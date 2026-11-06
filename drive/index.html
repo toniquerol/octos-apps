@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>OcToS DRIVE · V9</title>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>OcToS DRIVE · V11 · Terreno 3D</title>
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <style>
 :root{--bg:#181819;--panel:#232326;--edge:#444449;--ink:#f6f6f7;--muted:#aeb0b5;--orange:#ff891f;--low:#ffb971}
@@ -49,7 +49,7 @@ header{justify-content:center}.brand{position:absolute;left:50%;top:50%;transfor
 header .brand{left:50%!important;max-width:calc(100% - 310px);text-align:center;white-space:nowrap;gap:0}
 header .brand strong{font-size:19px;letter-spacing:.06em}
 header .brand small{font-size:9px;letter-spacing:.17em}
-.roadmap-controls{position:absolute;z-index:850;right:42px;bottom:66px;display:flex;flex-direction:column;align-items:center;gap:9px;pointer-events:auto}
+.roadmap-controls{position:absolute;z-index:850;right:30px;bottom:66px;display:flex;flex-direction:column;align-items:center;gap:9px;pointer-events:auto}
 .roadmap-control{display:grid;place-items:center;position:relative;flex:none;width:58px;height:58px;border-radius:13px;border:1px solid #63646b;background:#242428f0;color:#f5f5f5;box-shadow:0 4px 16px #0008;cursor:pointer;font:700 32px/1 system-ui;transition:background .15s,border-color .15s}
 .roadmap-control:hover,.roadmap-control:focus-visible,.roadmap-control.active{border-color:#ff891f;color:#ffad65;background:#303038}
 .roadmap-control.round{border-radius:50%}.roadmap-control.square{border-radius:12px}
@@ -57,20 +57,41 @@ header .brand small{font-size:9px;letter-spacing:.17em}
 .roadmap-control.square svg{fill:#ff891f33;stroke-width:1.7}
 .ctrl-mini{position:absolute;right:3px;bottom:2px;font-size:9px;color:#ffb971;font-weight:800;background:#202025;padding:1px 3px;border-radius:4px}
 .control-spacer{height:8px}
-@media(max-width:780px){header .brand{max-width:calc(100% - 205px)}header .brand strong{font-size:14px}header .brand small{font-size:7px;letter-spacing:.09em}.roadmap-controls{right:30px;bottom:60px}.roadmap-control{width:54px;height:54px}}
-@media(max-width:460px){header .brand{left:46%!important;max-width:calc(100% - 155px)!important}header .brand strong{font-size:12px}header .brand small{font-size:6.5px;letter-spacing:0}.roadmap-controls{right:28px;bottom:55px}.roadmap-control{width:51px;height:51px}}
+@media(max-width:780px){header .brand{max-width:calc(100% - 205px)}header .brand strong{font-size:14px}header .brand small{font-size:7px;letter-spacing:.09em}.roadmap-controls{right:19px;bottom:60px}.roadmap-control{width:54px;height:54px}}
+@media(max-width:460px){header .brand{left:46%!important;max-width:calc(100% - 155px)!important}header .brand strong{font-size:12px}header .brand small{font-size:6.5px;letter-spacing:0}.roadmap-controls{right:16px;bottom:55px}.roadmap-control{width:51px;height:51px}}
 
-/* Selector de mapas base compartido: Drive */
-.base-picker-drive{position:relative;z-index:1200}.base-picker-drive>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:7px;white-space:nowrap}.base-picker-drive>summary::-webkit-details-marker{display:none}.base-picker-options{position:absolute;right:0;top:calc(100% + 8px);width:195px;background:#252528;border:1px solid #58585d;border-radius:9px;box-shadow:0 12px 28px #0009;padding:7px}.base-picker-options label{display:flex;align-items:center;gap:8px;padding:10px 7px;color:#fafafa;font-size:12px;cursor:pointer}.base-picker-options input{accent-color:#ff891f}
-@media(max-width:460px){.base-picker-drive>summary{font-size:11px;padding:6px}.base-picker-options{right:0}}
+/* V11: controles específicos de terreno real, perspectiva y DEM */
+.terrain-panel .sectionbody{padding:9px}
+.terrain-provider{display:flex;align-items:center;gap:9px;padding:6px 5px 9px}
+.terrain-provider label{font-size:11px;color:#ccc;flex:1}
+.terrain-provider select{max-width:188px;min-width:0;border:1px solid #595960;background:#1f1f22;color:#f5f5f5;padding:8px 7px;border-radius:7px;font-size:11px}
+.terrain-state{margin:7px 5px 4px;display:flex;align-items:center;gap:7px;font-size:11px;color:#ffd09b}
+.terrain-state::before{content:"";width:7px;height:7px;border-radius:50%;background:#ffa75a;flex:none}
+.terrain-state.ok::before{background:#76d2a6}.terrain-state.warn::before{background:#ff6464}
+.terrain-panel .range-row{padding-bottom:7px}.terrain-panel .range-row em{font-size:11px;font-style:normal;color:#ffd09b;min-width:35px;text-align:right}
+.terrain-help{padding:7px 5px 5px;color:#aaaeb8;font-size:10px;line-height:1.55}
+#dimensionControl .ctrl-mini{right:2px;bottom:2px}
+#dimensionControl:not(.active){color:#eeeeee}
+#map3dStatus{font-weight:600;color:#ffb971}
+@media(max-width:780px){.terrain-provider{display:block}.terrain-provider select{display:block;max-width:none;width:100%;margin-top:6px}}
+@media(max-width:440px){#map3dStatus{display:none}.map-bottom{max-width:65%}}
 </style></head><body>
-<header><div class="brand"><div><strong><span>OcToS</span> <span style="color:#fff;text-transform:none">drive</span></strong><small>NEED FOR SPEED EDITION</small></div></div><div class="hdr-right"><details class="base-picker-drive" id="driveBasePicker"><summary class="hdr-chip" title="Seleccionar mapa base">◩ Mapas base <span style="color:#ff891f">⌄</span></summary><div class="base-picker-options"><label><input type="radio" name="topDriveBase" value="modeNfs"> NFS DARK MAP</label><label><input type="radio" name="topDriveBase" value="modeSat"> Satélite PNOA</label></div></details><button class="hdr-chip" id="topGps" title="Seguir ubicación y orientación">⌖ GPS</button><button class="hdr-chip secondary" id="topPanel" title="Mostrar/ocultar catálogo">☷ Capas</button><span class="vtag">V9</span></div></header>
+<header><div class="brand"><div><strong><span>OcToS</span> DRIVE</strong><small>NEED FOR SPEED EDITION</small></div></div><div class="hdr-right"><button class="hdr-chip" id="topGps" title="Seguir ubicación y orientación">⌖ GPS</button><button class="hdr-chip secondary" id="topPanel" title="Mostrar/ocultar catálogo">☷ Capas</button><span class="vtag">V11</span></div></header>
 <div class="shell" id="shell"><aside id="sidebar"><div class="sidebar-top"><h1>Carreteras y servicios</h1><p>Red vectorial NFS · puntos de interés por teselas</p><p class="healthline" id="health">Conectando con teselas públicas...</p></div><div class="list">
 <details class="section" open><summary>Visualización del mapa</summary><div class="sectionbody">
 <label class="option"><input id="modeNfs" type="radio" name="mapMode"><span>NFS DARK MAP</span><em>Vectorial</em></label><label class="option"><input id="modeSat" type="radio" name="mapMode" checked><span>Satélite PNOA</span></label>
 <label class="option"><input id="lidarEnabled" type="checkbox" checked><span>LiDAR IGN</span><em id="lidarPct">15%</em></label>
 <div class="range-row"><span>Transparencia LiDAR</span><input id="lidarAlpha" type="range" min="0" max="100" step="5" value="15" aria-label="Opacidad LiDAR"></div>
 <div class="help">Carreteras vectoriales y controles de color independientes. PNOA y LiDAR se muestran solo en modo satélite.</div>
+</div></details>
+<details class="section terrain-panel" open><summary>Terreno y perspectiva 3D <small>DEM</small></summary><div class="sectionbody">
+<label class="option"><input id="terrainEnabled" type="checkbox" checked><span>Relieve 3D real del terreno</span><em id="terrainOnLabel">Activado</em></label>
+<label class="option"><input id="hillshadeEnabled" type="checkbox" checked><span>Sombras de montañas y relieve</span><em>Hillshade</em></label>
+<div class="range-row"><span>Escala vertical del relieve</span><input id="terrainScale" type="range" min="0.5" max="3" step="0.25" value="1.25" aria-label="Exageración vertical del terreno"><em id="terrainScaleValue">1,25×</em></div>
+<div class="range-row"><span>Inclinación de cámara 3D</span><input id="terrainPitch" type="range" min="25" max="80" step="5" value="60" aria-label="Ángulo de cámara tridimensional"><em id="terrainPitchValue">60°</em></div>
+<div class="terrain-provider"><label for="demProvider">Modelo digital de elevación</label><select id="demProvider"><option value="mapterhorn">Mapterhorn · detallado</option><option value="aws">Mapzen AWS · alternativo</option></select></div>
+<div id="terrainState" class="terrain-state" role="status" aria-live="polite">Preparando datos de altura…</div>
+<div class="terrain-help">El terreno usa altitudes reales (DEM) y la ortofoto PNOA y el LiDAR IGN se adaptan a su superficie. La capa LiDAR es una imagen de relieve sombreado, no una nube de puntos 3D ni un modelo LiDAR de edificios. El relieve vertical a 1× es proporcional.</div>
 </div></details>
 <details class="section" open><summary>Red de carreteras <small id="roadCount">—</small></summary><div class="sectionbody" id="roadsBox"></div></details>
 <details class="section" open><summary>Edificios y etiquetas</summary><div class="sectionbody">
@@ -88,10 +109,11 @@ header .brand small{font-size:9px;letter-spacing:.17em}
 <main class="map-area"><div id="map"></div><div class="roadmap-controls" aria-label="Controles del mapa">
 <button id="locateControl" class="roadmap-control round" type="button" title="Activar ubicación GPS y centrar mapa" aria-label="Activar ubicación GPS y centrar mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
 <button id="bearingControl" class="roadmap-control square" type="button" aria-pressed="false" title="Cambiar entre norte arriba y orientación según rumbo GPS" aria-label="Modo norte arriba; pulsar para seguir el rumbo GPS"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L18 20 12 16 6 20Z"/><path d="M12 7v9"/></svg><span class="ctrl-mini" id="bearingMini">N</span></button>
+<button id="dimensionControl" class="roadmap-control square active" type="button" aria-pressed="true" title="Cambiar a vista 2D cenital" aria-label="Cambiar vista tridimensional a 2D"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m2 19 7-12 4 7 3-4 6 9H2Z"/><path d="M7 14 9 11 12 16M16 10l2 5"/></svg><span class="ctrl-mini" id="dimensionMini">3D</span></button>
 <div class="control-spacer" aria-hidden="true"></div>
 <button id="zoomInControl" class="roadmap-control zoom" type="button" title="Acercar" aria-label="Acercar">+</button>
 <button id="zoomOutControl" class="roadmap-control zoom" type="button" title="Alejar" aria-label="Alejar">−</button>
-</div><div class="map-overlay map-right"><button class="float-btn" id="floatingGps" title="Seguir mi ubicación">⌖ Ubicación</button><div class="status-card"><strong id="gpsState">GPS desconectado</strong><div id="gpsInfo">Pulsa GPS para solicitar permiso.</div></div></div><div class="map-overlay map-bottom"><span id="zoom">Z —</span> · <span id="coords">40.3, -3.7</span> · <span id="headingLabel">Rumbo —</span></div><div class="legend">NFS DARK · <span id="networkState">Red: esperando</span> · <span id="poiState">POI: esperando</span></div></main></div>
+</div><div class="map-overlay map-right"><button class="float-btn" id="floatingGps" title="Seguir mi ubicación">⌖ Ubicación</button><div class="status-card"><strong id="gpsState">GPS desconectado</strong><div id="gpsInfo">Pulsa GPS para solicitar permiso.</div></div></div><div class="map-overlay map-bottom"><span id="zoom">Z —</span> · <span id="coords">40.3, -3.7</span> · <span id="headingLabel">Rumbo —</span> · <span id="map3dStatus">Relieve 3D</span></div><div class="legend">NFS DARK · <span id="networkState">Red: esperando</span> · <span id="poiState">POI: esperando</span></div></main></div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 (()=>{'use strict';
@@ -121,13 +143,13 @@ d.querySelector('select').addEventListener('change',e=>{p.icon=e.target.value;up
 d.querySelector('input[type=color]').addEventListener('input',e=>{p.color=e.target.value;updatePreview();refreshIcon(p)});
 $('poiBox').appendChild(d);updatePreview();}
 if(!window.maplibregl){health('No se ha cargado MapLibre GL JS');setNote('Biblioteca cartográfica no disponible; se necesita conexión para cargar el visor.',true);return}
-const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-3.6,40.5],zoom:6,minZoom:3,maxZoom:19,antialias:true,attributionControl:false,renderWorldCopies:false});
+const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-3.6,40.5],zoom:6,pitch:60,maxPitch:85,minZoom:3,maxZoom:19,antialias:true,attributionControl:false,renderWorldCopies:false});
 // V5: controles propios de zoom, localización y orientación del mapa.
 map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-left');
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let bearingFollow=false;
 let roadLabelLayers=[],hydroLabelLayers=[],buildingLayerIds=[],buildingFillLayers=[];
-let vectorSource=null,ready=false,mode='sat',currentPosition=null,watchId=null,heading=null,gpsMarker=null,accuracyCircle=null,centerFollow=true,compassBound=false,lastCompassAt=0;
+let vectorSource=null,ready=false,mode='sat',perspective3D=true,demErrors=0,demFallbackUsed=false,currentPosition=null,watchId=null,heading=null,gpsMarker=null,accuracyCircle=null,centerFollow=true,compassBound=false,lastCompassAt=0;
 function detectSource(){const s=map.getStyle().sources;return Object.keys(s).find(k=>s[k].type==='vector'&&/openmaptiles|openfreemap/i.test(k+' '+(s[k].url||''))) || Object.keys(s).find(k=>s[k].type==='vector')}
 function roadsFilter(r){return ['in',['get','class'],['literal',r.classes]]}
 function poiFilter(p){const parts=[];if(p.subclasses.length)parts.push(['in',['get','subclass'],['literal',p.subclasses]]);if(p.classes.length)parts.push(['in',['get','class'],['literal',p.classes]]);return parts.length===1?parts[0]:['any',...parts]}
@@ -171,23 +193,75 @@ function darkenBase(){for(const l of map.getStyle().layers){const id=l.id, sourc
  }else if(l.type==='line'&&sourceLayer!=='transportation')try{map.setPaintProperty(id,'line-opacity',.35)}catch(e){}
  }}
 function ensureBuildingExtrusions(){
- // Some public vector styles have no 3D building layer. Supply one from the existing building vector geometry.
- if(!buildingLayerIds.length){
-  const id='octos-buildings-3d';map.addLayer({id,type:'fill-extrusion',source:vectorSource,'source-layer':'building',minzoom:14,
-   paint:{'fill-extrusion-color':'#555555','fill-extrusion-height':['coalesce',['to-number',['get','render_height']],['to-number',['get','height']],8],
-   'fill-extrusion-base':['coalesce',['to-number',['get','render_min_height']],['to-number',['get','min_height']],0],
-   'fill-extrusion-opacity':1}},'octos-road-halo-'+roads[0].id);
-  buildingLayerIds.push(id);
- }
- // Keep volumetric buildings visible over the satellite/LiDAR rasters and below roads.
- for(const id of buildingLayerIds)if(map.getLayer(id))map.moveLayer(id,'octos-road-halo-'+roads[0].id);
+ // Reemplazar la extrusión del estilo por una sola capa controlada por OcToS.
+ // De otro modo los edificios de origen y los personalizados pueden superponerse.
+ for(const id of buildingLayerIds)if(map.getLayer(id))map.setLayoutProperty(id,'visibility','none');
+ buildingLayerIds=[];
+ const id='octos-buildings-3d';
+ const h=['case',['has','render_height'],['to-number',['get','render_height'],9],
+   ['has','height'],['to-number',['get','height'],9],
+   ['has','levels'],['*',3,['to-number',['get','levels'],3]],9];
+ const base=['case',['has','render_min_height'],['to-number',['get','render_min_height'],0],
+   ['has','min_height'],['to-number',['get','min_height'],0],0];
+ map.addLayer({id,type:'fill-extrusion',source:vectorSource,'source-layer':'building',minzoom:13.5,
+  layout:{visibility:'visible'},paint:{'fill-extrusion-color':'#555555','fill-extrusion-height':h,
+  'fill-extrusion-base':base,'fill-extrusion-opacity':1,'fill-extrusion-vertical-gradient':true}},
+  'octos-road-halo-'+roads[0].id);
+ buildingLayerIds.push(id);
 }
+
+// V11: diferencia entre imagen raster LiDAR/PNOA y datos DEM de altura.
+// La fuente Mapterhorn es un DEM Terrarium en WebP de 512 px; AWS es el respaldo.
+const demIds={mapterhorn:'octos-dem-mapterhorn',aws:'octos-dem-aws'};
+const hillIds={mapterhorn:'octos-hill-mapterhorn',aws:'octos-hill-aws'};
+function activeDem(){return $('demProvider').value}
+function terrainStatus(message,kind=''){const el=$('terrainState');el.textContent=message;el.classList.toggle('ok',kind==='ok');el.classList.toggle('warn',kind==='warn')}
+function initTerrain(){
+ map.addSource(demIds.mapterhorn,{type:'raster-dem',url:'https://tiles.mapterhorn.com/tilejson.json',
+   encoding:'terrarium',tileSize:512,attribution:'© Mapterhorn · fuentes altimétricas abiertas'});
+ map.addSource(demIds.aws,{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+   tileSize:256,maxzoom:15,encoding:'terrarium',attribution:'© Mapzen / AWS Open Data'});
+ // Las sombras son capas cartográficas que siguen la malla DEM; las bases raster siguen la misma superficie.
+ for(const provider of ['mapterhorn','aws'])map.addLayer({id:hillIds[provider],type:'hillshade',source:demIds[provider],
+   layout:{visibility:'none'},paint:{'hillshade-exaggeration':.38,
+   'hillshade-shadow-color':'#1a202b','hillshade-highlight-color':'#fff5dc',
+   'hillshade-accent-color':'#313a47'}},'octos-road-halo-'+roads[0].id);
+ syncTerrain();
+}
+function syncTerrain(){
+ if(!ready)return;
+ const provider=activeDem(),enabled=$('terrainEnabled').checked,exaggeration=Number($('terrainScale').value);
+ $('terrainScaleValue').textContent=exaggeration.toLocaleString('es-ES',{maximumFractionDigits:2})+'×';
+ $('terrainOnLabel').textContent=enabled?'Activado':'Desactivado';
+ $('terrainPitchValue').textContent=$('terrainPitch').value+'°';
+ try{
+  map.setTerrain(enabled?{source:demIds[provider],exaggeration}:null);
+  for(const key of ['mapterhorn','aws'])if(map.getLayer(hillIds[key]))map.setLayoutProperty(hillIds[key],
+    'visibility',enabled&&$('hillshadeEnabled').checked&&provider===key?'visible':'none');
+  terrainStatus(enabled?'Cargando relieve '+(provider==='mapterhorn'?'Mapterhorn':'AWS')+'…':'Relieve desactivado',enabled?'':'warn');
+  $('map3dStatus').textContent=enabled?'3D · '+exaggeration.toLocaleString('es-ES',{maximumFractionDigits:2})+'×':'Terreno plano';
+ }catch(err){terrainStatus('Error del terreno: '+err.message,'warn');setNote('DEM 3D: '+err.message,true)}
+}
+function syncDimensionButton(){
+ const b=$('dimensionControl');b.classList.toggle('active',perspective3D);
+ b.setAttribute('aria-pressed',String(perspective3D));
+ b.setAttribute('aria-label',perspective3D?'Cambiar vista tridimensional a 2D':'Cambiar vista cenital a 3D');
+ b.title=perspective3D?'Cambiar a vista 2D cenital':'Activar perspectiva 3D';
+ $('dimensionMini').textContent=perspective3D?'3D':'2D';
+}
+function toggleDimension(){
+ perspective3D=!perspective3D;
+ if(perspective3D&&!$('terrainEnabled').checked){$('terrainEnabled').checked=true;syncTerrain()}
+ map.easeTo({pitch:perspective3D?Number($('terrainPitch').value):0,duration:650});
+ syncDimensionButton();
+}
+
 
 function svgFor(p){const c=p.color;let inner='';if(p.icon==='gas')inner='<rect x="17" y="14" width="18" height="26" rx="2" fill="none" stroke="white" stroke-width="3"/><path d="M20 20h12M20 40v4M35 23l7 5v12a4 4 0 0 0 8 0V27l-5-8" fill="none" stroke="white" stroke-width="3"/>';
 else if(p.icon==='radar')inner='<rect x="16" y="15" width="29" height="28" rx="4" fill="none" stroke="white" stroke-width="3"/><circle cx="30" cy="29" r="9" fill="none" stroke="white" stroke-width="2.5"/><circle cx="30" cy="29" r="3" fill="white"/><path d="M24 11h12M21 47h18" stroke="white" stroke-width="3"/>';
 else if(p.icon==='pin')inner='<path d="M30 46S16 34 16 26a14 14 0 0 1 28 0c0 8-14 20-14 20Z" stroke="white" stroke-width="3" fill="none"/><circle cx="30" cy="26" r="5" fill="white"/>';
 else if(p.icon==='flag')inner='<path d="M19 46V13h23l-6 9 6 9H19" fill="none" stroke="white" stroke-width="3"/>';
-else if(p.icon==='alert')inner='<path d="M30 12L48 43H12Z" fill="none" stroke="white" stroke-width="3"/><path d="M30 23v10M30 37v2" stroke="white" stroke-width="4"/>';
+else if(p.icon==='alert')inner='<path d="M30 12L48 43H12Z" fill="none" stroke="white" stroke-width="3"/><path d="M30 23v11M30 37v2" stroke="white" stroke-width="4"/>';
 else if(p.icon==='star')inner='<path d="M30 13l5 12 13 1-10 9 3 13-11-7-11 7 3-13-10-9 13-1Z" stroke="white" stroke-width="3" fill="none"/>';
 else if(p.icon==='circle')inner='<circle cx="30" cy="30" r="11" fill="white"/>';
 else if(p.icon==='parking')inner='<text x="30" y="42" fill="white" font-family="sans-serif" font-weight="900" font-size="33" text-anchor="middle">P</text>';
@@ -207,15 +281,46 @@ function initLayers(){vectorSource=detectSource();if(!vectorSource){health('No s
  map.addLayer({id:'octos-pnoa-layer',type:'raster',source:'octos-pnoa',layout:{visibility:'none'},paint:{'raster-opacity':1}},'octos-road-halo-'+roads[0].id);
  map.addSource('octos-lidar',{type:'raster',tiles:['https://wmts-mapa-lidar.idee.es/lidar?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=EL.GridCoverageDSM&STYLE=default&FORMAT=image/png&TILEMATRIXSET=GoogleMapsCompatible&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'],tileSize:256,maxzoom:19,attribution:'© IGN/CNIG LiDAR'});
  map.addLayer({id:'octos-lidar-layer',type:'raster',source:'octos-lidar',layout:{visibility:'none'},paint:{'raster-opacity':.15}},'octos-road-halo-'+roads[0].id);
+ // Dem y sombras entre la ortofoto/LiDAR y los edificios 3D.
+ ready=true;
+ initTerrain();
  ensureBuildingExtrusions();
  Promise.all(pois.filter(p=>p.id==='fuel').map(loadIcon)).then(()=>{for(const p of pois.filter(p=>p.id==='fuel')){const id='octos-poi-'+p.id;map.addLayer({id,type:'symbol',source:vectorSource,'source-layer':'poi',minzoom:13,filter:poiFilter(p),layout:{'icon-image':'octos-icon-'+p.id,'icon-size':['interpolate',['linear'],['zoom'],13,.48,17,.78],'icon-allow-overlap':true,'icon-ignore-placement':true,'visibility':p.visible?'visible':'none'},paint:{'icon-opacity':.98}})}$('poiState').textContent='gasolineras · radares pendientes';loadRadarData();});
- ready=true;setMode(mode);syncAllRoads();syncRoadLabels();hideHydroLabels();syncBuildings();if(currentPosition)drawGps();$('networkState').textContent='activo';$('roadCount').textContent='(6 categorías)';health('Teselas vectoriales cargadas · sin claves');setNote('Anchuras de carreteras en metros (aproximación Web Mercator según centro del mapa). Gasolineras OSM; radares oficiales con cobertura regional.');
+ setMode(mode);syncAllRoads();syncRoadLabels();hideHydroLabels();syncBuildings();if(currentPosition)drawGps();$('networkState').textContent='activo';$('roadCount').textContent='(6 categorías)';health('Teselas vectoriales y DEM 3D configurados');setNote('V11: terreno DEM real, edificios extruidos y PNOA/LiDAR proyectados sobre relieve. Requiere conexión a las fuentes públicas; no es LiDAR 3D de puntos.');
 }
 map.on('load',initLayers);
-map.on('error',e=>{const err=String(e?.error?.message||e?.error||'Error desconocido');health('Incidencia de teselas o capas');setNote('Error de carga: '+err.slice(0,160),true)});
+map.on('error',e=>{
+ const err=String(e?.error?.message||e?.error||'Error desconocido');
+ const source=String(e?.sourceId||e?.source?.id||'');
+ const isDem=source.startsWith('octos-dem-')||/mapterhorn\.com|elevation-tiles-prod/i.test(err);
+ if(isDem){
+  if(activeDem()==='mapterhorn'&&!demFallbackUsed&&$('terrainEnabled').checked){
+   demErrors++;
+   if(demErrors>=3){demFallbackUsed=true;$('demProvider').value='aws';syncTerrain();terrainStatus('Mapterhorn inaccesible · usando DEM AWS','warn');return}
+  }
+  terrainStatus('Fallo de descarga del DEM. Cambia de proveedor.','warn');return;
+ }
+ health('Incidencia en las teselas de mapa');
+ setNote('Error de carga: '+err.slice(0,160),true)
+});
+map.on('sourcedata',e=>{
+ if(!ready||!$('terrainEnabled').checked)return;
+ if(e.sourceId===demIds[activeDem()]&&e.isSourceLoaded){terrainStatus('Relieve '+(activeDem()==='mapterhorn'?'Mapterhorn':'AWS')+' listo','ok')}
+});
 map.on('click',e=>{if(!ready)return;const layers=pois.filter(p=>p.id==='fuel').map(p=>'octos-poi-'+p.id).filter(id=>map.getLayer(id));const features=map.queryRenderedFeatures(e.point,{layers});if(features.length){const f=features[0],p=pois.find(p=>'octos-poi-'+p.id===f.layer.id),name=f.properties.name||p.label;new maplibregl.Popup().setLngLat(e.lngLat).setHTML('<h3>'+safe(name)+'</h3><p>'+safe(p.label)+'</p><p>Coordenadas: '+e.lngLat.lat.toFixed(5)+', '+e.lngLat.lng.toFixed(5)+'</p><p>Datos: OSM / OpenFreeMap, cobertura no exhaustiva</p><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/dir/?api=1&amp;destination='+encodeURIComponent(e.lngLat.lat+','+e.lngLat.lng)+'">Cómo llegar</a>').addTo(map);return}
  const rl=roads.map(r=>'octos-road-'+r.id).filter(id=>map.getLayer(id));const lines=map.queryRenderedFeatures(e.point,{layers:rl});if(lines.length){const f=lines[0];new maplibregl.Popup().setLngLat(e.lngLat).setHTML('<h3>'+safe(f.properties.ref||f.properties.name||'Tramo de carretera')+'</h3><p>Tipo OSM: '+safe(f.properties.class)+'</p>').addTo(map)}});
 map.on('mousemove',e=>{if(!ready)return;const ids=pois.filter(p=>p.id==='fuel').map(p=>'octos-poi-'+p.id).filter(id=>map.getLayer(id));map.getCanvas().style.cursor=map.queryRenderedFeatures(e.point,{layers:ids}).length?'pointer':''});
+$('terrainEnabled').addEventListener('change',syncTerrain);
+$('hillshadeEnabled').addEventListener('change',syncTerrain);
+$('terrainScale').addEventListener('input',syncTerrain);
+$('terrainPitch').addEventListener('input',()=>{
+ $('terrainPitchValue').textContent=$('terrainPitch').value+'°';
+ if(perspective3D)map.easeTo({pitch:Number($('terrainPitch').value),duration:140});
+});
+$('demProvider').addEventListener('change',()=>{demErrors=0;syncTerrain()});
+$('dimensionControl').addEventListener('click',toggleDimension);
+map.on('pitchend',()=>{const tilted=map.getPitch()>15;if(tilted!==perspective3D){perspective3D=tilted;syncDimensionButton()}});
+syncDimensionButton();
 $('modeNfs').addEventListener('change',()=>setMode('dark'));
 $('modeSat').addEventListener('change',()=>setMode('sat'));
 function setMode(m){mode=m;if(!ready)return;map.setLayoutProperty('octos-pnoa-layer','visibility',m==='sat'?'visible':'none');map.setLayoutProperty('octos-lidar-layer','visibility',m==='sat'&&$('lidarEnabled').checked?'visible':'none')}
@@ -250,4 +355,4 @@ startGPS(true);
 $('accuracyCheck').addEventListener('change',drawGps);$('headingCheck').addEventListener('change',drawGps);$('followCheck').addEventListener('change',()=>{centerFollow=true;drawGps()});map.on('dragstart',()=>{centerFollow=false});
 map.on('move',syncAllRoads);map.on('moveend',()=>{const c=map.getCenter();$('zoom').textContent='Z '+map.getZoom().toFixed(1);$('coords').textContent=c.lat.toFixed(4)+', '+c.lng.toFixed(4)});map.fire('moveend');
 })();
-</script><script>(function(){const picker=document.getElementById("driveBasePicker");if(!picker)return;const radios=[...picker.querySelectorAll("input[name=topDriveBase]")];function sync(){for(const r of radios){const original=document.getElementById(r.value);r.checked=!!original?.checked}}for(const r of radios){r.addEventListener("change",()=>{const original=document.getElementById(r.value);if(original){original.click();sync()}picker.open=false});document.getElementById(r.value)?.addEventListener("change",sync)}document.addEventListener("click",e=>{if(!picker.contains(e.target))picker.open=false});sync()})();</script></body></html>
+</script></body></html>
