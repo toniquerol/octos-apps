@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>OcToS DRIVE · V9</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+:root{--bg:#181819;--panel:#232326;--edge:#444449;--ink:#f6f6f7;--muted:#aeb0b5;--orange:#ff891f;--low:#ffb971}
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--ink);font:13px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif}button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}button:focus-visible,input:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+header{height:65px;background:#202022;border-bottom:1px solid #4a4a4d;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:relative;z-index:1100}
+.brand{display:flex;align-items:center;gap:12px;white-space:nowrap}.emblem{font-weight:900;color:var(--orange);font-size:27px;font-style:italic;letter-spacing:-3px;line-height:1}.brand strong{font-size:18px;letter-spacing:.045em}.brand strong span{color:var(--orange)}.brand small{display:block;letter-spacing:.15em;font-size:9px;color:#b7b7bb}.hdr-right{display:flex;gap:7px;align-items:center}.hdr-chip{color:#eee;background:#333337;border:1px solid #57575d;border-radius:9px;padding:8px 12px;min-height:37px}.hdr-chip:hover,.hdr-chip.selected{border-color:var(--orange);color:var(--low)}.vtag{color:#888;font-size:10px;margin-left:6px}
+.shell{height:calc(100dvh - 65px);display:grid;grid-template-columns:315px minmax(0,1fr);min-height:0;position:relative}.shell.fold{grid-template-columns:0 minmax(0,1fr)}aside{overflow:hidden;min-height:0;display:flex;flex-direction:column;background:#242426;border-right:1px solid #444}.shell.fold aside{border:0}.sidebar-top{padding:18px 15px 13px;border-bottom:1px solid #454548}.sidebar-top h1{margin:0 0 5px;font-size:19px}.sidebar-top p{font-size:11px;color:var(--muted);margin:0 0 14px}.toolstrip{display:flex;gap:7px}.button{background:#333336;border:1px solid #57575a;color:var(--ink);border-radius:8px;min-height:38px;padding:9px 12px}.button.accent{background:#ff891f;color:#24160d;font-weight:750;border-color:#ff891f}.button:hover:not(:disabled){border-color:#ff891f}.button.full{width:100%}.list{overflow-y:auto;padding:10px 10px 20px;flex:1}.section{margin-bottom:10px;border:1px solid #454549;border-radius:10px;overflow:hidden;background:#2e2e31}.section>summary{list-style:none;cursor:pointer;padding:11px 12px;font-weight:700;display:flex;justify-content:space-between;align-items:center}.section>summary::-webkit-details-marker{display:none}.section>summary::after{content:'⌄';font-size:16px;color:var(--orange)}.section:not([open])>summary::after{transform:rotate(-90deg)}.sectionbody{border-top:1px solid #46464a;padding:7px 9px}.option{display:flex;gap:10px;align-items:center;min-height:37px;padding:6px 5px;cursor:pointer}.option input{accent-color:var(--orange);height:18px;width:18px;flex:none}.option span{flex:1;font-size:12px}.option em{font-size:10px;color:#a6a6aa;font-style:normal}.note{padding:11px 14px;color:#b6b6bb;font-size:11px;border-top:1px solid #454549;background:#202023;line-height:1.5}.note.warn{color:#ffb980}.sidebar-close{position:absolute;left:315px;top:50%;z-index:950;transform:translate(-2px,-50%);width:26px;height:56px;background:#2a2a2c;color:var(--orange);border:1px solid #57575a;border-radius:0 8px 8px 0;font-size:21px}.shell.fold .sidebar-close{left:0;transform:translate(0,-50%)}
+.map-area{position:relative;min-width:0;min-height:0;background:#ddd}#map{position:absolute;inset:0;height:100%;width:100%}.map-overlay{position:absolute;z-index:750;pointer-events:none}.map-overlay>*{pointer-events:auto}.map-left{top:14px;left:17px;display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}.map-right{top:14px;right:14px;display:flex;flex-direction:column;align-items:flex-end;gap:8px}.float-btn{min-height:43px;border-radius:9px;border:1px solid #55565b;background:#242428ee;color:#fff;box-shadow:0 4px 18px #0005;padding:9px 12px;font-weight:680}.float-btn:hover,.float-btn.on{border-color:var(--orange)}.float-btn.on{color:#ffb46a}.status-card{background:#202024f4;border:1px solid #55565b;border-radius:9px;padding:9px 12px;color:#eee;font-size:11px;max-width:min(340px,80vw);box-shadow:0 5px 16px #0004}.status-card strong{color:#ffac59}.map-bottom{bottom:13px;left:15px;background:#202024ed;color:#f5f5f5;border:1px solid #525256;padding:7px 10px;border-radius:8px;font-size:11px}.map-bottom span{color:#ffad63}.leaflet-bottom.leaflet-right{right:20px;bottom:28px}.leaflet-control-zoom{border:1px solid #575757!important;border-radius:9px!important;box-shadow:0 4px 15px #0006!important}.leaflet-control-zoom a,.leaflet-touch .leaflet-control-zoom a{width:50px!important;height:50px!important;line-height:49px!important;background:#27272b!important;color:#fff!important;font-size:30px!important;border-bottom:1px solid #545457!important}.leaflet-control-zoom a:hover{color:#ff891f!important}.leaflet-control-attribution{max-width:calc(100vw - 120px);background:#ffffffd9!important;font-size:10px!important}.leaflet-popup-content-wrapper{background:#242427!important;color:#fafafa!important;border:1px solid #55565a;border-radius:10px!important}.leaflet-popup-tip{background:#242427!important}.leaflet-popup-content{min-width:210px;margin:12px 14px!important}.leaflet-popup-content h3{margin:0 0 7px;color:#ffaf63;font-size:15px}.leaflet-popup-content p{margin:5px 0}.leaflet-popup-content a{color:#ffae65}.leaflet-popup-close-button{color:#fff!important}.gps-symbol{width:44px;height:44px;position:relative;display:grid;place-items:center;filter:drop-shadow(0 2px 4px #0008)}.gps-arrow{width:34px;height:34px;transform-origin:50% 50%;transition:transform .15s linear}.gps-arrow svg{width:100%;height:100%;overflow:visible}.poi-dot{height:26px;width:26px;border-radius:50%;background:#262629;border:2px solid #fff;color:#ff891f;display:grid;place-items:center;box-shadow:0 3px 9px #0008;font-weight:800;font-size:15px}.poi-dot.fuel{color:#ffd28a}.poi-dot.repair{color:#ff891f}.poi-dot.rest{color:#75d3a6}.poi-dot.parking{color:#a4c7ff}.legend{position:absolute;z-index:700;bottom:15px;right:88px;background:#242429e8;color:#eee;border:1px solid #555;border-radius:7px;padding:5px 8px;font-size:10px}.legend i{display:inline-block;width:9px;height:4px;vertical-align:middle;margin-right:2px}
+@media(max-width:780px){header{padding:0 11px;height:61px}.brand strong{font-size:15px}.emblem{font-size:23px}.brand small{font-size:8px}.vtag{display:none}.shell{height:calc(100dvh - 61px);display:block}.shell aside{position:absolute;z-index:1000;top:0;bottom:0;left:0;width:min(315px,83vw);box-shadow:5px 0 20px #0007}.shell.fold aside{transform:translateX(-110%)}.sidebar-close{left:min(315px,83vw)}.shell.fold .sidebar-close{left:0}.map-area{height:100%}.hdr-chip{padding:6px 9px;min-height:36px}.map-left{top:10px;left:12px}.map-right{top:10px;right:10px}.status-card{max-width:215px}.map-bottom{bottom:10px;left:10px;font-size:10px}.legend{right:83px}.leaflet-bottom.leaflet-right{bottom:24px;right:16px}}@media(max-width:420px){.hdr-right .hdr-chip.secondary{display:none}.sidebar-top{padding-top:14px}.map-left{max-width:63%}}
+
+/* Leaflet: posicionamiento mínimo integrado, imprescindible si falla CDN CSS */
+.leaflet-container{position:relative;overflow:hidden;outline:0;touch-action:pan-x pan-y;background:#e4e4e4}
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container .leaflet-tile{width:256px;height:256px;max-width:none!important;max-height:none!important;border:0;margin:0;padding:0;visibility:hidden}
+.leaflet-container .leaflet-tile-loaded{visibility:inherit}
+.leaflet-container img.leaflet-image-layer,.leaflet-container .leaflet-overlay-pane svg,.leaflet-container .leaflet-marker-pane img{max-width:none!important;max-height:none!important}
+.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-shadow-pane{z-index:500}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}.leaflet-top{top:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-right{right:0}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both}
+.leaflet-left .leaflet-control{float:left;margin-left:10px}.leaflet-right .leaflet-control{float:right;margin-right:10px}
+.leaflet-top .leaflet-control{margin-top:10px}.leaflet-bottom .leaflet-control{margin-bottom:10px}
+.leaflet-control-zoom a{display:block;text-decoration:none;text-align:center;cursor:pointer}
+.leaflet-control-attribution{background:#fff9;color:#333;font-size:10px}
+.leaflet-control-attribution a{color:#26729a}
+.leaflet-zoom-animated{transform-origin:0 0}.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}
+.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab{cursor:grabbing}
+.range-row{display:flex;align-items:center;gap:10px;padding:3px 6px 10px}.range-row span{flex:1;color:#ccc;font-size:11px}.range-row input{flex:1;min-width:80px;accent-color:var(--orange);height:24px}
+
+/* Atlas V3 / MapLibre */
+#map .maplibregl-canvas{outline:none}
+.healthline{font-size:10px!important;color:#ffb971!important;margin:8px 0 0!important}
+.help{font-size:10px;color:#aaadb4;margin:7px 5px;line-height:1.55}
+.road-setting{border-bottom:1px solid #434348;padding:8px 3px}.road-setting:last-child{border:0}
+.road-setting-head{display:flex;align-items:center;gap:8px;font-size:12px}.road-setting-head>label{flex:1;display:flex;align-items:center;gap:8px;cursor:pointer}.road-setting input[type=checkbox]{accent-color:var(--orange);width:17px;height:17px}.road-setting input[type=color]{border:1px solid #555;background:transparent;border-radius:6px;width:36px;height:28px;cursor:pointer;padding:2px}.road-setting input[type=range]{width:100%;accent-color:var(--orange);height:19px}
+.road-sliders{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:6px}.road-sliders label{display:block;color:#bfc0c5;font-size:10px}
+.pill-status{font-size:10px;color:#ffb971}.leaflet-control-attribution{display:none}
+.maplibregl-popup-content{background:#242427!important;color:#fff;border:1px solid #555;border-radius:10px!important;min-width:210px}.maplibregl-popup-tip{border-top-color:#242427!important}.maplibregl-popup-close-button{color:#fff;font-size:19px}
+#map{background:#10151c} .gps-pin{width:42px;height:42px;filter:drop-shadow(0 3px 5px #000b);display:grid;place-items:center}.gps-pin svg{width:100%;height:100%}
+/* V4: centrado absoluto de marca, controles y servicios */
+header{justify-content:center}.brand{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);justify-content:center}.hdr-right{margin-left:auto;position:relative;z-index:2}
+.service-setting{padding:10px 5px;border-bottom:1px solid #46464a}.service-setting:last-child{border-bottom:0}.service-setting .service-header{display:flex;gap:10px;align-items:center}.service-setting .service-header input{accent-color:var(--orange);width:18px;height:18px}.service-setting .service-header span{font-weight:700;flex:1}.service-setting .service-controls{display:flex;gap:8px;align-items:center;margin-top:9px}.service-setting select{flex:1;min-width:0;background:#202023;color:#eee;border:1px solid #5b5b60;border-radius:7px;padding:8px}.service-setting input[type=color]{width:38px;height:35px;background:#202023;border:1px solid #5b5b60;border-radius:7px}.service-preview{width:31px;height:31px;display:grid;place-items:center;border:1px solid #555;border-radius:50%;background:#151923}.service-note{color:#b4b5bd;font-size:10px;margin-top:7px;line-height:1.4}
+@media(max-width:780px){header .brand{max-width:55%;overflow:hidden}.brand strong{font-size:12px}.brand small{font-size:7px}.brand .emblem{font-size:18px}.brand{gap:6px}header .hdr-right{gap:4px}}
+@media(max-width:460px){.brand{left:43%;max-width:49%!important}.brand strong{font-size:11px}.hdr-chip{padding:6px 7px}}
+
+/* V6: cabecera simplificada y red viaria predominantemente gris */
+header .brand{left:50%!important;max-width:calc(100% - 310px);text-align:center;white-space:nowrap;gap:0}
+header .brand strong{font-size:19px;letter-spacing:.06em}
+header .brand small{font-size:9px;letter-spacing:.17em}
+.roadmap-controls{position:absolute;z-index:850;right:30px;bottom:66px;display:flex;flex-direction:column;align-items:center;gap:9px;pointer-events:auto}
+.roadmap-control{display:grid;place-items:center;position:relative;flex:none;width:58px;height:58px;border-radius:13px;border:1px solid #63646b;background:#242428f0;color:#f5f5f5;box-shadow:0 4px 16px #0008;cursor:pointer;font:700 32px/1 system-ui;transition:background .15s,border-color .15s}
+.roadmap-control:hover,.roadmap-control:focus-visible,.roadmap-control.active{border-color:#ff891f;color:#ffad65;background:#303038}
+.roadmap-control.round{border-radius:50%}.roadmap-control.square{border-radius:12px}
+.roadmap-control svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.roadmap-control.square svg{fill:#ff891f33;stroke-width:1.7}
+.ctrl-mini{position:absolute;right:3px;bottom:2px;font-size:9px;color:#ffb971;font-weight:800;background:#202025;padding:1px 3px;border-radius:4px}
+.control-spacer{height:8px}
+@media(max-width:780px){header .brand{max-width:calc(100% - 205px)}header .brand strong{font-size:14px}header .brand small{font-size:7px;letter-spacing:.09em}.roadmap-controls{right:19px;bottom:60px}.roadmap-control{width:54px;height:54px}}
+@media(max-width:460px){header .brand{left:46%!important;max-width:calc(100% - 155px)!important}header .brand strong{font-size:12px}header .brand small{font-size:6.5px;letter-spacing:0}.roadmap-controls{right:16px;bottom:55px}.roadmap-control{width:51px;height:51px}}
+</style></head><body>
+<header><div class="brand"><div><strong><span>OcToS</span> DRIVE</strong><small>NEED FOR SPEED EDITION</small></div></div><div class="hdr-right"><button class="hdr-chip" id="topGps" title="Seguir ubicación y orientación">⌖ GPS</button><button class="hdr-chip secondary" id="topPanel" title="Mostrar/ocultar catálogo">☷ Capas</button><span class="vtag">V9</span></div></header>
+<div class="shell" id="shell"><aside id="sidebar"><div class="sidebar-top"><h1>Carreteras y servicios</h1><p>Red vectorial NFS · puntos de interés por teselas</p><p class="healthline" id="health">Conectando con teselas públicas...</p></div><div class="list">
+<details class="section" open><summary>Visualización del mapa</summary><div class="sectionbody">
+<label class="option"><input id="modeNfs" type="radio" name="mapMode"><span>NFS DARK MAP</span><em>Vectorial</em></label><label class="option"><input id="modeSat" type="radio" name="mapMode" checked><span>Satélite PNOA</span></label>
+<label class="option"><input id="lidarEnabled" type="checkbox" checked><span>LiDAR IGN</span><em id="lidarPct">15%</em></label>
+<div class="range-row"><span>Transparencia LiDAR</span><input id="lidarAlpha" type="range" min="0" max="100" step="5" value="15" aria-label="Opacidad LiDAR"></div>
+<div class="help">Carreteras vectoriales y controles de color independientes. PNOA y LiDAR se muestran solo en modo satélite.</div>
+</div></details>
+<details class="section" open><summary>Red de carreteras <small id="roadCount">—</small></summary><div class="sectionbody" id="roadsBox"></div></details>
+<details class="section" open><summary>Edificios y etiquetas</summary><div class="sectionbody">
+<label class="option"><input id="roadLabelsEnabled" type="checkbox"><span>Nombres y escudos de carreteras</span><em>Ocultos</em></label>
+<div class="help">Oculta solo las etiquetas viarias del mapa vectorial; las líneas de carretera y los nombres de localidades permanecen.</div>
+<label class="option"><input id="buildingsEnabled" type="checkbox" checked><span>Edificios 3D</span><em id="buildingsState">Activados</em></label>
+<div class="road-setting-head" style="padding:7px 5px"><span style="flex:1">Color de edificios</span><input id="buildingsColor" type="color" value="#555555" aria-label="Color de edificios 3D"></div>
+<div class="range-row"><span>Opacidad</span><input id="buildingsAlpha" type="range" min="0" max="100" step="5" value="100" aria-label="Opacidad de edificios"><em id="buildingsPct">100%</em></div>
+<div class="help">El color afecta a la volumetría vectorial 3D. No modifica edificios fotografiados en la ortofoto PNOA.</div>
+</div></details>
+<details class="section" open><summary>Servicios en ruta <small id="poiCount">—</small></summary><div class="sectionbody" id="poiBox"></div></details>
+<details class="section"><summary>Navegación GPS</summary><div class="sectionbody"><label class="option"><input type="checkbox" id="followCheck" checked><span>Seguir mi ubicación</span></label><label class="option"><input type="checkbox" id="headingCheck" checked><span>Orientar flecha con brújula</span></label><label class="option"><input type="checkbox" id="accuracyCheck" checked><span>Círculo de precisión</span></label><button class="button full" id="gpsPerm">Activar GPS y brújula</button><p style="font-size:10px;color:#bcbcbc">Si la brújula no está disponible, se usa el rumbo GPS solo en movimiento. Puede requerir HTTPS.</p></div></details>
+<details class="section"><summary>Herramientas</summary><div class="sectionbody"><button id="spain" class="button full">Mostrar España</button><p style="font-size:10px;color:#bcbcbc;margin:8px 3px">El mapa carga las teselas automáticamente. No es un navegador giro a giro.</p></div></details>
+</div><div id="note" class="note">Carreteras en metros reales aproximados sobre el plano. Gasolineras desde teselas y radares desde datos públicos disponibles.</div></aside><button class="sidebar-close" id="foldButton" title="Ocultar catálogo" aria-label="Ocultar catálogo">‹</button>
+<main class="map-area"><div id="map"></div><div class="roadmap-controls" aria-label="Controles del mapa">
+<button id="locateControl" class="roadmap-control round" type="button" title="Activar ubicación GPS y centrar mapa" aria-label="Activar ubicación GPS y centrar mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+<button id="bearingControl" class="roadmap-control square" type="button" aria-pressed="false" title="Cambiar entre norte arriba y orientación según rumbo GPS" aria-label="Modo norte arriba; pulsar para seguir el rumbo GPS"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L18 20 12 16 6 20Z"/><path d="M12 7v9"/></svg><span class="ctrl-mini" id="bearingMini">N</span></button>
+<div class="control-spacer" aria-hidden="true"></div>
+<button id="zoomInControl" class="roadmap-control zoom" type="button" title="Acercar" aria-label="Acercar">+</button>
+<button id="zoomOutControl" class="roadmap-control zoom" type="button" title="Alejar" aria-label="Alejar">−</button>
+</div><div class="map-overlay map-right"><button class="float-btn" id="floatingGps" title="Seguir mi ubicación">⌖ Ubicación</button><div class="status-card"><strong id="gpsState">GPS desconectado</strong><div id="gpsInfo">Pulsa GPS para solicitar permiso.</div></div></div><div class="map-overlay map-bottom"><span id="zoom">Z —</span> · <span id="coords">40.3, -3.7</span> · <span id="headingLabel">Rumbo —</span></div><div class="legend">NFS DARK · <span id="networkState">Red: esperando</span> · <span id="poiState">POI: esperando</span></div></main></div>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const setNote=(text,warn=false)=>{const el=$('note');el.textContent=text;el.classList.toggle('warn',warn)};
+const health=text=>$('health').textContent=text;
+const roads=[
+ {id:'motorway',label:'Autopistas y autovías',classes:['motorway'],color:'#FF841C',width:30,visible:true},
+ {id:'trunk',label:'Vías rápidas / principales',classes:['trunk'],color:'#999999',width:24,visible:true},
+ {id:'primary',label:'Carreteras nacionales / principales OSM',classes:['primary'],color:'#999999',width:18,visible:true},
+ {id:'secondary',label:'Carreteras secundarias',classes:['secondary'],color:'#999999',width:14,visible:true},
+ {id:'tertiary',label:'Carreteras locales',classes:['tertiary'],color:'#999999',width:10,visible:true},
+ {id:'minor',label:'Calles y otras vías',classes:['minor','service','track','path','street','street_limited','construction'],color:'#999999',width:7,visible:true}
+];
+const pois=[
+ {id:'fuel',label:'Gasolineras',subclasses:['fuel'],classes:['fuel'],color:'#ffb35c',icon:'gas',visible:true},
+ {id:'radar',label:'Radares fijos',subclasses:[],classes:[],color:'#ff5669',icon:'radar',visible:true}
+];
+const iconChoices=[['gas','Surtidor'],['radar','Radar'],['pin','Marcador'],['flag','Bandera'],['alert','Alerta'],['star','Estrella'],['circle','Punto'],['parking','P'],['wrench','Herramientas']];
+for(const r of roads){const d=document.createElement('div');d.className='road-setting';d.innerHTML=`<div class="road-setting-head"><label><input type="checkbox" class="r-active" ${r.visible?'checked':''}><span>${r.label}</span></label><input class="r-color" type="color" value="${r.color}" title="Color de la carretera"></div><div class="road-sliders"><label>Anchura <span class="w-val">${r.width}</span> m<input class="r-width" type="range" min="1" max="80" step="1" value="${r.width}"></label><label>Opacidad <span class="a-val">95</span>%<input class="r-opacity" type="range" min="0" max="100" step="5" value="95"></label></div>`;
+ r.opacity=.95;d.querySelector('.r-active').addEventListener('change',e=>{r.visible=e.target.checked;syncRoad(r)});d.querySelector('.r-color').addEventListener('input',e=>{r.color=e.target.value;syncRoad(r)});d.querySelector('.r-width').addEventListener('input',e=>{r.width=+e.target.value;d.querySelector('.w-val').textContent=r.width;syncRoad(r)});d.querySelector('.r-opacity').addEventListener('input',e=>{r.opacity=+e.target.value/100;d.querySelector('.a-val').textContent=e.target.value;syncRoad(r)});$('roadsBox').appendChild(d);
+}
+for(const p of pois){const d=document.createElement('div');d.className='service-setting';d.innerHTML=`<label class="service-header"><input type="checkbox" ${p.visible?'checked':''}><span>${p.label}</span><div class="service-preview"></div></label><div class="service-controls"><select aria-label="Seleccionar icono de ${p.label}">${iconChoices.map(i=>`<option value="${i[0]}" ${i[0]===p.icon?'selected':''}>${i[1]}</option>`).join('')}</select><input type="color" value="${p.color}" title="Color del icono"></div><div class="service-note">${p.id==='radar'?'Fuente oficial: Ayuntamiento de Madrid (cobertura solo Madrid). Se informa si no carga.':'Datos de surtidores en teselas vectoriales OSM. Cobertura no exhaustiva.'}</div>`;
+const updatePreview=()=>d.querySelector('.service-preview').innerHTML=svgFor(p).replace('width="60" height="60"','width="30" height="30"');
+d.querySelector('input[type=checkbox]').addEventListener('change',e=>{p.visible=e.target.checked;syncPoi(p)});
+d.querySelector('select').addEventListener('change',e=>{p.icon=e.target.value;updatePreview();refreshIcon(p)});
+d.querySelector('input[type=color]').addEventListener('input',e=>{p.color=e.target.value;updatePreview();refreshIcon(p)});
+$('poiBox').appendChild(d);updatePreview();}
+if(!window.maplibregl){health('No se ha cargado MapLibre GL JS');setNote('Biblioteca cartográfica no disponible; se necesita conexión para cargar el visor.',true);return}
+const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-3.6,40.5],zoom:6,minZoom:3,maxZoom:19,antialias:true,attributionControl:false,renderWorldCopies:false});
+// V5: controles propios de zoom, localización y orientación del mapa.
+map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-left');
+const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let bearingFollow=false;
+let roadLabelLayers=[],hydroLabelLayers=[],buildingLayerIds=[],buildingFillLayers=[];
+let vectorSource=null,ready=false,mode='sat',currentPosition=null,watchId=null,heading=null,gpsMarker=null,accuracyCircle=null,centerFollow=true,compassBound=false,lastCompassAt=0;
+function detectSource(){const s=map.getStyle().sources;return Object.keys(s).find(k=>s[k].type==='vector'&&/openmaptiles|openfreemap/i.test(k+' '+(s[k].url||''))) || Object.keys(s).find(k=>s[k].type==='vector')}
+function roadsFilter(r){return ['in',['get','class'],['literal',r.classes]]}
+function poiFilter(p){const parts=[];if(p.subclasses.length)parts.push(['in',['get','subclass'],['literal',p.subclasses]]);if(p.classes.length)parts.push(['in',['get','class'],['literal',p.classes]]);return parts.length===1?parts[0]:['any',...parts]}
+// Conversión de ancho horizontal terrestre a píxeles de pantalla (Web Mercator).
+// A zoom alto mantiene anchura en metros; a escala país se limita a 0.6 px de visibilidad.
+function metersToPixels(m){const latitude=Math.min(85,Math.abs(map.getCenter().lat));const metersPerPixel=156543.03392804097*Math.cos(latitude*Math.PI/180)/Math.pow(2,map.getZoom());return Math.min(180,Math.max(.6,m/metersPerPixel))}
+function syncRoad(r){if(!ready)return;const id='octos-road-'+r.id;if(!map.getLayer(id))return;const px=metersToPixels(r.width);map.setLayoutProperty(id,'visibility',r.visible?'visible':'none');map.setPaintProperty(id,'line-color',r.color);map.setPaintProperty(id,'line-width',px);map.setPaintProperty(id,'line-opacity',r.opacity);const halo='octos-road-halo-'+r.id;if(map.getLayer(halo)){map.setLayoutProperty(halo,'visibility',r.visible?'visible':'none');map.setPaintProperty(halo,'line-color',r.color);map.setPaintProperty(halo,'line-width',px+Math.max(2,px*.6));map.setPaintProperty(halo,'line-opacity',r.visible?r.opacity*.16:0)}}
+function syncAllRoads(){roads.forEach(syncRoad)}
+function syncPoi(p){if(!ready)return;const id='octos-poi-'+p.id;if(map.getLayer(id))map.setLayoutProperty(id,'visibility',p.visible?'visible':'none');if(p.id==='radar')renderRadarMarkers()}
+function isRoadNameLayer(l){
+ if(l.type!=='symbol')return false;
+ const source=(l['source-layer']||'').toLowerCase(),id=l.id.toLowerCase();
+ // Roads and motorway shields only: preserve place, city, address and POI labels.
+ return source==='transportation_name'||source==='road_name'||
+  /(^|[-_])(road[-_]?label|road[-_]?name|motorway[-_]?shield|highway[-_]?shield|highway[-_]?name|transportation[-_]?name|road[-_]?shield)([-_]|$)/.test(id);
+}
+function isHydroNameLayer(l){
+ if(l.type!=='symbol')return false;
+ const source=(l['source-layer']||'').toLowerCase(),id=l.id.toLowerCase();
+ // Hide hydrological labels only, keeping rivers, seas and other water features rendered.
+ return /^(water_name|waterway_name|waterway|marine_label|marine_name|ocean_name|lake_name)$/.test(source)||
+   /(^|[-_])(water(?:way)?[-_]?(?:name|label)|river[-_]?(?:name|label)|lake[-_]?(?:name|label)|stream[-_]?(?:name|label)|ocean[-_]?(?:name|label)|sea[-_]?(?:name|label)|marine[-_]?(?:name|label))($|[-_])/.test(id);
+}
+function hideHydroLabels(){for(const id of hydroLabelLayers){if(map.getLayer(id))map.setLayoutProperty(id,'visibility','none')}}
+function syncRoadLabels(){if(!ready)return;const visible=$('roadLabelsEnabled').checked;for(const id of roadLabelLayers){if(map.getLayer(id))map.setLayoutProperty(id,'visibility',visible?'visible':'none')}}
+function syncBuildings(){if(!ready)return;const on=$('buildingsEnabled').checked,color=$('buildingsColor').value,opacity=+$('buildingsAlpha').value/100;
+ for(const id of buildingLayerIds){if(!map.getLayer(id))continue;map.setLayoutProperty(id,'visibility',on?'visible':'none');map.setPaintProperty(id,'fill-extrusion-color',color);map.setPaintProperty(id,'fill-extrusion-opacity',opacity)}
+ // Building footprints in 2D use the same palette, but remain below the aerial imagery.
+ for(const id of buildingFillLayers){if(!map.getLayer(id))continue;try{map.setPaintProperty(id,'fill-color',color)}catch(e){}}
+ $('buildingsPct').textContent=Math.round(opacity*100)+'%';$('buildingsState').textContent=on?'Activados':'Ocultos';
+}
+function darkenBase(){for(const l of map.getStyle().layers){const id=l.id, sourceLayer=l['source-layer']||'';
+ if(isRoadNameLayer(l))roadLabelLayers.push(id);
+ if(isHydroNameLayer(l))hydroLabelLayers.push(id);
+ if(l.type==='fill-extrusion'&&(/building/i.test(id+' '+sourceLayer)))buildingLayerIds.push(id);
+ if(l.type==='fill'&&(/building/i.test(id+' '+sourceLayer)))buildingFillLayers.push(id);
+ if(sourceLayer==='transportation'||sourceLayer==='poi')map.setLayoutProperty(id,'visibility','none');
+ else if(l.type==='background')map.setPaintProperty(id,'background-color','#10151c');
+ else if(l.type==='fill'){
+ const name=(id+' '+sourceLayer).toLowerCase();const color=name.includes('water')?'#122331':name.includes('building')?'#555555':name.includes('park')||name.includes('landcover')?'#151f20':'#171d25';try{map.setPaintProperty(id,'fill-color',color);map.setPaintProperty(id,'fill-opacity',.88)}catch(e){}
+ }else if(l.type==='line'&&sourceLayer!=='transportation')try{map.setPaintProperty(id,'line-opacity',.35)}catch(e){}
+ }}
+function ensureBuildingExtrusions(){
+ // Some public vector styles have no 3D building layer. Supply one from the existing building vector geometry.
+ if(!buildingLayerIds.length){
+  const id='octos-buildings-3d';map.addLayer({id,type:'fill-extrusion',source:vectorSource,'source-layer':'building',minzoom:14,
+   paint:{'fill-extrusion-color':'#555555','fill-extrusion-height':['coalesce',['to-number',['get','render_height']],['to-number',['get','height']],8],
+   'fill-extrusion-base':['coalesce',['to-number',['get','render_min_height']],['to-number',['get','min_height']],0],
+   'fill-extrusion-opacity':1}},'octos-road-halo-'+roads[0].id);
+  buildingLayerIds.push(id);
+ }
+ // Keep volumetric buildings visible over the satellite/LiDAR rasters and below roads.
+ for(const id of buildingLayerIds)if(map.getLayer(id))map.moveLayer(id,'octos-road-halo-'+roads[0].id);
+}
+
+function svgFor(p){const c=p.color;let inner='';if(p.icon==='gas')inner='<rect x="17" y="14" width="18" height="26" rx="2" fill="none" stroke="white" stroke-width="3"/><path d="M20 20h12M20 40v4M35 23l7 5v12a4 4 0 0 0 8 0V27l-5-8" fill="none" stroke="white" stroke-width="3"/>';
+else if(p.icon==='radar')inner='<rect x="16" y="15" width="29" height="28" rx="4" fill="none" stroke="white" stroke-width="3"/><circle cx="30" cy="29" r="9" fill="none" stroke="white" stroke-width="2.5"/><circle cx="30" cy="29" r="3" fill="white"/><path d="M24 11h12M21 47h18" stroke="white" stroke-width="3"/>';
+else if(p.icon==='pin')inner='<path d="M30 46S16 34 16 26a14 14 0 0 1 28 0c0 8-14 20-14 20Z" stroke="white" stroke-width="3" fill="none"/><circle cx="30" cy="26" r="5" fill="white"/>';
+else if(p.icon==='flag')inner='<path d="M19 46V13h23l-6 9 6 9H19" fill="none" stroke="white" stroke-width="3"/>';
+else if(p.icon==='alert')inner='<path d="M30 12L48 43H12Z" fill="none" stroke="white" stroke-width="3"/><path d="M30 23v10M30 37v2" stroke="white" stroke-width="4"/>';
+else if(p.icon==='star')inner='<path d="M30 13l5 12 13 1-10 9 3 13-11-7-11 7 3-13-10-9 13-1Z" stroke="white" stroke-width="3" fill="none"/>';
+else if(p.icon==='circle')inner='<circle cx="30" cy="30" r="11" fill="white"/>';
+else if(p.icon==='parking')inner='<text x="30" y="42" fill="white" font-family="sans-serif" font-weight="900" font-size="33" text-anchor="middle">P</text>';
+else inner='<path d="M44 16a12 12 0 0 1-13 14L19 42a6 6 0 1 1-8-8l14-12a12 12 0 0 1 13-12l-7 7 6 6Z" fill="none" stroke="white" stroke-width="3"/>';
+return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60"><circle cx="30" cy="30" r="27" fill="#111821" stroke="${c}" stroke-width="5"/>${inner}</svg>`}
+function loadIcon(p){return new Promise(resolve=>{const im=new Image;im.onload=()=>{try{if(map.hasImage('octos-icon-'+p.id))map.updateImage('octos-icon-'+p.id,im);else map.addImage('octos-icon-'+p.id,im,{pixelRatio:2})}catch(e){console.warn('Icono',e)}resolve()};im.onerror=resolve;im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgFor(p))})}
+async function refreshIcon(p){if(!ready)return;await loadIcon(p);if(p.id==='radar'&&radarMarkers.length)renderRadarMarkers()}
+let radarMarkers=[],radarFeatures=[],radarStatus='Pendiente';
+const madridGeo='https://datos.madrid.es/dataset/300049-0-radares-fijos-moviles/resource/300049-0-radares-fijos-moviles-geo/download/300049-0-radares-fijos-moviles-geo.geo';
+function normalizeRadarGeo(data){let features=[];if(data?.type==='FeatureCollection')features=data.features||[];else if(data?.type==='Feature')features=[data];else if(Array.isArray(data?.features))features=data.features;return features.filter(f=>f?.geometry?.type==='Point'&&Array.isArray(f.geometry.coordinates)&&Number.isFinite(+f.geometry.coordinates[0])&&Number.isFinite(+f.geometry.coordinates[1])&&Math.abs(+f.geometry.coordinates[0])<=180&&Math.abs(+f.geometry.coordinates[1])<=90)}
+function renderRadarMarkers(){for(const m of radarMarkers)m.remove();radarMarkers=[];if(!ready||!pois[1].visible)return;for(const f of radarFeatures){const [lng,lat]=f.geometry.coordinates;const d=document.createElement('div');d.innerHTML=svgFor(pois[1]).replace('width="60" height="60"','width="30" height="30"');const el=d.firstChild;el.style.cursor='pointer';const name=f.properties?.NOMBRE||f.properties?.nombre||f.properties?.name||'Radar fijo';const popup=new maplibregl.Popup({offset:18}).setHTML('<h3>'+safe(name)+'</h3><p>Radar fijo · Ayuntamiento de Madrid</p><p>'+lat.toFixed(5)+', '+lng.toFixed(5)+'</p>');radarMarkers.push(new maplibregl.Marker({element:el}).setLngLat([lng,lat]).setPopup(popup).addTo(map))}}
+async function loadRadarData(){try{const res=await fetch(madridGeo);if(!res.ok)throw Error('HTTP '+res.status);const payload=await res.text();let data;try{data=JSON.parse(payload)}catch{throw Error('Formato no interpretable como GeoJSON')}const features=normalizeRadarGeo(data);if(!features.length)throw Error('El recurso no ofrece puntos GeoJSON válidos');radarFeatures=features;const collection={type:'FeatureCollection',features};map.addSource('octos-radar-data',{type:'geojson',data:collection});radarStatus=features.length+' Madrid';renderRadarMarkers();$('poiState').textContent='radares: '+radarStatus}catch(e){radarStatus='sin carga (Madrid)';$('poiState').textContent='radares: '+radarStatus;setNote('Gasolineras desde teselas. Radares: recurso oficial de Madrid inaccesible desde este HTML ('+e.message+'). No se inventan ubicaciones.',true)}}
+function initLayers(){vectorSource=detectSource();if(!vectorSource){health('No se detecta fuente vectorial');setNote('El estilo remoto no contiene un origen vectorial compatible.',true);return}
+ darkenBase();for(const r of roads){const filter=roadsFilter(r);map.addLayer({id:'octos-road-halo-'+r.id,type:'line',source:vectorSource,'source-layer':'transportation',filter,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':r.color,'line-opacity':.16,'line-width':metersToPixels(r.width)*1.6}});map.addLayer({id:'octos-road-'+r.id,type:'line',source:vectorSource,'source-layer':'transportation',filter,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':r.color,'line-opacity':r.opacity,'line-width':metersToPixels(r.width)}})}
+ // Raster overlays are added BELOW the custom roads, but over the styled base.
+ map.addSource('octos-pnoa',{type:'raster',tiles:['https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg'],tileSize:256,maxzoom:19,attribution:'© IGN/CNIG PNOA'});
+ map.addLayer({id:'octos-pnoa-layer',type:'raster',source:'octos-pnoa',layout:{visibility:'none'},paint:{'raster-opacity':1}},'octos-road-halo-'+roads[0].id);
+ map.addSource('octos-lidar',{type:'raster',tiles:['https://wmts-mapa-lidar.idee.es/lidar?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=EL.GridCoverageDSM&STYLE=default&FORMAT=image/png&TILEMATRIXSET=GoogleMapsCompatible&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'],tileSize:256,maxzoom:19,attribution:'© IGN/CNIG LiDAR'});
+ map.addLayer({id:'octos-lidar-layer',type:'raster',source:'octos-lidar',layout:{visibility:'none'},paint:{'raster-opacity':.15}},'octos-road-halo-'+roads[0].id);
+ ensureBuildingExtrusions();
+ Promise.all(pois.filter(p=>p.id==='fuel').map(loadIcon)).then(()=>{for(const p of pois.filter(p=>p.id==='fuel')){const id='octos-poi-'+p.id;map.addLayer({id,type:'symbol',source:vectorSource,'source-layer':'poi',minzoom:13,filter:poiFilter(p),layout:{'icon-image':'octos-icon-'+p.id,'icon-size':['interpolate',['linear'],['zoom'],13,.48,17,.78],'icon-allow-overlap':true,'icon-ignore-placement':true,'visibility':p.visible?'visible':'none'},paint:{'icon-opacity':.98}})}$('poiState').textContent='gasolineras · radares pendientes';loadRadarData();});
+ ready=true;setMode(mode);syncAllRoads();syncRoadLabels();hideHydroLabels();syncBuildings();if(currentPosition)drawGps();$('networkState').textContent='activo';$('roadCount').textContent='(6 categorías)';health('Teselas vectoriales cargadas · sin claves');setNote('Anchuras de carreteras en metros (aproximación Web Mercator según centro del mapa). Gasolineras OSM; radares oficiales con cobertura regional.');
+}
+map.on('load',initLayers);
+map.on('error',e=>{const err=String(e?.error?.message||e?.error||'Error desconocido');health('Incidencia de teselas o capas');setNote('Error de carga: '+err.slice(0,160),true)});
+map.on('click',e=>{if(!ready)return;const layers=pois.filter(p=>p.id==='fuel').map(p=>'octos-poi-'+p.id).filter(id=>map.getLayer(id));const features=map.queryRenderedFeatures(e.point,{layers});if(features.length){const f=features[0],p=pois.find(p=>'octos-poi-'+p.id===f.layer.id),name=f.properties.name||p.label;new maplibregl.Popup().setLngLat(e.lngLat).setHTML('<h3>'+safe(name)+'</h3><p>'+safe(p.label)+'</p><p>Coordenadas: '+e.lngLat.lat.toFixed(5)+', '+e.lngLat.lng.toFixed(5)+'</p><p>Datos: OSM / OpenFreeMap, cobertura no exhaustiva</p><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/dir/?api=1&amp;destination='+encodeURIComponent(e.lngLat.lat+','+e.lngLat.lng)+'">Cómo llegar</a>').addTo(map);return}
+ const rl=roads.map(r=>'octos-road-'+r.id).filter(id=>map.getLayer(id));const lines=map.queryRenderedFeatures(e.point,{layers:rl});if(lines.length){const f=lines[0];new maplibregl.Popup().setLngLat(e.lngLat).setHTML('<h3>'+safe(f.properties.ref||f.properties.name||'Tramo de carretera')+'</h3><p>Tipo OSM: '+safe(f.properties.class)+'</p>').addTo(map)}});
+map.on('mousemove',e=>{if(!ready)return;const ids=pois.filter(p=>p.id==='fuel').map(p=>'octos-poi-'+p.id).filter(id=>map.getLayer(id));map.getCanvas().style.cursor=map.queryRenderedFeatures(e.point,{layers:ids}).length?'pointer':''});
+$('modeNfs').addEventListener('change',()=>setMode('dark'));
+$('modeSat').addEventListener('change',()=>setMode('sat'));
+function setMode(m){mode=m;if(!ready)return;map.setLayoutProperty('octos-pnoa-layer','visibility',m==='sat'?'visible':'none');map.setLayoutProperty('octos-lidar-layer','visibility',m==='sat'&&$('lidarEnabled').checked?'visible':'none')}
+$('roadLabelsEnabled').addEventListener('change',syncRoadLabels);
+$('buildingsEnabled').addEventListener('change',syncBuildings);
+$('buildingsColor').addEventListener('input',syncBuildings);
+$('buildingsAlpha').addEventListener('input',syncBuildings);
+$('lidarEnabled').addEventListener('change',()=>setMode(mode));$('lidarAlpha').addEventListener('input',e=>{if(ready)map.setPaintProperty('octos-lidar-layer','raster-opacity',+e.target.value/100);$('lidarPct').textContent=e.target.value+'%'});
+for(const p of pois){const check=document.querySelector('[data-poi="'+p.id+'"]');if(check){check.checked=p.visible;check.addEventListener('change',e=>{p.visible=e.target.checked;syncPoi(p)})}}
+$('spain').addEventListener('click',()=>map.flyTo({center:[-3.6,40.5],zoom:6}));
+function fold(on){$('shell').classList.toggle('fold',on);$('foldButton').textContent=on?'›':'‹';$('foldButton').title=on?'Mostrar catálogo':'Ocultar catálogo';setTimeout(()=>map.resize(),240)}
+$('foldButton').addEventListener('click',()=>fold(!$('shell').classList.contains('fold')));$('topPanel').addEventListener('click',()=>fold(!$('shell').classList.contains('fold')));if(innerWidth<780)fold(true);window.addEventListener('resize',()=>map.resize());
+function gpsElement(){const el=document.createElement('div');el.className='gps-pin';el.innerHTML='<svg viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg"><path d="M21 2 L38 38 L21 30 L4 38 Z" fill="#ff891f" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/><path d="M21 9 L21 30" stroke="#8b3605" stroke-width="2"/></svg>';return el}
+function drawGps(){if(!currentPosition)return;const c=currentPosition.coords,lat=c.latitude,lon=c.longitude,h=heading??(Number.isFinite(c.heading)?c.heading:0);if(!gpsMarker)gpsMarker=new maplibregl.Marker({element:gpsElement(),rotationAlignment:'map'}).setLngLat([lon,lat]).addTo(map);else gpsMarker.setLngLat([lon,lat]);gpsMarker.setRotation(h);if(bearingFollow && Number.isFinite(h))map.setBearing(h);
+ if($('accuracyCheck').checked){const n=48,vertices=[],r=Math.min(1500,c.accuracy||20),rad=r/111320;for(let i=0;i<=n;i++){const a=i/n*Math.PI*2;vertices.push([lon+Math.cos(a)*rad/Math.max(.1,Math.cos(lat*Math.PI/180)),lat+Math.sin(a)*rad])}const geo={type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'Polygon',coordinates:[vertices]},properties:{}}]};if(!map.getSource('octos-accuracy')){map.addSource('octos-accuracy',{type:'geojson',data:geo});map.addLayer({id:'octos-accuracy-layer',type:'fill',source:'octos-accuracy',paint:{'fill-color':'#ff891f','fill-opacity':.08}})}else map.getSource('octos-accuracy').setData(geo);map.setLayoutProperty('octos-accuracy-layer','visibility','visible')}else if(map.getLayer('octos-accuracy-layer'))map.setLayoutProperty('octos-accuracy-layer','visibility','none');
+ if(centerFollow&&$('followCheck').checked){if(map.getZoom()<14)map.jumpTo({center:[lon,lat],zoom:15});else map.jumpTo({center:[lon,lat]})}
+ $('gpsState').textContent='GPS activo · '+(Number.isFinite(c.speed)?Math.round(Math.max(0,c.speed)*3.6)+' km/h':'velocidad —');$('gpsInfo').textContent='Precisión ±'+Math.round(c.accuracy||0)+' m · '+(heading===null?'Sin rumbo de brújula':Math.round(heading)+'°');$('headingLabel').textContent='Rumbo '+(heading===null?'—':Math.round(heading)+'°')}
+function onOrientation(e){if(!$('headingCheck').checked)return;let h=null;if(Number.isFinite(e.webkitCompassHeading))h=e.webkitCompassHeading;else if(e.absolute===true&&Number.isFinite(e.alpha))h=(360-e.alpha)%360;if(h!==null){heading=(h+360)%360;lastCompassAt=Date.now();drawGps()}}
+async function startGPS(auto=false){const button=$('gpsPerm');button.disabled=true;$('gpsState').textContent=auto?'Solicitando ubicación al iniciar…':'Solicitando permisos…';try{if(!auto&&typeof DeviceOrientationEvent!=='undefined'&&!compassBound){if(typeof DeviceOrientationEvent.requestPermission==='function'){const p=await DeviceOrientationEvent.requestPermission();if(p==='granted'){window.addEventListener('deviceorientation',onOrientation);window.addEventListener('deviceorientationabsolute',onOrientation);compassBound=true}}else{window.addEventListener('deviceorientation',onOrientation);window.addEventListener('deviceorientationabsolute',onOrientation);compassBound=true}}}catch(e){setNote('Brújula: '+e.message,true)}
+ if(!navigator.geolocation){$('gpsState').textContent='GPS no disponible';button.disabled=false;return}if(watchId!==null){button.disabled=false;centerFollow=true;if(currentPosition)drawGps();return}
+ try{watchId=navigator.geolocation.watchPosition(pos=>{currentPosition=pos;if(Date.now()-lastCompassAt>5000&&Number.isFinite(pos.coords.heading)&&pos.coords.speed>.7)heading=pos.coords.heading;if(ready)drawGps();else if(centerFollow&&$('followCheck').checked)map.jumpTo({center:[pos.coords.longitude,pos.coords.latitude],zoom:15});button.disabled=false},e=>{button.disabled=false;watchId=null;$('gpsState').textContent='GPS sin permiso';$('gpsInfo').textContent=e.message;setNote('Geolocalización necesita permisos y contexto seguro (HTTPS o localhost).',true)},{enableHighAccuracy:true,maximumAge:2000,timeout:16000})}catch(e){button.disabled=false;setNote('Error GPS: '+e.message,true)}}
+$('gpsPerm').addEventListener('click',()=>startGPS(false));$('topGps').addEventListener('click',()=>startGPS(false));$('floatingGps').addEventListener('click',()=>startGPS(false));
+$('zoomInControl').addEventListener('click',()=>map.zoomIn({duration:260}));
+$('zoomOutControl').addEventListener('click',()=>map.zoomOut({duration:260}));
+$('locateControl').addEventListener('click',()=>{centerFollow=true;$('followCheck').checked=true;startGPS();});
+function syncBearingButton(){const b=$('bearingControl');b.classList.toggle('active',bearingFollow);b.setAttribute('aria-pressed',String(bearingFollow));b.setAttribute('aria-label',bearingFollow?'Modo seguir rumbo GPS; pulsar para fijar norte arriba':'Modo norte arriba; pulsar para seguir el rumbo GPS');$('bearingMini').textContent=bearingFollow?'GPS':'N';}
+$('bearingControl').addEventListener('click',()=>{bearingFollow=!bearingFollow;syncBearingButton();if(bearingFollow){const direction=heading??(currentPosition&&Number.isFinite(currentPosition.coords.heading)?currentPosition.coords.heading:null);if(direction!==null)map.easeTo({bearing:direction,duration:360});else{setNote('Modo rumbo seleccionado. Esperando datos de rumbo GPS o brújula; mientras tanto se mantiene el norte arriba.');startGPS()}}else map.easeTo({bearing:0,duration:360})});
+syncBearingButton();
+// Automatic location request on startup. Only geolocation is requested here;
+// compass permissions, when a user gesture is required, remain on the GPS button.
+startGPS(true);
+$('accuracyCheck').addEventListener('change',drawGps);$('headingCheck').addEventListener('change',drawGps);$('followCheck').addEventListener('change',()=>{centerFollow=true;drawGps()});map.on('dragstart',()=>{centerFollow=false});
+map.on('move',syncAllRoads);map.on('moveend',()=>{const c=map.getCenter();$('zoom').textContent='Z '+map.getZoom().toFixed(1);$('coords').textContent=c.lat.toFixed(4)+', '+c.lng.toFixed(4)});map.fire('moveend');
+})();
+</script></body></html>
