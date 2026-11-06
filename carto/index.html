@@ -258,6 +258,12 @@ header .head-actions{margin-left:auto;position:relative;z-index:2}
 #activeList .active-row.temporarily-hidden .active-name{color:#bdbdc2}
 #activeList .visibility-label{font-size:10px;color:#ffad69;font-weight:500}
 #activeList .active-row>input[type=checkbox]{min-width:20px;min-height:20px;cursor:pointer}
+
+/* Controles cartográficos: separación del borde y botones táctiles coherentes con Drive */
+.leaflet-bottom.leaflet-right{right:30px;bottom:35px}
+.leaflet-control-zoom{border:1px solid #575757!important;border-radius:10px!important;box-shadow:0 4px 15px #0006!important}
+.leaflet-control-zoom a,.leaflet-touch .leaflet-control-zoom a{width:51px!important;height:51px!important;line-height:50px!important;background:#27272b!important;color:#ff891f!important;font-size:30px!important;border-color:#545457!important}
+@media(max-width:760px){.leaflet-bottom.leaflet-right{right:25px;bottom:30px}.topbar{right:25px}}
 </style></head><body>
 <svg id="colorFilters" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden;pointer-events:none"><defs id="colorFilterDefs"></defs></svg>
 <header><div class="brand"><div><b><span class="octos" style="color:#ff891f">OcToS</span> <span style="color:#fff">Carto</span></b><small>VISOR CARTOGRÁFICO</small></div></div><div class="head-actions"><button class="btn mobile-only" id="menuBtn">☰ Capas</button><div class="lidar-header-control"><button id="lidarQuick" class="header-lidar" type="button" aria-pressed="false" title="Activar o desactivar mapa LiDAR">LiDAR <span class="lidar-indicator" aria-hidden="true"></span></button><div class="lidar-slider-wrap" id="lidarSliderWrap" title="Transparencia LiDAR"><input id="lidarOpacity" type="range" min="0" max="100" value="80" step="1" data-opacity-key="lidar" aria-label="Opacidad de LiDAR"><output id="lidarOpacityValue" for="lidarOpacity">80%</output></div></div><details id="basePicker" class="header-base"><summary title="Cambiar mapa base">◩ Mapas base IGN <span class="header-chevron">⌄</span></summary><div class="base-options" id="baseOptions" role="group" aria-label="Selección de mapa base"></div></details></div></header>
