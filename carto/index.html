@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Atlas OcToS | Visor cartográfico · V18</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyo0kkwXvIe2wa1e8=" crossorigin="">
+<style>
+:root{--bg:#0c1420;--panel:#111d2b;--line:#283749;--muted:#94a5b9;--text:#edf4fc;--accent:#62d1bd;--accent2:#2e8a80}*{box-sizing:border-box}html,body{height:100%;margin:0;font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text);background:var(--bg)}button,input,select{font:inherit}button{cursor:pointer}header{height:70px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:#101a28;gap:12px}.brand{display:flex;align-items:center;gap:12px}.mark{display:grid;place-items:center;width:38px;height:38px;border:1px solid #43877d;background:#173932;border-radius:11px;color:var(--accent);font-weight:800}.brand b{font-size:17px;letter-spacing:.07em}.brand small{display:block;color:var(--muted);font-size:11px;letter-spacing:.14em}.head-actions{display:flex;gap:8px;align-items:center}.btn{padding:9px 13px;border:1px solid #355066;border-radius:8px;background:#1a2a3b;color:var(--text);text-decoration:none;white-space:nowrap}.btn:hover{border-color:var(--accent)}.btn.primary{background:var(--accent);border-color:var(--accent);color:#102c2a;font-weight:700}.shell{height:calc(100% - 70px);display:grid;grid-template-columns:340px minmax(0,1fr)}aside{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}.sidehead{padding:20px 18px 14px;border-bottom:1px solid var(--line)}.eyebrow{font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.2em;text-transform:uppercase}h1{font-size:20px;font-weight:650;margin:6px 0}.desc{color:var(--muted);font-size:12px;margin:0 0 15px}.search{width:100%;padding:11px 12px;background:#0c1723;color:white;border:1px solid #344659;border-radius:8px;outline:none}.search:focus{border-color:var(--accent)}.catalog{overflow-y:auto;flex:1;padding:10px 12px 20px}.group{border:1px solid var(--line);border-radius:10px;margin-bottom:9px;overflow:hidden;background:#152231}.group>summary{padding:12px 13px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-weight:650;list-style:none}.group>summary::-webkit-details-marker{display:none}.group>summary:after{content:'⌄';color:var(--muted);font-size:18px}.group[open]>summary:after{transform:rotate(180deg)}.count{color:#789b9b;font-size:11px;font-weight:500;margin-left:auto;margin-right:14px}.groupbody{border-top:1px solid var(--line);padding:5px 9px 10px}.layer{padding:10px 5px;display:flex;gap:10px;align-items:flex-start;border-bottom:1px solid #233346}.layer:last-child{border:0}.layer input[type=checkbox],.layer input[type=radio]{accent-color:var(--accent);width:16px;height:16px;margin:3px 0 0;cursor:pointer}.layer .detail{min-width:0;flex:1}.layer strong{display:block;font-size:12.5px;font-weight:600}.layer small{display:block;color:var(--muted);font-size:11px;margin-top:2px}.pill{border:1px solid #36536b;border-radius:4px;padding:1px 4px;color:#8cb8b5;font-size:9px;letter-spacing:.04em}.opacity{width:100%;height:3px;accent-color:var(--accent);margin-top:8px}.mapwrap{min-width:0;position:relative;background:#d9e1e8}#map{height:100%;width:100%;z-index:1}.float{position:absolute;z-index:700;box-shadow:0 8px 30px #09121b2e}.topbar{top:17px;left:17px;right:17px;display:flex;justify-content:space-between;align-items:start;gap:12px;pointer-events:none}.topbar>*{pointer-events:auto}.location{background:#152333ee;color:white;border:1px solid #45556b;border-radius:9px;padding:10px 13px;font-size:12px;max-width:390px}.location strong{display:block;font-size:12px}.location span{color:#b9c9d8}.maptools{display:flex;gap:7px}.maptools button{background:#152333ed;color:white;border:1px solid #45556b;border-radius:8px;padding:10px}.bottom{bottom:17px;left:17px;max-width:calc(100% - 34px);padding:10px 12px;background:#152333f0;color:#d5e6ed;border:1px solid #45556b;border-radius:8px;font-size:11px}.statusdot{display:inline-block;width:7px;height:7px;background:#5eccaf;border-radius:100%;margin-right:6px}.notice{font-size:11px;color:#adc5d3;padding:12px 15px;border-top:1px solid var(--line);background:#10202b;max-height:140px;overflow:auto}.notice.warn{color:#f3c887}.leaflet-control-attribution{font-size:10px!important} .legend{text-align:center;background:#0f2230;border:1px solid #2f4759;border-radius:7px;padding:10px;font-size:11px;color:#bbcad5}.mobile-only{display:none}.hidden{display:none!important} @media(max-width:760px){header{height:61px;padding:0 12px}.brand b{font-size:14px}.brand small{font-size:9px}.head-actions .secondary{display:none}.shell{height:calc(100% - 61px);display:block}aside{position:absolute;z-index:800;top:61px;bottom:0;width:min(340px,92vw);box-shadow:7px 0 22px #0005;transition:transform .2s}aside.closed{transform:translateX(-105%)}.mapwrap{height:100%}.mobile-only{display:block}.topbar{top:12px;left:12px;right:12px}.location{max-width:210px}.location span{display:none}.bottom{font-size:10px}}
+
+/* Estilos críticos Leaflet integrados: evitan teselas en el flujo de página */
+.leaflet-container{overflow:hidden;outline:0;position:relative;background:#dae2e9;-webkit-tap-highlight-color:transparent}
+.leaflet-container.leaflet-touch-drag{-ms-touch-action:pinch-zoom;touch-action:pinch-zoom}
+.leaflet-container.leaflet-touch-zoom{-ms-touch-action:pan-x pan-y;touch-action:pan-x pan-y}
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container .leaflet-overlay-pane svg,.leaflet-container .leaflet-marker-pane img,.leaflet-container .leaflet-shadow-pane img,.leaflet-container .leaflet-tile-pane img,.leaflet-container img.leaflet-image-layer{max-width:none!important;max-height:none!important}
+.leaflet-container .leaflet-tile{width:256px;height:256px;border:0;margin:0;padding:0;visibility:hidden}
+.leaflet-container .leaflet-tile-loaded{visibility:inherit}
+.leaflet-zoom-animated{transform-origin:0 0}
+.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-shadow-pane{z-index:500}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}
+.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}
+.leaflet-top{top:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-right{right:0}
+.leaflet-left .leaflet-control{float:left;margin-left:10px}.leaflet-right .leaflet-control{float:right;margin-right:10px}
+.leaflet-top .leaflet-control{margin-top:10px}.leaflet-bottom .leaflet-control{margin-bottom:10px}
+.leaflet-control-zoom{border:2px solid #0003;border-radius:5px;overflow:hidden;background:white}
+.leaflet-control-zoom a{display:block;width:30px;height:30px;line-height:30px;text-align:center;text-decoration:none;font-size:22px;font-weight:bold;color:#222;background:white;border-bottom:1px solid #ddd}
+.leaflet-control-zoom a:last-child{border:0}
+.leaflet-control-zoom a:hover{background:#f4f4f4}
+.leaflet-control-attribution{background:#fffe;color:#444;padding:0 5px;font:10px/1.5 Arial,sans-serif}
+.leaflet-control-attribution a{color:#26729a}
+.leaflet-container a{cursor:pointer}
+.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab{cursor:grabbing}
+html,body{height:100%;width:100%;margin:0;overflow:hidden}
+.shell{height:calc(100dvh - 70px);min-height:0;overflow:hidden}
+.mapwrap{height:100%;min-height:0;overflow:hidden}
+#map{position:absolute;inset:0;height:100%;width:100%;overflow:hidden}
+@media(max-width:760px){.shell{height:calc(100dvh - 61px)}}
+
+
+.service{padding:0 4px;border-bottom:1px solid #233346}.service:last-child{border-bottom:0}
+.service>summary{display:flex;align-items:center;gap:8px;padding:11px 3px;cursor:pointer;list-style:none}
+.service>summary::-webkit-details-marker{display:none}.service>summary:before{content:'▸';color:var(--accent);font-size:13px}
+.service[open]>summary:before{content:'▾'}
+.service .service-heading{flex:1;min-width:0}.service strong{font-size:12.5px;font-weight:600;display:block}.service small{color:var(--muted);font-size:11px;display:block}
+.service .subtree{padding:0 0 10px 19px;max-height:360px;overflow:auto}.service .load-state{color:#aec6d1;font-size:11px;padding:5px 2px 9px}
+.service .load-state.error{color:#ffc58c}.service .subitem{padding:8px 4px;border-bottom:1px solid #26394a;display:flex;gap:9px;align-items:flex-start}
+.service .subitem:last-child{border-bottom:none}.service .subitem label{display:flex;align-items:flex-start;gap:8px;cursor:pointer;min-width:0;flex:1}
+.service .subitem label span{font-size:11px;line-height:1.3;overflow-wrap:anywhere}
+.service .subitem input[type=checkbox]{accent-color:var(--accent);margin-top:1px;flex:none}
+.service .subitem input[type=range]{width:75px;flex:none;accent-color:var(--accent);height:3px;margin:8px 0}
+.service .subitem.inactive{opacity:.6}.service .service-count{font-size:10px;color:var(--accent)}
+.service a,.catalog-link{color:#91decb;font-size:11px;display:inline-block;margin-top:7px}.catalog-only{padding:11px 6px;border-bottom:1px solid #27384a}.catalog-only .detail{padding-left:3px}.layer.loading{opacity:.55}
+@media(max-width:760px){.service .subitem input[type=range]{width:53px}}
+
+
+/* ATLAS OcToS · V8 — Tema antracita y naranja */
+:root{--bg:#1b1b1d;--panel:#252527;--line:#424245;--muted:#b4b4b7;--text:#fafafa;--accent:#ff891f;--accent2:#d9680c}
+html,body{background:#1b1b1d;color:#fafafa}
+header{background:#202022;border-bottom-color:#454548}
+.mark{border-color:#ff891f;background:#33281f;color:#ff952e;font-size:24px;font-weight:850;letter-spacing:0}
+.brand b{color:#fff}.brand b .octos{color:#ff952e}
+.brand small{color:#c5c5c7}
+.btn{border-color:#515154;background:#303033;color:#fff}.btn:hover{border-color:#ff891f}
+.btn.primary{background:#ff891f;border-color:#ff891f;color:#22170c}
+aside{background:#262628;border-right-color:#48484b}
+.sidehead{border-bottom-color:#48484b}
+.search{background:#1c1c1e;border-color:#505054;color:#fff}
+.group{background:#303033;border-color:#464649}
+.groupbody{border-top-color:#48484b}
+.layer,.service,.service .subitem,.catalog-only{border-bottom-color:#454548}
+.pill{border-color:#69503b;color:#ffc08c}
+.service a,.catalog-link{color:#ffa85f}
+.service .load-state{color:#c7c7cb}
+.notice{background:#212123;color:#d0d0d2;border-top-color:#48484b}
+.notice.warn,.service .load-state.error{color:#ffc48b}
+.location,.bottom{background:#242426ee;border-color:#525256;color:#f5f5f5}
+.location span{color:#ccccd0}.bottom{color:#f2f2f3}
+.maptools button{background:#29292bec;color:#fafafa;border-color:#555559}
+.maptools button:hover{border-color:#ff891f;background:#39322d}
+.maptools #gps:focus-visible{outline:2px solid #ff891f;outline-offset:2px}
+.statusdot{background:#ff891f}
+.count{color:#ffbb83}
+.legend{background:#2b2b2d;color:#e0e0e1;border-color:#505054}
+#clear{color:#f5f5f5}
+.gps-marker{width:18px;height:18px;box-sizing:border-box;border:4px solid #fff;border-radius:50%;background:#ff891f;box-shadow:0 0 0 2px #d76a0b,0 2px 10px #0009}
+@media(max-width:760px){.maptools{flex-wrap:wrap;justify-content:flex-end}.maptools button{padding:8px;font-size:11px}}
+
+
+/* V9: controles compactos y panel flotante de capas visibles */
+.topbar{left:auto;right:15px;top:15px;display:block;width:auto;pointer-events:none}
+.topbar .maptools{pointer-events:auto;display:flex;flex-direction:column;align-items:stretch;gap:7px;width:155px}
+.maptools>button,.active-menu>button{width:100%;text-align:center;padding:9px 10px;min-height:37px}
+.active-menu{position:relative}
+.active-menu>button{background:#29292bec;color:#fafafa;border:1px solid #555559;border-radius:8px;cursor:pointer}
+.active-menu>button:hover,.active-menu>button[aria-expanded=true]{border-color:#ff891f;background:#39322d}
+#activeCount{display:inline-flex;align-items:center;justify-content:center;min-width:17px;padding:0 3px;border-radius:4px;background:#ff891f;color:#191919;font-size:11px;font-weight:700}
+.active-panel{position:absolute;right:calc(100% + 9px);top:0;width:min(305px,calc(100vw - 205px));max-height:min(55vh,490px);overflow:auto;background:#252527;box-shadow:0 12px 40px #0008;border:1px solid #555559;border-radius:10px;padding:10px;color:#fafafa;z-index:1000}
+.active-heading{padding:2px 5px 9px;font-size:12px;font-weight:700;border-bottom:1px solid #444448}
+.active-row{display:flex;align-items:flex-start;gap:9px;padding:10px 5px;border-bottom:1px solid #404044;cursor:pointer}
+.active-row:last-child{border-bottom:0}
+.active-row input{width:16px;height:16px;accent-color:#ff891f;flex:none;margin:2px 0 0}
+.active-detail{flex:1;min-width:0}.active-name{font-size:12px;font-weight:600;overflow-wrap:anywhere}.active-detail small{display:block;color:#b4b4b7;font-size:10px;margin-top:2px}
+.active-base{cursor:default;justify-content:space-between}.active-kind{font-size:10px;color:#ffad65;white-space:nowrap}
+.active-empty{font-size:11px;color:#b4b4b7;padding:13px 5px 4px}
+.bottom{display:inline-flex;align-items:center;gap:5px;max-width:calc(100% - 38px);width:max-content;white-space:nowrap;bottom:12px;left:12px;padding:5px 9px;font-size:10px;line-height:1.2;box-shadow:0 4px 12px #0003}
+.bottom-credit{color:#c4c4c6}.bottom-separator{color:#99999b}
+@media(max-width:760px){.topbar{right:10px;top:10px}.topbar .maptools{width:122px;flex-direction:column;flex-wrap:nowrap}.maptools>button,.active-menu>button{padding:7px 5px;min-height:33px;font-size:10px}.active-panel{right:0;top:calc(100% + 8px);width:min(295px,calc(100vw - 25px));max-height:45vh}.bottom{bottom:10px;left:10px;font-size:9px;padding:5px 7px}}
+
+
+/* V10 — dos accesos compactos; zoom táctil ampliado */
+.topbar{right:17px;top:17px}
+.topbar .maptools{width:47px;gap:9px;align-items:stretch}
+.maptools>button,.active-menu>button{
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  width:47px;height:47px;min-height:47px;padding:0;
+  font-size:25px;line-height:1;border-radius:10px
+}
+.maptools>button:disabled{opacity:.65}
+#activeToggle{font-size:20px;white-space:nowrap}
+#activeCount{font-size:11px;min-width:16px;height:18px}
+.active-panel{right:calc(100% + 10px);top:0;width:min(340px,calc(100vw - 95px));max-height:min(70vh,600px)}
+.active-row{cursor:default}
+.active-row>input[type=checkbox]{margin-top:3px;cursor:pointer}
+.active-detail{display:block}
+.active-opacity{display:flex;align-items:center;gap:9px;margin-top:9px}
+.active-opacity input[type=range]{height:24px;width:100%;min-width:0;flex:1;accent-color:#ff891f;cursor:pointer;touch-action:pan-y}
+.active-opacity-value{font-size:11px;color:#ffad65;width:35px;text-align:right;flex:none;font-variant-numeric:tabular-nums}
+.leaflet-bottom.leaflet-right{right:24px;bottom:25px}
+.leaflet-control-zoom{border:1px solid #656568;border-radius:11px;background:#272729;box-shadow:0 7px 22px #0006;overflow:hidden}
+.leaflet-control-zoom a,.leaflet-touch .leaflet-control-zoom a{
+  box-sizing:border-box;width:53px;height:53px;line-height:52px;
+  font-size:31px;font-weight:400;color:white;background:#29292b;
+  border-bottom:1px solid #555558;touch-action:manipulation
+}
+.leaflet-control-zoom a:last-child,.leaflet-touch .leaflet-control-zoom a:last-child{border-bottom:none}
+.leaflet-control-zoom a:hover,.leaflet-touch .leaflet-control-zoom a:hover{color:#ff891f;background:#383638}
+.leaflet-control-zoom a.leaflet-disabled{color:#838387;background:#29292b}
+@media(max-width:760px){
+ .topbar{right:12px;top:12px}
+ .topbar .maptools{width:46px;gap:8px}
+ .maptools>button,.active-menu>button{width:46px;height:46px;min-height:46px;padding:0;font-size:25px}
+ #activeToggle{font-size:20px}
+ .active-panel{right:calc(100% + 8px);top:0;width:min(315px,calc(100vw - 85px));max-height:65vh}
+ .leaflet-bottom.leaflet-right{right:19px;bottom:22px}
+ .leaflet-control-zoom a,.leaflet-touch .leaflet-control-zoom a{width:54px;height:54px;line-height:53px}
+}
+
+
+/* V11: selector exclusivo de fondos dentro del encabezado, sin cambiar el visor */
+.head-actions{position:relative;align-self:center;gap:10px}
+.header-base{position:relative;color:#fafafa}
+.header-base>summary{list-style:none;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px;padding:8px 14px;background:#28282b;border:1px solid #58585d;border-radius:9px;font-size:13px;font-weight:650;white-space:nowrap}
+.header-base>summary::-webkit-details-marker{display:none}
+.header-base>summary:hover,.header-base[open]>summary{border-color:#ff891f;background:#353134}
+.header-chevron{color:#ff891f;font-size:18px;line-height:1}
+.base-options{position:absolute;right:0;top:calc(100% + 9px);width:295px;max-width:calc(100vw - 24px);padding:7px;background:#252528;box-shadow:0 16px 38px #0009;border:1px solid #56565b;border-radius:10px;z-index:1800;max-height:min(440px,70vh);overflow-y:auto}
+.base-option{display:flex;align-items:flex-start;gap:10px;padding:11px 9px;border-bottom:1px solid #424246;cursor:pointer;border-radius:5px}
+.base-option:last-child{border-bottom:0}
+.base-option:hover{background:#343438}
+.base-option input{width:16px;height:16px;accent-color:#ff891f;flex:none;margin:3px 0 0}
+.base-option-text{min-width:0}
+.base-option strong{display:block;font-size:12px;color:#fff;font-weight:650}
+.base-option small{display:block;font-size:11px;color:#bcbcc3;margin-top:2px}
+@media(max-width:760px){.header-base>summary{min-height:36px;padding:7px 10px;font-size:11px;gap:5px}.base-options{width:min(295px,calc(100vw - 20px))}.head-actions{gap:6px}}
+
+/* V12: acceso LiDAR en cabecera y catálogo de un único nivel desplegable */
+.header-lidar{min-height:40px;padding:8px 15px;display:inline-flex;align-items:center;gap:9px;border:1px solid #58585d;border-radius:9px;background:#28282b;color:#f9f9f9;font-weight:650;font-size:13px;cursor:pointer;white-space:nowrap}
+.header-lidar:hover,.header-lidar:focus-visible{border-color:#ff891f}
+.header-lidar[aria-pressed="true"]{border-color:#ff891f;background:#49301e;color:#ffad6c}
+.lidar-indicator{height:8px;width:8px;border-radius:50%;background:#77777b}
+.header-lidar[aria-pressed="true"] .lidar-indicator{background:#ff891f;box-shadow:0 0 0 3px #ff891f24}
+.group{margin-bottom:8px}
+.group>summary{padding:8px 12px;background:#353538;cursor:default}
+.group>summary:after{display:none}
+.groupbody{padding:3px 8px 5px}
+.service>summary{padding:7px 8px;min-height:36px}
+.service-heading strong{font-size:12px}
+.service-heading small{font-size:10px;display:inline-block;opacity:.8}
+.layer{padding:7px 5px}
+.layer small{display:none}
+.catalog-only small{display:none}
+.catalog-only .catalog-link{font-size:10px}
+.group .count{font-size:10px}
+.group .service-count{font-size:10px}
+@media(max-width:760px){.header-lidar{min-height:36px;padding:7px 10px;font-size:11px;gap:5px}.head-actions{gap:6px}}
+
+/* Control directo de opacidad LiDAR: V12 revisada */
+.lidar-header-control{display:flex;align-items:center;gap:10px;border:1px solid #4b4b4f;background:#252527;border-radius:10px;padding:3px 11px 3px 3px;min-width:0}
+.lidar-header-control .header-lidar{border:0;flex-shrink:0}
+.lidar-header-control .header-lidar[aria-pressed=true]{background:#49301e}
+.lidar-slider-wrap{display:flex;align-items:center;gap:7px;min-width:120px;transition:opacity .15s}
+.lidar-slider-wrap input[type=range]{width:92px;min-width:65px;accent-color:#ff891f;cursor:pointer;touch-action:pan-y}
+.lidar-slider-wrap output{display:inline-block;min-width:32px;color:#ffad6c;font-size:11px;font-variant-numeric:tabular-nums;text-align:right}
+.lidar-slider-wrap.lidar-off{opacity:.5}
+@media(max-width:760px){.lidar-header-control{gap:5px;padding-right:7px}.lidar-slider-wrap{gap:3px;min-width:78px}.lidar-slider-wrap input[type=range]{width:58px;min-width:40px}.lidar-slider-wrap output{min-width:27px;font-size:10px}}
+
+/* V13 — personalización visual de subcapas WMS transparentes */
+.layer-color-controls{display:flex;align-items:center;gap:7px;margin:7px 0 2px;min-width:0}
+.layer-color-caption{font-size:10px;color:#c8c8cc;font-weight:600;white-space:nowrap}
+.layer-color-input{width:37px;height:28px;min-width:37px;padding:2px;background:#2d2d30;border:1px solid #66666b;border-radius:6px;cursor:pointer;touch-action:manipulation}
+.active-row .layer-color-input{width:37px;height:28px;min-width:37px;margin:0;flex:none}
+.layer-color-input::-webkit-color-swatch-wrapper{padding:0}
+.layer-color-input::-webkit-color-swatch{border:0;border-radius:3px}
+.layer-color-reset{background:#343437;color:#e6e6e8;border:1px solid #55555b;border-radius:6px;font-size:10px;padding:5px 8px;cursor:pointer}
+.layer-color-reset:hover:not(:disabled){border-color:#ff891f}
+.layer-color-reset:disabled{opacity:.4;cursor:default}
+.subitem .layer-color-controls{margin-left:23px;flex-basis:100%;width:calc(100% - 23px)}
+.subitem{flex-wrap:wrap}
+.active-detail .layer-color-controls{margin-top:7px}
+
+/* V14: panel lateral compacto y secciones plegables */
+.sidehead{padding:15px 14px 11px}
+.sidehead h1{font-size:18px;line-height:1.25;margin:0 0 10px;font-weight:650}
+.sidehead .search{font-size:12px;line-height:1.3;padding:7px 10px;min-height:34px;border-radius:7px}
+.sidehead>div:last-child{margin-top:8px!important}
+.group>summary{cursor:pointer;padding:10px 12px;user-select:none}
+.group>summary:after{display:inline-block;content:'⌄';font-size:17px;line-height:1;color:#ff891f;transition:transform .15s;transform:rotate(-90deg)}
+.group[open]>summary:after{transform:rotate(0deg)}
+.group>summary:hover{background:#404043}
+.group>summary:focus-visible{outline:2px solid #ff891f;outline-offset:-3px}
+.group:not([open]){margin-bottom:6px}
+
+/* Panel lateral plegable: deja el mapa a pantalla completa sin desplazamientos */
+.shell{position:relative;transition:grid-template-columns .22s ease}
+.shell.sidebar-hidden{grid-template-columns:0 minmax(0,1fr)}
+.shell #sidebar{overflow:hidden;min-width:0;transition:opacity .17s ease}
+.shell.sidebar-hidden #sidebar{visibility:hidden;opacity:0;pointer-events:none}
+.sidebar-collapse{position:absolute;z-index:1005;top:50%;left:340px;transform:translate(-1px,-50%);width:25px;height:76px;padding:0;border:1px solid #5c5c60;border-left:0;border-radius:0 9px 9px 0;background:#29292b;color:#ff891f;font-size:25px;line-height:1;cursor:pointer;transition:left .22s ease,background .15s ease}
+.sidebar-collapse:hover{background:#3d3530}
+.shell.sidebar-hidden .sidebar-collapse{left:0}
+@media(max-width:760px){
+ .shell,.shell.sidebar-hidden{display:block}
+ .shell #sidebar{position:absolute;top:0;bottom:0;left:0;width:min(340px,92vw);z-index:850;visibility:visible;opacity:1;transform:translateX(0);transition:transform .22s ease,opacity .17s ease}
+ .shell.sidebar-hidden #sidebar{visibility:hidden;opacity:0;transform:translateX(-105%)}
+ .sidebar-collapse{left:min(340px,92vw);top:50%;height:70px}
+ .shell.sidebar-hidden .sidebar-collapse{left:0}
+}
+
+/* Cabecera: marca centrada de forma independiente de los controles */
+header{position:relative}
+header .brand{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:block;text-align:center;z-index:1;pointer-events:none;white-space:nowrap}
+header .brand b{display:block;font-size:18px;line-height:1.3}
+header .brand small{display:block;font-size:10px;letter-spacing:.15em}
+header .head-actions{margin-left:auto;position:relative;z-index:2}
+@media(max-width:760px){header .brand b{font-size:13px}header .brand small{font-size:8px;letter-spacing:.08em}header .brand{left:43%}}
+
+/* V18: botones táctiles de orden sin arrastre */
+.active-row{position:relative;align-items:flex-start;cursor:default}
+.active-order-buttons{display:flex;flex-direction:column;flex:none;gap:5px;margin-top:-5px}
+.active-order-buttons .layer-move{box-sizing:border-box;display:flex;align-items:center;justify-content:center;width:42px;height:42px;min-width:42px;padding:0;background:#353538;border:1px solid #77777b;border-radius:8px;color:#ffad69;font-size:25px;font-weight:700;line-height:1;cursor:pointer;touch-action:manipulation}
+.active-order-buttons .layer-move:hover:not(:disabled),.active-order-buttons .layer-move:focus-visible{border-color:#ff891f;background:#493527;outline:2px solid #ff891f;outline-offset:1px}
+.active-order-buttons .layer-move:disabled{opacity:.3;cursor:default}
+.active-order-help{padding:5px 5px 9px;color:#aaa9ae;font-size:10px;line-height:1.3}
+@media(pointer:coarse){.active-order-buttons .layer-move{width:48px;height:48px;min-width:48px;font-size:28px}}
+@media(max-width:760px){.active-panel{width:min(365px,calc(100vw - 30px))}.active-order-buttons .layer-move{width:46px;height:46px;min-width:46px}}
+
+/* V19: las capas apagadas permanecen en la lista para comparaciones */
+#activeList .active-row.temporarily-hidden{opacity:.73;background:#242427}
+#activeList .active-row.temporarily-hidden .active-name{color:#bdbdc2}
+#activeList .visibility-label{font-size:10px;color:#ffad69;font-weight:500}
+#activeList .active-row>input[type=checkbox]{min-width:20px;min-height:20px;cursor:pointer}
+</style></head><body>
+<svg id="colorFilters" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden;pointer-events:none"><defs id="colorFilterDefs"></defs></svg>
+<header><div class="brand"><div><b>ATLAS <span class="octos">OcToS</span></b><small>VISOR CARTOGRÁFICO</small></div></div><div class="head-actions"><button class="btn mobile-only" id="menuBtn">☰ Capas</button><div class="lidar-header-control"><button id="lidarQuick" class="header-lidar" type="button" aria-pressed="false" title="Activar o desactivar mapa LiDAR">LiDAR <span class="lidar-indicator" aria-hidden="true"></span></button><div class="lidar-slider-wrap" id="lidarSliderWrap" title="Transparencia LiDAR"><input id="lidarOpacity" type="range" min="0" max="100" value="80" step="1" data-opacity-key="lidar" aria-label="Opacidad de LiDAR"><output id="lidarOpacityValue" for="lidarOpacity">80%</output></div></div><details id="basePicker" class="header-base"><summary title="Cambiar mapa base">◩ Mapas base IGN <span class="header-chevron">⌄</span></summary><div class="base-options" id="baseOptions" role="group" aria-label="Selección de mapa base"></div></details></div></header>
+<div class="shell" id="appShell"><aside id="sidebar"><div class="sidehead"><h1>Catálogo de capas</h1><input class="search" type="search" id="filter" placeholder="Buscar capas…" aria-label="Filtrar capas"><div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center"><span id="counter" style="font-size:11px;color:#a7bdc9">0 capas activas</span><button class="btn" id="clear" style="padding:4px 8px;font-size:11px">Limpiar superposiciones</button></div></div><div class="catalog" id="catalog"></div><div class="notice" id="notice">Capas WMS/WMTS: desplegar y activar. Productos de descarga: enlace al catálogo. Se requiere Internet.</div></aside><button id="collapseSidebar" class="sidebar-collapse" type="button" aria-label="Ocultar catálogo de capas" aria-expanded="true" title="Ocultar catálogo">‹</button><main class="mapwrap"><div id="map"></div><div class="float topbar"><div class="maptools"><button title="Mi ubicación" aria-label="Solicitar ubicación GPS" id="gps" type="button">◎</button><div class="active-menu"><button type="button" title="Capas activas" id="activeToggle" aria-label="Abrir capas activas" aria-expanded="false" aria-controls="activePanel">▤ <span id="activeCount">0</span></button><section id="activePanel" class="active-panel hidden" aria-label="Capas activas"><div class="active-heading">Capas visibles</div><div id="activeList"></div></section></div></div></div><div class="float bottom"><span id="zoom">Zoom —</span><span class="bottom-separator">·</span><span id="coords">—</span><span class="bottom-separator">·</span><span class="bottom-credit">© IGN/CNIG</span></div></main></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+(function(){
+'use strict';
+const notice=document.getElementById('notice');
+function msg(text,warn=false){notice.textContent=text;notice.classList.toggle('warn',warn)}
+if(!window.L){msg('No se pudo cargar Leaflet. Comprueba la conexión a Internet.',true);return}
+const map=L.map('map',{center:[40.3,-3.75],zoom:6,minZoom:3,maxZoom:19,zoomControl:false,attributionControl:false,preferCanvas:true,worldCopyJump:false});
+L.control.zoom({position:'bottomright'}).addTo(map);
+map.createPane('backgroundTiles');map.getPane('backgroundTiles').style.zIndex='180';
+const groups=[
+ {name:'Mapas base IGN',items:[
+  {id:'base',name:'Mapa base IGN',desc:'Cartografía general de España',type:'base',url:'https://tms-ign-base.idee.es/1.0.0/IGNBaseTodo/{z}/{x}/{-y}.jpeg'},
+  {id:'ortho',name:'Ortofotografía PNOA',desc:'Fotografía aérea de máxima actualidad',type:'base',url:'https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg'},
+  {id:'raster',name:'Mapa topográfico ráster',desc:'Mapa Nacional IGN',type:'base',url:'https://tms-mapa-raster.ign.es/1.0.0/mapa-raster/{z}/{x}/{-y}.jpeg'},
+  {id:'grey',name:'Mapa base gris',desc:'Fondo neutro',type:'base',url:'https://tms-ign-base.idee.es/1.0.0/IGNBaseGris/{z}/{x}/{-y}.jpeg'},
+  {id:'simple',name:'Mapa base simplificado',desc:'Cartografía simplificada IGN',type:'base',url:'https://tms-ign-base.idee.es/1.0.0/IGNBaseSimplificado/{z}/{x}/{-y}.png'}
+ ]},
+ {name:'Topografía y cartografía',items:[
+  {id:'topooverlay',name:'Mapa topográfico IGN',desc:'Mapa topográfico superpuesto',type:'xyz',url:'https://tms-mapa-raster.ign.es/1.0.0/mapa-raster/{z}/{x}/{-y}.jpeg'}
+ ]},
+ {name:'Modelos digitales y relieve',items:[
+  {id:'relief',name:'Relieve sombreado MDT',desc:'Modelo de sombras MDT25',type:'xyz',url:'https://tms-relieve.idee.es/1.0.0/relieve/{z}/{x}/{-y}.jpeg'},
+  {id:'dem',name:'Modelo digital de elevaciones',desc:'Elevaciones ráster',type:'xyz',url:'https://xyz-mdt.idee.es/1.0.0/raster-dem/{z}/{x}/{y}.png'},
+  {id:'mdt',name:'Modelos digitales del terreno',desc:'Servicios WMS MDT',type:'wms',endpoint:'https://servicios.idee.es/wms-inspire/mdt'},
+  {id:'slope',name:'Pendientes del terreno',desc:'Modelo digital de pendientes',type:'wms',endpoint:'https://wms-pendientes.idee.es/pendientes'},
+  {id:'mdtwmts',name:'Elevaciones WMTS',desc:'Mapas teselados de elevación',type:'wmts',endpoint:'https://servicios.idee.es/wmts/mdt'}
+ ]},
+ {name:'LiDAR y superficies',items:[
+  {id:'lidar',name:'Mapa LiDAR',desc:'Modelo Digital de Superficies LiDAR (IGN)',type:'wmts-direct',url:'https://wmts-mapa-lidar.idee.es/lidar?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=EL.GridCoverageDSM&STYLE=default&FORMAT=image/png&TILEMATRIXSET=GoogleMapsCompatible&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'}
+ ]},
+ {name:'Ortofoto e imágenes históricas',items:[
+  {id:'historicortho',name:'Ortofotos históricas PNOA',desc:'Vuelos y series de diferentes años',type:'wms',endpoint:'https://www.ign.es/wms/pnoa-historico'},
+  {id:'satellite',name:'Mosaicos satélite históricos',desc:'Series de satélites',type:'wms',endpoint:'https://wms-satelites-historicos.idee.es/satelites-historicos'},
+  {id:'fototeca',name:'Fototeca',desc:'Fotografías y fondos históricos',type:'wms',endpoint:'https://wms-fototeca.idee.es/fototeca'}
+ ]},
+ {name:'Referencias y cuadrículas',items:[
+  {id:'grids',name:'Cuadrículas MTN25 / MTN50',desc:'Índices cartográficos',type:'wms',endpoint:'https://www.ign.es/wms-inspire/cuadriculas'},
+  {id:'admin',name:'Unidades administrativas',desc:'Límites municipales y territoriales',type:'wms',endpoint:'https://www.ign.es/wms-inspire/unidades-administrativas'},
+  {id:'geonames',name:'Nombres geográficos',desc:'Toponimia oficial',type:'wms',endpoint:'https://www.ign.es/wms-inspire/ngbe'},
+  {id:'water',name:'Hidrografía',desc:'Ríos, lagos y masas de agua',type:'wms',endpoint:'https://servicios.idee.es/wms-inspire/hidrografia'},
+  {id:'roads',name:'Red de transporte',desc:'Carreteras y ferrocarriles',type:'wms',endpoint:'https://servicios.idee.es/wms-inspire/transportes'}
+ ]},
+ {name:'Información geográfica temática',items:[
+  {id:'land',name:'Ocupación del suelo · SIOSE y CORINE',desc:'Coberturas disponibles en el servicio oficial; elegir dentro del desplegable',type:'wms',endpoint:'https://servicios.idee.es/wms-inspire/ocupacion-suelo'},
+  {id:'landtiles',name:'Ocupación del suelo · mapas teselados',desc:'Servicio WMTS de ocupación del suelo',type:'wmts',endpoint:'https://servicios.idee.es/wmts/ocupacion-suelo'},
+  {id:'copernicusland',name:'Copernicus · cubiertas del suelo',desc:'Capas españolas de alta resolución publicadas como servicio WMS',type:'wms',endpoint:'https://servicios.idee.es/wms/copernicus-landservice-spain'},
+  {id:'seismic',name:'Información sísmica',desc:'Capas geofísicas oficiales IGN',type:'wms',endpoint:'https://www.ign.es/wms-inspire/geofisica'},
+  {id:'volcanic',name:'Vigilancia volcánica',desc:'Red de vigilancia y datos de volcanología IGN',type:'wms',endpoint:'https://wms-volcanologia.ign.es/volcanologia'},
+  {id:'siosear',name:'SIOSE Alta Resolución (AR)',desc:'Cobertura 2016–2020 · archivos GeoPackage / Geodatabase; requiere descarga',type:'catalog',url:'https://centrodedescargas.cnig.es/CentroDescargas/informacion-geografica-tematica'},
+  {id:'ane',name:'Mapas temáticos del Atlas Nacional de España',desc:'Productos temáticos y cartografía de síntesis; descarga o visor específico',type:'catalog',url:'https://www.ign.es/web/ign/portal/ane-area-ane'},
+  {id:'tesauro',name:'Tesauro del Atlas Nacional de España',desc:'Catálogo de conceptos; no constituye una capa geográfica',type:'catalog',url:'https://centrodedescargas.cnig.es/CentroDescargas/tesauro-ane'},
+  {id:'magnetic',name:'Mapas y modelos geomagnéticos de España',desc:'Cartografía geomagnética y modelos del IGN',type:'catalog',url:'https://www.ign.es/web/es/ign/portal/gmt-area-geomagnetismo'},
+  {id:'eclipses',name:'Trío de eclipses',desc:'Cartografía temática del CNIG; información del producto',type:'catalog',url:'https://centrodedescargas.cnig.es/CentroDescargas/informacion-geografica-tematica'}
+ ]},
+ {name:'Inundaciones · peligrosidad y riesgo',items:[
+  {id:'floodhazard',name:'Peligrosidad por inundación fluvial y costera',desc:'Mapas oficiales SNCZI por distintos escenarios y periodos de retorno; consulta sus subcapas',type:'wms',endpoint:'https://servicios.idee.es/wms-inspire/riesgos-naturales/inundaciones'},
+  {id:'flood10',name:'Zonas inundables · T=10 años',desc:'Alta probabilidad; extensión cartografiada por el MITECO',type:'wms',endpoint:'https://gis.miteco.gob.es/geoserver/agua/Zi_laminas_q10/wms'},
+  {id:'flood50',name:'Zonas inundables · T=50 años',desc:'Inundación frecuente; extensión cartografiada por el MITECO',type:'wms',endpoint:'https://gis.miteco.gob.es/geoserver/agua/Zi_laminas_q50/wms'},
+  {id:'flood100',name:'Zonas inundables · T=100 años',desc:'Probabilidad media; extensión cartografiada por el MITECO',type:'wms',endpoint:'https://gis.miteco.gob.es/geoserver/agua/Zi_laminas_q100/wms'},
+  {id:'flood500',name:'Zonas inundables · T=500 años',desc:'Probabilidad baja; extensión cartografiada por el MITECO',type:'wms',endpoint:'https://gis.miteco.gob.es/geoserver/agua/Zi_laminas_q500/wms'},
+  {id:'floodrisk',name:'Riesgo de inundación · población y actividades',desc:'Mapas de riesgo de inundación del MITECO; despliega para consultar los escenarios publicados',type:'wms',endpoint:'https://gis.miteco.gob.es/geoserver/agua/riesgo/wms'},
+  {id:'floodarpsi',name:'Áreas con riesgo significativo (ARPSI)',desc:'Áreas de riesgo potencial significativo de inundación',type:'wms',endpoint:'https://gis.miteco.gob.es/geoserver/agua/Zi_arpsi/wms'}
+ ]},
+ {name:'Otras capas oficiales',items:[
+  {id:'geodesy',name:'Redes geodésicas',desc:'Vértices y referencias',type:'wms',endpoint:'https://www.ign.es/wms-inspire/redes-geodesicas'}
+ ]}
+];
+const catalog=document.getElementById('catalog'), layers=new Map(), active=new Set(), opacity=new Map(), serviceNodes=new Map(), servicesCache=new Map(), activeNames=new Map();
+const baseChoices=groups[0].items;
+const lidarChoice=groups.flatMap(g=>g.items).find(it=>it.id==='lidar');
+const rememberedLayers=[]; // Capas seleccionadas en esta sesión, visibles u ocultas
+let activeBase=null,basemap='base';
+function el(tag,cls,txt){const a=document.createElement(tag);if(cls)a.className=cls;if(txt!==undefined)a.textContent=txt;return a}
+function tileOf(it){return L.tileLayer(it.url,{pane:it.type==='base'?'backgroundTiles':'tilePane',maxZoom:19,maxNativeZoom:19,attribution:'© IGN / CNIG',keepBuffer:2,updateWhenIdle:true})}
+function watch(layer,name){let errors=0;layer.on('tileerror',()=>{errors++;if(errors===4)msg('Algunas teselas de «'+name+'» no se han podido cargar. Puede ser falta de cobertura o disponibilidad del servicio.',true)});return layer}
+function setBase(it){if(activeBase)map.removeLayer(activeBase);activeBase=watch(tileOf(it),it.name);activeBase.addTo(map);basemap=it.id;document.querySelectorAll('[name=topBase]').forEach(r=>r.checked=r.value===basemap);refresh();}
+function refresh(){const lidarButton=document.getElementById('lidarQuick');if(lidarButton){const on=active.has('lidar');lidarButton.setAttribute('aria-pressed',String(on));lidarButton.title=on?'Desactivar mapa LiDAR':'Activar mapa LiDAR';const sliderWrap=document.getElementById('lidarSliderWrap');if(sliderWrap)sliderWrap.classList.toggle('lidar-off',!on);}renderActiveList();applyLayerStackOrder();document.getElementById('counter').textContent=active.size+' superposiciones activas';catalog.querySelectorAll('[data-base]').forEach(input=>input.checked=input.dataset.base===basemap);catalog.querySelectorAll('[data-active-id]').forEach(input=>input.checked=active.has(input.dataset.activeId));for(const [id,node] of serviceNodes){const count=[...active].filter(key=>key.startsWith(id+'::')).length;node.count.textContent=count?count+' activas':''}}
+
+function syncOpacityControls(key,amount,source){
+ for(const range of document.querySelectorAll('input[type="range"][data-opacity-key]')){
+   if(range!==source && range.dataset.opacityKey===key)range.value=String(amount);
+ }
+ const floating=document.querySelectorAll('.active-opacity input[type="range"]');
+ for(const range of floating){
+   if(range!==source && range.dataset.opacityKey===key){
+     range.value=String(amount);
+     const value=range.parentElement.querySelector('.active-opacity-value');
+     if(value)value.textContent=amount+'%';
+   }
+ }
+ if(key==='lidar'){
+   const pct=document.getElementById('lidarOpacityValue');
+   if(pct)pct.textContent=amount+'%';
+ }
+}
+function applyLayerStackOrder(){
+ // La primera fila recordada ocupa el primer plano si está activada.
+ rememberedLayers.forEach((key,index)=>{
+   if(!active.has(key))return;
+   const layer=layers.get(key);
+   if(layer && typeof layer.setZIndex==='function')layer.setZIndex(1000-index*10);
+ });
+}
+function moveVisibleLayer(key,direction){
+ const current=rememberedLayers.indexOf(key);
+ const destination=current+direction;
+ if(current<0||destination<0||destination>=rememberedLayers.length)return;
+ [rememberedLayers[current],rememberedLayers[destination]]=[rememberedLayers[destination],rememberedLayers[current]];
+ applyLayerStackOrder();
+ const panel=document.getElementById('activePanel');
+ const scroll=panel.scrollTop;
+ renderActiveList();
+ panel.scrollTop=scroll;
+ const selector=direction<0?'.layer-up':'.layer-down';
+ const updated=[...document.querySelectorAll('#activeList .active-row')].find(row=>row.dataset.layerKey===key);
+ updated?.querySelector(selector)?.focus({preventScroll:true});
+}
+function createOrderButtons(key,index,total){
+ const container=el('div','active-order-buttons');
+ const up=el('button','layer-move layer-up','↑');
+ up.type='button';up.title='Subir capa: situar por encima';
+ up.setAttribute('aria-label','Subir '+(activeNames.get(key)?.title||key));
+ up.disabled=index===0;
+ up.addEventListener('click',event=>{event.stopPropagation();moveVisibleLayer(key,-1)});
+ const down=el('button','layer-move layer-down','↓');
+ down.type='button';down.title='Bajar capa: situar por debajo';
+ down.setAttribute('aria-label','Bajar '+(activeNames.get(key)?.title||key));
+ down.disabled=index===total-1;
+ down.addEventListener('click',event=>{event.stopPropagation();moveVisibleLayer(key,1)});
+ container.append(up,down);
+ return container;
+}
+function renderActiveList(){
+ const target=document.getElementById('activeList'), count=document.getElementById('activeCount');
+ if(!target)return;
+ count.textContent=String(active.size);
+ target.replaceChildren();
+ if(!rememberedLayers.length){target.appendChild(el('div','active-empty','No hay capas seleccionadas.'));return;}
+ target.appendChild(el('div','active-order-help','↑ Subir al frente · ↓ Bajar al fondo'));
+ let orderIndex=0;
+ for(const key of rememberedLayers){
+   const info=activeNames.get(key);
+   const row=el('div','active-row');row.dataset.layerKey=key;row.classList.toggle('temporarily-hidden',!active.has(key));
+   const check=el('input');check.type='checkbox';check.checked=active.has(key);
+   check.setAttribute('aria-label','Mostrar u ocultar '+(info?.title||key));
+   check.addEventListener('change',()=>{
+     const original=Array.from(catalog.querySelectorAll('[data-active-id]')).find(e=>e.dataset.activeId===key);
+     if(original){
+       original.checked=check.checked;
+       original.dispatchEvent(new Event('change',{bubbles:true}));
+     }else{
+       // LiDAR, que dispone de interruptor exclusivo en la cabecera.
+       const ly=layers.get(key);
+       if(check.checked){if(ly){ly.addTo(map);ly.setOpacity(opacity.get(key)??.8);active.add(key);applyStoredLayerColor(key)}}
+       else{if(ly)map.removeLayer(ly);active.delete(key)}
+       refresh();
+     }
+   });
+   const detail=el('div','active-detail');
+   detail.appendChild(el('span','active-name',info?.title||key));if(!active.has(key))detail.appendChild(el('small','visibility-label','Oculta temporalmente'));
+   if(info?.group && info.group!==info.title)detail.appendChild(el('small','',info.group));
+   const controls=el('div','active-opacity');
+   const percent=el('span','active-opacity-value',Math.round((opacity.get(key)??.8)*100)+'%');
+   const range=el('input');
+   range.type='range';range.min='0';range.max='100';range.step='1';range.dataset.opacityKey=key;
+   range.value=String(Math.round((opacity.get(key)??.8)*100));
+   range.setAttribute('aria-label','Opacidad de '+(info?.title||key));
+   range.title='Opacidad de '+(info?.title||key);
+   range.addEventListener('input',()=>{
+     const amount=Number(range.value);
+     opacity.set(key,amount/100);
+     layers.get(key)?.setOpacity(amount/100);
+     percent.textContent=amount+'%';
+     syncOpacityControls(key,amount,range);
+   });
+   controls.append(range,percent);
+   detail.appendChild(controls);
+   if(layerTypes.get(key)==='wms')addColorControl(detail,key);
+   row.append(check,createOrderButtons(key,orderIndex++,rememberedLayers.length),detail);target.appendChild(row);
+ }
+}
+const activeToggle=document.getElementById('activeToggle'),activePanel=document.getElementById('activePanel');
+function closeActivePanel(){activePanel.classList.add('hidden');activeToggle.setAttribute('aria-expanded','false')}
+activeToggle.addEventListener('click',()=>{const opening=activePanel.classList.contains('hidden');activePanel.classList.toggle('hidden',!opening);activeToggle.setAttribute('aria-expanded',String(opening))});
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.active-menu'))closeActivePanel()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeActivePanel()});
+
+const layerColors=new Map();
+const layerTypes=new Map();
+const colorFilters=new Map();
+let nextColorFilterId=0;
+const SVG_NS='http://www.w3.org/2000/svg';
+function isColorable(it,child){return it.type==='wms'&&!!child;}
+function setLayerColor(key,color){
+ if(!/^#[0-9a-fA-F]{6}$/.test(color))return;
+ layerColors.set(key,color);
+ let filter=colorFilters.get(key);
+ if(!filter){
+   const id='octos-color-'+(++nextColorFilterId);
+   const element=document.createElementNS(SVG_NS,'filter');
+   element.setAttribute('id',id);
+   element.setAttribute('x','0');element.setAttribute('y','0');
+   element.setAttribute('width','100%');element.setAttribute('height','100%');
+   element.setAttribute('color-interpolation-filters','sRGB');
+   const matrix=document.createElementNS(SVG_NS,'feColorMatrix');
+   matrix.setAttribute('type','matrix');
+   element.appendChild(matrix);
+   document.getElementById('colorFilterDefs').appendChild(element);
+   filter={id,element,matrix};colorFilters.set(key,filter);
+ }
+ const nums=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16)/255);
+ const values=nums.flatMap(v=>[0,0,0,0,v]).concat([0,0,0,1,0]);
+ filter.matrix.setAttribute('values',values.join(' '));
+ const container=layers.get(key)?.getContainer?.();
+ if(container)container.style.filter='url(#'+filter.id+')';
+ syncLayerColorControls(key);
+}
+function resetLayerColor(key){
+ layerColors.delete(key);
+ const container=layers.get(key)?.getContainer?.();
+ if(container)container.style.filter='';
+ syncLayerColorControls(key);
+}
+function applyStoredLayerColor(key){
+ const color=layerColors.get(key);
+ if(!color)return;
+ const filter=colorFilters.get(key);
+ const container=layers.get(key)?.getContainer?.();
+ if(filter&&container)container.style.filter='url(#'+filter.id+')';
+}
+function syncLayerColorControls(key){
+ for(const el of document.querySelectorAll('[data-color-key]')){
+   if(el.dataset.colorKey!==key)continue;
+   if(el.matches('input[type=color]')){
+     el.value=layerColors.get(key)||'#ff891f';
+     el.title='Color de visualización'+(layerColors.has(key)?': '+layerColors.get(key):' (original)');
+   }
+   if(el.matches('button'))el.disabled=!layerColors.has(key);
+ }
+}
+function addColorControl(parent,key){
+ const wrap=el('div','layer-color-controls');
+ const caption=el('span','layer-color-caption','Color');
+ const color=el('input','layer-color-input');
+ color.type='color';color.value=layerColors.get(key)||'#ff891f';color.dataset.colorKey=key;
+ color.setAttribute('aria-label','Cambiar color de '+key);
+ color.title='Recolorear visualmente esta capa WMS';
+ color.addEventListener('input',e=>{e.stopPropagation();setLayerColor(key,color.value)});
+ color.addEventListener('click',e=>e.stopPropagation());
+ const reset=el('button','layer-color-reset','Original');
+ reset.type='button';reset.dataset.colorKey=key;reset.disabled=!layerColors.has(key);
+ reset.title='Restaurar los colores originales de la capa';
+ reset.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();resetLayerColor(key)});
+ wrap.append(caption,color,reset);
+ parent.appendChild(wrap);
+}
+function layerKey(it,child){return child?it.id+'::'+child.id:it.id}
+function applyLayer(it,child,checked){const key=layerKey(it,child);if(!checked){active.delete(key);const ly=layers.get(key);if(ly)map.removeLayer(ly);refresh();return}
+ try{let ly=layers.get(key);if(!ly){ly=child?remoteLayer(it,child):tileOf(it);watch(ly,child?.title||it.name);layers.set(key,ly)}ly.addTo(map);ly.setOpacity(opacity.get(key)??.8);active.add(key);if(!rememberedLayers.includes(key))rememberedLayers.push(key);layerTypes.set(key,it.type);applyStoredLayerColor(key);activeNames.set(key,{title:child?.title||it.name,group:it.name});msg('Activada: '+(child?.title||it.name));}catch(e){msg('Error al activar la capa: '+e.message,true)}refresh()}
+function catalogLayer(it){const row=el('div','layer catalog-only');row.dataset.search=(it.name+' '+it.desc).toLowerCase();const detail=el('div','detail');const title=el('strong','',it.name);detail.appendChild(title);detail.appendChild(el('small','',it.desc));const a=el('a','catalog-link','Consultar producto en el catálogo ↗');a.href=it.url;a.target='_blank';a.rel='noopener noreferrer';detail.appendChild(a);row.appendChild(detail);return row}
+function directLayer(it){const label=el('label','layer');label.dataset.search=(it.name+' '+it.desc).toLowerCase();const input=el('input');input.type=it.type==='base'?'radio':'checkbox';if(it.type==='base'){input.name='baselayer';input.dataset.base=it.id;input.checked=it.id==='base';input.addEventListener('change',()=>setBase(it))}else{input.dataset.activeId=it.id;input.addEventListener('change',()=>applyLayer(it,null,input.checked))}label.appendChild(input);const detail=el('div','detail');detail.appendChild(el('strong','',it.name));detail.appendChild(el('small','',it.desc));if(it.type!=='base')addOpacity(detail,it,null);label.appendChild(detail);return label}
+function addOpacity(parent,it,child){const key=layerKey(it,child),range=el('input','opacity');range.type='range';range.min=0;range.max=100;range.value=80;range.dataset.opacityKey=key;range.title='Transparencia: '+(child?.title||it.name);range.setAttribute('aria-label',range.title);range.addEventListener('input',()=>{opacity.set(key,Number(range.value)/100);layers.get(key)?.setOpacity(opacity.get(key));syncOpacityControls(key,Number(range.value),range)});range.addEventListener('click',e=>e.stopPropagation());parent.appendChild(range)}
+function childLayer(it,child){const item=el('div','subitem');const label=el('label');const checkbox=el('input');checkbox.type='checkbox';checkbox.dataset.activeId=layerKey(it,child);checkbox.addEventListener('change',()=>applyLayer(it,child,checkbox.checked));const title=el('span','',child.title||child.id);title.title=child.id;label.append(checkbox,title);item.appendChild(label);const range=el('input');range.type='range';range.min=0;range.max=100;range.value=80;range.dataset.opacityKey=layerKey(it,child);range.title='Opacidad';range.setAttribute('aria-label','Opacidad de '+child.title);range.addEventListener('input',()=>{const key=layerKey(it,child);opacity.set(key,+range.value/100);layers.get(key)?.setOpacity(+range.value/100);syncOpacityControls(key,Number(range.value),range)});item.appendChild(range);if(isColorable(it,child))addColorControl(item,layerKey(it,child));return item}
+function serviceLayer(it){const d=el('details','service');d.dataset.search=(it.name+' '+it.desc).toLowerCase();const summary=el('summary');const heading=el('span','service-heading');heading.appendChild(el('strong','',it.name));heading.title=it.desc+' · '+it.type.toUpperCase();heading.appendChild(el('small','',it.type.toUpperCase()));summary.appendChild(heading);const count=el('span','service-count');summary.appendChild(count);d.appendChild(summary);const subtree=el('div','subtree');const status=el('div','load-state','Despliega para consultar las subcapas disponibles.');subtree.appendChild(status);d.appendChild(subtree);serviceNodes.set(it.id,{node:d,subtree,status,count});d.addEventListener('toggle',()=>{if(d.open)loadService(it)});return d}
+function directChildren(node,tag){return Array.from(node?.children||[]).filter(c=>c.localName===tag)}
+function first(node,tag){return directChildren(node,tag)[0]}
+function value(node,tag){return first(node,tag)?.textContent?.trim()||''}
+function descendants(node,tag){return Array.from(node?.getElementsByTagName('*')||[]).filter(c=>c.localName===tag)}
+function wmsCapabilities(xml){const list=[],seen=new Set();const cap=descendants(xml,'Capability')[0];const root=first(cap,'Layer');if(!root)return [];
+ function walk(node,parents=[]){const name=value(node,'Name'),title=value(node,'Title')||name;const availableCRS=[...parents,...directChildren(node,'CRS').map(c=>c.textContent.trim()),...directChildren(node,'SRS').map(c=>c.textContent.trim())];if(name&&!seen.has(name)){seen.add(name);if(availableCRS.some(x=>/3857|900913|CRS:84|EPSG:4326/i.test(x)) || availableCRS.length===0)list.push({id:name,title,crs:availableCRS})}directChildren(node,'Layer').forEach(child=>walk(child,availableCRS))}walk(root);return list}
+function wmtsCapabilities(xml){const contents=descendants(xml,'Contents')[0];if(!contents)return [];
+ const matrices=new Map();for(const set of directChildren(contents,'TileMatrixSet')){const id=value(set,'Identifier'),crs=value(set,'SupportedCRS');const levels=directChildren(set,'TileMatrix').map(m=>({id:value(m,'Identifier'),scale:Number(value(m,'ScaleDenominator'))}));matrices.set(id,{id,crs,levels})}
+ const entries=[];for(const node of directChildren(contents,'Layer')){const id=value(node,'Identifier'),title=value(node,'Title')||id;if(!id)continue;const setNames=directChildren(node,'TileMatrixSetLink').map(n=>value(n,'TileMatrixSet'));const matrix=setNames.map(n=>matrices.get(n)).find(m=>m&&/(3857|900913|GoogleMapsCompatible)/i.test(m.crs+' '+m.id));if(!matrix)continue;
+ const styleNode=directChildren(node,'Style').find(n=>n.getAttribute('isDefault')==='true')||first(node,'Style');const style=value(styleNode,'Identifier')||'default';const format=directChildren(node,'Format').map(n=>n.textContent.trim()).find(f=>/image\/(png|jpeg|jpg|webp)/i.test(f))||value(node,'Format')||'image/png';const resource=directChildren(node,'ResourceURL').find(n=>n.getAttribute('resourceType')==='tile'&&n.getAttribute('format')===format)?.getAttribute('template')||'';
+ entries.push({id,title,matrix,style,format,resource})}return entries}
+async function loadService(it){const ui=serviceNodes.get(it.id);if(!ui||ui.loaded||ui.loading)return;ui.loading=true;ui.status.textContent='Consultando servicio oficial…';ui.status.classList.remove('error');
+ try{let entries=servicesCache.get(it.id);if(!entries){const url=it.endpoint+(it.endpoint.includes('?')?'&':'?')+'SERVICE='+it.type.toUpperCase()+'&VERSION='+(it.type==='wms'?'1.3.0':'1.0.0')+'&REQUEST=GetCapabilities';const response=await fetch(url,{mode:'cors'});if(!response.ok)throw new Error('HTTP '+response.status);const xml=new DOMParser().parseFromString(await response.text(),'text/xml');if(xml.querySelector('parsererror'))throw new Error('el servidor no ha entregado un XML válido');entries=it.type==='wms'?wmsCapabilities(xml):wmtsCapabilities(xml);servicesCache.set(it.id,entries)}
+ if(!entries.length)throw new Error('no se han encontrado subcapas compatibles');ui.subtree.replaceChildren();const n=el('div','load-state',entries.length+' subcapas disponibles. Activa las que quieras.');ui.subtree.appendChild(n);for(const child of entries)ui.subtree.appendChild(childLayer(it,child));ui.loaded=true;refresh();}
+ catch(err){ui.status.textContent='No se pudo consultar: '+err.message+'. El servidor puede bloquear CORS o no estar disponible.';ui.status.classList.add('error');ui.subtree.replaceChildren(ui.status);const a=el('a','','Abrir servicio oficial');a.href=it.endpoint+'?SERVICE='+it.type.toUpperCase()+'&REQUEST=GetCapabilities';a.target='_blank';a.rel='noopener noreferrer';ui.subtree.appendChild(a);msg('No se ha podido consultar «'+it.name+'». Revisa el servicio oficial.',true)}finally{ui.loading=false}}
+function remoteLayer(it,c){if(it.type==='wms'){return L.tileLayer.wms(it.endpoint,{layers:c.id,format:'image/png',transparent:true,version:'1.3.0',maxZoom:19,attribution:it.id.startsWith('flood')?'© MITECO / SNCZI':'© IGN / CNIG'})}
+ const levels=c.matrix.levels,standard=559082264.029;const tileUrl=(coords)=>{const expected=standard/Math.pow(2,coords.z);let best=null,delta=Infinity;for(const m of levels){const d=Math.abs(Math.log2(m.scale/expected));if(d<delta){delta=d;best=m}}if(!best||delta>.09)return '';if(!Number.isFinite(best.scale))return ''; // tesela solo si la escala coincide con EPSG:3857
+ const q=new URLSearchParams({SERVICE:'WMTS',REQUEST:'GetTile',VERSION:'1.0.0',LAYER:c.id,STYLE:c.style,FORMAT:c.format,TILEMATRIXSET:c.matrix.id,TILEMATRIX:best.id,TILEROW:String(coords.y),TILECOL:String(coords.x)});return it.endpoint+(it.endpoint.includes('?')?'&':'?')+q.toString()};
+ const WMTS=L.TileLayer.extend({getTileUrl:tileUrl});return new WMTS('',{maxZoom:19,minZoom:0,attribution:'© IGN / CNIG'})}
+function build(){groups.slice(1).filter(g=>g.items.some(it=>it.id!=='lidar')).forEach((g,i)=>{const d=el('details','group');d.open=i===0;const summary=el('summary','',g.name);const counter=el('span','count',g.items.filter(it=>it.id!=='lidar').length+' elementos');summary.appendChild(counter);summary.title='Abrir o cerrar '+g.name;d.appendChild(summary);const body=el('div','groupbody');for(const it of g.items.filter(it=>it.id!=='lidar'))body.appendChild(it.type==='catalog'?catalogLayer(it):(it.type==='wms'||it.type==='wmts'?serviceLayer(it):directLayer(it)));d.appendChild(body);catalog.appendChild(d)})}
+function buildBasePicker(){
+ const holder=document.getElementById('baseOptions');
+ for(const it of baseChoices){
+   const row=el('label','base-option');
+   const input=el('input');input.type='radio';input.name='topBase';input.value=it.id;input.checked=it.id===basemap;
+   input.addEventListener('change',()=>{setBase(it);document.getElementById('basePicker').open=false});
+   const detail=el('span','base-option-text');detail.append(el('strong','',it.name),el('small','',it.desc));
+   row.append(input,detail);holder.appendChild(row);
+ }
+ const picker=document.getElementById('basePicker');
+ document.addEventListener('pointerdown',ev=>{if(!picker.contains(ev.target))picker.open=false});
+ document.addEventListener('keydown',ev=>{if(ev.key==='Escape')picker.open=false});
+}
+buildBasePicker();build();setBase(baseChoices[0]);
+document.getElementById('lidarQuick').addEventListener('click',()=>{
+ const enabled=!active.has('lidar');
+ applyLayer(lidarChoice,null,enabled);
+ if(enabled)msg('LiDAR activado · IGN. Ajusta la transparencia en el control de la barra superior.');
+});
+const lidarOpacity=document.getElementById('lidarOpacity');
+lidarOpacity.addEventListener('input',()=>{
+ const value=Number(lidarOpacity.value);
+ opacity.set('lidar',value/100);
+ layers.get('lidar')?.setOpacity(value/100);
+ document.getElementById('lidarOpacityValue').textContent=value+'%';
+ syncOpacityControls('lidar',value,lidarOpacity);
+});
+const hash=new URLSearchParams(location.hash.slice(1));if(hash.has('lat')&&hash.has('lng')){const lat=+hash.get('lat'),lng=+hash.get('lng'),zoom=+hash.get('z')||10;if(Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=85&&Math.abs(lng)<=180)map.setView([lat,lng],Math.max(3,Math.min(19,zoom)))}
+document.getElementById('filter').addEventListener('input',e=>{const term=e.target.value.trim().toLowerCase();for(const g of catalog.querySelectorAll('.group')){let visible=0;for(const d of g.querySelectorAll('.layer,.service')){let show=d.dataset.search.includes(term)||Boolean(term&&[...d.querySelectorAll('.subitem span')].some(n=>n.textContent.toLowerCase().includes(term)));d.classList.toggle('hidden',!show);if(show){visible++;if(term&&d.classList.contains('service'))d.open=true}}g.classList.toggle('hidden',!visible);if(term&&visible)g.open=true}});
+document.getElementById('clear').addEventListener('click',()=>{for(const key of [...active]){const layer=layers.get(key);if(layer)map.removeLayer(layer);active.delete(key);activeNames.delete(key)}rememberedLayers.length=0;refresh();msg('Se ha limpiado la lista de superposiciones.')});
+
+// GPS: solicita permisos únicamente al pulsar el botón; conserva la vista al fallar.
+let gpsDot=null,gpsAccuracy=null;
+const gpsButton=document.getElementById('gps');
+gpsButton.addEventListener('click',()=>{
+  if(!('geolocation' in navigator)){
+    msg('Este navegador no ofrece geolocalización.',true);return;
+  }
+  if(!window.isSecureContext){
+    msg('La geolocalización requiere una página segura (HTTPS o un contexto local autorizado por el navegador).',true);return;
+  }
+  gpsButton.disabled=true;
+  gpsButton.textContent='…';
+  msg('Solicitando acceso a la ubicación del dispositivo…');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    gpsButton.disabled=false;
+    gpsButton.textContent='◎';
+    const lat=pos.coords.latitude,lng=pos.coords.longitude;
+    const accuracy=pos.coords.accuracy;
+    const ll=[lat,lng];
+    if(gpsDot) map.removeLayer(gpsDot);
+    if(gpsAccuracy)map.removeLayer(gpsAccuracy);
+    gpsAccuracy=L.circle(ll,{radius:accuracy,color:'#ff891f',weight:1,fillColor:'#ff891f',fillOpacity:0.12,interactive:false}).addTo(map);
+    gpsDot=L.marker(ll,{icon:L.divIcon({className:'',html:'<div class="gps-marker"></div>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);
+    gpsDot.bindPopup('<strong>Tu ubicación aproximada</strong><br>Precisión estimada: '+Math.round(accuracy)+' m');
+    map.setView(ll,Math.max(map.getZoom(),15),{animate:true});
+    msg('Ubicación obtenida. Precisión estimada: '+Math.round(accuracy)+' metros.');
+  },err=>{
+    gpsButton.disabled=false;
+    gpsButton.textContent='◎';
+    const why=err.code===1?'Permiso de ubicación denegado.':err.code===2?'Ubicación no disponible en este dispositivo.':'Tiempo agotado al obtener la ubicación.';
+    msg(why+' Comprueba los permisos del navegador y los servicios de ubicación.',true);
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:30000});
+});
+
+const appShell=document.getElementById('appShell');
+const collapseSidebar=document.getElementById('collapseSidebar');
+function setSidebarHidden(hidden){
+  appShell.classList.toggle('sidebar-hidden',hidden);
+  collapseSidebar.textContent=hidden?'›':'‹';
+  collapseSidebar.setAttribute('aria-expanded',String(!hidden));
+  collapseSidebar.setAttribute('aria-label',hidden?'Mostrar catálogo de capas':'Ocultar catálogo de capas');
+  collapseSidebar.title=hidden?'Mostrar catálogo':'Ocultar catálogo';
+  // Leaflet must recalculate its viewport after the sidebar width changes.
+  if(window.L && map){map.invalidateSize({pan:false});setTimeout(()=>map.invalidateSize({pan:false}),250)}
+}
+collapseSidebar.addEventListener('click',()=>setSidebarHidden(!appShell.classList.contains('sidebar-hidden')));
+document.getElementById('menuBtn').addEventListener('click',()=>setSidebarHidden(!appShell.classList.contains('sidebar-hidden')));
+if(innerWidth<760)setSidebarHidden(true);
+map.on('moveend zoomend',()=>{const p=map.getCenter();document.getElementById('coords').textContent=p.lat.toFixed(4)+'°, '+p.lng.toFixed(4)+'°';document.getElementById('zoom').textContent='Zoom '+map.getZoom();});map.fire('moveend');
+window.addEventListener('load',()=>setTimeout(()=>map.invalidateSize(true),150));window.addEventListener('resize',()=>map.invalidateSize(false));
+})();
+</script></body></html>
