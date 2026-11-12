@@ -10,10 +10,13 @@ export async function mosaic(files,{maxCells=12000000,bounds,progress}={}){
  const tiles=[];
  for(let i=0;i<src.length;i++){
   progress?.('Leyendo hoja '+(i+1)+'/'+src.length+': '+(src[i].name||'archivo'));
-  const d=await loadDEM(src[i],{maxCells:12000000,bounds});
+  let d;
+  try{d=await loadDEM(src[i],{maxCells:12000000,bounds});}
+  catch(e){if(bounds&&String(e.message).includes('no intersecta')){progress?.('Hoja fuera del área, omitida: '+src[i].name);continue;}throw e;}
   if(d.resolution.resampled)throw Error('La hoja '+d.source+' supera 12 millones de celdas sin reducir resolución. Selecciona primero un recorte más pequeño.');
   tiles.push(d);
  }
+ if(!tiles.length)throw Error('Ninguna hoja importada intersecta la zona seleccionada.');
  const a=tiles[0],tolerance=1e-5;
  for(const b of tiles){
   if(b.crs!==a.crs)throw Error('EPSG diferentes. Todas las hojas del mosaico deben estar en el mismo CRS; reproyecta las incompatibles previamente.');
