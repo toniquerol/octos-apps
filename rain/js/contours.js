@@ -4,7 +4,7 @@
  */
 export function contours(dem,interval,{maxSegments=50000}={}) {
  if(!Number.isFinite(interval)||interval<=0)throw Error('El intervalo de curvas debe ser positivo.');
- if(!Number.isSafeInteger(maxSegments)||maxSegments<1||maxSegments>50000)throw Error('Límite de segmentos inválido.');
+ if(!Number.isSafeInteger(maxSegments)||maxSegments<1||maxSegments>150000)throw Error('Límite de segmentos inválido.');
  const {width:w,height:h,data:z,dx,dy,x0,y0}=dem,result=[];
  for(let r=0;r<h-1;r++)for(let c=0;c<w-1;c++){
   const i=r*w+c,v=[z[i],z[i+1],z[i+w+1],z[i+w]];
