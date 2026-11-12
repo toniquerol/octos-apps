@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const moduleAt=async p=>import('data:text/javascript;base64,'+Buffer.from(await readFile(new URL(p,import.meta.url))).toString('base64'));
+const {terrain,hillshade}=await moduleAt('../js/terrain.js');
+const {loadDEM,cellCenter}=await moduleAt('../js/dem.js');
+const dem={width:3,height:3,dx:2,dy:4,x0:100,y0:200,data:Float64Array.from([0,2,4,8,10,12,16,18,20])};
+const t=terrain(dem);
+assert.equal(t.mean,10);assert.equal(t.min,0);assert.equal(t.max,20);
+for(const slope of t.slope)assert.ok(Math.abs(slope-Math.atan(Math.sqrt(5))*180/Math.PI)<1e-10);
+assert.equal(t.gx[4],1);assert.equal(t.gy[4],-2);assert.deepEqual(cellCenter(dem,4),[103,194]);
+const before=Array.from(dem.data);hillshade(t,{exaggeration:10});assert.deepEqual(Array.from(dem.data),before);
+const flat=terrain({...dem,data:new Float64Array(9).fill(5)});assert.equal(flat.slope[4],0);assert.ok(Number.isNaN(flat.aspect[4]));
+const missing=Float64Array.from([NaN,NaN,NaN,NaN,8,NaN,NaN,NaN,NaN]);assert.ok(Number.isNaN(terrain({...dem,data:missing}).slope[4]));
+// Validate ingestion contracts with GeoTIFF API fixtures, without network dependencies.
+globalThis.proj4=Object.assign((a,b,p)=>p,{defs(){}});
+let point=false,crs=25830,samples=1,readCount=0;
+globalThis.GeoTIFF={fromBlob:async()=>({getImage:async()=>({getGeoKeys:()=>({ProjectedCSTypeGeoKey:crs,GTRasterTypeGeoKey:point?2:1}),fileDirectory:{ModelPixelScale:[2,4,0],ModelTiepoint:[0,0,0,100,200,0]},getSamplesPerPixel:()=>samples,getWidth:()=>3,getHeight:()=>3,getGDALNoData:()=>-9999,getGDALMetadata:()=>({}),readRasters:async()=>{readCount++;return [0,1,2,3,-9999,5,6,7,8];}})})};
+let loaded=await loadDEM({name:'fixture.tif'});assert.equal(loaded.x0,100);assert.ok(Number.isNaN(loaded.data[4]));assert.equal(loaded.valid,8);
+point=true;loaded=await loadDEM({name:'point.tif'});assert.equal(loaded.x0,99);assert.equal(loaded.y0,202);
+const reads=readCount;await assert.rejects(()=>loadDEM({}, {maxCells:8}),/superan/);assert.equal(readCount,reads);
+crs=4326;await assert.rejects(()=>loadDEM({}),/no admitido/);crs=25830;samples=3;await assert.rejects(()=>loadDEM({}),/una banda/);
+console.log('terrain / DEM contracts: passed');
