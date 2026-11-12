@@ -9,7 +9,7 @@ while(heap.length){const [i]=heap.pop();rank[i]=count++;neighbours(d,i,j=>{if(se
 for(let i=0;i<n;i++){if(!Number.isFinite(filled[i]))continue;depth[i]=filled[i]-d.data[i];let best=0;neighbours(d,i,(j,dist)=>{if(!Number.isFinite(filled[j]))return;const slope=(filled[i]-filled[j])/dist;if(slope>best){best=slope;receiver[i]=j;}});if(receiver[i]<0&&parent[i]>=0)receiver[i]=parent[i];}
 // Filled flats use their flood parent (strictly earlier rank), so cycles cannot occur.
 const incoming=new Uint8Array(n),accumulation=new Float64Array(n),queue=new Int32Array(n);let head=0,tail=0,valid=0;
-for(let i=0;i<n;i++){if(!Number.isFinite(filled[i])){accumulation[i]=NaN;continue;}valid++;accumulation[i]=d.dx*d.dy;if(receiver[i]>=0)incoming[receiver[i]]++;}
+for(let i=0;i<n;i++){if(!Number.isFinite(filled[i])){accumulation[i]=NaN;continue;}valid++;accumulation[i]=d.dx*d.dy*(d.areaFactor||1);if(receiver[i]>=0)incoming[receiver[i]]++;}
 for(let i=0;i<n;i++)if(Number.isFinite(filled[i])&&!incoming[i])queue[tail++]=i;
 while(head<tail){const i=queue[head++],j=receiver[i];if(j>=0){accumulation[j]+=accumulation[i];if(!--incoming[j])queue[tail++]=j;}}
 if(head!==valid)throw Error('Ciclo en direcciones de flujo');return {filled,receiver,accumulation,depth};}
