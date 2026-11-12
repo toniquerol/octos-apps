@@ -7,6 +7,7 @@ function projection(crs) {
   let def;
   if(n>=25828&&n<=25831) def=`+proj=utm +zone=${n-25800} +ellps=GRS80 +units=m +no_defs`;
   else if(n>=32628&&n<=32631) def=`+proj=utm +zone=${n-32600} +datum=WGS84 +units=m +no_defs`;
+  else if(n===3857) def='+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +no_defs';
   else if(n===4083) def='+proj=utm +zone=28 +ellps=GRS80 +units=m +no_defs';
   else throw new Error(`EPSG:${n} no admitido: reproyecta el MDT a UTM métrico de España.`);
   globalThis.proj4.defs(`EPSG:${n}`,def);
@@ -19,12 +20,13 @@ export function cellAt(dem,lat,lng) {const [x,y]=fromLatLng(dem,lat,lng),c=Math.
 export function cellCenter(dem,i) {return [dem.x0+(i%dem.width+.5)*dem.dx,dem.y0-(Math.floor(i/dem.width)+.5)*dem.dy];}
 export async function loadDEM(input,{maxCells=1000000,bounds,signal}={}) {
   if(!globalThis.GeoTIFF) throw new Error('No se ha cargado geotiff.js.');
-  if(!Number.isSafeInteger(maxCells)||maxCells<1||maxCells>12000000)throw new Error('Límite de celdas inválido (1–16 millones).');
+  if(!Number.isSafeInteger(maxCells)||maxCells<1||maxCells>12000000)throw new Error('Límite de celdas inválido (1–12 millones).');
   const tiff=typeof input==='string'?await GeoTIFF.fromUrl(input,{allowFullFile:false},signal):await GeoTIFF.fromBlob(input);
   try {
     const im=await tiff.getImage(),keys=await im.getGeoKeys(),fd=im.fileDirectory;
     const tag=async n=>fd.loadValue?await fd.loadValue(n):fd[n];
-    const crs=projection(keys.ProjectedCSTypeGeoKey);
+    const declared=keys.ProjectedCSTypeGeoKey || (keys.GeographicTypeGeoKey===3857?3857:undefined);
+    const crs=projection(declared);
     if(keys.ProjLinearUnitsGeoKey&&keys.ProjLinearUnitsGeoKey!==9001)throw new Error('El MDT no usa metros.');
     if(keys.VerticalUnitsGeoKey&&keys.VerticalUnitsGeoKey!==9001)throw new Error('Las elevaciones no están en metros.');
     if(im.getSamplesPerPixel()!==1)throw new Error('Se requiere un MDT numérico de una banda; no una imagen RGB.');
@@ -58,6 +60,9 @@ export async function loadDEM(input,{maxCells=1000000,bounds,signal}={}) {
     const data=new Float64Array(raw.length);let valid=0;
     for(let i=0;i<raw.length;i++){data[i]=!Number.isFinite(raw[i])||(nodata!==null&&nodata!==undefined&&raw[i]===nodata)?NaN:raw[i]*factor+offset;if(Number.isFinite(data[i]))valid++;}
     if(!valid)throw new Error('El recorte contiene únicamente NoData.');
-    return {width:outWidth,height:outHeight,data,dx:dx*width/outWidth,dy:dy*height/outHeight,x0:x0+window[0]*dx,y0:y0-window[1]*dy,crs,source:typeof input==='string'?input:input.name,valid,nodata:outWidth*outHeight-valid,originalCells,resolution:{x:dx*width/outWidth,y:dy*height/outHeight,unit:'m',resampled,originalX:dx,originalY:dy},verticalDatum:keys.VerticalCSTypeGeoKey||'No indicado: consultar ficha del producto',window};
+    const midpointY=y0-(window[1]+height/2)*dy;
+    const midLat=toLatLng({crs},x0+(window[0]+width/2)*dx,midpointY)[0];
+    const areaFactor=crs==='EPSG:3857'?Math.cos(midLat*Math.PI/180)**2:1;
+    return {areaFactor,projectionCaution:crs==='EPSG:3857'?'EPSG:3857 distorsiona distancias y superficies. Corrección aproximada de área a latitud central; para estudios precisos reproyectar a UTM.':'',width:outWidth,height:outHeight,data,dx:dx*width/outWidth,dy:dy*height/outHeight,x0:x0+window[0]*dx,y0:y0-window[1]*dy,crs,source:typeof input==='string'?input:input.name,valid,nodata:outWidth*outHeight-valid,originalCells,resolution:{x:dx*width/outWidth,y:dy*height/outHeight,unit:'m',resampled,originalX:dx,originalY:dy},verticalDatum:keys.VerticalCSTypeGeoKey||'No indicado: consultar ficha del producto',window};
   }finally{if(tiff.close)await tiff.close();}
 }
