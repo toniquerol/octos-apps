@@ -19,7 +19,7 @@ export function cellAt(dem,lat,lng) {const [x,y]=fromLatLng(dem,lat,lng),c=Math.
 export function cellCenter(dem,i) {return [dem.x0+(i%dem.width+.5)*dem.dx,dem.y0-(Math.floor(i/dem.width)+.5)*dem.dy];}
 export async function loadDEM(input,{maxCells=1000000,bounds,signal}={}) {
   if(!globalThis.GeoTIFF) throw new Error('No se ha cargado geotiff.js.');
-  if(!Number.isSafeInteger(maxCells)||maxCells<1||maxCells>16000000)throw new Error('Límite de celdas inválido (1–16 millones).');
+  if(!Number.isSafeInteger(maxCells)||maxCells<1||maxCells>12000000)throw new Error('Límite de celdas inválido (1–16 millones).');
   const tiff=typeof input==='string'?await GeoTIFF.fromUrl(input,{allowFullFile:false},signal):await GeoTIFF.fromBlob(input);
   try {
     const im=await tiff.getImage(),keys=await im.getGeoKeys(),fd=im.fileDirectory;
@@ -46,14 +46,18 @@ export async function loadDEM(input,{maxCells=1000000,bounds,signal}={}) {
     }
     const width=window[2]-window[0],height=window[3]-window[1];
     if(width<1||height<1)throw new Error('El terreno seleccionado no intersecta este MDT.');
-    if(width*height>maxCells)throw new Error(`${width*height} celdas superan el límite de ${maxCells}. Selecciona una zona menor antes de importar.`);
-    const raw=await im.readRasters({window,samples:[0],interleave:true,signal}),nodata=await im.getGDALNoData();
+    const originalCells=width*height;
+    const scaleFactor=Math.max(1,Math.sqrt(originalCells/maxCells));
+    let outWidth=Math.max(1,Math.floor(width/scaleFactor)),outHeight=Math.max(1,Math.floor(height/scaleFactor));
+    while(outWidth*outHeight>maxCells){if(outWidth>=outHeight)outWidth--;else outHeight--;}
+    const resampled=outWidth!==width||outHeight!==height;
+    const raw=await im.readRasters({window,width:outWidth,height:outHeight,resampleMethod:'nearest',samples:[0],interleave:true,signal}),nodata=await im.getGDALNoData();
     const metadata=await im.getGDALMetadata(0)||{};
     const factor=metadata.SCALE===undefined?1:Number(metadata.SCALE),offset=metadata.OFFSET===undefined?0:Number(metadata.OFFSET);
     if(!Number.isFinite(factor)||!Number.isFinite(offset))throw new Error('Escala de elevaciones inválida.');
     const data=new Float64Array(raw.length);let valid=0;
     for(let i=0;i<raw.length;i++){data[i]=!Number.isFinite(raw[i])||(nodata!==null&&nodata!==undefined&&raw[i]===nodata)?NaN:raw[i]*factor+offset;if(Number.isFinite(data[i]))valid++;}
     if(!valid)throw new Error('El recorte contiene únicamente NoData.');
-    return {width,height,data,dx,dy,x0:x0+window[0]*dx,y0:y0-window[1]*dy,crs,source:typeof input==='string'?input:input.name,valid,nodata:width*height-valid,resolution:{x:dx,y:dy,unit:'m',resampled:false},verticalDatum:keys.VerticalCSTypeGeoKey||'No indicado: consultar ficha del producto',window};
+    return {width:outWidth,height:outHeight,data,dx:dx*width/outWidth,dy:dy*height/outHeight,x0:x0+window[0]*dx,y0:y0-window[1]*dy,crs,source:typeof input==='string'?input:input.name,valid,nodata:outWidth*outHeight-valid,originalCells,resolution:{x:dx*width/outWidth,y:dy*height/outHeight,unit:'m',resampled,originalX:dx,originalY:dy},verticalDatum:keys.VerticalCSTypeGeoKey||'No indicado: consultar ficha del producto',window};
   }finally{if(tiff.close)await tiff.close();}
 }
