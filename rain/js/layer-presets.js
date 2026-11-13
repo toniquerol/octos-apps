@@ -31,6 +31,7 @@ export function initLayerStack(map,host,onStatus=()=>{}){
   else entry.layer.setOpacity(entry.opacity);
   if(entry.external?.range){entry.external.range.value=String(entry.opacity);}
   if(entry.external?.percentage)entry.external.percentage.textContent=Math.round(entry.opacity*100)+' %';
+  paintCompact();
  }
  function syncOrder(){
   // Primer elemento del listado = capa WMS superior.
@@ -45,6 +46,7 @@ export function initLayerStack(map,host,onStatus=()=>{}){
   else if(map.hasLayer(entry.layer))entry.layer.remove();
   if(entry.external?.checkbox)entry.external.checkbox.checked=entry.visible;
   if(entry.visible)syncOrder();
+  paintCompact();
  }
  const compactHost=document.getElementById('sidebarPresetLayers');
  function paintCompact(){
