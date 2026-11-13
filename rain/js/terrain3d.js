@@ -4,7 +4,7 @@
 import {toLatLng} from './dem.js';
 export class Terrain3D {
  constructor(host){
-  this.host=host;this.running=false;this.dem=null;this.hydro=null;this.animator=null;this.exaggeration=3;this.baseUrl='';this.textureRequest=0;this.interactionMode='rotate';this.activePointers=new Map();
+  this.host=host;this.running=false;this.dem=null;this.hydro=null;this.animator=null;this.exaggeration=1;this.baseUrl='';this.textureRequest=0;this.interactionMode='rotate';this.activePointers=new Map();
   this.el=document.createElement('div');this.el.className='rain-3d-view';
   this.el.setAttribute('aria-label','Terreno en tres dimensiones');
   this.host.append(this.el);
@@ -17,7 +17,7 @@ export class Terrain3D {
   catch(e){throw Error('No se ha podido cargar Three.js. Requiere Internet y WebGL: '+e.message);}
   const T=this.THREE;
   if(!this.el.isConnected)this.host.append(this.el);
-  this.renderer=new T.WebGLRenderer({antialias:true,alpha:false});
+  this.renderer=new T.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:true});
   this.renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
   this.renderer.setClearColor(0x172431,1);
   this.el.append(this.renderer.domElement);
@@ -107,6 +107,31 @@ export class Terrain3D {
   this.radius=Math.max(300,Math.min(2100,550+250*Math.log10(Math.max(1,maxSize/1000))));
   this.theta=-.7;this.phi=1.02;this.updateCamera();
  }
+ topView(){
+  if(!this.dem||!this.target)return;
+  this.target.set(0,Math.max(0,(this.zMax-this.zMin)*this.exaggeration/this.unit)*.2,0);
+  this.theta=0;
+  this.phi=.015; // nearly vertical, avoids the up-vector singularity
+  const d=this.dem,span=Math.max(d.width*d.dx,d.height*d.dy)/this.unit;
+  const fov=this.camera.fov*Math.PI/180;
+  const verticalSpan=span/Math.max(.55,this.camera.aspect);
+  this.radius=Math.min(6000,Math.max(80,verticalSpan/(2*Math.tan(fov/2))*1.14));
+  this.updateCamera();
+ }
+ saveView(name='Octos_Rain_V7_6_vista3d.png'){
+  if(!this.running||!this.renderer)throw Error('Activa la vista 3D para guardar una imagen.');
+  // Capture a freshly rendered frame: preserves textures and particle positions.
+  this.drawParticles();this.renderer.render(this.scene,this.camera);
+  const canvas=this.renderer.domElement;
+  return new Promise((resolve,reject)=>{
+   canvas.toBlob(blob=>{
+    if(!blob){reject(Error('No se pudo generar la captura 3D.'));return;}
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=name;a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);resolve();
+   },'image/png');
+  });
+ }
  updateCamera(){
   if(!this.camera||!this.target)return;
   const t=this.target;
@@ -119,7 +144,7 @@ export class Terrain3D {
   this.camera.aspect=w/h;this.camera.updateProjectionMatrix();
   this.renderer.setSize(w,h,false);
  }
- async open(dem,{baseUrl,baseOpacity=1,hydro,animator,exaggeration=3,onStatus=()=>{}}={}){
+ async open(dem,{baseUrl,baseOpacity=1,hydro,animator,exaggeration=1,onStatus=()=>{}}={}){
   if(!dem)throw Error('Importa primero un MDT real para mostrar el relieve en 3D.');
   await this.init();this.dem=dem;this.hydro=hydro;this.animator=animator;
   this.baseUrl=baseUrl;this.baseOpacity=baseOpacity;this.exaggeration=exaggeration;this.status=onStatus;
@@ -173,7 +198,7 @@ export class Terrain3D {
   this.target=new T.Vector3(0,Math.max(0,(hi-lo)*this.exaggeration/this.unit)*.24,0);
  }
  setExaggeration(v){
-  this.exaggeration=Math.max(.5,Math.min(15,+v||3));
+  this.exaggeration=Math.max(1,Math.min(3,+v||1));
   if(this.dem){const theta=this.theta,phi=this.phi,radius=this.radius,oldTarget=this.target?.clone();this.construct();if(oldTarget){this.target.x=oldTarget.x;this.target.z=oldTarget.z;}this.theta=theta;this.phi=phi;this.radius=radius;this.updateCamera();if(this.baseUrl)this.loadTexture(this.baseUrl);}
  }
  setOpacity(v){this.baseOpacity=Math.max(0,Math.min(1,+v));if(this.textureMesh)this.textureMesh.material.opacity=this.baseOpacity;}
