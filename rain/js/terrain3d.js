@@ -67,7 +67,7 @@ export class Terrain3D {
  }
  construct(){
   const T=this.THREE,d=this.dem;
-  this.surface?.geometry?.dispose();this.surface?.material?.dispose();
+  this.clearTexture();this.surface?.geometry?.dispose();this.surface?.material?.dispose();
   if(this.surface)this.scene.remove(this.surface);
   if(this.points){this.scene.remove(this.points);this.points.geometry.dispose();this.points.material.dispose();this.points=null;}
   this.cx=d.x0+d.width*d.dx/2;this.cy=d.y0-d.height*d.dy/2;
@@ -96,7 +96,7 @@ export class Terrain3D {
   const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(pos,3));
   geometry.setAttribute('color',new T.BufferAttribute(color,3));geometry.setAttribute('uv',new T.BufferAttribute(uv,2));
   geometry.setIndex(indices);geometry.computeVertexNormals();
-  const mat=new T.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0,side:T.DoubleSide,transparent:true,opacity:this.baseOpacity});
+  const mat=new T.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0,side:T.DoubleSide,transparent:false,opacity:1});
   this.surface=new T.Mesh(geometry,mat);this.scene.add(this.surface);
   this.target=new T.Vector3(0,Math.max(0,(hi-lo)*this.exaggeration/this.unit)*.24,0);
  }
@@ -104,11 +104,12 @@ export class Terrain3D {
   this.exaggeration=Math.max(.5,Math.min(15,+v||3));
   if(this.dem){const theta=this.theta,phi=this.phi,radius=this.radius;this.construct();this.theta=theta;this.phi=phi;this.radius=radius;this.updateCamera();if(this.baseUrl)this.loadTexture(this.baseUrl);}
  }
- setOpacity(v){this.baseOpacity=Math.max(0,Math.min(1,+v));if(this.surface)this.surface.material.opacity=this.baseOpacity;}
+ setOpacity(v){this.baseOpacity=Math.max(0,Math.min(1,+v));if(this.textureMesh)this.textureMesh.material.opacity=this.baseOpacity;}
+ clearTexture(){if(this.textureMesh){this.scene.remove(this.textureMesh);this.textureMesh.material.map?.dispose();this.textureMesh.material.dispose();this.textureMesh=null;}}
  async loadTexture(url){
   if(!this.surface||!this.dem||!url)return;
   const d=this.dem,T=this.THREE,stamp=this.surface,opacity=this.baseOpacity;
-  this.status('Preparando mapa de fondo para el terreno 3D…');
+  this.clearTexture();this.status('Preparando mapa de fondo para el terreno 3D…');
   // Imagen de 1024 px sobre el mismo rectángulo del MDT: composición de teselas web Mercator.
   const lonlat=(x,y)=>{const v=toLatLng(d,x,y);return [v[1],v[0]];};
   const corners=[[d.x0,d.y0],[d.x0+d.width*d.dx,d.y0],[d.x0,d.y0-d.height*d.dy],[d.x0+d.width*d.dx,d.y0-d.height*d.dy]].map(([x,y])=>lonlat(x,y));
@@ -147,8 +148,8 @@ export class Terrain3D {
    }
    uv.needsUpdate=true;
    const tex=new T.CanvasTexture(canvas);tex.colorSpace=T.SRGBColorSpace;
-   stamp.material.map?.dispose();stamp.material.map=tex;stamp.material.vertexColors=false;
-   stamp.material.color.set(0xffffff);stamp.material.opacity=opacity;stamp.material.needsUpdate=true;
+   const textureMaterial=new T.MeshBasicMaterial({map:tex,transparent:true,opacity:opacity,side:T.DoubleSide,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+   this.textureMesh=new T.Mesh(stamp.geometry,textureMaterial);this.scene.add(this.textureMesh);
    this.status('Terreno 3D texturizado con el mapa base seleccionado.');
   }catch(e){this.status('El proveedor no permite usar sus teselas como textura WebGL. El relieve 3D se muestra con colores de altitud.');}
  }
@@ -178,7 +179,7 @@ export class Terrain3D {
  close(){this.running=false;if(this.frame)cancelAnimationFrame(this.frame);this.el.classList.remove('shown');}
  destroy(){
   this.close();window.removeEventListener('resize',this.onResize);
-  this.surface?.geometry.dispose();this.surface?.material.map?.dispose();this.surface?.material.dispose();
+  this.clearTexture();this.surface?.geometry.dispose();this.surface?.material.dispose();
   this.points?.geometry.dispose();this.points?.material.dispose();
   this.renderer?.dispose();this.el.remove();
  }
