@@ -199,7 +199,7 @@ $('imp').onclick=()=>$('jsonFile').click();
 $('jsonFile').onchange=async e=>{try{let o=JSON.parse(await e.target.files[0].text());if(!Array.isArray(o.items))throw Error('Sin items');if(!confirm('Sustituir catálogo local?'))return;const seen=new Set;data=o.items.filter(x=>{let k=canon(x);if(seen.has(k))return false;seen.add(k);return true});persist();selected=data[0]?.id;category='Todas';providerFilter='';hostFilter='';render();select(selected)}catch(e){alert(e.message)}};
 if(matchMedia('(max-width:790px)').matches)document.body.classList.add('closed');
 try{data=JSON.parse(localStorage.getItem(key))||[]}catch{}
-fetch('catalog.json').then(x=>x.json()).then(x=>{if(!data.length){data=x.items;persist()}selected=data[0]?.id;render();select(selected)}).catch(e=>{setPreviewStatus('No se pudo cargar catálogo: '+e.message);render()});
+fetch('catalog.json').then(x=>x.json()).then(x=>{if(!data.length)data=x.items;const drive=data.find(i=>i.url==='https://tiles.openfreemap.org/styles/liberty');if(drive&&drive.status==='pendiente'){drive.status='aprobada';drive.note=drive.note||'Mapa base validado en OcToS Drive; la integración en Layers requiere revisión visual.'}persist();selected=data[0]?.id;render();select(selected)}).catch(e=>{setPreviewStatus('No se pudo cargar catálogo: '+e.message);render()});
 
 
 /* OcToS Layers V2.7: preview thumbnails, background library and original Drive style */
@@ -292,7 +292,7 @@ ensure3d=function(){
  if(map3d)return;if(!window.maplibregl)throw Error('MapLibre no disponible');
  let lon=-3.6,lat=40.5,zoom=6;if(map){const c=map.getCenter();lon=c.lng;lat=c.lat;zoom=map.getZoom()}
  map3d=new maplibregl.Map({container:'map3d',style:baseConfig().url&&baseConfig().engine==='maplibre'?baseConfig().url:basemapOptions[0].url,center:[lon,lat],zoom,pitch:terrainMode?60:0,bearing:0,antialias:true,maxPitch:85,renderWorldCopies:false,attributionControl:true});
- map3d.on('style.load',()=>{styleId=baseChoice;minimalizeStyle();addTerrain();installFocus();});
+ styleId=baseChoice;map3d.on('style.load',()=>{styleId=baseChoice;minimalizeStyle();addTerrain();installFocus();});
  map3d.on('moveend',updateScale);map3d.on('zoomend',updateScale);
  map3d.on('error',e=>{if(e.error)setPreviewStatus('Mapa: '+e.error.message)});
 };
