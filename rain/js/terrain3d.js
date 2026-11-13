@@ -199,12 +199,12 @@ export class Terrain3D {
  }
  setExaggeration(v){
   this.exaggeration=Math.max(1,Math.min(3,+v||1));
-  if(this.dem){const theta=this.theta,phi=this.phi,radius=this.radius,oldTarget=this.target?.clone();this.construct();if(oldTarget){this.target.x=oldTarget.x;this.target.z=oldTarget.z;}this.theta=theta;this.phi=phi;this.radius=radius;this.updateCamera();if(this.baseUrl)this.loadTexture(this.baseUrl);}
+  if(this.dem){const theta=this.theta,phi=this.phi,radius=this.radius,oldTarget=this.target?.clone();this.construct();if(oldTarget){this.target.x=oldTarget.x;this.target.z=oldTarget.z;}this.theta=theta;this.phi=phi;this.radius=radius;this.updateCamera();if(this.baseUrl)this.loadTexture(this.baseUrl);if(this.coverUrl)this.setCoverOverlay(this.coverUrl,this.coverOpacity);}
  }
  clearCoverTexture(){if(this.coverMesh){this.scene.remove(this.coverMesh);this.coverMesh.material.map?.dispose();this.coverMesh.material.dispose();this.coverMesh=null;}}
  setCoverOpacity(v){this.coverOpacity=Math.max(0,Math.min(1,Number(v)||0));if(this.coverMesh)this.coverMesh.material.opacity=this.coverOpacity;}
  async setCoverOverlay(url,opacity=.65){
-  this.coverOpacity=opacity;const token=++this.coverRequest;
+  this.coverUrl=url||null;this.coverOpacity=opacity;const token=++this.coverRequest;
   this.clearCoverTexture();
   if(!url||!this.surface||!this.THREE)return;
   const T=this.THREE,geom=this.surface.geometry;
