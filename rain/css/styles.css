@@ -174,3 +174,21 @@ body.view3d #legend{display:none}
  .layer-menu>summary{padding:7px 8px;font-size:11px}
  .stack-layer-controls{margin-left:55px}
 }
+
+
+/* V9.5 · Resumen del grupo 06 y cabecera adaptable */
+.preset-section .preset-line{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+ padding:5px 0;border-bottom:1px solid #39393c;font-size:11px;color:#d7d7db}
+.preset-section .preset-line span{flex:1}
+.preset-section .preset-line small{flex:none;color:#ffbc81;font-variant-numeric:tabular-nums}
+.preset-section>button{margin-top:9px}
+@media(max-width:530px){
+ header{gap:4px;padding-inline:5px}
+ header>.icon{display:none}
+ header b{font-size:16px;letter-spacing:0}
+ header small{display:none}
+ .header-actions{gap:4px}
+ .layer-menu>summary,.base-menu>summary{padding:7px 6px;font-size:10px}
+ #gps{padding:7px}
+ .layer-panel{right:-62px}
+}
