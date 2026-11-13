@@ -11,3 +11,30 @@
 .flow-actions button{font-size:11px;padding:9px 4px;text-align:center}
 .flow-guide-status{font-size:11px;line-height:1.5;white-space:pre-wrap;color:#dceef7;border-left:3px solid #54bcdd;padding:10px;background:#20343d;margin:12px 0}
 .flow-particles{mix-blend-mode:screen}
+
+/* OcToS Rain V6 · selector de mapas y catálogo de servicios transparentes */
+.base-picker{margin-left:auto;display:flex;flex-direction:column;gap:2px;min-width:190px;width:220px;flex:none}
+.base-picker label{font-size:10px;color:#c4c4c8;margin:0;display:flex;justify-content:space-between;gap:6px}
+.base-picker select{margin:0;width:100%;font-size:12px;padding:5px 8px;min-height:26px}
+.base-picker input[type=range]{width:100%;height:12px;accent-color:var(--orange)}
+.base-picker output{color:#ffac6c;white-space:nowrap}
+.official-services{border-top:1px solid #565056;padding-top:10px}
+.official-services>summary{color:#ffc086}
+.service-section{background:#29292b;border:1px solid #47474b;border-radius:7px;margin:8px 0;padding:8px}
+.service-section>summary{font-size:11px;color:#f6f6f6;padding:2px 0 8px;font-weight:650;cursor:pointer}
+.catalog-service{border-top:1px solid #414146;padding:6px 1px}
+.catalog-service>summary{font-size:11px;color:#ededf0;letter-spacing:0;font-weight:500;padding:4px 0;cursor:pointer;overflow-wrap:anywhere}
+.catalog-service .hint{margin:4px 0 8px}
+.catalog-layer-row{border-top:1px solid #3c3c40;padding:6px 0 9px;display:grid;grid-template-columns:1fr 38px;align-items:center;column-gap:8px}
+.catalog-layer-row label{grid-column:1/-1;display:flex;gap:7px;align-items:flex-start;font-size:11px;margin:0 0 4px;cursor:pointer}
+.catalog-layer-row label input{width:14px;min-width:14px;accent-color:#ff891f;margin:2px 0 0}
+.catalog-layer-row span{overflow-wrap:anywhere}
+.catalog-layer-row input[type=range]{grid-column:1;margin:0;width:100%;accent-color:#ff891f}
+.catalog-layer-row small{grid-column:2;text-align:right;color:#ffb579}
+#thematicCatalog .official-services{margin:5px 0 12px}
+@media(max-width:760px){
+ .base-picker{width:130px;min-width:110px;gap:0}
+ .base-picker label{font-size:9px}
+ .base-picker select{font-size:10px;padding:4px 5px;min-height:25px}
+ header{gap:6px}
+}
