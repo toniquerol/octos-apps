@@ -4,9 +4,10 @@ import{extractStreams}from'./streams.js';
 import{loadVisualTiff}from'./image-tiff.js';
 import{mosaic}from'./mosaic.js';
 import{FlowParticles}from'./flow-particles.js';
+import{Terrain3D}from'./terrain3d.js';
 import{officialCatalog}from'./catalog.js';
 import{loadDEM,toLatLng,fromLatLng,cellAt,cellCenter}from'./dem.js';import{hillshade}from'./terrain.js';import{raster,demBounds,inside,maskGeometry}from'./render.js';import{grade}from'./grading.js';
-const $=id=>document.getElementById(id),say=s=>$('status').textContent=s,fmt=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('es-ES',{maximumFractionDigits:d}):'—';let dem,terrain,hydro,grading,mask,worker,abort,mode='',points=[],drawLayer,vertices=[],crop,profile=[],features=[],rows=[],rasterLayer,profileMarker,lastBasin,visualLayer,flowAnimator,zoneMode='',zonePts=[],zoneLayer,zoneBounds,zoneMarker;const map=L.map('map',{zoomControl:false}).setView([40.1,-3.5],6);L.control.zoom({position:'topright'}).addTo(map);L.control.scale({imperial:false}).addTo(map);
+const $=id=>document.getElementById(id),say=s=>$('status').textContent=s,fmt=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('es-ES',{maximumFractionDigits:d}):'—';let dem,terrain,hydro,grading,mask,worker,abort,mode='',points=[],drawLayer,vertices=[],crop,profile=[],features=[],rows=[],rasterLayer,profileMarker,lastBasin,visualLayer,flowAnimator,terrain3d,zoneMode='',zonePts=[],zoneLayer,zoneBounds,zoneMarker;const map=L.map('map',{zoomControl:false}).setView([40.1,-3.5],6);L.control.zoom({position:'topright'}).addTo(map);L.control.scale({imperial:false}).addTo(map);
 // V6: panes fijos para evitar que las capas oficiales queden detrás del fondo.
 for(const [name,z] of [['rainLidarPane',270],['rainVisualPane',310],['rainAnalysisPane',350],['rainThematicPane',480],['rainVectorPane',490]]){
  if(!map.getPane(name)){const pane=map.createPane(name);pane.style.zIndex=String(z);if(name==='rainThematicPane')pane.style.pointerEvents='none';}
@@ -31,15 +32,15 @@ function base(){
  baseLayer.on('tileerror',()=>say('Alguna tesela del mapa base no está disponible. Prueba otro mapa base.'));
 }
 base();
-$('base').onchange=base;
+$('base').onchange=()=>{base();$('baseMenuName').textContent=$('base').selectedOptions[0]?.textContent||'Mapa';if(terrain3d?.running)terrain3d.loadTexture(bases[$('base').selectedIndex]);};
 $('baseOpacity').oninput=()=>{
  const value=+$('baseOpacity').value;
  baseLayer?.setOpacity(value);
- $('baseOpacityValue').textContent=Math.round(value*100)+' %';
+ $('baseOpacityValue').textContent=Math.round(value*100)+' %';terrain3d?.setOpacity(value);
 };
 const lidar=L.tileLayer(lidarUrl,{pane:'rainLidarPane',opacity:.6,maxZoom:20,maxNativeZoom:18,attribution:'LiDAR © IGN'});$('lidar').onchange=()=>{$('lidar').checked?lidar.addTo(map):lidar.remove();rasterLayer?.bringToFront()};$('lidarOpacity').oninput=e=>lidar.setOpacity(+e.target.value);$('menu').onclick=()=>{document.body.classList.toggle('collapsed');map.invalidateSize()};if(innerWidth<760)document.body.classList.add('collapsed');$('gps').onclick=()=>navigator.geolocation?.getCurrentPosition(p=>map.setView([p.coords.latitude,p.coords.longitude],16),e=>say(e.message));
 function guard(fn){return async(...args)=>{try{await fn(...args)}catch(e){say(e.message);console.error(e)}}}function need(){if(!dem)throw Error('Importa primero un MDT con elevaciones en metros.')}function needHydro(){need();if(!hydro)throw Error('Calcula primero el drenaje.')}let rejectJob;function job(kind){if(worker)throw Error('Hay un cálculo en curso. Cancélalo antes de iniciar otro.');return new Promise((resolve,reject)=>{rejectJob=reject;worker=new Worker(new URL('./worker.js',import.meta.url),{type:'module'});worker.onmessage=({data})=>{if(data.stage)say(data.stage);else{worker.terminate();worker=null;rejectJob=null;data.error?reject(Error(data.error)):resolve(data.result)}};worker.onerror=e=>{worker.terminate();worker=null;rejectJob=null;reject(Error(e.message))};worker.postMessage({kind,dem})})}
-function clearResults(){flowAnimator?.reset();updateFlowControls(false);lastBasin=null;hydro=null;grading=null;mask=null;features=[];profile=[];$('profileBox').hidden=true;for(const r of rows)r.layer.remove();rows=[];$('layers').replaceChildren();rasterLayer?.remove();rasterLayer=null;$('results').textContent=''}
+function clearResults(){terrain3d?.close();$('switch3d').textContent='3D';$('switch3d').setAttribute('aria-pressed','false');$('controls3d').hidden=true;flowAnimator?.reset();updateFlowControls(false);lastBasin=null;hydro=null;grading=null;mask=null;features=[];profile=[];$('profileBox').hidden=true;for(const r of rows)r.layer.remove();rows=[];$('layers').replaceChildren();rasterLayer?.remove();rasterLayer=null;$('results').textContent=''}
 async function load(source){if(worker)throw Error('Cancela la operación actual antes de cargar otro MDT.');abort?.abort();abort=new AbortController();say('Leyendo elevaciones reales…');const next=await loadDEM(source,{maxCells:+$('limit').value,bounds:crop?[crop.getWest(),crop.getSouth(),crop.getEast(),crop.getNorth()]:undefined,signal:abort.signal});clearResults();dem=next;terrain=await job('terrain');$('metadata').textContent=`${dem.source}\n${dem.crs} · ${dem.width} × ${dem.height} celdas\nResolución ${fmt(dem.dx)} × ${fmt(dem.dy)} m\nCotas ${fmt(terrain.min)}–${fmt(terrain.max)} m\n${fmt(terrain.count,0)} celdas válidas. ${dem.resolution.resampled?'Resolución reducida desde '+fmt(dem.resolution.originalX)+' × '+fmt(dem.resolution.originalY)+' m ('+fmt(dem.originalCells,0)+' celdas originales).':'Resolución original conservada.'} ${dem.projectionCaution||''} Precisión: consultar ficha del MDT.`;$('elevation').value=terrain.mean.toFixed(2);$('view').value='data';showRaster();map.fitBounds(demBounds(dem));say('MDT cargado. Pulsa el mapa para consultar una cota.');}
 $('visualTiff').onchange=guard(async e=>{const file=e.target.files[0];if(!file)return;say('Procesando imagen LiDAR de referencia…');const visual=await loadVisualTiff(file);visualLayer?.remove();visualLayer=L.imageOverlay(visual.url,visual.bounds,{pane:'rainVisualPane',opacity:0.65,interactive:false}).addTo(map);rasterLayer?.bringToFront();map.fitBounds(visual.bounds);say('Capa visual EPSG:3857 cargada ('+visual.bands+' bandas). No interviene en el drenaje.');});$('hideVisual').onclick=()=>{visualLayer?.remove();visualLayer=null;say('Capa visual importada ocultada.');};
 // Zona previa: las coordenadas se mantienen siempre en WGS84 para visualización.
@@ -111,7 +112,7 @@ Superficie ${fmt(grading.stats.area)} m²
 Desmonte máximo ${fmt(grading.stats.maxCut)} m
 Terraplén máximo ${fmt(grading.stats.maxFill)} m
 Espesor medio ${fmt(grading.stats.meanThickness)} m`});
-function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}$('geojson').onclick=guard(()=>{if(!features.length)throw Error('No hay geometrías calculadas.');download('octos-rain.geojson',JSON.stringify({type:'FeatureCollection',features}),'application/geo+json')});$('csv').onclick=guard(()=>{need();const lines=profile.length?['distancia_m,cota_m,pendiente_porcentaje,latitud,longitud',...profile.map(p=>[p.distance,Number.isFinite(p.z)?p.z:'',Number.isFinite(p.slope)?p.slope:'',p.lat,p.lng].join(','))]:['magnitud,valor','cota_min_m,'+terrain.min,'cota_max_m,'+terrain.max,'cota_media_m,'+terrain.mean,...Object.entries(grading?.stats||{}).filter(([,v])=>typeof v==='number').map(([k,v])=>k+','+v)];download('octos-rain.csv',lines.join('\n'),'text/csv')});$('elevations').onclick=guard(()=>{need();const lines=['x_m,y_m,cota_m'];for(let i=0;i<dem.data.length;i++)if(Number.isFinite(dem.data[i]))lines.push([...cellCenter(dem,i),dem.data[i]].join(','));download('octos-rain-elevaciones.csv',lines.join('\n'),'text/csv')});$('print').onclick=guard(()=>{need();$('report').textContent=`OcToS Rain V5.2 · ${new Date().toLocaleString('es-ES')}\n${$('metadata').textContent}\n${$('results').textContent}\n${$('profileInfo').textContent}\nAnálisis topográfico orientativo. Sin lluvia, infiltración, alcantarillado o caudales. Los límites del MDT y NoData pueden truncar las cuencas. Resolución de cálculo: la original del MDT. Fuente declarada por el archivo; verificar su ficha técnica.\nMapa: IGN / CNIG. Ráster de cálculo importado por el usuario.`;const chartImage=document.createElement('img');chartImage.src=$('chart').toDataURL();chartImage.style.width='100%';if(profile.length)$('report').append(chartImage);window.print()});
+function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}$('geojson').onclick=guard(()=>{if(!features.length)throw Error('No hay geometrías calculadas.');download('octos-rain.geojson',JSON.stringify({type:'FeatureCollection',features}),'application/geo+json')});$('csv').onclick=guard(()=>{need();const lines=profile.length?['distancia_m,cota_m,pendiente_porcentaje,latitud,longitud',...profile.map(p=>[p.distance,Number.isFinite(p.z)?p.z:'',Number.isFinite(p.slope)?p.slope:'',p.lat,p.lng].join(','))]:['magnitud,valor','cota_min_m,'+terrain.min,'cota_max_m,'+terrain.max,'cota_media_m,'+terrain.mean,...Object.entries(grading?.stats||{}).filter(([,v])=>typeof v==='number').map(([k,v])=>k+','+v)];download('octos-rain.csv',lines.join('\n'),'text/csv')});$('elevations').onclick=guard(()=>{need();const lines=['x_m,y_m,cota_m'];for(let i=0;i<dem.data.length;i++)if(Number.isFinite(dem.data[i]))lines.push([...cellCenter(dem,i),dem.data[i]].join(','));download('octos-rain-elevaciones.csv',lines.join('\n'),'text/csv')});$('print').onclick=guard(()=>{need();$('report').textContent=`OcToS Rain V7 · ${new Date().toLocaleString('es-ES')}\n${$('metadata').textContent}\n${$('results').textContent}\n${$('profileInfo').textContent}\nAnálisis topográfico orientativo. Sin lluvia, infiltración, alcantarillado o caudales. Los límites del MDT y NoData pueden truncar las cuencas. Resolución de cálculo: la original del MDT. Fuente declarada por el archivo; verificar su ficha técnica.\nMapa: IGN / CNIG. Ráster de cálculo importado por el usuario.`;const chartImage=document.createElement('img');chartImage.src=$('chart').toDataURL();chartImage.style.width='100%';if(profile.length)$('report').append(chartImage);window.print()});
 
 // Asistente: mantiene el motor de terreno y los cálculos V3/V4.
 function updateFlowControls(ready){
@@ -130,6 +131,7 @@ $('guidePrepare').onclick=guard(()=>{
  flowAnimator??=new FlowParticles(map);
  const stats=flowAnimator.prepare(dem,hydro,{mask:lastBasin?.mask,count:+$('flowCount').value,speed:+$('flowSpeed').value});
  updateFlowControls(true);
+ if(terrain3d?.running){terrain3d.hydro=hydro;terrain3d.animator=flowAnimator;}
  const warn=lastBasin?.edge?' AVISO: la cuenca llega al borde de los datos y puede estar incompleta.':'';
  $('flowGuideStatus').textContent='Preparado: '+fmt(stats.particles,0)+' partículas; '+fmt(stats.paths,0)+' celdas de emisión. Escorrentía estimada: '+fmt(result.runoffM3,2)+' m³; caudal medio equivalente: '+fmt(result.averageEquivalentM3s,3)+' m³/s.'+warn+' Play reproduce rutas D8, no velocidades físicas.';
  $('results').textContent='ESTUDIO DE LLUVIA · MODELO VOLUMÉTRICO\\nÁrea considerada '+fmt(validArea/10000)+' ha\\nLluvia '+fmt(result.rainMm)+' mm durante '+fmt(result.durationH)+' h\\nCoeficiente '+fmt(result.runoffCoefficient)+'\\nAgua precipitada '+fmt(result.totalM3)+' m³\\nEscorrentía estimada '+fmt(result.runoffM3)+' m³\\nCaudal medio equivalente '+fmt(result.averageEquivalentM3s,3)+' m³/s\\nAnimación topográfica D8: sin cálculo hidráulico de velocidad, calado o inundación.';
@@ -141,6 +143,34 @@ $('flowStop').onclick=()=>{flowAnimator?.pause();flowAnimator?.draw();$('flowGui
 $('flowSpeed').oninput=()=>flowAnimator?.setSpeed(+$('flowSpeed').value);
 $('flowCount').onchange=()=>flowAnimator?.setCount(+$('flowCount').value);
 updateFlowControls(false);
+
+// V7: botón 2D/3D. Mantiene el mismo MDT de cálculo y reutiliza el mapa seleccionado.
+$('switch3d').onclick=guard(async()=>{
+ if(terrain3d?.running){
+  terrain3d.close();$('controls3d').hidden=true;$('switch3d').textContent='3D';
+  $('switch3d').setAttribute('aria-pressed','false');say('Vista 2D restaurada.');map.invalidateSize();return;
+ }
+ need();
+ $('switch3d').disabled=true;say('Preparando terreno real en 3D…');
+ try{
+  terrain3d??=new Terrain3D(document.querySelector('.mapwrap'));
+  await terrain3d.open(dem,{baseUrl:bases[$('base').selectedIndex],baseOpacity:+$('baseOpacity').value,
+   hydro,animator:flowAnimator,exaggeration:+$('terrainExag').value,
+   onStatus:message=>{$('terrain3dStatus').textContent=message;}});
+  $('controls3d').hidden=false;$('switch3d').textContent='2D';
+  $('switch3d').setAttribute('aria-pressed','true');
+  say('Terreno 3D activo. Arrastra para rotar y usa la rueda para acercar.');
+ }catch(e){
+  terrain3d?.close();$('controls3d').hidden=true;
+  $('switch3d').setAttribute('aria-pressed','false');$('switch3d').textContent='3D';
+  throw e;
+ }finally{$('switch3d').disabled=false;}
+});
+$('terrainExag').oninput=()=>{
+ const n=+$('terrainExag').value;$('terrainExagValue').textContent=n+'×';
+ terrain3d?.setExaggeration(n);
+};
+$('resetCamera3d').onclick=()=>{if(!terrain3d?.running)return;terrain3d.theta=-.7;terrain3d.phi=1.02;terrain3d.radius=900;terrain3d.updateCamera();};
 
 officialCatalog(map,$('thematicCatalog')||document.querySelector('aside'),()=>{},say);
 
