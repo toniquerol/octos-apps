@@ -201,13 +201,153 @@ if(matchMedia('(max-width:790px)').matches)document.body.classList.add('closed')
 try{data=JSON.parse(localStorage.getItem(key))||[]}catch{}
 fetch('catalog.json').then(x=>x.json()).then(x=>{if(!data.length){data=x.items;persist()}selected=data[0]?.id;render();select(selected)}).catch(e=>{setPreviewStatus('No se pudo cargar catálogo: '+e.message);render()});
 
+
+/* OcToS Layers V2.7: preview thumbnails, background library and original Drive style */
+const basemapOptions=[
+ {id:'drive',name:'OcToS Drive · Liberty',engine:'maplibre',url:'https://tiles.openfreemap.org/styles/liberty',valid:'Validado en OcToS Drive'},
+ {id:'simple',name:'Minimalista · tierra blanca y mar',engine:'maplibre',url:'https://tiles.openfreemap.org/styles/liberty',valid:'Estilo derivado de Drive'},
+ {id:'ign',name:'IGN · Base',engine:'leaflet',url:'https://tms-ign-base.idee.es/1.0.0/IGNBaseTodo/{z}/{x}/{-y}.jpeg',tms:true},
+ {id:'gris',name:'IGN · Gris',engine:'leaflet',url:'https://tms-ign-base.idee.es/1.0.0/IGNBaseGris/{z}/{x}/{-y}.jpeg',tms:true},
+ {id:'pnoa',name:'PNOA · Ortofoto',engine:'leaflet',url:'https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg',tms:true},
+ {id:'relieve',name:'IGN · Relieve',engine:'leaflet',url:'https://tms-relieve.idee.es/1.0.0/relieve/{z}/{x}/{-y}.jpeg',tms:true}
+];
+const basemapPreference='octos-layers-basemap-v27';
+let baseChoice=localStorage.getItem(basemapPreference)||'drive', activeBaseLayer=null, styleId='';
+if(!basemapOptions.some(x=>x.id===baseChoice))baseChoice='drive';
+function baseConfig(){return basemapOptions.find(x=>x.id===baseChoice)||basemapOptions[0]}
+function usesMapLibre(){return terrainMode||baseConfig().engine==='maplibre'}
+function displayCanvas(){const useGL=usesMapLibre();$('map3d').style.display=useGL?'block':'none';$('map').style.display=useGL?'none':'block';if(useGL){if(map3d)requestAnimationFrame(()=>map3d.resize())}else if(map)requestAnimationFrame(()=>map.invalidateSize());updateScale()}
+function tileForLeaflet(x){return x.url}
+function paintBasemaps(){
+ $('basePickerChoices').innerHTML=basemapOptions.map(x=>'<button type="button" data-base="'+esc(x.id)+'" class="'+(x.id===baseChoice?'selected':'')+'">'+esc(x.name)+(x.valid?' · ✓':'')+'</button>').join('');
+ $('basePickerChoices').querySelectorAll('button').forEach(b=>b.onclick=()=>{baseChoice=b.dataset.base;localStorage.setItem(basemapPreference,baseChoice);$('basePickerMenu').hidden=true;$('basePickerButton').setAttribute('aria-expanded','false');paintBasemaps();applyBase()});
+}
+$('basePickerButton').onclick=()=>{const expanded=$('basePickerMenu').hidden;$('basePickerMenu').hidden=!expanded;$('basePickerButton').setAttribute('aria-expanded',String(expanded))};
+paintBasemaps();
+const originalThumbnailURL=thumbnailURL;
+thumbnailURL=x=>x?.thumbData||originalThumbnailURL(x);
+function paintThumbnail(){const x=data.find(y=>y.id===selected),u=x?.thumbData||originalThumbnailURL(x||{});$('thumbImage').hidden=!u;$('thumbPlaceholder').hidden=!!u;if(u)$('thumbImage').src=u}
+const originalSelect=select;
+select=function(id){originalSelect(id);paintThumbnail()};
+const originalSave=save;
+save=function(){originalSave();paintThumbnail()};
+$('thumbButton').onclick=()=>$('thumbUpload').click();
+$('thumbUpload').onchange=async e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ const x=data.find(v=>v.id===selected);if(!x){alert('Guarda primero la ficha');return}
+ if(!file.type.startsWith('image/')){alert('Selecciona una imagen');return}
+ try{
+  const image=await createImageBitmap(file),width=320,height=200,c=document.createElement('canvas');c.width=width;c.height=height;
+  const ctx=c.getContext('2d');ctx.fillStyle='#242424';ctx.fillRect(0,0,width,height);
+  const ratio=Math.min(width/image.width,height/image.height),w=image.width*ratio,h=image.height*ratio;
+  ctx.drawImage(image,(width-w)/2,(height-h)/2,w,h);
+  x.thumbData=c.toDataURL('image/jpeg',.7);
+  image.close?.();persist();paintThumbnail();render();setPreviewStatus('Vista personalizada guardada localmente')
+ }catch(error){alert('No se pudo importar la imagen: '+error.message)}
+ e.target.value='';
+};
+$('clearThumb').onclick=()=>{const x=data.find(v=>v.id===selected);if(x){delete x.thumbData;persist();paintThumbnail();render()}};
+ensureMap=function(){
+ if(map)return;if(!window.L)throw Error('Leaflet no disponible');
+ let center=[40,-3],zoom=6;if(map3d){const c=map3d.getCenter();center=[c.lat,c.lng];zoom=map3d.getZoom()}
+ map=L.map('map',{center,zoom,zoomControl:false,attributionControl:true});map.on('moveend zoomend',updateScale);
+};
+function setLeafletBase(){ensureMap();if(activeBaseLayer)map.removeLayer(activeBaseLayer);const b=baseConfig();
+ if(b.engine==='leaflet'){activeBaseLayer=L.tileLayer(tileForLeaflet(b),{tms:!!b.tms,attribution:'© IGN / CNIG',maxZoom:19});activeBaseLayer.addTo(map)}
+}
+function minimalizeStyle(){
+ if(!map3d||!map3d.isStyleLoaded()||baseChoice!=='simple')return;
+ for(const layer of map3d.getStyle().layers||[]){
+  const id=(layer.id||'').toLowerCase();
+  if(layer.type==='background'){map3d.setPaintProperty(layer.id,'background-color','#fbfcfd');continue}
+  if(layer.type==='fill'&&(id.includes('water')||id.includes('ocean')||id.includes('sea'))){map3d.setLayoutProperty(layer.id,'visibility','visible');map3d.setPaintProperty(layer.id,'fill-color','#b6d6e5');continue}
+  map3d.setLayoutProperty(layer.id,'visibility','none');
+ }
+}
+function addTerrain(){
+ if(!map3d||!map3d.isStyleLoaded())return;
+ if(!terrainMode){map3d.setTerrain(null);return}
+ if(!map3d.getSource('octos-drive-dem'))map3d.addSource('octos-drive-dem',{type:'raster-dem',url:'https://tiles.mapterhorn.com/tilejson.json',tileSize:256});
+ map3d.setTerrain({source:'octos-drive-dem',exaggeration:1.2});
+}
+function installFocus(){
+ if(!map3d||!map3d.isStyleLoaded())return;
+ const x=data.find(v=>v.id===selected);if(!x)return;
+ try{
+  if(map3d.getLayer('focus'))map3d.removeLayer('focus');
+  if(map3d.getSource('focus'))map3d.removeSource('focus');
+  const opacity=Math.max(0,Math.min(1,Number($('opacity').value)/100));
+  let opts=null;
+  if(x.kind==='WMS'&&($('layer').value||x.layer))opts={type:'raster',tiles:[normalizeWms3d(x)],tileSize:256};
+  if(['XYZ','TMS'].includes(x.kind)&&x.url.includes('{z}')){
+   let tileURL=x.url.replaceAll('{-y}','{y}');
+   opts={type:'raster',tiles:[tileURL],tileSize:256,scheme:x.kind==='TMS'?'tms':'xyz'};
+  }
+  if(opts){map3d.addSource('focus',opts);map3d.addLayer({id:'focus',type:'raster',source:'focus',paint:{'raster-opacity':opacity}});setPreviewStatus('Visualizando '+x.kind+' sobre '+baseConfig().name)}
+  else if(x.kind==='STYLE'||x.kind==='TILEJSON'){setPreviewStatus('Recurso de estilo/terreno: revisa su mapa base')}
+  else setPreviewStatus('Vista base disponible; capa sin representación directa');
+ }catch(e){setPreviewStatus('Vista previa: '+e.message)}
+}
+ensure3d=function(){
+ if(map3d)return;if(!window.maplibregl)throw Error('MapLibre no disponible');
+ let lon=-3.6,lat=40.5,zoom=6;if(map){const c=map.getCenter();lon=c.lng;lat=c.lat;zoom=map.getZoom()}
+ map3d=new maplibregl.Map({container:'map3d',style:baseConfig().url&&baseConfig().engine==='maplibre'?baseConfig().url:basemapOptions[0].url,center:[lon,lat],zoom,pitch:terrainMode?60:0,bearing:0,antialias:true,maxPitch:85,renderWorldCopies:false,attributionControl:true});
+ map3d.on('style.load',()=>{styleId=baseChoice;minimalizeStyle();addTerrain();installFocus();});
+ map3d.on('moveend',updateScale);map3d.on('zoomend',updateScale);
+ map3d.on('error',e=>{if(e.error)setPreviewStatus('Mapa: '+e.error.message)});
+};
+function chooseStyle(){
+ ensure3d();const b=baseConfig(),target=b.engine==='maplibre'?b.url:basemapOptions[0].url;
+ if(styleId!==baseChoice){styleId=baseChoice;map3d.setStyle(target)}
+ else if(map3d.isStyleLoaded()){minimalizeStyle();addTerrain();installFocus()}
+}
+function applyBase(){
+ try{
+  if(usesMapLibre()){chooseStyle();displayCanvas();if(map3d)map3d.easeTo({pitch:terrainMode?60:0,duration:350})}
+  else{setLeafletBase();displayCanvas()}
+  preview();
+ }catch(e){setPreviewStatus('Fondo no disponible: '+e.message)}
+}
+const originalPreview=preview;
+preview=function(){
+ const x=data.find(y=>y.id===selected);if(!x){setPreviewStatus('Sin recurso seleccionado');return}
+ if(usesMapLibre()){try{chooseStyle();displayCanvas();installFocus()}catch(e){setPreviewStatus(e.message)};return}
+ setLeafletBase();
+ if(overlay){map.removeLayer(overlay);overlay=null}
+ try{
+  const op=Math.max(0,Math.min(1,Number($('opacity').value)/100));
+  if(x.kind==='WMS'){const layer=$('layer').value||x.layer;if(!layer)throw Error('WMS sin capa identificada');overlay=L.tileLayer.wms(x.url,{layers:layer,format:'image/png',transparent:true,opacity:op,version:'1.3.0'})}
+  else if(['TMS','XYZ'].includes(x.kind)){overlay=L.tileLayer(x.url,{tms:x.kind==='TMS',opacity:op})}
+  else if(x.kind==='WMTS'&&x.url.includes('wmts-mapa-lidar'))overlay=L.tileLayer('https://wmts-mapa-lidar.idee.es/lidar?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=EL.GridCoverageDSM&STYLE=default&FORMAT=image/png&TILEMATRIXSET=GoogleMapsCompatible&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',{opacity:op});
+  else{setPreviewStatus('Fondo disponible; este formato requiere configuración específica');return}
+  overlay.addTo(map);let failures=0;overlay.on('tileerror',()=>{if(++failures===2)setPreviewStatus('Error de teselas o fuera de cobertura')});
+  setPreviewStatus('Cargando '+x.name);requestAnimationFrame(()=>map.invalidateSize());updateScale()
+ }catch(e){setPreviewStatus(e.message)}
+};
+switch3d=function(){
+ terrainMode=!terrainMode;$('toggle3d').setAttribute('aria-pressed',String(terrainMode));
+ try{applyBase()}catch(e){setPreviewStatus(e.message);terrainMode=false}
+ updateScale();
+};
+$('toggle3d').onclick=switch3d;
+$('zoomIn').onclick=()=>usesMapLibre()?map3d?.zoomIn():map?.zoomIn();
+$('zoomOut').onclick=()=>usesMapLibre()?map3d?.zoomOut():map?.zoomOut();
+updateScale=function(){
+ const target=usesMapLibre()?map3d:map;if(!target)return;
+ const c=target.getCenter(),z=target.getZoom(),mpp=156543.03392*Math.cos(c.lat*Math.PI/180)/Math.pow(2,z),distance=mpp*110,power=Math.pow(10,Math.floor(Math.log10(distance))),meters=[1,2,5,10].map(n=>n*power).find(n=>n>=distance)||power*10;
+ const label=meters>=1000?(meters/1000).toLocaleString('es-ES')+' km':Math.round(meters)+' m';
+ $('mapScale').innerHTML='<span>'+label+(terrainMode?' aprox.':'')+'</span><span class="bar" style="width:'+Math.round(meters/mpp)+'px"></span>';
+};
+const previousStatus=$('status').onchange;
+$('status').addEventListener('change',()=>paintThumbnail());
+
 /* V2.5 · Divider drag with persistent desktop widths, no intrusive handles */
 (function(){
  const side=document.querySelector('aside'),list=document.querySelector('.listpanel'),summary=document.querySelector('.aside-summary'),left=$('resizeLeft'),middle=$('resizeMiddle'),rows=$('resizeRows');
- const pref='octos-layers-layout-v25';
+ const pref='octos-layers-layout-v27';
  let saved={};try{saved=JSON.parse(localStorage.getItem(pref))||{}}catch{}
  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
- function apply(){if(matchMedia('(max-width:790px)').matches)return;const total=window.innerWidth;const a=clamp(Number(saved.side)||275,190,Math.min(total*.48,530));const b=clamp(Number(saved.list)||Math.round(total*.32),210,Math.min(total*.60,total-a-270));side.style.width=a+'px';list.style.width=b+'px';summary.style.height=clamp(Number(saved.summary)||225,125,Math.max(145,side.clientHeight-140))+'px'}
+ function apply(){if(matchMedia('(max-width:790px)').matches)return;const total=window.innerWidth;const a=clamp(Number(saved.side)||275,190,Math.min(total*.48,530));const b=clamp(Number(saved.list)||Math.round(total*.24),165,Math.min(total*.40,total-a-270));side.style.width=a+'px';list.style.width=b+'px';summary.style.height=clamp(Number(saved.summary)||225,125,Math.max(145,side.clientHeight-140))+'px'}
  apply();window.addEventListener('resize',apply);
  function handle(div,target,axis,which){
    div.addEventListener('pointerdown',e=>{
@@ -216,7 +356,7 @@ fetch('catalog.json').then(x=>x.json()).then(x=>{if(!data.length){data=x.items;p
      const from=axis==='x'?e.clientX:e.clientY,initial=axis==='x'?target.getBoundingClientRect().width:target.getBoundingClientRect().height;
      const move=event=>{const amount=(axis==='x'?event.clientX:event.clientY)-from;
        if(which==='side'){const max=Math.min(innerWidth*.48,innerWidth-list.getBoundingClientRect().width-270);saved.side=clamp(initial+amount,190,Math.max(190,max))}
-       if(which==='list'){saved.list=clamp(initial+amount,210,Math.max(210,innerWidth-side.getBoundingClientRect().width-270))}
+       if(which==='list'){saved.list=clamp(initial+amount,165,Math.max(165,innerWidth-side.getBoundingClientRect().width-270))}
        if(which==='summary'){saved.summary=clamp(initial+amount,125,Math.max(125,side.clientHeight-125))}
        apply();
      };
