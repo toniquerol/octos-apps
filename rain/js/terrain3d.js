@@ -201,17 +201,25 @@ export class Terrain3D {
   this.exaggeration=Math.max(1,Math.min(3,+v||1));
   if(this.dem){const theta=this.theta,phi=this.phi,radius=this.radius,oldTarget=this.target?.clone();this.construct();if(oldTarget){this.target.x=oldTarget.x;this.target.z=oldTarget.z;}this.theta=theta;this.phi=phi;this.radius=radius;this.updateCamera();if(this.baseUrl)this.loadTexture(this.baseUrl);if(this.coverUrl)this.setCoverOverlay(this.coverUrl,this.coverOpacity);}
  }
- clearCoverTexture(){if(this.coverMesh){this.scene.remove(this.coverMesh);this.coverMesh.material.map?.dispose();this.coverMesh.material.dispose();this.coverMesh=null;}}
+ clearCoverTexture(){if(this.coverMesh){this.scene.remove(this.coverMesh);this.coverMesh.geometry.dispose();this.coverMesh.material.map?.dispose();this.coverMesh.material.dispose();this.coverMesh=null;}}
  setCoverOpacity(v){this.coverOpacity=Math.max(0,Math.min(1,Number(v)||0));if(this.coverMesh)this.coverMesh.material.opacity=this.coverOpacity;}
  async setCoverOverlay(url,opacity=.65){
   this.coverUrl=url||null;this.coverOpacity=opacity;const token=++this.coverRequest;
   this.clearCoverTexture();
   if(!url||!this.surface||!this.THREE)return;
-  const T=this.THREE,geom=this.surface.geometry;
+  const T=this.THREE,sourceGeom=this.surface.geometry;
   const img=new Image();img.src=url;
   try{await img.decode();}catch{throw Error('No se pudo mostrar la clasificación en 3D.');}
-  if(token!==this.coverRequest||!this.surface||this.surface.geometry!==geom)return;
+  if(token!==this.coverRequest||!this.surface||this.surface.geometry!==sourceGeom)return;
   const tex=new T.Texture(img);tex.colorSpace=T.SRGBColorSpace;tex.needsUpdate=true;
+  // UV propios sobre la extensión del DEM, independientes de la reproyección Mercator del fondo.
+  const geom=sourceGeom.clone(),uv=geom.getAttribute('uv'),positions=geom.getAttribute('position');
+  for(let i=0;i<uv.count;i++){
+   const x=this.cx+positions.getX(i)*this.unit,y=this.cy+positions.getZ(i)*this.unit;
+   uv.setXY(i,(x-this.dem.x0)/(this.dem.width*this.dem.dx),
+    1-(this.dem.y0-y)/(this.dem.height*this.dem.dy));
+  }
+  uv.needsUpdate=true;
   const mat=new T.MeshBasicMaterial({map:tex,transparent:true,opacity:this.coverOpacity,depthWrite:false,side:T.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
   this.coverMesh=new T.Mesh(geom,mat);this.scene.add(this.coverMesh);
  }
