@@ -4,7 +4,7 @@
 import {toLatLng} from './dem.js';
 export class Terrain3D {
  constructor(host){
-  this.host=host;this.running=false;this.dem=null;this.hydro=null;this.animator=null;this.exaggeration=3;this.baseUrl='';
+  this.host=host;this.running=false;this.dem=null;this.hydro=null;this.animator=null;this.exaggeration=3;this.baseUrl='';this.textureRequest=0;
   this.el=document.createElement('div');this.el.className='rain-3d-view';
   this.el.setAttribute('aria-label','Terreno en tres dimensiones');
   this.host.append(this.el);
@@ -109,7 +109,7 @@ export class Terrain3D {
  async loadTexture(url){
   if(!this.surface||!this.dem||!url)return;
   const d=this.dem,T=this.THREE,stamp=this.surface,opacity=this.baseOpacity;
-  const requestId=++this.textureRequest||1;
+  const requestId=++this.textureRequest;
   this.clearTexture();this.status('Preparando mapa de fondo para el terreno 3D…');
   // Imagen de 1024 px sobre el mismo rectángulo del MDT: composición de teselas web Mercator.
   const lonlat=(x,y)=>{const v=toLatLng(d,x,y);return [v[1],v[0]];};
