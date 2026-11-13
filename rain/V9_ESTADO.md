@@ -29,3 +29,5 @@ https://centrodedescargas.cnig.es/CentroDescargas/modelos-digitales-elevaciones
 https://centrodedescargas.cnig.es/CentroDescargas/conf/capasVisor.js
 https://www.ign.es/wms-inspire/cuadriculas
 https://visors.icgc.cat/appdownloads/
+
+Auditoría pública: comprobados cabecera V9, gestor de datos, selección de área, carga remota de fixture GeoTIFF y apertura 3D con textura. El WMS de cuadrículas devolvió errores y mostró el aviso previsto. Se ajustó además el encuadre 3D para considerar el desnivel. La revisión no cubre todos los datos reales ni equivale a validar el flujo completo de hojas.

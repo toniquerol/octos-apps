@@ -102,20 +102,20 @@ export class Terrain3D {
  }
  resetCamera(){
   if(!this.dem)return;
-  this.target.set(0,Math.max(0,(this.zMax-this.zMin)*this.exaggeration/this.unit)*.24,0);
+  this.target.set(0,Math.max(0,(this.zMax-this.zMin)*this.exaggeration/this.unit)*.5,0);
   const maxSize=Math.max(this.dem.width*this.dem.dx,this.dem.height*this.dem.dy);
   this.radius=Math.max(300,Math.min(2100,550+250*Math.log10(Math.max(1,maxSize/1000))));
-  this.theta=-.7;this.phi=1.02;this.updateCamera();
+  this.radius=Math.max(this.radius,Math.hypot(850,(this.zMax-this.zMin)*this.exaggeration/this.unit)*1.8);this.camera.far=Math.max(10000,this.radius*5);this.camera.updateProjectionMatrix();this.theta=-.7;this.phi=1.02;this.updateCamera();
  }
  topView(){
   if(!this.dem||!this.target)return;
-  this.target.set(0,Math.max(0,(this.zMax-this.zMin)*this.exaggeration/this.unit)*.2,0);
+  this.target.set(0,Math.max(0,(this.zMax-this.zMin)*this.exaggeration/this.unit)*.5,0);
   this.theta=0;
   this.phi=.015; // nearly vertical, avoids the up-vector singularity
   const d=this.dem,span=Math.max(d.width*d.dx,d.height*d.dy)/this.unit;
   const fov=this.camera.fov*Math.PI/180;
   const verticalSpan=span/Math.max(.55,this.camera.aspect);
-  this.radius=Math.min(6000,Math.max(80,verticalSpan/(2*Math.tan(fov/2))*1.14));
+  this.radius=Math.max(80,verticalSpan/(2*Math.tan(fov/2))*1.14)+(this.zMax-this.zMin)*this.exaggeration/this.unit/2;this.camera.far=Math.max(10000,this.radius*5);this.camera.updateProjectionMatrix();
   this.updateCamera();
  }
  saveView(name='Octos_Rain_V7_6_vista3d.png'){
@@ -195,7 +195,7 @@ export class Terrain3D {
   geometry.setIndex(indices);geometry.computeVertexNormals();
   const mat=new T.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0,side:T.DoubleSide,transparent:false,opacity:1});
   this.surface=new T.Mesh(geometry,mat);this.scene.add(this.surface);
-  this.target=new T.Vector3(0,Math.max(0,(hi-lo)*this.exaggeration/this.unit)*.24,0);
+  this.target=new T.Vector3(0,Math.max(0,(hi-lo)*this.exaggeration/this.unit)*.5,0);
  }
  setExaggeration(v){
   this.exaggeration=Math.max(1,Math.min(3,+v||1));

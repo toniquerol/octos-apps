@@ -6,7 +6,7 @@ import{loadVisualTiff}from'./image-tiff.js';
 import{mosaic}from'./mosaic.js';
 import{FlowParticles}from'./flow-particles.js';
 import{CATEGORIES,DEFAULT_C,clampCoefficients,loadCoverGeoTIFF,analyzeCover,overlayCover}from'./landcover.js';
-import{Terrain3D}from'./terrain3d.js?v=9';
+import{Terrain3D}from'./terrain3d.js?v=9.2';
 import{officialCatalog}from'./catalog.js';
 import{loadDEM,toLatLng,fromLatLng,cellAt,cellCenter}from'./dem.js';import{hillshade}from'./terrain.js';import{raster,demBounds,inside,maskGeometry}from'./render.js';import{grade}from'./grading.js';
 const $=id=>document.getElementById(id),say=s=>$('status').textContent=s,fmt=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('es-ES',{maximumFractionDigits:d}):'—';let dem,terrain,hydro,grading,mask,worker,abort,mode='',points=[],drawLayer,vertices=[],crop,profile=[],features=[],rows=[],rasterLayer,profileMarker,lastBasin,visualLayer,flowAnimator,terrain3d,zoneMode='',zonePts=[],zoneLayer,zoneBounds,zoneMarker;const map=L.map('map',{zoomControl:false}).setView([40.1,-3.5],6);L.control.zoom({position:'topright'}).addTo(map);L.control.scale({imperial:false,position:'bottomleft'}).addTo(map);
