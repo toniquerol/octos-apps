@@ -38,3 +38,40 @@
  .base-picker select{font-size:10px;padding:4px 5px;min-height:25px}
  header{gap:6px}
 }
+
+/* V7 · menú de fondos compacto y vista 3D real del MDT */
+header{position:relative;z-index:1250;overflow:visible}
+.header-actions{margin-left:auto;display:flex;gap:9px;align-items:center;min-width:0}
+.base-menu{position:relative}
+.base-menu>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;white-space:nowrap;border:1px solid #626268;border-radius:8px;background:#303034;padding:9px 12px;font-size:12px;font-weight:650}
+.base-menu>summary::-webkit-details-marker{display:none}
+.base-menu>summary:hover,.base-menu[open]>summary{border-color:var(--orange)}
+#baseMenuName{color:#ffbb85;font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+.base-panel{position:absolute;top:calc(100% + 9px);right:0;width:min(295px,calc(100vw - 22px));background:#27272a;border:1px solid #59595f;border-radius:11px;box-shadow:0 14px 35px #0009;padding:15px;z-index:2200}
+.base-panel label{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:8px 0 5px;font-size:11px}
+.base-panel select{width:100%;margin:3px 0 9px}
+.base-panel input[type=range]{width:100%;margin:0;accent-color:var(--orange)}
+.base-panel output{font-variant-numeric:tabular-nums;color:#ffb879}
+.base-panel .hint{margin:11px 0 0}
+#switch3d{min-width:53px;font-weight:800;background:#303034;border:1px solid #66656a;border-radius:8px;padding:9px 12px;text-align:center}
+#switch3d[aria-pressed=true]{background:#4c341f;border-color:var(--orange);color:#ffb472}
+.rain-3d-view{display:none;position:absolute;inset:0;z-index:530;background:#172431;touch-action:none;overflow:hidden}
+.rain-3d-view.shown{display:block}
+.rain-3d-view canvas{display:block;width:100%;height:100%}
+.controls3d{position:absolute;z-index:720;right:15px;top:15px;background:#24262aef;border:1px solid #5b6669;border-radius:10px;padding:12px;width:min(230px,calc(100% - 30px));box-shadow:0 10px 25px #0007;font-size:11px}
+.controls3d[hidden]{display:none}
+.controls3d strong{display:block;color:#ffbb81;margin-bottom:5px;font-size:12px}
+.controls3d span{display:block;color:#b8c4ca;margin-bottom:9px}
+.controls3d label{display:flex;justify-content:space-between;gap:4px;font-size:11px;margin:8px 0}
+.controls3d input[type=range]{width:100%}
+.controls3d button{width:100%;padding:7px;text-align:center;margin:6px 0}
+.controls3d p{font-size:10px;color:#c2d2de;margin:8px 0 0}
+@media(max-width:760px){
+ header{padding:6px 8px;gap:5px}
+ .header-actions{gap:5px}
+ .base-menu>summary{padding:7px 8px;gap:4px;font-size:11px}
+ #baseMenuName{display:none}
+ #switch3d{min-width:42px;padding:7px 8px;font-size:12px}
+ .base-panel{right:-48px}
+ .controls3d{top:auto;bottom:90px;right:10px;width:min(205px,55vw)}
+}
