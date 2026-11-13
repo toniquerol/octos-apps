@@ -55,7 +55,7 @@ export class Terrain3D {
   this.radius=Math.max(300,Math.min(2100,550+250*Math.log10(Math.max(1,maxSize/1000))));
   this.updateCamera();this.resize();
   this.running=true;this.tick();
-  await this.loadTexture(baseUrl);
+  this.loadTexture(baseUrl).catch(e=>this.status('Textura no disponible: '+e.message));
  }
  mapPoint(i,t=0){
   const d=this.dem;const j=this.hydro?.receiver?.[i]??-1;
@@ -109,6 +109,7 @@ export class Terrain3D {
  async loadTexture(url){
   if(!this.surface||!this.dem||!url)return;
   const d=this.dem,T=this.THREE,stamp=this.surface,opacity=this.baseOpacity;
+  const requestId=++this.textureRequest||1;
   this.clearTexture();this.status('Preparando mapa de fondo para el terreno 3D…');
   // Imagen de 1024 px sobre el mismo rectángulo del MDT: composición de teselas web Mercator.
   const lonlat=(x,y)=>{const v=toLatLng(d,x,y);return [v[1],v[0]];};
@@ -128,13 +129,15 @@ export class Terrain3D {
    const px=(x-bbox[0])/(bbox[2]-bbox[0])*width,py=(y-bbox[1])/(bbox[3]-bbox[1])*height;
    const tw=width/(bbox[2]-bbox[0]),th=height/(bbox[3]-bbox[1]);
    tasks.push(new Promise(resolve=>{
-    const img=new Image();img.crossOrigin='anonymous';
-    img.onload=()=>{try{ctx.drawImage(img,px,py,tw+.7,th+.7);painted++;}catch{}resolve();};
-    img.onerror=()=>resolve();img.src=src;
+    const img=new Image();img.crossOrigin='anonymous';let settled=false;
+    const finish=()=>{if(!settled){settled=true;clearTimeout(timeout);resolve();}};
+    const timeout=setTimeout(()=>{img.onload=null;img.onerror=null;finish();},6000);
+    img.onload=()=>{if(!settled){try{ctx.drawImage(img,px,py,tw+.7,th+.7);painted++;}catch{}}finish();};
+    img.onerror=finish;img.src=src;
    }));
   }
   await Promise.all(tasks);
-  if(this.surface!==stamp)return;
+  if(this.surface!==stamp||this.textureRequest!==requestId)return;
   if(!painted){this.status('Textura 3D no disponible desde ese servicio. Se mantiene el relieve con sombreado.');return;}
   try{
    // Si el servidor no permite CORS, la comprobación detecta canvas contaminado.
