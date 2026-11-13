@@ -92,6 +92,10 @@ export function initLayerStack(map,host,onStatus=()=>{}){
  function registerVector(layer,name,key,color='#ff891f'){
   return register({id:'vector:'+key,name,type:'vector',layer,opacity:1,visible:true,color});
  }
+ function syncExternal(key,opacity){
+  const entry=records.find(x=>x.id==='catalog:'+key);
+  if(entry){setOpacity(entry,opacity);paint();}
+ }
  function unregister(key){
   const id=key.startsWith('catalog:')||key.startsWith('vector:')?key:'catalog:'+key;
   records=records.filter(x=>x.id!==id);syncOrder();paint();
@@ -109,5 +113,5 @@ export function initLayerStack(map,host,onStatus=()=>{}){
   });
   register(entry);
  }
- return {registerExternal,registerVector,unregister,refresh:paint,getLayers:()=>records.map(x=>({id:x.id,name:x.name,opacity:x.opacity,visible:x.visible}))};
+ return {registerExternal,registerVector,unregister,syncExternal,refresh:paint,getLayers:()=>records.map(x=>({id:x.id,name:x.name,opacity:x.opacity,visible:x.visible}))};
 }
