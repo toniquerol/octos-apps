@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><meta charset="utf-8"><meta name="description" content="OcToS Aero V1: visualizador 3D de flujo aproximado para carrocerías GLB. Procesamiento local, partículas y múltiples vistas. No CFD."><meta name="viewport" content="width=device-width,initial-scale=1"><!-- Three.js 0.170.0 and example modules.
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="description" content="OcToS Aero V2: visualizador 3D de flujo aproximado para carrocerías GLB. Procesamiento local, partículas y múltiples vistas. No CFD."><meta name="viewport" content="width=device-width,initial-scale=1"><!-- Three.js 0.170.0 and example modules.
 The MIT License
 
 Copyright © 2010-2024 three.js authors
@@ -22,9 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 -->
-<title>OcToS Aero · V1.0</title><style>
+<title>OcToS Aero · V2.0</title><style>
 *{box-sizing:border-box}body{margin:0;background:#0e0e10;color:#f1f1ef;font:13px system-ui,Segoe UI,sans-serif}header{height:66px;border-bottom:1px solid #303137;display:flex;align-items:center;padding:0 24px;gap:20px}header b{font-size:24px;letter-spacing:3px}header b span{color:#ff6a1a}header small{color:#95969e;letter-spacing:2px}button,.file{background:#25262b;color:#eee;border:1px solid #3c3e45;border-radius:6px;padding:9px 12px;font:inherit;cursor:pointer}button:hover,.file:hover{border-color:#ff6a1a}.primary{background:#ff6a1a;color:#141414;border-color:#ff6a1a;font-weight:700}header .file{margin-left:auto}main{display:flex;height:calc(100vh - 119px)}aside{width:252px;flex-shrink:0;padding:22px 18px;overflow:auto;border-right:1px solid #303137}h2{font-size:11px;letter-spacing:2px;color:#ff995e;margin:0 0 16px}section{padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid #292b30}label{display:block;color:#c1c3cb;margin:12px 0 6px;font-size:12px}input[type=range]{width:100%;accent-color:#ff6a1a}input[type=number],select{background:#202127;color:#eee;border:1px solid #3b3d46;border-radius:5px;padding:7px;width:100%}input[type=checkbox]{accent-color:#ff6a1a}.row{display:flex;gap:6px}.row>*{flex:1;min-width:0}.hint{font-size:11px;line-height:1.6;color:#9396a1}.stat{font-size:12px;color:#c6c8cf;line-height:1.9}#stage{position:relative;flex:1;min-width:0;overflow:hidden;background:#11151b}canvas{position:absolute;inset:0;width:100%;height:100%}#panels{position:absolute;inset:0;display:grid;pointer-events:none}.view{position:relative;border:1px solid #31384255}.view select{position:absolute;top:14px;left:15px;width:126px;pointer-events:auto;background:#151a22d9;font-size:11px}.view small{position:absolute;right:16px;top:20px;color:#717e90;font-size:10px;letter-spacing:1px}#badge{position:absolute;bottom:18px;left:20px;color:#abb6c5;font-size:11px;background:#11151bca;padding:9px 12px;border:1px solid #313c4b;border-radius:5px;pointer-events:none}footer{height:53px;display:flex;align-items:center;gap:12px;padding:0 20px;border-top:1px solid #303137}#status{flex:1;font-size:12px;color:#b8bec7}#status.error{color:#ffad86}#fps{font:11px monospace;color:#929daa}#filename{overflow-wrap:anywhere;color:#eee;margin-bottom:7px}button:focus-visible,select:focus-visible{outline:2px solid #ff6a1a}#file{display:none}@media(max-width:750px){aside{width:192px;padding:15px 12px}header{padding:0 12px;gap:10px}header small{display:none}#badge{font-size:9px;left:8px}footer{padding:0 10px}#status{font-size:10px}}
-</style><header><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V1.0</small><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></header><main><aside><section><h2>01 / VEHÍCULO</h2><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label>Corregir orientación · +90°</label><div class="row"><button data-axis="x">X</button><button data-axis="y">Y</button><button data-axis="z">Z</button></div><p class="hint">Morro hacia −X. Cada giro vuelve a centrar el vehículo y apoyarlo en el suelo.</p></section><section><h2>02 / FLUJO VISUAL</h2><label for="quality">Partículas / consumo</label><select id="quality"><option value="400">Bajo · 400 partículas</option><option value="900">Medio · 900 partículas</option><option value="1600">Alto · 1.600 partículas</option></select><label for="speed">Velocidad de animación <span id="speedval">1×</span></label><input id="speed" type="range" min="0.2" max="2.5" value="1" step="0.1"><label><input id="lines" type="checkbox" checked> Mostrar trayectorias</label><label><input id="body" type="checkbox" checked> Mostrar carrocería</label><label><input id="grid" type="checkbox" checked> Rejilla del suelo</label></section><section><h2>03 / VISTAS</h2><label for="layout">Distribución</label><select id="layout"><option value="1">Una vista</option><option value="2">Dos vistas</option><option value="4">Cuatro vistas</option></select><button id="frame" style="width:100%;margin-top:12px">Reencuadrar cámaras</button><p class="hint">Arrastrar: orbitar en 3D.<br>Rueda: acercar / alejar.<br>El aire avanza de −X a +X.</p></section><p class="hint">Envolvente por secciones de la malla. No representa presión, fuerzas ni turbulencia física.</p></aside><div id="stage"><div id="panels"></div><div id="badge">SIMULACIÓN VISUAL APROXIMADA · NO CFD</div></div></main><footer><button id="play" class="primary">Ⅱ Pausar</button><button id="reset">↺ Reiniciar</button><span id="status" role="status">Preparando escena…</span><span id="fps">— FPS</span></footer><script>const THREE=(()=>{/**
+#flowlegend{position:absolute;left:20px;bottom:62px;z-index:2;display:flex;gap:14px;align-items:center;color:#94aab8;font:10px system-ui;letter-spacing:1px;pointer-events:none}#flowlegend b{color:#c2dbe1;font-weight:500}#particlecount{padding:5px 8px;border:1px solid #3b505d;border-radius:4px;background:#101820cc}aside{scrollbar-width:thin;scrollbar-color:#39464f #12161b}section{margin-bottom:15px;padding-bottom:15px}#badge{font-size:10px;color:#8296a6;border-color:#2d424e}header{background:#101216}header small{font-size:10px}input[type=range]{height:14px}.view select{max-width:calc(100% - 30px)}.view small{display:none}@media(max-width:750px){#flowlegend{left:10px;gap:8px;font-size:8px}#flowlegend b{display:none}}
+</style><header><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V2.0</small><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></header><main><aside><section><h2>01 / VEHÍCULO</h2><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label>Corregir orientación · +90°</label><div class="row"><button data-axis="x">X</button><button data-axis="y">Y</button><button data-axis="z">Z</button></div><p class="hint">Morro hacia −X. Cada giro vuelve a centrar el vehículo y apoyarlo en el suelo.</p></section><section><h2>02 / FLUJO VISUAL</h2><label for="quality">Densidad de partículas</label><select id="quality"><option value="2000">Ligero · 2.000</option><option value="6000" selected>Equilibrado · 6.000</option><option value="12000">Denso · 12.000</option><option value="24000">Máximo · 24.000</option></select>
+<label for="flowmode">Representación</label><select id="flowmode"><option value="both">Partículas + estelas</option><option value="trails">Solo estelas</option><option value="points">Solo partículas</option></select>
+<label for="pointsize">Tamaño fino · píxeles</label><input id="pointsize" type="range" min="1" max="3" step="0.1" value="1.6">
+<label for="trail">Longitud de estela</label><input id="trail" type="range" min="0.3" max="2.5" step="0.1" value="1">
+<label for="opacity">Intensidad del flujo</label><input id="opacity" type="range" min="0.2" max="1" step="0.05" value="0.8">
+<label for="palette">Color de trazadores</label><select id="palette"><option value="#b8e9ec">Hielo</option><option value="#e5edf2">Perla</option><option value="#ffb16d">Ámbar</option></select>
+<label for="focus">Zona de emisión</label><select id="focus"><option value="all">Anchura completa</option><option value="center">Franja central</option></select><label for="speed">Velocidad de animación <span id="speedval">1×</span></label><input id="speed" type="range" min="0.2" max="2.5" value="1" step="0.1"><label><input id="lines" type="checkbox"> Guías de trayectoria</label><label><input id="tunnel" type="checkbox" checked> Marco del túnel</label><label><input id="body" type="checkbox" checked> Mostrar carrocería</label><label><input id="grid" type="checkbox" checked> Rejilla del suelo</label></section><section><h2>03 / VISTAS</h2><label for="layout">Distribución</label><select id="layout"><option value="1">Una vista</option><option value="2">Dos vistas</option><option value="4">Cuatro vistas</option></select><button id="frame" style="width:100%;margin-top:12px">Reencuadrar cámaras</button><p class="hint">Arrastrar: orbitar en 3D.<br>Rueda: acercar / alejar.<br>El aire avanza de −X a +X.</p></section><p class="hint">Envolvente por secciones de la malla. No representa presión, fuerzas ni turbulencia física.</p></aside><div id="stage"><div id="flowlegend"><b>FLUJO / VISUAL</b><span id="particlecount">6.000 TRAZADORES</span><span>−X → +X</span></div><div id="panels"></div><div id="badge">SIMULACIÓN VISUAL APROXIMADA · NO CFD</div></div></main><footer><button id="play" class="primary">Ⅱ Pausar</button><button id="reset">↺ Reiniciar</button><span id="status" role="status">Preparando escena…</span><span id="fps">— FPS</span></footer><script>const THREE=(()=>{/**
  * @license
  * Copyright 2010-2024 Three.js Authors
  * SPDX-License-Identifier: MIT
@@ -60698,16 +60705,91 @@ function addPrimitiveAttributes( geometry, primitiveDef, parser ) {
 
 return { GLTFLoader };
 
-})();(()=>{'use strict';
+})();// GPU tracers: immutable path atlas, small soft sprites and tapered line trails.
+// This is a visual transport renderer, not a fluid solver.
+const AeroFlow = (() => {
+  const T = THREE;
+  const vertex = `
+    uniform sampler2D atlas;
+    uniform vec2 atlasSize;
+    uniform float time, size, pixelRatio, trailLength, modelLength, opacity;
+    uniform vec3 tint;
+    attribute float track, phase, rate, age;
+    varying float alpha;
+    varying vec3 color;
+    vec3 samplePath(float t) {
+      float s = clamp(t, 0.0, 1.0) * (atlasSize.x - 1.0);
+      float j = floor(s);
+      vec2 uv = vec2((j + 0.5) / atlasSize.x, (track + 0.5) / atlasSize.y);
+      vec3 a = texture2D(atlas, uv).xyz;
+      vec3 b = texture2D(atlas, vec2(min(j + 1.5, atlasSize.x - 0.5) / atlasSize.x, uv.y)).xyz;
+      return mix(a, b, fract(s));
+    }
+    void main() {
+      float head = fract(phase + time * 0.072 * rate);
+      float t = head - age * trailLength;
+      vec3 p = samplePath(t);
+      vec4 mv = modelViewMatrix * vec4(p, 1.0);
+      gl_Position = projectionMatrix * mv;
+      float perspectiveScale = projectionMatrix[3][3] == 0.0 ? clamp(modelLength * 2.0 / max(-mv.z, 0.001), 0.65, 1.25) : 1.0;
+      gl_PointSize = clamp(size * pixelRatio * perspectiveScale, 1.0, 3.2 * pixelRatio);
+      float fade = smoothstep(0.0, 0.045, t) * (1.0 - smoothstep(0.94, 1.0, t));
+      alpha = fade * pow(1.0 - age, 1.6) * opacity * step(0.0, t);
+      color = mix(tint, vec3(1.0, 0.48, 0.19), step(0.94, fract(track * 0.381966)) * 0.8);
+    }`;
+  const pointFragment = `varying float alpha; varying vec3 color;
+    void main(){vec2 p=gl_PointCoord*2.0-1.0;float d=dot(p,p);if(d>1.0)discard;
+      gl_FragColor=vec4(color,alpha*exp(-2.4*d)*(1.0-smoothstep(0.65,1.0,d)));}`;
+  const trailFragment = `varying float alpha; varying vec3 color;
+    void main(){gl_FragColor=vec4(color,alpha*0.38);}`;
+
+  function create(paths, tracks, steps, count, length, pixelRatio) {
+    const rgba = new Float32Array(tracks * steps * 4);
+    for (let i=0; i<tracks*steps; i++) rgba.set(paths.subarray(i*3,i*3+3),i*4);
+    const atlas = new T.DataTexture(rgba,steps,tracks,T.RGBAFormat,T.FloatType);
+    atlas.needsUpdate=true;
+    const uniforms={atlas:{value:atlas},atlasSize:{value:new T.Vector2(steps,tracks)},time:{value:0},size:{value:1.6},pixelRatio:{value:pixelRatio},trailLength:{value:.018},modelLength:{value:length},opacity:{value:.82},tint:{value:new T.Color(0xb8e9ec)}};
+    function geometry(n,trail) {
+      const stride=trail?6:1, total=n*stride, g=new T.BufferGeometry();
+      const track=new Float32Array(total),phase=new Float32Array(total),rate=new Float32Array(total),age=new Float32Array(total);
+      for(let i=0;i<n;i++) for(let j=0;j<stride;j++) {
+        const k=i*stride+j;
+        track[k]=i%tracks;
+        phase[k]=(i*.61803398875)%1;
+        rate[k]=.86+((i*73)%101)/101*.25;
+        age[k]=trail?[0,1/3,1/3,2/3,2/3,1][j]:0;
+      }
+      g.setAttribute('position',new T.BufferAttribute(new Float32Array(total*3),3));
+      for(const [name,data] of Object.entries({track,phase,rate,age}))g.setAttribute(name,new T.BufferAttribute(data,1));
+      return g;
+    }
+    function material(fragment){return new T.ShaderMaterial({uniforms,vertexShader:vertex,fragmentShader:fragment,transparent:true,depthWrite:false,depthTest:true,toneMapped:false});}
+    const points=new T.Points(geometry(count,false),material(pointFragment));
+    const trails=new T.LineSegments(geometry(count,true),material(trailFragment));
+    points.frustumCulled=trails.frustumCulled=false;
+    const group=new T.Group();group.add(trails,points);
+    return {group,points,trails,uniforms,count,
+      setTime(t){uniforms.time.value=t;},
+      configure({size,trailLength,opacity,color,mode}){
+        uniforms.size.value=size;uniforms.trailLength.value=trailLength;uniforms.opacity.value=opacity;uniforms.tint.value.set(color);
+        points.visible=mode!=='trails';trails.visible=mode!=='points';
+      },
+      dispose(){atlas.dispose();points.geometry.dispose();points.material.dispose();trails.geometry.dispose();trails.material.dispose();}
+    };
+  }
+  return {create};
+})();
+(()=>{'use strict';
 const $=id=>document.getElementById(id), T=THREE, stage=$('stage');
-let renderer;try{renderer=new T.WebGLRenderer({antialias:true,powerPreference:'low-power'});}catch(e){$('status').textContent='WebGL2 no disponible. Abre el archivo en Chrome o Edge con aceleración gráfica.';return;}
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));renderer.setClearColor(0x11151b);renderer.outputColorSpace=T.SRGBColorSpace;stage.prepend(renderer.domElement);
+let renderer;try{renderer=new T.WebGLRenderer({antialias:true,powerPreference:'default'});}catch(e){$('status').textContent='WebGL2 no disponible. Abre el archivo en Chrome o Edge con aceleración gráfica.';return;}
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));renderer.setClearColor(0x101820);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1;stage.prepend(renderer.domElement);
 const scene=new T.Scene();scene.add(new T.HemisphereLight(0xd9eaff,0x46414b,2.5));const light=new T.DirectionalLight(0xffffff,3);light.position.set(-3,7,4);scene.add(light);
-const vehicle=new T.Group();scene.add(vehicle);let content=null,paths=null,points=null,lineMesh=null,playing=true,clock=0,last=0,dirty=true,raf=0,loading=false,token=0;
-let L=4.5,H=1.4,W=1.9,extent=8,triangles=0;const SLICES=48,STEPS=180,TRACKS=120;
+const fill=new T.DirectionalLight(0x9acbde,1.4);fill.position.set(4,3,-5);scene.add(fill);
+const vehicle=new T.Group();scene.add(vehicle);let flow=null,scenery=null;let content=null,paths=null,points=null,lineMesh=null,playing=true,clock=0,last=0,dirty=true,raf=0,loading=false,token=0;
+let L=4.5,H=1.4,W=1.9,extent=8,triangles=0;const SLICES=48,STEPS=240,TRACKS=480;
 let sections=[],cameras=[],views=[],orbit=[],frameCount=0,fpsTime=0;
 const ground=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial({color:0x171d25,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.025;scene.add(ground);
-const grid=new T.GridHelper(20,40,0x425061,0x252e3b);grid.position.y=-.015;scene.add(grid);
+const grid=new T.GridHelper(20,40,0x3c505c,0x23323e);grid.position.y=-.015;scene.add(grid);
 const arrow=new T.ArrowHelper(new T.Vector3(1,0,0),new T.Vector3(-6,.06,-2.4),2,0xff6a1a,.3,.17);scene.add(arrow);
 function status(s,error=false){$('status').textContent=s;$('status').classList.toggle('error',error);}
 function wake(){dirty=true;if(!raf)raf=requestAnimationFrame(tick);}
@@ -60723,23 +60805,41 @@ function buildEnvelope(){sections=Array.from({length:SLICES},()=>({h:0,w:0}));tr
 // shoulder; taking the maximum preserves its rectangular obstacle bounds.
 function envelope(x){let h=0,w=0;const shoulder=L*.15;for(let i=0;i<SLICES;i++){const sx=L*(i/(SLICES-1)-.5),d=Math.max(0,Math.abs(x-sx)-L/SLICES),f=Math.exp(-d*d/(shoulder*shoulder));h=Math.max(h,sections[i].h*f);w=Math.max(w,sections[i].w*f);}return [h,w];}
 function buildPaths(){paths=new Float32Array(TRACKS*STEPS*3);const lines=[];let seed=71;const rand=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};let env=Array.from({length:STEPS},(_,i)=>envelope(-extent+2*extent*i/(STEPS-1)));
-for(let p=0;p<TRACKS;p++){const y0=.07+rand()*H*1.9,z0=(rand()-.5)*W*3.3;for(let s=0;s<STEPS;s++){const x=-extent+2*extent*s/(STEPS-1),[eh,ew]=env[s];let y=y0,z=z0;const margin=Math.min(L*.025,.12),h=eh+margin,w=ew+margin;const r=Math.max(y0/h,Math.abs(z0)/w);if(r<1.8&&eh>.001){const target=Math.pow(1+Math.pow(r,6),1/6),factor=target/Math.max(r,.001);y=y0*factor;z=z0*factor;}const k=(p*STEPS+s)*3;paths[k]=x;paths[k+1]=y;paths[k+2]=z;if(p%3===0&&s>0)lines.push(...paths.subarray(k-3,k),x,y,z);}}
-if(lineMesh){scene.remove(lineMesh);dispose(lineMesh);}lineMesh=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(lines,3)),new T.LineBasicMaterial({color:0x5e9ea6,transparent:true,opacity:.17,depthWrite:false}));lineMesh.visible=$('lines').checked;scene.add(lineMesh);setParticles();}
-function setParticles(){if(points){scene.remove(points);dispose(points);}const n=+$('quality').value,arr=new Float32Array(n*3);points=new T.Points(new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(arr,3).setUsage(T.DynamicDrawUsage)),new T.PointsMaterial({color:0xffa266,size:L*.011,sizeAttenuation:true,transparent:true,opacity:.9}));points.frustumCulled=false;scene.add(points);updateParticles();wake();}
-function updateParticles(){if(!paths||!points)return;const pos=points.geometry.attributes.position;for(let i=0;i<pos.count;i++){const p=i%TRACKS,phase=(i*.61803398875+clock*.12)%1,s=phase*(STEPS-1),j=Math.floor(s),f=s-j,k=(p*STEPS+j)*3,k2=Math.min(k+3,(p*STEPS+STEPS-1)*3);pos.setXYZ(i,paths[k]*(1-f)+paths[k2]*f,paths[k+1]*(1-f)+paths[k2+1]*f,paths[k+2]*(1-f)+paths[k2+2]*f);}pos.needsUpdate=true;}
-function rebuild(){normalize();buildEnvelope();buildPaths();resetCameras();status(`${triangles.toLocaleString('es')} triángulos · envolvente geométrica lista`);wake();}
+for(let p=0;p<TRACKS;p++){const col=p%24,row=Math.floor(p/24),focus=$('focus').value;
+const y0=.05+(row+rand()*.7)/20*H*1.8,z0=((col+rand()*.7)/24-.5)*W*(focus==='center'?.75:2.9);for(let s=0;s<STEPS;s++){const x=-extent+2*extent*s/(STEPS-1),[eh,ew]=env[s];let y=y0,z=z0;const margin=Math.min(L*.025,.12),h=eh+margin,w=ew+margin;const r=Math.max(y0/h,Math.abs(z0)/w);if(eh>.00001){const target=Math.pow(1+Math.pow(r,6),1/6),factor=target/Math.max(r,.001);y=y0*factor;z=z0*factor;}const k=(p*STEPS+s)*3;paths[k]=x;paths[k+1]=y;paths[k+2]=z;if(p%12===0&&s>0)lines.push(...paths.subarray(k-3,k),x,y,z);}}
+if(lineMesh){scene.remove(lineMesh);dispose(lineMesh);}lineMesh=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(lines,3)),new T.LineBasicMaterial({color:0x7fbcc4,transparent:true,opacity:.065,depthWrite:false}));lineMesh.visible=$('lines').checked;scene.add(lineMesh);setParticles();}
+function setParticles(){
+  if(flow){scene.remove(flow.group);flow.dispose();}
+  flow=AeroFlow.create(paths,TRACKS,STEPS,+$('quality').value,L,renderer.getPixelRatio());
+  points=flow.points;scene.add(flow.group);configureFlow();updateParticles();wake();
+}
+function configureFlow(){if(!flow)return;flow.configure({size:+$('pointsize').value,trailLength:+$('trail').value*.018,opacity:+$('opacity').value,color:$('palette').value,mode:$('flowmode').value});$('particlecount').textContent=flow.count.toLocaleString('es')+' TRAZADORES';wake();}
+function updateParticles(){if(flow)flow.setTime(clock);}
+function buildScenery(){
+  if(scenery){scene.remove(scenery);dispose(scenery);}scenery=new T.Group();
+  const halfZ=Math.max(W*1.65,L*.55),top=H*2.2,halfX=extent*.96;
+  const segments=[];const edge=(a,b)=>segments.push(...a,...b);
+  for(const z of [-halfZ,halfZ]){edge([-halfX,.02,z],[halfX,.02,z]);edge([-halfX,top,z],[halfX,top,z]);for(const x of [-halfX,halfX])edge([x,.02,z],[x,top,z]);}
+  for(const x of [-halfX,halfX]){edge([x,top,-halfZ],[x,top,halfZ]);edge([x,.02,-halfZ],[x,.02,halfZ]);}
+  const frame=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(segments,3)),new T.LineBasicMaterial({color:0x4e7182,transparent:true,opacity:.28}));scenery.add(frame);
+  const ticks=[];for(let i=-6;i<=6;i++){const x=i*L/4;ticks.push(x,.025,-halfZ,x,.025,-halfZ-L*.025);}
+  scenery.add(new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(ticks,3)),new T.LineBasicMaterial({color:0x90a3ad,transparent:true,opacity:.4})));
+  const pad=new T.Mesh(new T.BoxGeometry(L*1.15,.035,W*1.35),new T.MeshStandardMaterial({color:0x202e38,roughness:.85,metalness:.15}));pad.position.y=-.02;scenery.add(pad);
+  scenery.visible=$('tunnel').checked;scene.add(scenery);
+}
+function rebuild(){normalize();buildEnvelope();buildPaths();buildScenery();resetCameras();status(`${triangles.toLocaleString('es')} triángulos · envolvente geométrica lista`);wake();}
 function install(obj,name){if(content){vehicle.remove(content);dispose(content);}vehicle.rotation.set(0,0,0);vehicle.scale.setScalar(1);content=obj;vehicle.add(obj);vehicle.visible=$('body').checked;$('filename').textContent=name;clock=0;rebuild();}
-function resetCameras(){orbit=views.map(()=>({theta:.82,phi:1.09,r:extent*1.35,zoom:1}));wake();}
+function resetCameras(){orbit=views.map(()=>({theta:2.35,phi:1.13,r:extent*1.12,zoom:1}));wake();}
 function layout(){const count=+$('layout').value;$('panels').innerHTML='';$('panels').style.gridTemplateColumns=count===1?'1fr':'1fr 1fr';$('panels').style.gridTemplateRows=count===4?'1fr 1fr':'1fr';views=[];cameras=[];for(let i=0;i<count;i++){const div=document.createElement('div');div.className='view';div.innerHTML=`<select aria-label="Cámara ${i+1}"><option value="3d">Perspectiva 3D</option><option value="side">Lateral</option><option value="top">Superior</option><option value="front">Frontal</option></select><small>0${i+1} / VISTA</small>`;$('panels').append(div);div.querySelector('select').value=['3d','side','top','front'][i];div.querySelector('select').onchange=wake;views.push(div);cameras.push({persp:new T.PerspectiveCamera(42,1,.01,10000),ortho:new T.OrthographicCamera(-1,1,1,-1,.01,10000)});}resetCameras();}
 function render(){const width=stage.clientWidth,height=stage.clientHeight;if(renderer.domElement.width!==Math.round(width*renderer.getPixelRatio())||renderer.domElement.height!==Math.round(height*renderer.getPixelRatio()))renderer.setSize(width,height,false);renderer.setScissorTest(true);const sr=stage.getBoundingClientRect();views.forEach((v,i)=>{const rect=v.getBoundingClientRect(),x=rect.left-sr.left,y=height-(rect.bottom-sr.top),aspect=rect.width/rect.height,type=v.querySelector('select').value,o=orbit[i],target=new T.Vector3(0,H*.55,0);let cam;if(type==='3d'){cam=cameras[i].persp;cam.aspect=aspect;cam.position.set(Math.cos(o.theta)*Math.sin(o.phi)*o.r,H*.55+Math.cos(o.phi)*o.r,Math.sin(o.theta)*Math.sin(o.phi)*o.r);cam.up.set(0,1,0);}else{cam=cameras[i].ortho;const size=extent*.58/o.zoom;cam.left=-size*aspect;cam.right=size*aspect;cam.top=size;cam.bottom=-size;cam.up.set(0,1,0);if(type==='side')cam.position.set(0,H*.55,extent*3);if(type==='front')cam.position.set(-extent*3,H*.55,0);if(type==='top'){cam.position.set(0,extent*3,0);cam.up.set(1,0,0);target.set(0,0,0);}}cam.lookAt(target);cam.updateProjectionMatrix();renderer.setViewport(x,y,rect.width,rect.height);renderer.setScissor(x,y,rect.width,rect.height);renderer.render(scene,cam);});dirty=false;}
 function tick(t){raf=0;const dt=last?Math.min((t-last)/1000,.04):0;last=t;if(document.hidden){last=0;return;}if(playing&&!loading){clock+=dt*+$('speed').value;updateParticles();dirty=true;}if(dirty)render();frameCount++;if(t-fpsTime>1000){$('fps').textContent=playing?Math.round(frameCount*1000/(t-fpsTime))+' FPS':'PAUSA';frameCount=0;fpsTime=t;}if(playing)raf=requestAnimationFrame(tick);}
 let drag=null;function viewAt(e){return views.findIndex(v=>{const r=v.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom;});}renderer.domElement.addEventListener('pointerdown',e=>{const i=viewAt(e);if(i<0)return;drag={i,x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId);});renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;const o=orbit[drag.i];o.theta+=(e.clientX-drag.x)*.008;o.phi=T.MathUtils.clamp(o.phi+(e.clientY-drag.y)*.008,.08,Math.PI*.49);drag.x=e.clientX;drag.y=e.clientY;wake();});renderer.domElement.addEventListener('pointerup',()=>drag=null);renderer.domElement.addEventListener('pointercancel',()=>drag=null);renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();const i=viewAt(e);if(i<0)return;const f=Math.exp(e.deltaY*.001);orbit[i].r=T.MathUtils.clamp(orbit[i].r*f,L*.3,extent*8);orbit[i].zoom=T.MathUtils.clamp(orbit[i].zoom/f,.15,8);wake();},{passive:false});
-$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Ⅱ Pausar':'▶ Reproducir';$('fps').textContent=playing?'— FPS':'PAUSA';last=0;wake();};$('reset').onclick=()=>{clock=0;updateParticles();wake();};$('quality').onchange=setParticles;$('speed').oninput=()=>{$('speedval').textContent=$('speed').value+'×';};$('layout').onchange=layout;$('frame').onclick=resetCameras;$('lines').onchange=()=>{lineMesh.visible=$('lines').checked;wake();};$('body').onchange=()=>{vehicle.visible=$('body').checked;wake();};$('grid').onchange=()=>{grid.visible=$('grid').checked;wake();};$('scale').onclick=()=>{const v=+$('length').value;if(!Number.isFinite(v)||v<.1||v>100){status('Introduce una longitud entre 0,1 y 100 metros.',true);return;}vehicle.scale.multiplyScalar(v/L);rebuild();};document.querySelectorAll('[data-axis]').forEach(b=>b.onclick=()=>{vehicle.rotation[b.dataset.axis]+=Math.PI/2;rebuild();});$('demo').onclick=()=>{token++;loading=false;install(demo(),'Concepto de demostración');};
+$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Ⅱ Pausar':'▶ Reproducir';$('fps').textContent=playing?'— FPS':'PAUSA';last=0;wake();};$('reset').onclick=()=>{clock=0;updateParticles();wake();};$('quality').onchange=setParticles;for(const id of ['pointsize','trail','opacity','palette','flowmode'])$(id).oninput=configureFlow;$('focus').onchange=buildPaths;$('tunnel').onchange=()=>{scenery.visible=$('tunnel').checked;wake();};$('speed').oninput=()=>{$('speedval').textContent=$('speed').value+'×';};$('layout').onchange=layout;$('frame').onclick=resetCameras;$('lines').onchange=()=>{lineMesh.visible=$('lines').checked;wake();};$('body').onchange=()=>{vehicle.visible=$('body').checked;wake();};$('grid').onchange=()=>{grid.visible=$('grid').checked;wake();};$('scale').onclick=()=>{const v=+$('length').value;if(!Number.isFinite(v)||v<.1||v>100){status('Introduce una longitud entre 0,1 y 100 metros.',true);return;}vehicle.scale.multiplyScalar(v/L);rebuild();};document.querySelectorAll('[data-axis]').forEach(b=>b.onclick=()=>{vehicle.rotation[b.dataset.axis]+=Math.PI/2;rebuild();});$('demo').onclick=()=>{token++;loading=false;install(demo(),'Concepto de demostración');};
 // Validate embedded-only GLB before parsing; external network URLs are rejected.
 function validateGLB(buffer){const v=new DataView(buffer);if(v.byteLength<20||v.getUint32(0,true)!==0x46546c67||v.getUint32(4,true)!==2||v.getUint32(8,true)!==v.byteLength)throw Error('No es un GLB 2.0 válido.');let json;for(let p=12;p+8<=v.byteLength;){const n=v.getUint32(p,true),type=v.getUint32(p+4,true);if(p+8+n>v.byteLength)throw Error('GLB incompleto.');if(type===0x4e4f534a)json=JSON.parse(new TextDecoder().decode(new Uint8Array(buffer,p+8,n)));p+=8+n;}if(!json)throw Error('Falta la descripción del modelo.');for(const item of [...json.buffers||[],...json.images||[]])if(item.uri&&!item.uri.startsWith('data:'))throw Error('El GLB contiene recursos externos. Exporta con todo incrustado.');for(const x of json.extensionsUsed||[])if(/draco|meshopt|basisu/i.test(x))throw Error('Exporta sin compresión DRACO, Meshopt o KTX2 para este prototipo.');if(json.skins?.length||json.nodes?.some(n=>n.extensions?.EXT_mesh_gpu_instancing))throw Error('Exporta una malla estática sin esqueletos ni instancias GPU.');}
 $('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=++token;loading=true;status('Leyendo GLB local…');await new Promise(r=>setTimeout(r,30));try{const buf=await f.arrayBuffer();validateGLB(buf);const manager=new T.LoadingManager();manager.setURLModifier(u=>{if(!/^(blob:|data:)/.test(u))throw Error('Recurso externo bloqueado.');return u;});const gltf=await new LOADERS.GLTFLoader(manager).parseAsync(buf,'');if(t!==token){dispose(gltf.scene);return;}const box=new T.Box3().setFromObject(gltf.scene),sz=box.getSize(new T.Vector3());if(box.isEmpty()||!Number.isFinite(sz.x+sz.y+sz.z)||Math.min(sz.x,sz.y,sz.z)<=0){dispose(gltf.scene);throw Error('El modelo no contiene un volumen válido.');}install(gltf.scene,f.name);status('GLB cargado · verifica orientación y longitud real.');}catch(err){if(t===token)status('No se pudo cargar: '+err.message,true);}finally{if(t===token)loading=false;e.target.value='';wake();}};
 new ResizeObserver(wake).observe(stage);document.addEventListener('visibilitychange',()=>{last=0;if(!document.hidden)wake();});renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();playing=false;status('Contexto gráfico perdido. Recarga el archivo.',true);});
 layout();install(demo(),'Concepto de demostración');
-window.aeroDiagnostics=()=>({triangles,particles:points.geometry.attributes.position.count,views:views.length,playing,dimensions:[L,H,W],tracks:TRACKS,steps:STEPS,externalResources:performance.getEntriesByType('resource').filter(r=>/^https?:/.test(r.name)).length});
+window.aeroDiagnostics=()=>({triangles,particles:points.geometry.attributes.position.count,views:views.length,playing,dimensions:[L,H,W],tracks:TRACKS,steps:STEPS,gpuAnimation:true,trailVertices:flow.trails.geometry.attributes.position.count,particleSize:flow.uniforms.size.value,externalResources:performance.getEntriesByType('resource').filter(r=>/^https?:/.test(r.name)).length});
 })();
 </script></html>
