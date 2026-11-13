@@ -568,6 +568,7 @@ function buildBasePicker(){
 }
 buildBasePicker();build();setBase(baseChoices[0]);
 OcToSBasemaps.mount({app:'carto',map,apply:async b=>{
+ if(!map.attributionControl)L.control.attribution({position:'bottomleft'}).addTo(map);
  const next=await OcToSBasemaps.leafletLayer(b,'backgroundTiles');
  next.addTo(map);if(activeBase)map.removeLayer(activeBase);activeBase=next;basemap=b.id;refresh();
 }});

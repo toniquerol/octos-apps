@@ -358,6 +358,7 @@ map.on('move',syncAllRoads);map.on('moveend',()=>{const c=map.getCenter();$('zoo
 const sharedVisibility=new Map();
 OcToSBasemaps.mount({app:'drive',map,apply:async b=>{
  if(!map.isStyleLoaded())await new Promise(resolve=>map.once('idle',resolve));
+ $('modeNfs').checked=true;$('modeSat').checked=false;setMode('dark');
  if(b.type==='MAPLIBRE_STYLE'){
   if(b.url!=='https://tiles.openfreemap.org/styles/liberty')throw Error('Drive requiere el estilo Liberty para sus controles de carreteras');
   if(map.getLayer('shared-base'))map.removeLayer('shared-base');if(map.getSource('shared-base'))map.removeSource('shared-base');
