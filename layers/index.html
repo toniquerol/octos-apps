@@ -44,7 +44,7 @@ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const canon=x=>{try{let u=new URL(x.url);return u.host.toLowerCase()+u.pathname.replace(/\/$/,'').toLowerCase()+'|'+String(x.layer||'').toLowerCase()+'|'+x.kind}catch{return x.url}};
 function persist(){localStorage.setItem(key,JSON.stringify(data))}
 let providerFilter='',hostFilter='';
-function hostOf(x){try{return new URL(x.url).hostname.replace(/^www\\./,'')}catch{return 'Sin servidor'}}
+function hostOf(x){try{return new URL(x.url).hostname.replace(/^www[.]/,'')}catch{return 'Sin servidor'}}
 function providerOf(x){let p=String(x.provider||'').trim();if(p==='IGN / IDEE'){let h=hostOf(x);if(h.includes('miteco')||h.includes('mapama'))return 'MITECO / SNCZI';if(h.includes('geoserveis'))return 'ICGC';if(h.includes('catastro'))return 'Catastro';if(h.includes('cartociudad'))return 'CartoCiudad';return 'IGN / IDEE / CNIG'}return p||'Sin organismo'}
 function render(){
  const counts={aprobada:0,pruebas:0,error:0};data.forEach(x=>{if(Object.prototype.hasOwnProperty.call(counts,x.status))counts[x.status]++});
