@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2.0.0",
+  "catalogVersion": "2.7.0",
   "generated": "2026-11-13",
   "reviewPolicy": "Pendiente de comprobación y aprobación manual",
   "items": [
@@ -118,17 +118,18 @@
     },
     {
       "id": "octos-009",
-      "name": "OpenFreeMap Liberty",
+      "name": "OcToS Drive · OpenFreeMap Liberty",
       "url": "https://tiles.openfreemap.org/styles/liberty",
       "kind": "STYLE",
       "group": "Mapas base",
       "layer": "",
       "opacity": 0.75,
-      "provider": "Externo",
-      "origin": "Carto / Drive",
-      "status": "pendiente",
-      "note": "",
-      "lastChecked": null
+      "provider": "OpenFreeMap",
+      "origin": "OcToS Drive",
+      "status": "aprobada",
+      "note": "Mapa base validado por el usuario en OcToS Drive; utiliza MapLibre GL JS. Validación de integración en Layers independiente.",
+      "lastChecked": null,
+      "approvedSource": "usuario · configuración OcToS Drive"
     },
     {
       "id": "octos-010",
