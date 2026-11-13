@@ -1,4 +1,4 @@
-// OcToS Rain V9.5 — capas predefinidas y orden de visualización.
+// OcToS Rain V9.6 — capas predefinidas y orden de visualización.
 // Los servicios WMS proporcionan imágenes; no deben interpretarse como datos de elevación.
 const HY='https://servicios.idee.es/wms-inspire/hidrografia';
 const MDT='https://servicios.idee.es/wms-inspire/mdt';
@@ -46,6 +46,22 @@ export function initLayerStack(map,host,onStatus=()=>{}){
   if(entry.external?.checkbox)entry.external.checkbox.checked=entry.visible;
   if(entry.visible)syncOrder();
  }
+ const compactHost=document.getElementById('sidebarPresetLayers');
+ function paintCompact(){
+  if(!compactHost)return;
+  compactHost.replaceChildren();
+  for(const def of DEFAULT_LAYERS){
+   const entry=records.find(x=>x.id===def.id);
+   if(!entry)continue;
+   const line=make('div','sidebar-preset-row');
+   const label=make('label');const check=make('input');check.type='checkbox';check.checked=entry.visible;
+   check.setAttribute('aria-label','Mostrar '+entry.name);
+   check.addEventListener('change',()=>{setVisible(entry,check.checked);paint();});
+   label.append(check,make('span','',entry.name));
+   line.append(label,make('output','',Math.round(entry.opacity*100)+' %'));
+   compactHost.append(line);
+  }
+ }
  function paint(){
   host.replaceChildren();
   records.forEach((entry,i)=>{
@@ -78,6 +94,7 @@ export function initLayerStack(map,host,onStatus=()=>{}){
    if(entry.warning)row.append(make('p','stack-warning',entry.warning));
    host.append(row);
   });
+  paintCompact();
  }
  function register(entry){
   const old=records.findIndex(x=>x.id===entry.id);
