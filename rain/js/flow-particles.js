@@ -13,7 +13,7 @@ export class FlowParticles {
   this.resize=()=>{const rect=map.getContainer().getBoundingClientRect();const dpr=Math.min(2,window.devicePixelRatio||1);this.canvas.width=Math.max(1,Math.round(rect.width*dpr));this.canvas.height=Math.max(1,Math.round(rect.height*dpr));this.ctx.setTransform(dpr,0,0,dpr,0,0);this.w=rect.width;this.hpx=rect.height;this.draw();};
   map.on('moveend zoomend resize',this.resize);this.resize();
  }
- prepare(d,h,{mask,count=450,speed=3}={}){
+ prepare(d,h,{mask,count=450,speed=3,emissions}={}){
   this.pause();if(!h?.receiver||h.receiver.length!==d.data.length)throw Error('El resultado D8 no corresponde al MDT activo.');
   this.d=d;this.h=h;this.mask=mask||null;this.speed=+speed;this.count=Math.max(20,Math.min(1600,Math.round(+count)||450));
   this.candidates=[];const n=d.data.length;
@@ -23,19 +23,32 @@ export class FlowParticles {
    if(mask&&!mask[i])continue;
    this.candidates.push(i);
   }
+  // Con clasificación completa, distribuir emisiones en proporción a C, sin modificar la velocidad D8.
+  this.weightedCandidates=null;
+  if(emissions?.length){
+   this.weightedCandidates=emissions.filter(p=>p&&p.weight>0&&p.i>=0&&p.i<n&&(!mask||mask[p.i])&&h.receiver[p.i]>=0);
+   if(!this.weightedCandidates.length)this.weightedCandidates=null;
+  }
   if(!this.candidates.length)throw Error('No hay trayectorias de flujo dentro del área seleccionada.');
   this.particles=Array.from({length:this.count},()=>this.spawn());
   this.draw();
   return {paths:this.candidates.length,particles:this.count,maskApplied:!!mask};
  }
- spawn(){const p={i:this.candidates[Math.floor(Math.random()*this.candidates.length)],t:Math.random(),age:Math.random()*25};return p;}
+ spawn(){
+  let i=this.candidates[Math.floor(Math.random()*this.candidates.length)];
+  if(this.weightedCandidates?.length){for(let tries=0;tries<16;tries++){
+   const choice=this.weightedCandidates[Math.floor(Math.random()*this.weightedCandidates.length)];
+   if(Math.random()<=choice.weight){i=choice.i;break;}
+  }}
+  return {i,t:Math.random(),age:Math.random()*25};
+ }
  next(p){
   let i=p.i,j=this.h.receiver[i];if(j<0||!Number.isFinite(this.d.data[j])||(this.mask&&!this.mask[j]))return false;
   p.i=j;return this.h.receiver[j]>=0;
  }
  play(){if(!this.h)throw Error('Prepara el recorrido de partículas antes de reproducirlo.');if(this.running)return;this.running=true;this.last=0;this.frame=requestAnimationFrame(t=>this.tick(t));}
  pause(){this.running=false;if(this.frame)cancelAnimationFrame(this.frame);this.frame=0;}
- reset(){this.pause();this.d=null;this.h=null;this.mask=null;this.particles=[];this.candidates=[];this.draw();}
+ reset(){this.pause();this.d=null;this.h=null;this.mask=null;this.particles=[];this.candidates=[];this.weightedCandidates=null;this.draw();}
  setSpeed(v){this.speed=Math.max(.1,Math.min(25,+v||3));}
  setCount(v){this.count=Math.max(20,Math.min(1600,Math.round(+v||450)));if(this.h)this.particles=Array.from({length:this.count},()=>this.spawn());}
  xy(i){
