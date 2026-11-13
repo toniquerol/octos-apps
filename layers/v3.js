@@ -184,4 +184,95 @@ divider.addEventListener('pointerdown',e=>{
 divider.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();width+=e.key==='ArrowRight'?16:-16;fit();localStorage.setItem('octos-layers-width-v3',String(width))});
 new ResizeObserver(()=>{map?.invalidateSize();map3d?.resize();if(compareMap){if(usesMapLibre())compareMap.resize();else compareMap.invalidateSize()}}).observe(container);
 window.addEventListener('resize',fit);requestAnimationFrame(fit);if(selected)requestAnimationFrame(()=>preview());if(localStorage.getItem('octos-layers-compare-enabled-v3')!=='0')requestAnimationFrame(()=>{if(!terrainMode)activate()});
+
+/* V3.1: separar formulario y GetCapabilities con altura ajustable */
+{
+ const techBody=document.querySelector('.technical .techscroll');
+ const results=document.getElementById('found');
+ if(techBody && results && !document.getElementById('v31WmsResize')){
+  const form=document.createElement('section');
+  form.className='v31-form';
+  form.setAttribute('aria-label','Campos de la ficha técnica');
+  const caps=document.createElement('section');
+  caps.className='v31-caps';
+  caps.setAttribute('aria-label','Listado de subcapas del servicio');
+  const split=document.createElement('div');
+  split.id='v31WmsResize';
+  split.className='v31-separator';
+  split.tabIndex=0;
+  split.setAttribute('role','separator');
+  split.setAttribute('aria-orientation','horizontal');
+  split.setAttribute('aria-label','Ajustar altura del formulario y la lista de capas WMS');
+  split.setAttribute('aria-valuemin','0');
+  split.setAttribute('aria-valuemax','100');
+  for(const child of Array.from(techBody.children))if(child!==results)form.appendChild(child);
+  caps.appendChild(results);
+  techBody.append(form,split,caps);
+
+  const storageKey='octos-layers-wms-panel-height-v31';
+  let formHeight=Number(localStorage.getItem(storageKey))||0;
+  const compact=window.matchMedia('(max-width:790px)');
+  let dragging=false;
+  function dimensions(){
+   const total=Math.max(0,techBody.clientHeight-split.offsetHeight);
+   return {total,min:Math.min(110,total*.4),max:Math.max(0,total-Math.min(120,total*.4))};
+  }
+  function applyHeight(){
+   if(compact.matches){
+    form.style.removeProperty('flex');
+    form.style.removeProperty('height');
+    return;
+   }
+   const {total,min,max}=dimensions();
+   if(total<1)return;
+   if(!formHeight)formHeight=Math.round(total*.43);
+   formHeight=Math.max(min,Math.min(max,formHeight));
+   form.style.flex='0 0 '+formHeight+'px';
+   split.setAttribute('aria-valuenow',String(Math.round(100*formHeight/total)));
+  }
+  function storeHeight(){
+   try{localStorage.setItem(storageKey,String(Math.round(formHeight)))}catch(_){}
+  }
+  split.addEventListener('pointerdown',event=>{
+   if(compact.matches||event.button!==0)return;
+   event.preventDefault();
+   split.setPointerCapture(event.pointerId);
+   const startY=event.clientY,initial=form.getBoundingClientRect().height;
+   dragging=true;
+   document.body.classList.add('v31-resizing');
+   function move(e){formHeight=initial+e.clientY-startY;applyHeight()}
+   function stop(){
+    split.removeEventListener('pointermove',move);
+    split.removeEventListener('pointerup',stop);
+    split.removeEventListener('pointercancel',stop);
+    document.body.classList.remove('v31-resizing');
+    dragging=false;
+    storeHeight();
+   }
+   split.addEventListener('pointermove',move);
+   split.addEventListener('pointerup',stop);
+   split.addEventListener('pointercancel',stop);
+  });
+  split.addEventListener('keydown',event=>{
+   if(!['ArrowUp','ArrowDown','Home','End'].includes(event.key)||compact.matches)return;
+   event.preventDefault();
+   const {min,max}=dimensions();
+   if(event.key==='Home')formHeight=min;
+   else if(event.key==='End')formHeight=max;
+   else formHeight+=(event.key==='ArrowDown'?24:-24);
+   applyHeight();
+   storeHeight();
+  });
+  split.addEventListener('dblclick',()=>{
+   if(compact.matches)return;
+   formHeight=Math.round(dimensions().total*.43);
+   applyHeight();
+   storeHeight();
+  });
+  new ResizeObserver(()=>{if(!dragging)applyHeight()}).observe(techBody);
+  window.addEventListener('resize',applyHeight);
+  if(compact.addEventListener)compact.addEventListener('change',applyHeight);
+  applyHeight();
+ }
+}
 })();
