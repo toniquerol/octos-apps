@@ -4,7 +4,7 @@
 import {toLatLng} from './dem.js';
 export class Terrain3D {
  constructor(host){
-  this.host=host;this.running=false;this.dem=null;this.hydro=null;this.animator=null;this.exaggeration=3;this.baseUrl='';this.textureRequest=0;
+  this.host=host;this.running=false;this.dem=null;this.hydro=null;this.animator=null;this.exaggeration=3;this.baseUrl='';this.textureRequest=0;this.interactionMode='rotate';this.activePointers=new Map();
   this.el=document.createElement('div');this.el.className='rain-3d-view';
   this.el.setAttribute('aria-label','Terreno en tres dimensiones');
   this.host.append(this.el);
@@ -25,12 +25,87 @@ export class Terrain3D {
   this.camera=new T.PerspectiveCamera(53,1,0.5,10000);
   this.scene.add(new T.HemisphereLight(0xf0f7ff,0x444d4b,2.0));
   const sun=new T.DirectionalLight(0xffffff,1.7);sun.position.set(-250,600,400);this.scene.add(sun);
-  this.el.addEventListener('pointerdown',e=>{if(e.button!==0&&e.button!==2)return;this.dragging=true;this.dragX=e.clientX;this.dragY=e.clientY;this.el.setPointerCapture(e.pointerId);});
-  this.el.addEventListener('pointermove',e=>{if(!this.dragging)return;this.theta-=(e.clientX-this.dragX)*0.008;this.phi=Math.max(.1,Math.min(1.48,this.phi+(e.clientY-this.dragY)*.008));this.dragX=e.clientX;this.dragY=e.clientY;this.updateCamera();});
-  for(const ev of ['pointerup','pointercancel'])this.el.addEventListener(ev,()=>this.dragging=false);
-  this.el.addEventListener('wheel',e=>{e.preventDefault();this.radius=Math.max(20,Math.min(3500,this.radius*Math.exp(e.deltaY*.001)));this.updateCamera();},{passive:false});
+  // Navegación: izquierda = órbita; derecha/Mayús = desplazar; dos dedos = desplazar y pellizcar.
+  this.el.tabIndex=0;
+  this.el.addEventListener('pointerdown',e=>{
+   if(e.pointerType==='mouse'&&e.button!==0&&e.button!==2&&e.button!==1)return;
+   e.preventDefault();
+   this.activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   if(this.activePointers.size===1)this.pointerAction=(e.button===2||e.button===1||e.shiftKey)?'pan':this.interactionMode;
+   if(this.activePointers.size===2)this.touchGesture=this.gestureInfo();
+   try{this.el.setPointerCapture(e.pointerId);}catch{}
+   this.el.focus({preventScroll:true});
+  });
+  this.el.addEventListener('pointermove',e=>{
+   const prev=this.activePointers.get(e.pointerId);if(!prev)return;
+   e.preventDefault();
+   const oldGesture=this.activePointers.size>=2?this.gestureInfo():null;
+   this.activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   if(this.activePointers.size>=2){
+    const next=this.gestureInfo();
+    if(oldGesture&&next){
+     this.panPixels(next.x-oldGesture.x,next.y-oldGesture.y);
+     if(oldGesture.distance>2&&next.distance>2){
+      this.radius=Math.max(20,Math.min(6000,this.radius*oldGesture.distance/next.distance));
+     }
+     this.updateCamera();
+    }
+    return;
+   }
+   const dx=e.clientX-prev.x,dy=e.clientY-prev.y;
+   if(this.pointerAction==='pan'||e.shiftKey)this.panPixels(dx,dy);
+   else{this.theta-=dx*.008;this.phi=Math.max(.1,Math.min(1.48,this.phi+dy*.008));}
+   this.updateCamera();
+  });
+  const endPointer=e=>{
+   this.activePointers.delete(e.pointerId);
+   if(this.activePointers.size===1)this.pointerAction='pan'; // Evitar un giro inesperado al levantar un dedo
+   if(!this.activePointers.size)this.pointerAction=null;
+   try{if(this.el.hasPointerCapture(e.pointerId))this.el.releasePointerCapture(e.pointerId);}catch{}
+  };
+  for(const ev of ['pointerup','pointercancel','lostpointercapture'])this.el.addEventListener(ev,endPointer);
+  this.el.addEventListener('wheel',e=>{
+   e.preventDefault();this.radius=Math.max(20,Math.min(6000,this.radius*Math.exp(e.deltaY*.001)));
+   this.updateCamera();
+  },{passive:false});
   this.el.addEventListener('contextmenu',e=>e.preventDefault());
+  this.el.addEventListener('keydown',e=>{
+   if(!this.running||e.altKey||e.ctrlKey||e.metaKey)return;
+   const step=this.radius*.055;
+   const key=e.key.toLowerCase();
+   if(key==='arrowleft'||key==='a')this.panPixels(40,0);
+   else if(key==='arrowright'||key==='d')this.panPixels(-40,0);
+   else if(key==='arrowup'||key==='w')this.panPixels(0,40);
+   else if(key==='arrowdown'||key==='s')this.panPixels(0,-40);
+   else if(key==='+'||key==='=')this.radius=Math.max(20,this.radius*.88);
+   else if(key==='-')this.radius=Math.min(6000,this.radius*1.12);
+   else return;
+   e.preventDefault();this.updateCamera();
+  });
   this.resize();
+ }
+ setInteractionMode(mode){if(mode!=='pan'&&mode!=='rotate')throw Error('Modo de cámara inválido');this.interactionMode=mode;this.el.style.cursor=mode==='pan'?'move':'grab';}
+ gestureInfo(){
+  const p=[...this.activePointers.values()];if(p.length<2)return null;
+  return{x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2,distance:Math.hypot(p[1].x-p[0].x,p[1].y-p[0].y)};
+ }
+ panPixels(dx,dy){
+  if(!this.target||!this.camera||!this.radius)return;
+  // Escala de pan basada en el FOV y la distancia a la diana.
+  const h=Math.max(1,this.el.clientHeight);
+  const unitsPerPixel=2*this.radius*Math.tan(this.camera.fov*Math.PI/360)/h;
+  const rightX=Math.cos(this.theta),rightZ=-Math.sin(this.theta);
+  const forwardX=-Math.sin(this.theta),forwardZ=-Math.cos(this.theta);
+  const moveX=(-dx*rightX+dy*forwardX)*unitsPerPixel;
+  const moveZ=(-dx*rightZ+dy*forwardZ)*unitsPerPixel;
+  this.target.x+=moveX;this.target.z+=moveZ;
+ }
+ resetCamera(){
+  if(!this.dem)return;
+  this.target.set(0,Math.max(0,(this.zMax-this.zMin)*this.exaggeration/this.unit)*.24,0);
+  const maxSize=Math.max(this.dem.width*this.dem.dx,this.dem.height*this.dem.dy);
+  this.radius=Math.max(300,Math.min(2100,550+250*Math.log10(Math.max(1,maxSize/1000))));
+  this.theta=-.7;this.phi=1.02;this.updateCamera();
  }
  updateCamera(){
   if(!this.camera||!this.target)return;
@@ -50,10 +125,7 @@ export class Terrain3D {
   this.baseUrl=baseUrl;this.baseOpacity=baseOpacity;this.exaggeration=exaggeration;this.status=onStatus;
   this.el.classList.add('shown');
   this.construct();
-  this.radius=1000;this.theta=-.7;this.phi=1.02;
-  const maxSize=Math.max(dem.width*dem.dx,dem.height*dem.dy);
-  this.radius=Math.max(300,Math.min(2100,550+250*Math.log10(Math.max(1,maxSize/1000))));
-  this.updateCamera();this.resize();
+  this.resetCamera();this.resize();
   this.running=true;this.tick();
   this.loadTexture(baseUrl).catch(e=>this.status('Textura no disponible: '+e.message));
  }
@@ -102,7 +174,7 @@ export class Terrain3D {
  }
  setExaggeration(v){
   this.exaggeration=Math.max(.5,Math.min(15,+v||3));
-  if(this.dem){const theta=this.theta,phi=this.phi,radius=this.radius;this.construct();this.theta=theta;this.phi=phi;this.radius=radius;this.updateCamera();if(this.baseUrl)this.loadTexture(this.baseUrl);}
+  if(this.dem){const theta=this.theta,phi=this.phi,radius=this.radius,oldTarget=this.target?.clone();this.construct();if(oldTarget){this.target.x=oldTarget.x;this.target.z=oldTarget.z;}this.theta=theta;this.phi=phi;this.radius=radius;this.updateCamera();if(this.baseUrl)this.loadTexture(this.baseUrl);}
  }
  setOpacity(v){this.baseOpacity=Math.max(0,Math.min(1,+v));if(this.textureMesh)this.textureMesh.material.opacity=this.baseOpacity;}
  clearTexture(){if(this.textureMesh){this.scene.remove(this.textureMesh);this.textureMesh.material.map?.dispose();this.textureMesh.material.dispose();this.textureMesh=null;}}
@@ -179,7 +251,7 @@ export class Terrain3D {
   this.drawParticles();this.renderer.render(this.scene,this.camera);
   this.frame=requestAnimationFrame(()=>this.tick());
  }
- close(){this.running=false;if(this.frame)cancelAnimationFrame(this.frame);this.el.classList.remove('shown');}
+ close(){this.activePointers.clear();this.running=false;if(this.frame)cancelAnimationFrame(this.frame);this.el.classList.remove('shown');}
  destroy(){
   this.close();window.removeEventListener('resize',this.onResize);
   this.clearTexture();this.surface?.geometry.dispose();this.surface?.material.dispose();
