@@ -112,7 +112,7 @@ Superficie ${fmt(grading.stats.area)} m²
 Desmonte máximo ${fmt(grading.stats.maxCut)} m
 Terraplén máximo ${fmt(grading.stats.maxFill)} m
 Espesor medio ${fmt(grading.stats.meanThickness)} m`});
-function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}$('geojson').onclick=guard(()=>{if(!features.length)throw Error('No hay geometrías calculadas.');download('octos-rain.geojson',JSON.stringify({type:'FeatureCollection',features}),'application/geo+json')});$('csv').onclick=guard(()=>{need();const lines=profile.length?['distancia_m,cota_m,pendiente_porcentaje,latitud,longitud',...profile.map(p=>[p.distance,Number.isFinite(p.z)?p.z:'',Number.isFinite(p.slope)?p.slope:'',p.lat,p.lng].join(','))]:['magnitud,valor','cota_min_m,'+terrain.min,'cota_max_m,'+terrain.max,'cota_media_m,'+terrain.mean,...Object.entries(grading?.stats||{}).filter(([,v])=>typeof v==='number').map(([k,v])=>k+','+v)];download('octos-rain.csv',lines.join('\n'),'text/csv')});$('elevations').onclick=guard(()=>{need();const lines=['x_m,y_m,cota_m'];for(let i=0;i<dem.data.length;i++)if(Number.isFinite(dem.data[i]))lines.push([...cellCenter(dem,i),dem.data[i]].join(','));download('octos-rain-elevaciones.csv',lines.join('\n'),'text/csv')});$('print').onclick=guard(()=>{need();$('report').textContent=`OcToS Rain V7 · ${new Date().toLocaleString('es-ES')}\n${$('metadata').textContent}\n${$('results').textContent}\n${$('profileInfo').textContent}\nAnálisis topográfico orientativo. Sin lluvia, infiltración, alcantarillado o caudales. Los límites del MDT y NoData pueden truncar las cuencas. Resolución de cálculo: la original del MDT. Fuente declarada por el archivo; verificar su ficha técnica.\nMapa: IGN / CNIG. Ráster de cálculo importado por el usuario.`;const chartImage=document.createElement('img');chartImage.src=$('chart').toDataURL();chartImage.style.width='100%';if(profile.length)$('report').append(chartImage);window.print()});
+function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}$('geojson').onclick=guard(()=>{if(!features.length)throw Error('No hay geometrías calculadas.');download('octos-rain.geojson',JSON.stringify({type:'FeatureCollection',features}),'application/geo+json')});$('csv').onclick=guard(()=>{need();const lines=profile.length?['distancia_m,cota_m,pendiente_porcentaje,latitud,longitud',...profile.map(p=>[p.distance,Number.isFinite(p.z)?p.z:'',Number.isFinite(p.slope)?p.slope:'',p.lat,p.lng].join(','))]:['magnitud,valor','cota_min_m,'+terrain.min,'cota_max_m,'+terrain.max,'cota_media_m,'+terrain.mean,...Object.entries(grading?.stats||{}).filter(([,v])=>typeof v==='number').map(([k,v])=>k+','+v)];download('octos-rain.csv',lines.join('\n'),'text/csv')});$('elevations').onclick=guard(()=>{need();const lines=['x_m,y_m,cota_m'];for(let i=0;i<dem.data.length;i++)if(Number.isFinite(dem.data[i]))lines.push([...cellCenter(dem,i),dem.data[i]].join(','));download('octos-rain-elevaciones.csv',lines.join('\n'),'text/csv')});$('print').onclick=guard(()=>{need();$('report').textContent=`OcToS Rain V7.5 · ${new Date().toLocaleString('es-ES')}\n${$('metadata').textContent}\n${$('results').textContent}\n${$('profileInfo').textContent}\nAnálisis topográfico orientativo. Sin lluvia, infiltración, alcantarillado o caudales. Los límites del MDT y NoData pueden truncar las cuencas. Resolución de cálculo: la original del MDT. Fuente declarada por el archivo; verificar su ficha técnica.\nMapa: IGN / CNIG. Ráster de cálculo importado por el usuario.`;const chartImage=document.createElement('img');chartImage.src=$('chart').toDataURL();chartImage.style.width='100%';if(profile.length)$('report').append(chartImage);window.print()});
 
 // Asistente: mantiene el motor de terreno y los cálculos V3/V4.
 function updateFlowControls(ready){
@@ -157,7 +157,7 @@ $('switch3d').onclick=guard(async()=>{
   await terrain3d.open(dem,{baseUrl:bases[$('base').selectedIndex],baseOpacity:+$('baseOpacity').value,
    hydro,animator:flowAnimator,exaggeration:+$('terrainExag').value,
    onStatus:message=>{$('terrain3dStatus').textContent=message;}});
-  $('controls3d').hidden=false;$('switch3d').textContent='2D';
+  setNav3D('rotate');$('controls3d').hidden=false;$('switch3d').textContent='2D';
   $('switch3d').setAttribute('aria-pressed','true');
   say('Terreno 3D activo. Arrastra para rotar y usa la rueda para acercar.');
  }catch(e){
@@ -170,7 +170,14 @@ $('terrainExag').oninput=()=>{
  const n=+$('terrainExag').value;$('terrainExagValue').textContent=n+'×';
  terrain3d?.setExaggeration(n);
 };
-$('resetCamera3d').onclick=()=>{if(!terrain3d?.running)return;terrain3d.theta=-.7;terrain3d.phi=1.02;terrain3d.radius=900;terrain3d.updateCamera();};
+function setNav3D(mode){
+ terrain3d?.setInteractionMode(mode);
+ $('nav3dRotate').setAttribute('aria-pressed',String(mode==='rotate'));
+ $('nav3dPan').setAttribute('aria-pressed',String(mode==='pan'));
+}
+$('nav3dRotate').onclick=()=>setNav3D('rotate');
+$('nav3dPan').onclick=()=>setNav3D('pan');
+$('resetCamera3d').onclick=()=>{if(!terrain3d?.running)return;terrain3d.resetCamera();say('Cámara 3D centrada en el mosaico.');};
 
 officialCatalog(map,$('thematicCatalog')||document.querySelector('aside'),()=>{},say);
 
