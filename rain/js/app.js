@@ -32,7 +32,7 @@ const bases=[
 let baseLayer;
 function base(){
  baseLayer?.remove();
- const id=$('base').selectedIndex;
+ const id=$('base').selectedIndex;if(!bases[id]){say('Selecciona Liberty desde Mapas base · biblioteca 2.8. La textura 3D requiere un mapa ráster.');return}
  baseLayer=L.tileLayer(bases[id],{maxZoom:20,maxNativeZoom:18,attribution:id===7?'LiDAR © IGN':'© IGN / CNIG',opacity:+$('baseOpacity').value});
  baseLayer.addTo(map);
  baseLayer.on('tileerror',()=>say('Alguna tesela del mapa base no está disponible. Prueba otro mapa base.'));
@@ -348,3 +348,15 @@ initDataManager({map,getDEM:()=>dem,getArea:()=>{
  if(!zoneBounds||zoneMode||zoneBounds.getWest()===zoneBounds.getEast()||zoneBounds.getSouth()===zoneBounds.getNorth())return null;
  return {bounds:[zoneBounds.getWest(),zoneBounds.getSouth(),zoneBounds.getEast(),zoneBounds.getNorth()],ring:zonePts.length>=3?zonePts.map(p=>[p.lng,p.lat]):null};
 },loadFiles:loadMosaicFiles,onError:say});
+
+
+import '../../shared/basemaps.js';
+OcToSBasemaps.mount({app:'rain',map,apply:async b=>{
+ const pane=map.getPane('sharedBasemapPane')||map.createPane('sharedBasemapPane');pane.style.zIndex='200';
+ const next=await OcToSBasemaps.leafletLayer(b,'sharedBasemapPane');next.addTo(map);baseLayer?.remove();baseLayer=next;
+ let option=[...$('base').options].find(o=>o.dataset.shared===b.id);
+ if(!option){option=new Option(b.name,String(bases.length));option.dataset.shared=b.id;$('base').append(option);bases.push(b.type==='TMS'||b.type==='XYZ'?b.url:'')}
+ $('base').value=option.value;$('baseMenuName').textContent=b.name;
+ if(terrain3d?.running){if(b.type==='MAPLIBRE_STYLE')say('Liberty en 2D. Para texturizar el MDT 3D selecciona un mapa ráster.');else terrain3d.loadTexture(b.url)}
+}});
+

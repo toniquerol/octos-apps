@@ -115,7 +115,7 @@ header .brand small{font-size:9px;letter-spacing:.17em}
 <button id="zoomOutControl" class="roadmap-control zoom" type="button" title="Alejar" aria-label="Alejar">−</button>
 </div><div class="map-overlay map-right"><button class="float-btn" id="floatingGps" title="Seguir mi ubicación">⌖ Ubicación</button><div class="status-card"><strong id="gpsState">GPS desconectado</strong><div id="gpsInfo">Pulsa GPS para solicitar permiso.</div></div></div><div class="map-overlay map-bottom"><span id="zoom">Z —</span> · <span id="coords">40.3, -3.7</span> · <span id="headingLabel">Rumbo —</span> · <span id="map3dStatus">Relieve 3D</span></div><div class="legend">NFS DARK · <span id="networkState">Red: esperando</span> · <span id="poiState">POI: esperando</span></div></main></div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script>
+<script src="../shared/basemaps.js?v=2.8"></script><script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const setNote=(text,warn=false)=>{const el=$('note');el.textContent=text;el.classList.toggle('warn',warn)};
@@ -354,5 +354,20 @@ syncBearingButton();
 startGPS(true);
 $('accuracyCheck').addEventListener('change',drawGps);$('headingCheck').addEventListener('change',drawGps);$('followCheck').addEventListener('change',()=>{centerFollow=true;drawGps()});map.on('dragstart',()=>{centerFollow=false});
 map.on('move',syncAllRoads);map.on('moveend',()=>{const c=map.getCenter();$('zoom').textContent='Z '+map.getZoom().toFixed(1);$('coords').textContent=c.lat.toFixed(4)+', '+c.lng.toFixed(4)});map.fire('moveend');
+
+const sharedVisibility=new Map();
+OcToSBasemaps.mount({app:'drive',map,apply:async b=>{
+ if(!map.isStyleLoaded())await new Promise(resolve=>map.once('idle',resolve));
+ if(b.type==='MAPLIBRE_STYLE'){
+  if(b.url!=='https://tiles.openfreemap.org/styles/liberty')throw Error('Drive requiere el estilo Liberty para sus controles de carreteras');
+  if(map.getLayer('shared-base'))map.removeLayer('shared-base');if(map.getSource('shared-base'))map.removeSource('shared-base');
+  for(const [id,v] of sharedVisibility)if(map.getLayer(id))map.setLayoutProperty(id,'visibility',v);sharedVisibility.clear();return;
+ }
+ const originals=map.getStyle().layers.filter(l=>!l.id.startsWith('octos-')&&!l.id.startsWith('shared-'));
+ if(map.getLayer('shared-base'))map.removeLayer('shared-base');if(map.getSource('shared-base'))map.removeSource('shared-base');
+ map.addSource('shared-base',{type:'raster',tiles:[b.url.replaceAll('{-y}','{y}')],scheme:b.scheme,tileSize:256,attribution:b.attribution});
+ map.addLayer({id:'shared-base',type:'raster',source:'shared-base'},map.getStyle().layers[0]?.id);
+ for(const l of originals){if(!sharedVisibility.has(l.id))sharedVisibility.set(l.id,map.getLayoutProperty(l.id,'visibility')||'visible');map.setLayoutProperty(l.id,'visibility','none')}
+}});
 })();
 </script></body></html>

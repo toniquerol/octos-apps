@@ -269,7 +269,7 @@ header .head-actions{margin-left:auto;position:relative;z-index:2}
 <header><div class="brand"><div><b><span class="octos" style="color:#ff891f">OcToS</span> <span style="color:#fff;text-transform:none">carto</span></b><small>VISOR CARTOGRÁFICO</small></div></div><div class="head-actions"><button class="btn mobile-only" id="menuBtn">☰ Capas</button><div class="lidar-header-control"><button id="lidarQuick" class="header-lidar" type="button" aria-pressed="false" title="Activar o desactivar mapa LiDAR">LiDAR <span class="lidar-indicator" aria-hidden="true"></span></button><div class="lidar-slider-wrap" id="lidarSliderWrap" title="Transparencia LiDAR"><input id="lidarOpacity" type="range" min="0" max="100" value="80" step="1" data-opacity-key="lidar" aria-label="Opacidad de LiDAR"><output id="lidarOpacityValue" for="lidarOpacity">80%</output></div></div><details id="basePicker" class="header-base"><summary title="Cambiar mapa base">◩ Mapas base <span class="header-chevron">⌄</span></summary><div class="base-options" id="baseOptions" role="group" aria-label="Selección de mapa base"></div></details></div></header>
 <div class="shell" id="appShell"><aside id="sidebar"><div class="sidehead"><h1>Catálogo de capas</h1><input class="search" type="search" id="filter" placeholder="Buscar capas…" aria-label="Filtrar capas"><div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center"><span id="counter" style="font-size:11px;color:#a7bdc9">0 capas activas</span><button class="btn" id="clear" style="padding:4px 8px;font-size:11px">Limpiar superposiciones</button></div></div><div class="catalog" id="catalog"></div><div class="notice" id="notice">Capas WMS/WMTS: desplegar y activar. Productos de descarga: enlace al catálogo. Se requiere Internet.</div></aside><button id="collapseSidebar" class="sidebar-collapse" type="button" aria-label="Ocultar catálogo de capas" aria-expanded="true" title="Ocultar catálogo">‹</button><main class="mapwrap"><div id="map"></div><div class="float topbar"><div class="maptools"><button title="Mi ubicación" aria-label="Solicitar ubicación GPS" id="gps" type="button">◎</button><div class="active-menu"><button type="button" title="Capas activas" id="activeToggle" aria-label="Abrir capas activas" aria-expanded="false" aria-controls="activePanel">▤ <span id="activeCount">0</span></button><section id="activePanel" class="active-panel hidden" aria-label="Capas activas"><div class="active-heading">Capas visibles</div><div id="activeList"></div></section></div></div></div><div class="float bottom"><span id="zoom">Zoom —</span><span class="bottom-separator">·</span><span id="coords">—</span><span class="bottom-separator">·</span><span class="bottom-credit">© IGN/CNIG</span></div></main></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script>
+<script src="../shared/basemaps.js?v=2.8"></script><script>
 (function(){
 'use strict';
 const notice=document.getElementById('notice');
@@ -567,6 +567,11 @@ function buildBasePicker(){
  document.addEventListener('keydown',ev=>{if(ev.key==='Escape')picker.open=false});
 }
 buildBasePicker();build();setBase(baseChoices[0]);
+OcToSBasemaps.mount({app:'carto',map,apply:async b=>{
+ const next=await OcToSBasemaps.leafletLayer(b,'backgroundTiles');
+ next.addTo(map);if(activeBase)map.removeLayer(activeBase);activeBase=next;basemap=b.id;refresh();
+}});
+
 document.getElementById('lidarQuick').addEventListener('click',()=>{
  const enabled=!active.has('lidar');
  applyLayer(lidarChoice,null,enabled);

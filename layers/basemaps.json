@@ -1,7 +1,7 @@
 {
-  "version": "2.7.0",
+  "version": "2.8.0",
   "validatedBaseline": "drive-liberty",
-  "description": "Mapas de fondo disponibles en OcToS Layers. El estado aprobado de Drive se basa en su uso previo en OcToS Drive; el resto requiere comprobarse en Layers.",
+  "description": "Catálogo común. Aprobación de Drive declarada por el usuario; integración en los otros visores pendiente de prueba visual.",
   "items": [
     {
       "id": "drive-liberty",
@@ -11,43 +11,106 @@
       "status": "aprobada",
       "source": "OcToS Drive",
       "terrain3d": "https://tiles.mapterhorn.com/tilejson.json",
-      "note": "Configuración de estilo usada por Drive; validación indicada por el usuario"
-    },
-    {
-      "id": "minimal",
-      "name": "Minimalista · tierra blanca y mar",
-      "type": "STYLE_VARIANT",
-      "base": "drive-liberty",
-      "status": "pruebas",
-      "note": "Oculta las capas vectoriales salvo agua; fondo blanco"
+      "note": "Configuración de estilo usada por Drive; validación indicada por el usuario",
+      "group": "Mapas base",
+      "scheme": "xyz",
+      "attribution": "© OpenFreeMap · OpenMapTiles · OpenStreetMap",
+      "compatibility": {
+        "layers": true,
+        "drive": true,
+        "carto": true,
+        "rain": true,
+        "rainTerrainTexture": false
+      },
+      "validation": {
+        "source": "Confirmación del usuario en Drive",
+        "checkedAt": null
+      }
     },
     {
       "id": "ign-base",
       "name": "IGN Base",
       "type": "TMS",
       "url": "https://tms-ign-base.idee.es/1.0.0/IGNBaseTodo/{z}/{x}/{-y}.jpeg",
-      "status": "pendiente"
+      "status": "pendiente",
+      "group": "Mapas base",
+      "scheme": "tms",
+      "attribution": "© IGN / CNIG",
+      "compatibility": {
+        "layers": true,
+        "drive": true,
+        "carto": true,
+        "rain": true,
+        "rainTerrainTexture": true
+      },
+      "validation": {
+        "source": "Pendiente",
+        "checkedAt": null
+      }
     },
     {
       "id": "ign-gris",
       "name": "IGN Base gris",
       "type": "TMS",
       "url": "https://tms-ign-base.idee.es/1.0.0/IGNBaseGris/{z}/{x}/{-y}.jpeg",
-      "status": "pendiente"
+      "status": "pendiente",
+      "group": "Mapas base",
+      "scheme": "tms",
+      "attribution": "© IGN / CNIG",
+      "compatibility": {
+        "layers": true,
+        "drive": true,
+        "carto": true,
+        "rain": true,
+        "rainTerrainTexture": true
+      },
+      "validation": {
+        "source": "Pendiente",
+        "checkedAt": null
+      }
     },
     {
       "id": "pnoa",
       "name": "PNOA Ortofoto",
       "type": "TMS",
       "url": "https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg",
-      "status": "pendiente"
+      "status": "pendiente",
+      "group": "Mapas base",
+      "scheme": "tms",
+      "attribution": "© IGN / CNIG",
+      "compatibility": {
+        "layers": true,
+        "drive": true,
+        "carto": true,
+        "rain": true,
+        "rainTerrainTexture": true
+      },
+      "validation": {
+        "source": "Pendiente",
+        "checkedAt": null
+      }
     },
     {
       "id": "ign-relieve",
       "name": "IGN Relieve",
       "type": "TMS",
       "url": "https://tms-relieve.idee.es/1.0.0/relieve/{z}/{x}/{-y}.jpeg",
-      "status": "pendiente"
+      "status": "pendiente",
+      "group": "Mapas base",
+      "scheme": "tms",
+      "attribution": "© IGN / CNIG",
+      "compatibility": {
+        "layers": true,
+        "drive": true,
+        "carto": true,
+        "rain": true,
+        "rainTerrainTexture": true
+      },
+      "validation": {
+        "source": "Pendiente",
+        "checkedAt": null
+      }
     }
-  ]
+  ],
+  "schemaVersion": 2
 }
