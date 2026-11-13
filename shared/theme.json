@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "revision": 1,
+  "version": "1.0",
+  "publishedAt": "2026-11-13",
+  "apps": {"layers":"2.9","drive":"11.1","carto":"1.1","rain":"9.7","meteo":"7.2","templates":"1.0"},
+  "tokens": {"accent":"#ff891f","background":"#202022","panel":"#28282b","text":"#f4f4f5","headerHeight":76,"footerHeight":32,"sidebarWidth":280,"listWidth":300,"editorHeight":330,"fontSize":13,"titleSize":22,"buttonHeight":36,"radius":7,"gap":10,"logoSize":40,"mobileButtonHeight":44,"mobileHeaderHeight":112,"popupWidth":320,"popupPosition":"right","textAlign":"left","headingAlign":"center","logoUrl":"","iconMenu":"☰","iconClose":"×","iconZoomIn":"+","iconZoomOut":"−","icon3d":"3D"},
+  "history": []
+}
+
