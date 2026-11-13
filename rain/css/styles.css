@@ -122,3 +122,20 @@ body.view3d #legend{display:none}
  .study-info>div{grid-template-columns:78px minmax(0,1fr);font-size:10px}
  .terrain-actions button{font-size:10px}
 }
+
+/* V8 · ocupación del suelo y coeficientes de escorrentía */
+#landcoverSection{border-top:1px solid #795f47}
+#landcoverSection>summary{color:#ffbf86}
+.cover-code-row{display:block;border-top:1px solid #424245;padding:8px 0;font-size:11px}
+.cover-code-row select{margin:4px 0 0;font-size:11px}
+#coverCodes{max-height:270px;overflow:auto;margin:10px 0}
+#coverCoefficients{display:grid;grid-template-columns:1fr 1fr;gap:4px 9px}
+#coverCoefficients label{font-size:10px;margin:3px 0}
+#coverCoefficients input[type=number]{padding:7px;margin:4px 0}
+.cover-results{border:1px solid #484f51;border-radius:7px;background:#252b2d;margin-top:10px;padding:9px}
+.cover-results:empty{display:none}
+.cover-results>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;border-bottom:1px solid #41494b;padding:6px 2px;font-size:11px;align-items:center}
+.cover-results>div:last-child{border:0}
+.cover-results>div span{color:#c3c8ca;line-height:1.35}
+.cover-results>div strong{color:#f4f5f4;font-variant-numeric:tabular-nums;text-align:right;font-weight:550;white-space:nowrap}
+.cover-swatch{display:inline-block;width:10px;height:10px;border:1px solid #ffffff70;border-radius:2px;vertical-align:middle}
