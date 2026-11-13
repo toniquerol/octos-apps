@@ -155,7 +155,7 @@ function activate(){
   requestAnimationFrame(()=>{if(gl)compareMap?.resize();else compareMap?.invalidateSize();sync()});
  }catch(e){deactivate();setPreviewStatus('Comparador: '+e.message)}
 }
-compareButton.onclick=()=>compareActive?deactivate():activate();
+compareButton.onclick=()=>{if(compareActive){deactivate();localStorage.setItem('octos-layers-compare-enabled-v3','0')}else{activate();localStorage.setItem('octos-layers-compare-enabled-v3','1')}};
 rail.addEventListener('pointerdown',e=>{
  if(e.button!==0)return;e.preventDefault();rail.setPointerCapture(e.pointerId);
  const move=ev=>{const r=container.getBoundingClientRect();position=clamp((ev.clientX-r.left)/r.width,.03,.97);drawSplit()};
@@ -183,5 +183,5 @@ divider.addEventListener('pointerdown',e=>{
 });
 divider.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();width+=e.key==='ArrowRight'?16:-16;fit();localStorage.setItem('octos-layers-width-v3',String(width))});
 new ResizeObserver(()=>{map?.invalidateSize();map3d?.resize();if(compareMap){if(usesMapLibre())compareMap.resize();else compareMap.invalidateSize()}}).observe(container);
-window.addEventListener('resize',fit);requestAnimationFrame(fit);if(selected)requestAnimationFrame(()=>preview());
+window.addEventListener('resize',fit);requestAnimationFrame(fit);if(selected)requestAnimationFrame(()=>preview());if(localStorage.getItem('octos-layers-compare-enabled-v3')!=='0')requestAnimationFrame(()=>{if(!terrainMode)activate()});
 })();
