@@ -1,4 +1,5 @@
-// Catálogo cartográfico V6: servicios compartidos con OcToS Carto.
+import {DEFAULT_LAYERS} from './layer-presets.js';
+// Catálogo cartográfico V9.5: servicios compartidos con OcToS Carto.
 // Cada WMS se incorpora exclusivamente al panel temático, por encima del mapa base.
 const services=[
  {group:'Hidrografía',items:[
@@ -36,6 +37,15 @@ export function officialCatalog(map,host,onLayer,onError){
  const root=one(host,'details');root.id='officialLayers';root.className='official-services';
  one(root,'summary','06 · CAPAS CARTOGRÁFICAS');
  one(root,'p','Nueve capas oficiales se activan por defecto en V9.5. Utiliza el botón «Capas» superior para ordenarlas, ocultarlas o ajustar su opacidad. Aquí puedes añadir otras subcapas WMS.').className='hint';
+ const presetSection=one(root,'details');presetSection.className='service-section preset-section';
+ one(presetSection,'summary','Capas predefinidas · 9');
+ for(const cfg of DEFAULT_LAYERS){
+  const line=one(presetSection,'div');line.className='preset-line';
+  one(line,'span',cfg.name);one(line,'small',Math.round(cfg.opacity*100)+' %');
+ }
+ const openControl=one(presetSection,'button','Gestionar capas');
+ openControl.type='button';
+ openControl.addEventListener('click',()=>{document.getElementById('layersMenu').open=true;document.getElementById('layersMenu').querySelector('summary')?.focus();});
  const active=new Map();
  for(const group of services){
   const section=one(root,'details');section.className='service-section';
