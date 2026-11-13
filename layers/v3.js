@@ -53,7 +53,7 @@ preview=function(){
  if(!x){setPreviewStatus('Sin recurso seleccionado');return}
  if(x.kind!=='WMS'){clearGL();return originalPreview()}
  try{
-  if(usesMapLibre()){chooseStyle();displayCanvas();installFocus();return}
+  if(usesMapLibre()){chooseStyle();displayCanvas();return}
   setLeafletBase();displayCanvas();const layers=selectedSpecs(x);
   layers.forEach(s=>{
    const l=L.tileLayer.wms(x.url,{layers:s.name,format:'image/png',transparent:true,opacity:s.opacity,version:'1.3.0'});
@@ -72,7 +72,7 @@ function renderCapabilities(layers){
  const active=new Set(selectedSpecs(x).map(v=>v.name));
  $('found').innerHTML='<div class="v3capTitle">SUBCAPAS WMS · '+layers.length+' · selección múltiple</div>'+layers.map(v=>{
   const checked=active.has(v.name),value=Math.round(clamp(Number(x.wmsOpacities?.[v.name]??x.opacity??.75))*100);
-  return '<div class="v3capRow '+(checked?'checked':'')+'"><label><input type="checkbox" data-v3-layer="'+esc(v.name)+'" '+(checked?'checked':'')+' aria-label="Activar '+esc(v.name)+'"><span class="v3capName">'+esc(v.title||v.name)+'<small>'+esc(v.name)+'</small></span></label><div class="v3capOpacity"><input type="range" min="0" max="100" value="'+value+'" data-v3-opacity="'+esc(v.name)+'" aria-label="Transparencia '+esc(v.name)+'"><output>'+value+'%</output></div></div>';
+  return '<div class="v3capRow '+(checked?'checked':'')+'"><label><input type="checkbox" data-v3-layer="'+esc(v.name)+'" '+(checked?'checked':'')+' aria-label="Activar '+esc(v.name)+'"><span class="v3capName">'+esc(v.title||v.name)+'<small>'+esc(v.name)+'</small></span></label><div class="v3capOpacity"><input type="range" min="0" max="100" value="'+value+'" data-v3-opacity="'+esc(v.name)+'" aria-label="Opacidad '+esc(v.name)+'"><output>'+value+'%</output></div></div>';
  }).join('');
  $('found').querySelectorAll('input[data-v3-layer]').forEach(box=>box.addEventListener('change',()=>{
   const current=data.find(v=>v.id===selected);if(!current)return;
@@ -183,5 +183,5 @@ divider.addEventListener('pointerdown',e=>{
 });
 divider.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();width+=e.key==='ArrowRight'?16:-16;fit();localStorage.setItem('octos-layers-width-v3',String(width))});
 new ResizeObserver(()=>{map?.invalidateSize();map3d?.resize();if(compareMap){if(usesMapLibre())compareMap.resize();else compareMap.invalidateSize()}}).observe(container);
-window.addEventListener('resize',fit);requestAnimationFrame(fit);
+window.addEventListener('resize',fit);requestAnimationFrame(fit);if(selected)requestAnimationFrame(()=>preview());
 })();
