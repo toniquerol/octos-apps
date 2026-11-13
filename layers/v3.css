@@ -53,3 +53,57 @@ body.closed #resizeLeft{display:none}
  #resizePreview{display:none!important}
  .previewpane{height:min(65dvh,620px)!important;min-height:390px;width:100%;min-width:0;flex:none}
 }
+
+/* OcToS Layers V3.1 — ficha compacta y listado WMS ajustable */
+@media(min-width:791px){
+ .technical .techbar{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 71px!important;
+  grid-template-rows:auto auto;
+  grid-template-areas:"head thumb" "tools tools";
+  gap:5px 7px;
+  padding:7px 8px;
+ }
+ .technical .techbar .tech-head{grid-area:head;min-width:0;gap:6px}
+ .technical .techbar .tech-head h2{font-size:9px;line-height:1.2}
+ .technical .techbar .status-top{gap:3px;font-size:9px}
+ .technical .techbar .status-top select{max-width:88px;min-width:0;font-size:9px;padding:3px}
+ .technical .techbar .tech-thumbnail{
+  grid-area:thumb;display:flex;position:relative;align-self:center;justify-self:end;
+  width:67px;max-width:100%;min-width:0;margin:0;padding:0;
+ }
+ .technical .techbar #thumbButton{width:62px;height:51px;min-width:0;min-height:0;padding:2px}
+ .technical .techbar #clearThumb{
+  position:absolute;top:-6px;right:-2px;z-index:2;
+  width:18px;height:18px;line-height:13px;padding:0;font-size:14px;border-radius:50%;
+  background:#27272a;
+ }
+ .technical .techbar .tools{
+  grid-area:tools!important;display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:0;width:100%;
+ }
+ .technical .techbar .tools button{padding:5px 3px;min-width:0;min-height:27px;font-size:9px;line-height:1.15}
+}
+.technical .techscroll{display:flex!important;flex-direction:column;overflow:hidden!important;padding:0!important;gap:0}
+.technical .v31-form{min-height:0;flex:0 0 auto;overflow:auto;overscroll-behavior:contain;padding:8px 10px}
+.technical .v31-form>p.muted{display:none}
+.technical .v31-separator{
+ height:8px;flex:0 0 8px;background:#3b3b3f;cursor:row-resize;touch-action:none;
+ border-top:1px solid #505056;border-bottom:1px solid #505056;position:relative;
+}
+.technical .v31-separator:after{
+ content:"";position:absolute;left:calc(50% - 22px);top:2px;width:44px;height:2px;
+ background:#999;border-radius:2px;
+}
+.technical .v31-separator:hover,.technical .v31-separator:focus-visible{background:#ff6a1a;outline:none}
+.technical .v31-separator:hover:after,.technical .v31-separator:focus-visible:after{background:#fff}
+.technical .v31-caps{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 10px 12px}
+.technical .v31-caps #found{max-height:none!important;overflow:visible!important;margin:0}
+.technical .v31-caps #found:empty:before{content:"Consulta GetCapabilities para mostrar la lista de capas del servicio.";display:block;color:#a9a9ae;font-size:10px;line-height:1.5;padding:12px 0}
+.technical .v31-caps .v3capTitle{position:sticky;top:0;z-index:2;background:#252527;border-bottom:1px solid #49494d;padding:8px 0 6px}
+@media(max-width:790px){
+ .technical .techscroll{display:block!important;overflow:visible!important}
+ .technical .v31-form{height:auto!important;flex:none!important;overflow:visible!important}
+ .technical .v31-separator{display:none!important}
+ .technical .v31-caps{overflow:visible!important;min-height:0;padding:0 12px 12px}
+}
