@@ -194,10 +194,10 @@ body.view3d #legend{display:none}
 }
 
 
-/* V9.6 · Menú izquierdo en dos niveles fijos. Cada zona tiene su propio scroll. */
-main>aside{padding:0;overflow:hidden;display:flex;flex-direction:column;min-height:0}
-.rain-simulation-pane{height:66.6667%;min-height:0;flex:0 0 66.6667%;padding:16px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
-.rain-layer-pane{height:33.3333%;min-height:0;flex:1 1 33.3333%;display:flex;flex-direction:column;border-top:2px solid #705332;background:#222326;overflow:hidden}
+/* Paneles laterales independientes: simulación a la izquierda, árbol de capas a la derecha. */
+main>aside{width:min(660px,58vw);padding:0;overflow:hidden;display:flex;flex-direction:row;min-height:0}
+.rain-simulation-pane{height:100%;min-width:0;min-height:0;flex:1 1 50%;padding:16px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.rain-layer-pane{height:100%;min-width:0;min-height:0;flex:1 1 50%;display:flex;flex-direction:column;border-left:2px solid #705332;background:#222326;overflow:hidden}
 .rain-layer-heading{display:flex;flex:none;align-items:baseline;justify-content:space-between;gap:8px;padding:10px 14px 8px;background:#28282b;border-bottom:1px solid #444549}
 .rain-layer-heading strong{font-size:11px;letter-spacing:1.2px;color:#ffb67b}
 .rain-layer-heading span{font-size:9px;color:#b6b6bb;white-space:nowrap}
@@ -213,4 +213,4 @@ main>aside{padding:0;overflow:hidden;display:flex;flex-direction:column;min-heig
 .sidebar-preset-row output{font-size:10px;white-space:nowrap;color:#f0bb8d;font-variant-numeric:tabular-nums}
 .catalog-duplicate{font-size:10px;color:#aab2b8;border-top:1px solid #36383c;padding:5px 0}
 .catalog-service-link{display:block;font-size:10px;margin:4px 0 6px;overflow-wrap:anywhere}
-@media(max-width:760px){main>aside{height:calc(100dvh - 66px)}.rain-simulation-pane{padding:12px}.rain-layer-heading{padding:9px 10px 7px}}
+@media(max-width:760px){main>aside{width:min(330px,88vw);height:calc(100dvh - 66px);flex-direction:column}.rain-simulation-pane{height:66.6667%;flex:0 0 66.6667%;padding:12px}.rain-layer-pane{height:33.3333%;flex:1 1 33.3333%;border-left:0;border-top:2px solid #705332}.rain-layer-heading{padding:9px 10px 7px}}
