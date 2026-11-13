@@ -83,3 +83,42 @@ header{position:relative;z-index:1250;overflow:visible}
 .nav3d-mode button:focus-visible{outline:2px solid #ff891f;outline-offset:2px}
 .rain-3d-view{touch-action:none;user-select:none;-webkit-user-select:none}
 .rain-3d-view:focus-visible{outline:2px solid #ff891f;outline-offset:-3px}
+
+/* OcToS Rain V7.6 · presentación compacta de estudio y cámara 3D */
+.controls3d{
+ top:auto;bottom:20px;right:18px;width:min(275px,calc(100% - 36px));
+ padding:13px 14px;max-height:min(380px,calc(100% - 50px));overflow:auto
+}
+.controls3d strong{font-size:12px;letter-spacing:.07em;margin-bottom:12px}
+.controls3d label{display:flex;align-items:center;justify-content:space-between;margin:6px 0 8px}
+.controls3d input[type=range]{display:block;margin:0;width:100%;accent-color:var(--orange)}
+.terrain-tick-labels{display:flex;justify-content:space-between;color:#babdc2;font-size:10px;margin:2px 0 13px}
+.terrain-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.terrain-actions button{margin:0;padding:10px 5px;text-align:center;font-size:11px;min-height:39px}
+.controls3d .terrain-reset{width:100%;margin:8px 0 0;text-align:center;background:#423222;border-color:#725436}
+.controls3d .terrain-3d-status{font-size:10px;line-height:1.35;color:#c5d6d9;margin:8px 0 0}
+.controls3d .terrain-3d-status:empty{display:none}
+.study-panel{
+ position:absolute;z-index:680;top:66px;left:15px;
+ width:min(325px,calc(100% - 30px));max-height:calc(100% - 125px);overflow:auto;
+ background:#242629f2;border:1px solid #575d60;border-radius:10px;
+ padding:12px;box-shadow:0 7px 20px #0007
+}
+.study-panel[hidden],#studyContent[hidden]{display:none}
+.study-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.study-header strong{font-size:11px;letter-spacing:.07em;color:#ffba80}
+.study-header button{width:25px;height:25px;min-height:25px;padding:0;text-align:center;line-height:1}
+#studyPlan{display:block;width:100%;height:auto;max-height:190px;background:#1f3135;border-radius:6px}
+.study-info{display:grid;gap:0;margin-top:9px}
+.study-info>div{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;border-bottom:1px solid #42464b;padding:5px 0;font-size:11px;align-items:start}
+.study-info span{color:#bbbfc7}
+.study-info strong{color:#f1f2f4;font-weight:500;overflow-wrap:anywhere}
+.leaflet-bottom.leaflet-left{left:50%;transform:translateX(-50%)}
+.leaflet-bottom.leaflet-left .leaflet-control-scale{float:none;clear:none;margin-left:0;margin-bottom:14px}
+body.view3d #legend{display:none}
+@media(max-width:760px){
+ .controls3d{top:auto;right:10px;bottom:15px;width:min(245px,calc(100% - 20px));max-height:45vh}
+ .study-panel{top:55px;left:10px;width:min(285px,70vw);max-height:40vh}
+ .study-info>div{grid-template-columns:78px minmax(0,1fr);font-size:10px}
+ .terrain-actions button{font-size:10px}
+}
