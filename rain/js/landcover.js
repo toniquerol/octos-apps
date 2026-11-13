@@ -80,12 +80,12 @@ export async function analyzeCover(dem,basin,cover,mapping,coefficients,{maxSamp
  const total=basin.areaM2;
  const summary=CATEGORIES.filter(c=>c.c!==null).map(c=>{
   const count=classCounts.get(c.id)||0;
-  return {...c,coefficient:coeff[c.id],areaM2:count/Math.max(1,matched)*total,pct:count/Math.max(1,matched)*100};
+  return {...c,coefficient:coeff[c.id],areaM2:count/Math.max(1,sampledTotal)*total,pct:count/Math.max(1,sampledTotal)*100};
  }).filter(c=>c.areaM2>0);
- const knownFraction=knownCells/matched,coverage=matched/(matched+outside)||0;
+ const sampledTotal=matched+outside,knownFraction=knownCells/matched,coverage=matched/sampledTotal||0;
  return {summary,codeCounts,matched,unknown,outside,knownCells,knownFraction,coverage,
   weightedC:knownCells?weights/knownCells:null,
-  areaM2:total,imperviousM2:impervious/Math.max(1,matched)*total,
+  areaM2:total,imperviousM2:impervious/Math.max(1,sampledTotal)*total,
   complete:knownFraction>=.95&&coverage>=.95,
   usedSampling:stride>1,stride,coverName:cover.product,codeMapping:{...mapping},coefficients:coeff,
   sampleIndices,sampleCats,sampleCodes};
