@@ -34,8 +34,8 @@ export function officialCatalog(map,host,onLayer,onError){
  const paneName='rainThematicPane';
  if(!map.getPane(paneName)){const pane=map.createPane(paneName);pane.style.zIndex='480';pane.style.pointerEvents='none';}
  const root=one(host,'details');root.id='officialLayers';root.className='official-services';
- one(root,'summary','06 · CAPAS CARTOGRÁFICAS · OcToS Carto');
- one(root,'p','Capas oficiales sobre el mapa, por encima del fondo y del relieve. Cada subcapa tiene su transparencia.').className='hint';
+ one(root,'summary','06 · CAPAS CARTOGRÁFICAS');
+ one(root,'p','Nueve capas oficiales se activan por defecto en V9.5. Utiliza el botón «Capas» superior para ordenarlas, ocultarlas o ajustar su opacidad. Aquí puedes añadir otras subcapas WMS.').className='hint';
  const active=new Map();
  for(const group of services){
   const section=one(root,'details');section.className='service-section';
@@ -66,15 +66,15 @@ export function officialCatalog(map,host,onLayer,onError){
       opacity.title='Transparencia de '+item.title;opacity.setAttribute('aria-label','Opacidad de '+item.title);
       const percentage=one(row,'small','75 %');
       const setOpacity=()=>{percentage.textContent=Math.round(+opacity.value*100)+' %';active.get(key)?.setOpacity(+opacity.value);};
-      opacity.addEventListener('input',setOpacity);
+      opacity.addEventListener('input',()=>{setOpacity();onLayer?.(active.get(key),item.title,key,'sync');});
       check.addEventListener('change',()=>{
        if(check.checked){
         try{
          const layer=L.tileLayer.wms(url,{layers:item.name,format:'image/png',transparent:true,version:'1.3.0',pane:paneName,opacity:+opacity.value,attribution:name,maxZoom:22});
          layer.on('tileerror',()=>{state.textContent='Algunas teselas no están disponibles: verifica cobertura, escala y servicio.';});
-         active.set(key,layer);layer.addTo(map);onLayer?.(layer,item.title);
+         active.set(key,layer);layer.addTo(map);onLayer?.(layer,item.title,key,'add',{checkbox:check,range:opacity,percentage});
         }catch(e){check.checked=false;onError?.(name+': '+e.message);}
-       }else{active.get(key)?.remove();active.delete(key);}
+       }else{onLayer?.(active.get(key),item.title,key,'remove');active.get(key)?.remove();active.delete(key);}
       });
      }
      state.textContent=layers.length+' subcapas disponibles. Activa las necesarias.';
