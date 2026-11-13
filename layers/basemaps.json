@@ -1,0 +1,53 @@
+{
+  "version": "2.7.0",
+  "validatedBaseline": "drive-liberty",
+  "description": "Mapas de fondo disponibles en OcToS Layers. El estado aprobado de Drive se basa en su uso previo en OcToS Drive; el resto requiere comprobarse en Layers.",
+  "items": [
+    {
+      "id": "drive-liberty",
+      "name": "OcToS Drive · OpenFreeMap Liberty",
+      "type": "MAPLIBRE_STYLE",
+      "url": "https://tiles.openfreemap.org/styles/liberty",
+      "status": "aprobada",
+      "source": "OcToS Drive",
+      "terrain3d": "https://tiles.mapterhorn.com/tilejson.json",
+      "note": "Configuración de estilo usada por Drive; validación indicada por el usuario"
+    },
+    {
+      "id": "minimal",
+      "name": "Minimalista · tierra blanca y mar",
+      "type": "STYLE_VARIANT",
+      "base": "drive-liberty",
+      "status": "pruebas",
+      "note": "Oculta las capas vectoriales salvo agua; fondo blanco"
+    },
+    {
+      "id": "ign-base",
+      "name": "IGN Base",
+      "type": "TMS",
+      "url": "https://tms-ign-base.idee.es/1.0.0/IGNBaseTodo/{z}/{x}/{-y}.jpeg",
+      "status": "pendiente"
+    },
+    {
+      "id": "ign-gris",
+      "name": "IGN Base gris",
+      "type": "TMS",
+      "url": "https://tms-ign-base.idee.es/1.0.0/IGNBaseGris/{z}/{x}/{-y}.jpeg",
+      "status": "pendiente"
+    },
+    {
+      "id": "pnoa",
+      "name": "PNOA Ortofoto",
+      "type": "TMS",
+      "url": "https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg",
+      "status": "pendiente"
+    },
+    {
+      "id": "ign-relieve",
+      "name": "IGN Relieve",
+      "type": "TMS",
+      "url": "https://tms-relieve.idee.es/1.0.0/relieve/{z}/{x}/{-y}.jpeg",
+      "status": "pendiente"
+    }
+  ]
+}
