@@ -44,7 +44,7 @@ $('baseOpacity').oninput=()=>{
 };
 const lidar=L.tileLayer(lidarUrl,{pane:'rainLidarPane',opacity:.6,maxZoom:20,maxNativeZoom:18,attribution:'LiDAR © IGN'});$('lidar').onchange=()=>{$('lidar').checked?lidar.addTo(map):lidar.remove();rasterLayer?.bringToFront()};$('lidarOpacity').oninput=e=>lidar.setOpacity(+e.target.value);$('menu').onclick=()=>{document.body.classList.toggle('collapsed');map.invalidateSize()};if(innerWidth<760)document.body.classList.add('collapsed');$('gps').onclick=()=>navigator.geolocation?.getCurrentPosition(p=>map.setView([p.coords.latitude,p.coords.longitude],16),e=>say(e.message));
 function guard(fn){return async(...args)=>{try{await fn(...args)}catch(e){say(e.message);console.error(e)}}}function need(){if(!dem)throw Error('Importa primero un MDT con elevaciones en metros.')}function needHydro(){need();if(!hydro)throw Error('Calcula primero el drenaje.')}let rejectJob;function job(kind){if(worker)throw Error('Hay un cálculo en curso. Cancélalo antes de iniciar otro.');return new Promise((resolve,reject)=>{rejectJob=reject;worker=new Worker(new URL('./worker.js',import.meta.url),{type:'module'});worker.onmessage=({data})=>{if(data.stage)say(data.stage);else{worker.terminate();worker=null;rejectJob=null;data.error?reject(Error(data.error)):resolve(data.result)}};worker.onerror=e=>{worker.terminate();worker=null;rejectJob=null;reject(Error(e.message))};worker.postMessage({kind,dem})})}
-function clearResults(){++coverRequest;coverData=null;coverStats=null;coverImage=null;coverMapping={};coverLayer?.remove();coverLayer=null;$('coverFile').value='';$('coverCodes').replaceChildren();$('coverResults').replaceChildren();$('coverStatus').textContent='Importa un GeoTIFF categórico para calcular la escorrentía.';document.body.classList.remove('view3d');$('studyPanel').hidden=true;terrain3d?.close();$('switch3d').textContent='3D';$('switch3d').setAttribute('aria-pressed','false');$('controls3d').hidden=true;flowAnimator?.reset();updateFlowControls(false);lastBasin=null;hydro=null;grading=null;mask=null;features=[];profile=[];$('profileBox').hidden=true;for(const r of rows)r.layer.remove();rows=[];$('layers').replaceChildren();rasterLayer?.remove();rasterLayer=null;$('results').textContent=''}
+function clearResults(){++coverRequest;coverData=null;coverStats=null;coverImage=null;coverLayer?.remove();coverLayer=null;$('coverFile').value='';$('coverCodes').replaceChildren();$('coverResults').replaceChildren();$('coverStatus').textContent='Importa un GeoTIFF categórico para calcular la escorrentía.';document.body.classList.remove('view3d');$('studyPanel').hidden=true;terrain3d?.close();$('switch3d').textContent='3D';$('switch3d').setAttribute('aria-pressed','false');$('controls3d').hidden=true;flowAnimator?.reset();updateFlowControls(false);lastBasin=null;hydro=null;grading=null;mask=null;features=[];profile=[];$('profileBox').hidden=true;for(const r of rows)r.layer.remove();rows=[];$('layers').replaceChildren();rasterLayer?.remove();rasterLayer=null;$('results').textContent=''}
 async function load(source){if(worker)throw Error('Cancela la operación actual antes de cargar otro MDT.');abort?.abort();abort=new AbortController();say('Leyendo elevaciones reales…');const next=await loadDEM(source,{maxCells:+$('limit').value,bounds:crop?[crop.getWest(),crop.getSouth(),crop.getEast(),crop.getNorth()]:undefined,signal:abort.signal});clearResults();dem=next;terrain=await job('terrain');$('metadata').textContent=`${dem.source}\n${dem.crs} · ${dem.width} × ${dem.height} celdas\nResolución ${fmt(dem.dx)} × ${fmt(dem.dy)} m\nCotas ${fmt(terrain.min)}–${fmt(terrain.max)} m\n${fmt(terrain.count,0)} celdas válidas. ${dem.resolution.resampled?'Resolución reducida desde '+fmt(dem.resolution.originalX)+' × '+fmt(dem.resolution.originalY)+' m ('+fmt(dem.originalCells,0)+' celdas originales).':'Resolución original conservada.'} ${dem.projectionCaution||''} Precisión: consultar ficha del MDT.`;$('elevation').value=terrain.mean.toFixed(2);$('view').value='data';showRaster();map.fitBounds(demBounds(dem));updateStudyPanel();say('MDT cargado. Pulsa el mapa para consultar una cota.');}
 $('visualTiff').onchange=guard(async e=>{const file=e.target.files[0];if(!file)return;say('Procesando imagen LiDAR de referencia…');const visual=await loadVisualTiff(file);visualLayer?.remove();visualLayer=L.imageOverlay(visual.url,visual.bounds,{pane:'rainVisualPane',opacity:0.65,interactive:false}).addTo(map);rasterLayer?.bringToFront();map.fitBounds(visual.bounds);say('Capa visual EPSG:3857 cargada ('+visual.bands+' bandas). No interviene en el drenaje.');});$('hideVisual').onclick=()=>{visualLayer?.remove();visualLayer=null;say('Capa visual importada ocultada.');};
 // Zona previa: las coordenadas se mantienen siempre en WGS84 para visualización.
@@ -247,13 +247,20 @@ function updateCoverWms(){
 }
 $('coverWms').onchange=updateCoverWms;$('coverYear').onchange=updateCoverWms;
 $('coverWmsOpacity').oninput=()=>coverWmsLayer?.setOpacity(+$('coverWmsOpacity').value);
+// Guardar sólo las asociaciones de códigos y C configuradas por el usuario (sin datos geográficos).
+const coverSettingsKey='octos-rain-v8-icgc-settings';
+try{const saved=JSON.parse(localStorage.getItem(coverSettingsKey)||'null');if(saved&&typeof saved==='object'){
+ coverMapping=saved.mapping&&typeof saved.mapping==='object'?saved.mapping:{};
+ coverCoefficients=clampCoefficients(saved.coefficients||DEFAULT_C);
+}}catch{}
+function saveCoverSettings(){try{localStorage.setItem(coverSettingsKey,JSON.stringify({mapping:coverMapping,coefficients:coverCoefficients}));}catch{}}
 const coverCoefficientHost=$('coverCoefficients');
 for(const cat of CATEGORIES.filter(c=>c.c!==null)){
  const label=document.createElement('label');label.textContent=cat.name+' · C';
- const input=document.createElement('input');input.type='number';input.min='0';input.max='1';input.step='.05';input.value=String(cat.c);
+ const input=document.createElement('input');input.type='number';input.min='0';input.max='1';input.step='.05';input.value=String(coverCoefficients[cat.id]);
  label.append(input);coverCoefficientHost.append(label);
  input.onchange=()=>{const n=Number(input.value);if(!Number.isFinite(n)||n<0||n>1){say('C debe estar entre 0 y 1.');input.value=String(coverCoefficients[cat.id]);return;}
-  coverCoefficients[cat.id]=n;refreshCover().catch(e=>say(e.message));};
+  coverCoefficients[cat.id]=n;saveCoverSettings();refreshCover().catch(e=>say(e.message));};
 }
 function makeCoverCodeEditor(counts){
  const host=$('coverCodes');host.replaceChildren();
@@ -265,7 +272,7 @@ function makeCoverCodeEditor(counts){
   const blank=document.createElement('option');blank.value='';blank.textContent='Sin clasificar';select.append(blank);
   for(const cat of CATEGORIES.filter(c=>c.c!==null)){const o=document.createElement('option');o.value=cat.id;o.textContent=cat.name;select.append(o);}
   select.value=coverMapping[code]||'';
-  select.onchange=()=>{if(select.value)coverMapping[code]=select.value;else delete coverMapping[code];refreshCover().catch(e=>say(e.message));};
+  select.onchange=()=>{if(select.value)coverMapping[code]=select.value;else delete coverMapping[code];saveCoverSettings();refreshCover().catch(e=>say(e.message));};
   row.append(select);host.append(row);
  }
  if(counts.size>60){const warn=document.createElement('p');warn.className='hint';warn.textContent='Más de 60 códigos. Comprueba que el TIFF seleccionado sea realmente un ráster de clases.';host.append(warn);}
@@ -314,7 +321,7 @@ $('coverFile').onchange=guard(async e=>{
  need();const file=e.target.files[0];if(!file)return;
  $('coverStatus').textContent='Leyendo códigos de ocupación del suelo…';
  coverData=await loadCoverGeoTIFF(file,dem,{progress:t=>{$('coverStatus').textContent=t;}});
- coverMapping={};coverStats=null;coverImage=null;coverLayer?.remove();coverLayer=null;
+ coverStats=null;coverImage=null;coverLayer?.remove();coverLayer=null;
  await refreshCover();
 });
 $('coverAnalyze').onclick=guard(refreshCover);
