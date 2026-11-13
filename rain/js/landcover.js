@@ -67,13 +67,14 @@ export async function analyzeCover(dem,basin,cover,mapping,coefficients,{maxSamp
   const [x,y]=cellCenter(dem,i),code=coverCode(cover,dem,x,y);
   if(code===null){outside++;continue;}
   matched++;codeCounts.set(code,(codeCounts.get(code)||0)+1);
+  if(matched%16000===0){if(signal?.aborted)throw Error('Análisis de cobertura cancelado.');progress('Muestreadas '+matched.toLocaleString('es-ES')+' celdas…');await new Promise(resolve=>setTimeout(resolve,0));}
   const cat=mapping[code];
   if(!validMap(cat)){unknown++;continue;}
   knownCells++;classCounts.set(cat,(classCounts.get(cat)||0)+1);
   weights+=coeff[cat];if(CATEGORIES.find(c=>c.id===cat)?.impervious)impervious++;
   sampleIndices.push(i);sampleCodes.push(code);sampleCats.push(cat);
   cursor++;
-  if(cursor%18000===0){if(signal?.aborted)throw Error('Análisis de cobertura cancelado.');progress('Clasificando '+cursor.toLocaleString('es-ES')+' muestras…');await new Promise(resolve=>setTimeout(resolve,0));}
+
  }
  if(!matched)throw Error('La capa de cobertura no aporta datos a esta cuenca.');
  const total=basin.areaM2;
