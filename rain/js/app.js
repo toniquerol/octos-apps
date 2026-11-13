@@ -249,11 +249,15 @@ $('coverWms').onchange=updateCoverWms;$('coverYear').onchange=updateCoverWms;
 $('coverWmsOpacity').oninput=()=>coverWmsLayer?.setOpacity(+$('coverWmsOpacity').value);
 // Guardar sólo las asociaciones de códigos y C configuradas por el usuario (sin datos geográficos).
 const coverSettingsKey='octos-rain-v8-icgc-settings';
+let coverSavedMappings={};
 try{const saved=JSON.parse(localStorage.getItem(coverSettingsKey)||'null');if(saved&&typeof saved==='object'){
- coverMapping=saved.mapping&&typeof saved.mapping==='object'?saved.mapping:{};
+ coverSavedMappings=saved.mappings&&typeof saved.mappings==='object'?saved.mappings:{};
  coverCoefficients=clampCoefficients(saved.coefficients||DEFAULT_C);
 }}catch{}
-function saveCoverSettings(){try{localStorage.setItem(coverSettingsKey,JSON.stringify({mapping:coverMapping,coefficients:coverCoefficients}));}catch{}}
+function saveCoverSettings(){
+ if(coverData?.product)coverSavedMappings[coverData.product]=coverMapping;
+ try{localStorage.setItem(coverSettingsKey,JSON.stringify({mappings:coverSavedMappings,coefficients:coverCoefficients}));}catch{}
+}
 const coverCoefficientHost=$('coverCoefficients');
 for(const cat of CATEGORIES.filter(c=>c.c!==null)){
  const label=document.createElement('label');label.textContent=cat.name+' · C';
@@ -321,6 +325,7 @@ $('coverFile').onchange=guard(async e=>{
  need();const file=e.target.files[0];if(!file)return;
  $('coverStatus').textContent='Leyendo códigos de ocupación del suelo…';
  coverData=await loadCoverGeoTIFF(file,dem,{progress:t=>{$('coverStatus').textContent=t;}});
+ coverMapping={...(coverSavedMappings[coverData.product]||{})};
  coverStats=null;coverImage=null;coverLayer?.remove();coverLayer=null;
  await refreshCover();
 });
