@@ -17,7 +17,8 @@
   logo=document.createElement('img');logo.alt='OcToS';left.append(logo);
   for(const e of children){if(e===menu)continue;if(e.tagName==='IMG'||((e.textContent.includes('OcToS')||e.classList.contains('brand'))&&!e.querySelector('button,select,input'))){e.hidden=true;continue}right.append(e)}
   header.replaceChildren(left,title,right);footer=document.createElement('footer');footer.className='ot-footer';const link=document.createElement('a');link.href=new URL('../templates/',root);link.textContent='Plantilla OcToS';const credits=document.createElement('div');credits.className='ot-credits';credits.setAttribute('aria-label','Fuentes y atribuciones');footer.append(link,credits);document.body.append(footer);
-  let scheduled=false;function collect(){scheduled=false;for(const e of document.querySelectorAll('.leaflet-control-attribution,.maplibregl-ctrl-attrib,.maplibregl-ctrl-logo'))if(!footer.contains(e))credits.append(e)}
+  if(app==='meteo'){const credit=document.createElement('span');credit.innerHTML='Mapas: © <a href="https://www.ign.es/">IGN / PNOA</a> · <a href="https://leafletjs.com/">Leaflet</a>';credits.append(credit)}
+  let scheduled=false;function collect(){scheduled=false;for(const e of document.querySelectorAll('.leaflet-control-attribution,.maplibregl-ctrl-attrib,.maplibregl-ctrl-logo'+(app==='carto'?',.bottom':'')))if(!footer.contains(e))credits.append(e)}
   new MutationObserver(()=>{if(!scheduled){scheduled=true;requestAnimationFrame(collect)}}).observe(document.body,{childList:true,subtree:true});collect();readyDOM=true;if(current)apply(current);
  }
  window.OcToSTheme={apply,get current(){return current}};
