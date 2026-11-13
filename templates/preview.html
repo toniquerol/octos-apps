@@ -5,4 +5,3 @@ const popup=document.getElementById('context');document.getElementById('measure'
 function send(key,value){parent.postMessage({type:'octos-resize',key,value},location.origin)}
 for(const bar of document.querySelectorAll('.separator')){bar.onpointerdown=e=>{bar.setPointerCapture(e.pointerId);const key=bar.dataset.key,start=e.clientX,y=e.clientY,value=OcToSTheme.current.tokens[key];bar.onpointermove=p=>send(key,value+(key==='editorHeight'?p.clientY-y:p.clientX-start));bar.onpointerup=()=>bar.onpointermove=null;bar.onpointercancel=()=>bar.onpointermove=null};bar.onkeydown=e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();send(bar.dataset.key,OcToSTheme.current.tokens[bar.dataset.key]+(['ArrowLeft','ArrowUp'].includes(e.key)?-10:10))}}}
 </script></body></html>
-
