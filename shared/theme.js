@@ -16,6 +16,16 @@
   let menu=children.find(e=>e.tagName==='BUTTON'&&e.id==='menu');if(!menu){menu=document.createElement('button');menu.type='button';menu.setAttribute('aria-label','Mostrar menú');menu.onclick=()=>{const candidate=document.getElementById('topPanel')||document.getElementById('collapseSidebar')||document.getElementById('menu');if(candidate&&candidate!==menu)candidate.click();else document.querySelector('aside')?.classList.toggle('closed')}}left.append(menu);
   logo=document.createElement('img');logo.alt='OcToS';left.append(logo);
   for(const e of children){if(e===menu)continue;if(e.tagName==='IMG'||((e.textContent.includes('OcToS')||e.classList.contains('brand'))&&!e.querySelector('button,select,input'))){e.hidden=true;continue}right.append(e)}
+  // Shared template: place sidebar search between the app logo and centered title on wide screens.
+  // Preserve the original DOM node (including id and event listeners); restore it in compact layouts.
+  const search=document.querySelector('aside input[type="search"],aside input#search,.listpanel input#search');
+  if(search){
+   const anchor=document.createComment('OcToS search original position');search.before(anchor);
+   const slot=document.createElement('div');slot.className='ot-header-search';slot.setAttribute('role','search');left.append(slot);
+   const wide=window.matchMedia('(min-width:1101px)');
+   const placeSearch=()=>{if(wide.matches){if(search.parentNode!==slot)slot.append(search)}else if(search.previousSibling!==anchor)anchor.after(search)};
+   placeSearch();if(wide.addEventListener)wide.addEventListener('change',placeSearch);else wide.addListener(placeSearch);
+  }
   header.replaceChildren(left,title,right);footer=document.createElement('footer');footer.className='ot-footer';const link=document.createElement('a');link.href=new URL('../templates/',root);link.textContent='Plantilla OcToS';const credits=document.createElement('div');credits.className='ot-credits';credits.setAttribute('aria-label','Fuentes y atribuciones');footer.append(link,credits);document.body.append(footer);
   if(app==='meteo'){const credit=document.createElement('span');credit.innerHTML='Mapas: © <a href="https://www.ign.es/">IGN / PNOA</a> · <a href="https://leafletjs.com/">Leaflet</a>';credits.append(credit)}
   let scheduled=false;function collect(){scheduled=false;for(const e of document.querySelectorAll('.leaflet-control-attribution,.maplibregl-ctrl-attrib,.maplibregl-ctrl-logo'+(app==='carto'?',.bottom':'')))if(!footer.contains(e))credits.append(e)}
