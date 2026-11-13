@@ -75,3 +75,11 @@ header{position:relative;z-index:1250;overflow:visible}
  .base-panel{right:-48px}
  .controls3d{top:auto;bottom:90px;right:10px;width:min(205px,55vw)}
 }
+
+/* OcToS Rain V7.5 · navegación 3D: rotar, pan y gestos */
+.nav3d-mode{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.nav3d-mode button{margin:0;text-align:center;padding:8px 5px;border:1px solid #555b60;background:#303236;color:#e9e9ed}
+.nav3d-mode button[aria-pressed="true"]{background:#543b25;color:#ffca97;border-color:#ff891f}
+.nav3d-mode button:focus-visible{outline:2px solid #ff891f;outline-offset:2px}
+.rain-3d-view{touch-action:none;user-select:none;-webkit-user-select:none}
+.rain-3d-view:focus-visible{outline:2px solid #ff891f;outline-offset:-3px}
