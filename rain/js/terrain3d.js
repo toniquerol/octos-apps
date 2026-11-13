@@ -4,7 +4,7 @@
 import {toLatLng} from './dem.js';
 export class Terrain3D {
  constructor(host){
-  this.host=host;this.running=false;this.dem=null;this.hydro=null;this.animator=null;this.exaggeration=1;this.baseUrl='';this.textureRequest=0;this.interactionMode='rotate';this.activePointers=new Map();
+  this.host=host;this.running=false;this.dem=null;this.hydro=null;this.animator=null;this.exaggeration=1;this.baseUrl='';this.coverRequest=0;this.textureRequest=0;this.interactionMode='rotate';this.activePointers=new Map();
   this.el=document.createElement('div');this.el.className='rain-3d-view';
   this.el.setAttribute('aria-label','Terreno en tres dimensiones');
   this.host.append(this.el);
@@ -164,7 +164,7 @@ export class Terrain3D {
  }
  construct(){
   const T=this.THREE,d=this.dem;
-  this.clearTexture();this.surface?.geometry?.dispose();this.surface?.material?.dispose();
+  this.clearCoverTexture();this.clearTexture();this.surface?.geometry?.dispose();this.surface?.material?.dispose();
   if(this.surface)this.scene.remove(this.surface);
   if(this.points){this.scene.remove(this.points);this.points.geometry.dispose();this.points.material.dispose();this.points=null;}
   this.cx=d.x0+d.width*d.dx/2;this.cy=d.y0-d.height*d.dy/2;
@@ -200,6 +200,20 @@ export class Terrain3D {
  setExaggeration(v){
   this.exaggeration=Math.max(1,Math.min(3,+v||1));
   if(this.dem){const theta=this.theta,phi=this.phi,radius=this.radius,oldTarget=this.target?.clone();this.construct();if(oldTarget){this.target.x=oldTarget.x;this.target.z=oldTarget.z;}this.theta=theta;this.phi=phi;this.radius=radius;this.updateCamera();if(this.baseUrl)this.loadTexture(this.baseUrl);}
+ }
+ clearCoverTexture(){if(this.coverMesh){this.scene.remove(this.coverMesh);this.coverMesh.material.map?.dispose();this.coverMesh.material.dispose();this.coverMesh=null;}}
+ setCoverOpacity(v){this.coverOpacity=Math.max(0,Math.min(1,Number(v)||0));if(this.coverMesh)this.coverMesh.material.opacity=this.coverOpacity;}
+ async setCoverOverlay(url,opacity=.65){
+  this.coverOpacity=opacity;const token=++this.coverRequest;
+  this.clearCoverTexture();
+  if(!url||!this.surface||!this.THREE)return;
+  const T=this.THREE,geom=this.surface.geometry;
+  const img=new Image();img.src=url;
+  try{await img.decode();}catch{throw Error('No se pudo mostrar la clasificación en 3D.');}
+  if(token!==this.coverRequest||!this.surface||this.surface.geometry!==geom)return;
+  const tex=new T.Texture(img);tex.colorSpace=T.SRGBColorSpace;tex.needsUpdate=true;
+  const mat=new T.MeshBasicMaterial({map:tex,transparent:true,opacity:this.coverOpacity,depthWrite:false,side:T.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+  this.coverMesh=new T.Mesh(geom,mat);this.scene.add(this.coverMesh);
  }
  setOpacity(v){this.baseOpacity=Math.max(0,Math.min(1,+v));if(this.textureMesh)this.textureMesh.material.opacity=this.baseOpacity;}
  clearTexture(){if(this.textureMesh){this.scene.remove(this.textureMesh);this.textureMesh.material.map?.dispose();this.textureMesh.material.dispose();this.textureMesh=null;}}
@@ -279,7 +293,7 @@ export class Terrain3D {
  close(){this.activePointers.clear();this.running=false;if(this.frame)cancelAnimationFrame(this.frame);this.el.classList.remove('shown');}
  destroy(){
   this.close();window.removeEventListener('resize',this.onResize);
-  this.clearTexture();this.surface?.geometry.dispose();this.surface?.material.dispose();
+  this.clearCoverTexture();this.clearTexture();this.surface?.geometry.dispose();this.surface?.material.dispose();
   this.points?.geometry.dispose();this.points?.material.dispose();
   this.renderer?.dispose();this.el.remove();
  }
