@@ -7,12 +7,41 @@ import{FlowParticles}from'./flow-particles.js';
 import{officialCatalog}from'./catalog.js';
 import{loadDEM,toLatLng,fromLatLng,cellAt,cellCenter}from'./dem.js';import{hillshade}from'./terrain.js';import{raster,demBounds,inside,maskGeometry}from'./render.js';import{grade}from'./grading.js';
 const $=id=>document.getElementById(id),say=s=>$('status').textContent=s,fmt=(n,d=2)=>Number.isFinite(n)?n.toLocaleString('es-ES',{maximumFractionDigits:d}):'—';let dem,terrain,hydro,grading,mask,worker,abort,mode='',points=[],drawLayer,vertices=[],crop,profile=[],features=[],rows=[],rasterLayer,profileMarker,lastBasin,visualLayer,flowAnimator,zoneMode='',zonePts=[],zoneLayer,zoneBounds,zoneMarker;const map=L.map('map',{zoomControl:false}).setView([40.1,-3.5],6);L.control.zoom({position:'topright'}).addTo(map);L.control.scale({imperial:false}).addTo(map);
-const bases=['https://tms-ign-base.idee.es/1.0.0/IGNBaseTodo/{z}/{x}/{-y}.jpeg','https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg','https://tms-mapa-raster.ign.es/1.0.0/mapa-raster/{z}/{x}/{-y}.jpeg','https://tms-ign-base.idee.es/1.0.0/IGNBaseGris/{z}/{x}/{-y}.jpeg'];let baseLayer;function base(){baseLayer?.remove();baseLayer=L.tileLayer(bases[$('base').selectedIndex],{maxZoom:20,maxNativeZoom:18,attribution:'© IGN / CNIG'}).addTo(map);baseLayer.on('tileerror',()=>say('Alguna tesela oficial no está disponible. Prueba otro mapa base.'))}base();$('base').onchange=base;
-const lidar=L.tileLayer('https://wmts-mapa-lidar.idee.es/lidar?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=EL.GridCoverageDSM&STYLE=default&FORMAT=image/png&TILEMATRIXSET=GoogleMapsCompatible&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',{opacity:.6,maxZoom:20,maxNativeZoom:18,attribution:'LiDAR © IGN'});$('lidar').onchange=()=>{$('lidar').checked?lidar.addTo(map):lidar.remove();rasterLayer?.bringToFront()};$('lidarOpacity').oninput=e=>lidar.setOpacity(+e.target.value);$('menu').onclick=()=>{document.body.classList.toggle('collapsed');map.invalidateSize()};if(innerWidth<760)document.body.classList.add('collapsed');$('gps').onclick=()=>navigator.geolocation?.getCurrentPosition(p=>map.setView([p.coords.latitude,p.coords.longitude],16),e=>say(e.message));
+// V6: panes fijos para evitar que las capas oficiales queden detrás del fondo.
+for(const [name,z] of [['rainLidarPane',270],['rainVisualPane',310],['rainAnalysisPane',350],['rainThematicPane',480],['rainVectorPane',490]]){
+ if(!map.getPane(name)){const pane=map.createPane(name);pane.style.zIndex=String(z);if(name==='rainThematicPane')pane.style.pointerEvents='none';}
+}
+const lidarUrl='https://wmts-mapa-lidar.idee.es/lidar?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=EL.GridCoverageDSM&STYLE=default&FORMAT=image/png&TILEMATRIXSET=GoogleMapsCompatible&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}';
+const bases=[
+ 'https://tms-ign-base.idee.es/1.0.0/IGNBaseTodo/{z}/{x}/{-y}.jpeg',
+ 'https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg',
+ 'https://tms-mapa-raster.ign.es/1.0.0/mapa-raster/{z}/{x}/{-y}.jpeg',
+ 'https://tms-ign-base.idee.es/1.0.0/IGNBaseGris/{z}/{x}/{-y}.jpeg',
+ 'https://tms-ign-base.idee.es/1.0.0/IGNBaseSimplificado/{z}/{x}/{-y}.png',
+ 'https://tms-relieve.idee.es/1.0.0/relieve/{z}/{x}/{-y}.jpeg',
+ 'https://xyz-mdt.idee.es/1.0.0/raster-dem/{z}/{x}/{y}.png',
+ lidarUrl
+];
+let baseLayer;
+function base(){
+ baseLayer?.remove();
+ const id=$('base').selectedIndex;
+ baseLayer=L.tileLayer(bases[id],{maxZoom:20,maxNativeZoom:18,attribution:id===7?'LiDAR © IGN':'© IGN / CNIG',opacity:+$('baseOpacity').value});
+ baseLayer.addTo(map);
+ baseLayer.on('tileerror',()=>say('Alguna tesela del mapa base no está disponible. Prueba otro mapa base.'));
+}
+base();
+$('base').onchange=base;
+$('baseOpacity').oninput=()=>{
+ const value=+$('baseOpacity').value;
+ baseLayer?.setOpacity(value);
+ $('baseOpacityValue').textContent=Math.round(value*100)+' %';
+};
+const lidar=L.tileLayer(lidarUrl,{pane:'rainLidarPane',opacity:.6,maxZoom:20,maxNativeZoom:18,attribution:'LiDAR © IGN'});$('lidar').onchange=()=>{$('lidar').checked?lidar.addTo(map):lidar.remove();rasterLayer?.bringToFront()};$('lidarOpacity').oninput=e=>lidar.setOpacity(+e.target.value);$('menu').onclick=()=>{document.body.classList.toggle('collapsed');map.invalidateSize()};if(innerWidth<760)document.body.classList.add('collapsed');$('gps').onclick=()=>navigator.geolocation?.getCurrentPosition(p=>map.setView([p.coords.latitude,p.coords.longitude],16),e=>say(e.message));
 function guard(fn){return async(...args)=>{try{await fn(...args)}catch(e){say(e.message);console.error(e)}}}function need(){if(!dem)throw Error('Importa primero un MDT con elevaciones en metros.')}function needHydro(){need();if(!hydro)throw Error('Calcula primero el drenaje.')}let rejectJob;function job(kind){if(worker)throw Error('Hay un cálculo en curso. Cancélalo antes de iniciar otro.');return new Promise((resolve,reject)=>{rejectJob=reject;worker=new Worker(new URL('./worker.js',import.meta.url),{type:'module'});worker.onmessage=({data})=>{if(data.stage)say(data.stage);else{worker.terminate();worker=null;rejectJob=null;data.error?reject(Error(data.error)):resolve(data.result)}};worker.onerror=e=>{worker.terminate();worker=null;rejectJob=null;reject(Error(e.message))};worker.postMessage({kind,dem})})}
 function clearResults(){flowAnimator?.reset();updateFlowControls(false);lastBasin=null;hydro=null;grading=null;mask=null;features=[];profile=[];$('profileBox').hidden=true;for(const r of rows)r.layer.remove();rows=[];$('layers').replaceChildren();rasterLayer?.remove();rasterLayer=null;$('results').textContent=''}
 async function load(source){if(worker)throw Error('Cancela la operación actual antes de cargar otro MDT.');abort?.abort();abort=new AbortController();say('Leyendo elevaciones reales…');const next=await loadDEM(source,{maxCells:+$('limit').value,bounds:crop?[crop.getWest(),crop.getSouth(),crop.getEast(),crop.getNorth()]:undefined,signal:abort.signal});clearResults();dem=next;terrain=await job('terrain');$('metadata').textContent=`${dem.source}\n${dem.crs} · ${dem.width} × ${dem.height} celdas\nResolución ${fmt(dem.dx)} × ${fmt(dem.dy)} m\nCotas ${fmt(terrain.min)}–${fmt(terrain.max)} m\n${fmt(terrain.count,0)} celdas válidas. ${dem.resolution.resampled?'Resolución reducida desde '+fmt(dem.resolution.originalX)+' × '+fmt(dem.resolution.originalY)+' m ('+fmt(dem.originalCells,0)+' celdas originales).':'Resolución original conservada.'} ${dem.projectionCaution||''} Precisión: consultar ficha del MDT.`;$('elevation').value=terrain.mean.toFixed(2);$('view').value='data';showRaster();map.fitBounds(demBounds(dem));say('MDT cargado. Pulsa el mapa para consultar una cota.');}
-$('visualTiff').onchange=guard(async e=>{const file=e.target.files[0];if(!file)return;say('Procesando imagen LiDAR de referencia…');const visual=await loadVisualTiff(file);visualLayer?.remove();visualLayer=L.imageOverlay(visual.url,visual.bounds,{opacity:0.65,interactive:false}).addTo(map);rasterLayer?.bringToFront();map.fitBounds(visual.bounds);say('Capa visual EPSG:3857 cargada ('+visual.bands+' bandas). No interviene en el drenaje.');});$('hideVisual').onclick=()=>{visualLayer?.remove();visualLayer=null;say('Capa visual importada ocultada.');};
+$('visualTiff').onchange=guard(async e=>{const file=e.target.files[0];if(!file)return;say('Procesando imagen LiDAR de referencia…');const visual=await loadVisualTiff(file);visualLayer?.remove();visualLayer=L.imageOverlay(visual.url,visual.bounds,{pane:'rainVisualPane',opacity:0.65,interactive:false}).addTo(map);rasterLayer?.bringToFront();map.fitBounds(visual.bounds);say('Capa visual EPSG:3857 cargada ('+visual.bands+' bandas). No interviene en el drenaje.');});$('hideVisual').onclick=()=>{visualLayer?.remove();visualLayer=null;say('Capa visual importada ocultada.');};
 // Zona previa: las coordenadas se mantienen siempre en WGS84 para visualización.
 function resetZoneDrawing(){zoneLayer?.remove();zoneLayer=null;zoneMarker?.remove();zoneMarker=null;zonePts=[];}
 function setZone(mode){zoneMode=mode;resetZoneDrawing();$('zoneStatus').textContent=mode==='zonePoint'?'Marca el punto de salida en el mapa.':'Marca las esquinas o los vértices del área.';say($('zoneStatus').textContent);}
@@ -58,9 +87,9 @@ $('buildMosaic').onclick=guard(async()=>{
 $('mosaicFit').onclick=guard(()=>{need();map.fitBounds(demBounds(dem));});
 
 $('file').onchange=guard(e=>e.target.files[0]&&load(e.target.files[0]));$('remote').onclick=guard(()=>{const u=new URL($('url').value);if(u.protocol!=='https:')throw Error('Introduce una URL HTTPS.');return load(u.href)});$('cancel').onclick=()=>{abort?.abort();worker?.terminate();worker=null;rejectJob?.(Error('Operación cancelada.'));rejectJob=null;say('Operación cancelada.')};
-function showRaster(){need();let k=$('view').value,v=k==='data'?dem.data:k==='shade'?hillshade(terrain,{azimuth:+$('azimuth').value,altitude:+$('altitude').value}):k==='accumulation'?hydro?.accumulation:k==='depth'?hydro?.depth:k==='cutfill'?grading?.difference:k==='after'?grading?.surface:terrain?.[k];if(!v)throw Error('Calcula primero este resultado.');const r=raster(dem,v,k);if(!r)throw Error('No hay valores válidos.');rasterLayer?.remove();rasterLayer=L.imageOverlay(r.url,r.bounds,{opacity:+$('opacity').value,interactive:false}).addTo(map);$('legend').textContent=`${$('view').selectedOptions[0].textContent} · ${fmt(r.min)} → ${fmt(r.max)}`;}
+function showRaster(){need();let k=$('view').value,v=k==='data'?dem.data:k==='shade'?hillshade(terrain,{azimuth:+$('azimuth').value,altitude:+$('altitude').value}):k==='accumulation'?hydro?.accumulation:k==='depth'?hydro?.depth:k==='cutfill'?grading?.difference:k==='after'?grading?.surface:terrain?.[k];if(!v)throw Error('Calcula primero este resultado.');const r=raster(dem,v,k);if(!r)throw Error('No hay valores válidos.');rasterLayer?.remove();rasterLayer=L.imageOverlay(r.url,r.bounds,{pane:'rainAnalysisPane',opacity:+$('opacity').value,interactive:false}).addTo(map);$('legend').textContent=`${$('view').selectedOptions[0].textContent} · ${fmt(r.min)} → ${fmt(r.max)}`;}
 for(const id of ['view','azimuth','altitude'])$(id).onchange=guard(showRaster);$('opacity').oninput=()=>rasterLayer?.setOpacity(+$('opacity').value);$('fit').onclick=guard(()=>{need();map.fitBounds(demBounds(dem))});
-function addFeature(geometry,properties,color='#00d4eb'){const f={type:'Feature',geometry,properties:{...properties,source:dem?.source,crs_analysis:dem?.crs,date:new Date().toISOString()}};features.push(f);const layer=L.geoJSON(f,{style:{color,weight:2,fillOpacity:.18}}).addTo(map);rows.push({layer,name:properties.name});refreshLayers();return layer}
+function addFeature(geometry,properties,color='#00d4eb'){const f={type:'Feature',geometry,properties:{...properties,source:dem?.source,crs_analysis:dem?.crs,date:new Date().toISOString()}};features.push(f);const layer=L.geoJSON(f,{pane:'rainVectorPane',style:{color,weight:2,fillOpacity:.18}}).addTo(map);rows.push({layer,name:properties.name});refreshLayers();return layer}
 function refreshLayers(){$('layers').replaceChildren();rows.forEach((r,i)=>{const div=document.createElement('div');div.className='layer-row';const label=document.createElement('label'),check=document.createElement('input');check.type='checkbox';check.checked=map.hasLayer(r.layer);check.onchange=()=>check.checked?r.layer.addTo(map):r.layer.remove();label.append(check,document.createTextNode(r.name));const range=document.createElement('input');range.type='range';range.min=0;range.max=1;range.step=.05;range.value=1;range.setAttribute('aria-label','Opacidad '+r.name);range.oninput=()=>r.layer.setStyle({opacity:+range.value,fillOpacity:+range.value*.25});const up=document.createElement('button');up.textContent='↑';up.title='Traer al frente';up.onclick=()=>r.layer.bringToFront();div.append(label,range,up);$('layers').append(div)})}
 function coord(i){const [x,y]=cellCenter(dem,i);return toLatLng(dem,x,y).reverse()}function begin(m){if(m!=='area')need();mode=m;points=[];drawLayer?.remove();vertices.forEach(v=>v.remove());vertices=[];say(m==='area'?'Marca dos esquinas del recorte.':m==='trace'?'Pulsa un punto para seguir el agua.':m==='basin'?'Pulsa la salida de la cuenca.':'Marca los vértices; después pulsa «Terminar dibujo».')}
 for(const id of ['area','trace','basin','profile','parcel'])$(id).onclick=guard(()=>begin(id));$('clearArea').onclick=()=>{crop=null;drawLayer?.remove();mode='';$('areaInfo').textContent='Sin recorte activo.';say('Recorte eliminado.')};
@@ -113,7 +142,7 @@ $('flowSpeed').oninput=()=>flowAnimator?.setSpeed(+$('flowSpeed').value);
 $('flowCount').onchange=()=>flowAnimator?.setCount(+$('flowCount').value);
 updateFlowControls(false);
 
-officialCatalog(map,document.querySelector('aside'),()=>rasterLayer?.bringToFront(),say);
+officialCatalog(map,$('thematicCatalog')||document.querySelector('aside'),()=>{},say);
 
 
 $('finishParcel').onclick=()=> $('finish').click();
