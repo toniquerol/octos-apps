@@ -143,3 +143,34 @@ body.view3d #legend{display:none}
 
 
 .data-drop{padding:16px;border:1px dashed #7293a5;border-radius:8px;margin:10px 0;color:#bcd2df}#dataManager a{display:block;margin:8px 0}#dataManager p{font-size:12px;line-height:1.5}
+
+
+/* OcToS Rain V9.5 · Control de capas activo en cabecera */
+.layer-menu{position:relative;flex:none}
+.layer-panel{position:absolute;top:calc(100% + 9px);right:0;z-index:2300;
+ width:min(370px,calc(100vw - 20px));max-height:min(74vh,720px);overflow-y:auto;
+ padding:12px 13px;border:1px solid #5d5d61;border-radius:10px;
+ background:#252528;box-shadow:0 14px 35px #0009}
+.layer-panel .layer-help{margin:0 0 9px;font-size:11px;color:#bfc1c6;line-height:1.5}
+.layer-panel .layer-notice{font-size:10px;margin:10px 0 0;color:#d0a579}
+.stack-layer-row{border-top:1px solid #444449;padding:8px 0 9px}
+.stack-layer-head{display:flex;align-items:center;gap:7px;min-height:26px}
+.stack-move{display:flex;align-items:center;gap:2px;flex:none}
+.stack-move button.stack-arrow{min-width:23px;width:23px;height:23px;min-height:23px;padding:0;
+ font-size:13px;line-height:20px;text-align:center;border-radius:4px;background:#343438}
+.stack-move button.stack-arrow:disabled{opacity:.25}
+.stack-layer-head label.stack-name{display:flex;gap:7px;align-items:flex-start;margin:0;
+ font-size:11px;font-weight:550;color:#e3e4e6;line-height:1.35;cursor:pointer}
+.stack-name input[type=checkbox]{margin:1px 0 0;flex:none}
+.stack-layer-controls{display:flex;align-items:center;gap:8px;margin:7px 0 0 58px}
+.stack-layer-controls input[type=range]{min-width:0;width:100%;flex:1;margin:0;padding:0;
+ border:0;background:transparent;accent-color:var(--orange)}
+.stack-layer-controls output{font-size:10px;min-width:36px;text-align:right;color:#ffc28e;font-variant-numeric:tabular-nums}
+.stack-layer-controls input[type=color]{width:28px;height:25px;padding:2px;flex:none;
+ border:1px solid #66666b;background:#222;border-radius:5px;cursor:pointer}
+.stack-warning{color:#f0c28d;font-size:10px;margin:5px 0 0 58px}
+@media(max-width:760px){
+ .layer-panel{right:-56px;max-height:65vh}
+ .layer-menu>summary{padding:7px 8px;font-size:11px}
+ .stack-layer-controls{margin-left:55px}
+}
