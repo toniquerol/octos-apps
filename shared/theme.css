@@ -1,7 +1,13 @@
 html.octos-themed{color-scheme:dark;background:var(--ot-background)}
 html.octos-themed body{background:var(--ot-background);color:var(--ot-text);font-size:var(--ot-fontSize);--orange:var(--ot-accent);--accent:var(--ot-accent);--bg:var(--ot-background);--panel:var(--ot-panel);--ink:var(--ot-text)}
 .octos-themed body>header{height:var(--ot-headerHeight)!important;box-sizing:border-box;display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:var(--ot-gap);padding:8px 16px!important;background:var(--ot-background)!important;position:relative;z-index:1200}
-.ot-head-left,.ot-head-right{display:flex;align-items:center;gap:var(--ot-gap);min-width:0}.ot-head-right{justify-content:flex-end}.ot-head-right>*{margin-left:0!important}.ot-head-left img{width:var(--ot-logoSize)!important;height:var(--ot-logoSize)!important;object-fit:contain;background:transparent!important;padding:0!important}
+.ot-head-left,.ot-head-right{display:flex;align-items:center;gap:var(--ot-gap);min-width:0}.ot-head-right{justify-content:flex-end}
+/* Search in the shared header, after the logo and before the centered title. */
+.octos-themed .ot-head-left .ot-header-search{display:flex;align-items:center;flex:1 1 160px;max-width:340px;min-width:0}
+.octos-themed .ot-head-left .ot-header-search:empty{display:none}
+.octos-themed .ot-head-left .ot-header-search input{box-sizing:border-box;width:100%!important;min-width:0;height:var(--ot-buttonHeight);min-height:var(--ot-buttonHeight);margin:0!important;padding:6px 11px;background:var(--ot-panel);color:var(--ot-text);border:1px solid #55565a;border-radius:var(--ot-radius);font:inherit;outline-offset:2px}
+.octos-themed .ot-head-left .ot-header-search input:focus{outline:1px solid var(--ot-accent);border-color:var(--ot-accent)}
+.ot-head-right>*{margin-left:0!important}.ot-head-left img{width:var(--ot-logoSize)!important;height:var(--ot-logoSize)!important;object-fit:contain;background:transparent!important;padding:0!important}
 .ot-head-title{text-align:center!important;min-width:0;line-height:1.25}.ot-head-title strong{font-size:var(--ot-titleSize);font-weight:750;letter-spacing:.04em}.ot-head-title em{color:var(--ot-accent);font-style:normal}.ot-head-title small{display:block;font-size:10px!important;color:#bbb;letter-spacing:.08em!important}
 .octos-themed button,.octos-themed select,.octos-themed input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color]),.octos-themed textarea{font-size:var(--ot-fontSize);border-radius:var(--ot-radius)}
 .octos-themed button,.octos-themed summary{min-height:var(--ot-buttonHeight);box-sizing:border-box}.octos-themed button{display:inline-flex;align-items:center;justify-content:center;text-align:center}
