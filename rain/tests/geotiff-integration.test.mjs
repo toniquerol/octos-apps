@@ -34,6 +34,5 @@ const t=terrain(dem);assert.ok(Math.abs(t.slope[12]-Math.atan(Math.sqrt(5))*180/
 const sw=toLatLng(dem,500002.2,4399994.2),ne=toLatLng(dem,500005.8,4399997.8);
 const crop=await loadDEM(blob,{bounds:[sw[1],sw[0],ne[1],ne[0]]});
 assert.equal(crop.width,2);assert.equal(crop.height,2);assert.deepEqual(Array.from(crop.data),[106,108,110,112]);
-await assert.rejects(()=>loadDEM(blob,{maxCells:24}),/superan/);
+const reduced=await loadDEM(blob,{maxCells:24});assert.ok(reduced.width*reduced.height<=24);assert.equal(reduced.resolution.resampled,true);assert.equal(reduced.data.length,reduced.width*reduced.height);assert.equal(reduced.dx*reduced.width,dem.dx*dem.width);
 console.log('Real vendored GeoTIFF parser: synthetic Float32 UTM fixture, crop, NoData, slope and proj4 round-trip passed.');
-

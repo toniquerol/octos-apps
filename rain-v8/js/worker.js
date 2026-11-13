@@ -1,0 +1,1 @@
+import {analyze} from './hydrology.js';import {terrain} from './terrain.js';self.onmessage=({data:{dem,kind}})=>{try{postMessage({stage:'Procesando '+(kind==='terrain'?'pendientes':'Priority-Flood y acumulación')+'…'});postMessage({result:kind==='terrain'?terrain(dem):analyze(dem)})}catch(e){postMessage({error:e.message})}};

@@ -1,3 +1,4 @@
+import {initDataManager} from './data-manager.js';
 import{contours}from'./contours.js';
 import{eventEstimate,areaPerCell}from'./rainfall.js';
 import{extractStreams}from'./streams.js';
@@ -49,7 +50,7 @@ async function load(source){if(worker)throw Error('Cancela la operación actual 
 $('visualTiff').onchange=guard(async e=>{const file=e.target.files[0];if(!file)return;say('Procesando imagen LiDAR de referencia…');const visual=await loadVisualTiff(file);visualLayer?.remove();visualLayer=L.imageOverlay(visual.url,visual.bounds,{pane:'rainVisualPane',opacity:0.65,interactive:false}).addTo(map);rasterLayer?.bringToFront();map.fitBounds(visual.bounds);say('Capa visual EPSG:3857 cargada ('+visual.bands+' bandas). No interviene en el drenaje.');});$('hideVisual').onclick=()=>{visualLayer?.remove();visualLayer=null;say('Capa visual importada ocultada.');};
 // Zona previa: las coordenadas se mantienen siempre en WGS84 para visualización.
 function resetZoneDrawing(){zoneLayer?.remove();zoneLayer=null;zoneMarker?.remove();zoneMarker=null;zonePts=[];}
-function setZone(mode){zoneMode=mode;resetZoneDrawing();$('zoneStatus').textContent=mode==='zonePoint'?'Marca el punto de salida en el mapa.':'Marca las esquinas o los vértices del área.';say($('zoneStatus').textContent);}
+function setZone(mode){zoneBounds=null;zoneMode=mode;resetZoneDrawing();$('zoneStatus').textContent=mode==='zonePoint'?'Marca el punto de salida en el mapa.':'Marca las esquinas o los vértices del área.';say($('zoneStatus').textContent);}
 function closeZone(){
  if(zoneMode==='zonePolygon'&&zonePts.length>=3){zoneLayer?.remove();zoneLayer=L.polygon(zonePts,{color:'#f5a84a',weight:3,fillOpacity:.12}).addTo(map);zoneBounds=zoneLayer.getBounds();$('zoneStatus').textContent='Polígono seleccionado · extensión '+zoneBounds.toBBoxString();zoneMode='';}
  else if(zoneMode==='zonePolygon')throw Error('El polígono necesita al menos tres puntos.');
@@ -76,8 +77,7 @@ map.on('click',e=>{
   zoneLayer?.remove();zoneLayer=L.polyline(zonePts,{color:'#f5a84a',weight:3}).addTo(map);
  }
 });
-$('buildMosaic').onclick=guard(async()=>{
- const files=$('mosaicFiles').files;
+async function loadMosaicFiles(files){
  if(!files?.length)throw Error('Selecciona dos o más GeoTIFF, o un único GeoTIFF para analizarlo.');
  if(worker)throw Error('Cancela primero el análisis actual.');
  const bounds=zoneBounds&&zoneBounds.getWest()!==zoneBounds.getEast()&&zoneBounds.getSouth()!==zoneBounds.getNorth()
@@ -88,7 +88,8 @@ $('buildMosaic').onclick=guard(async()=>{
  $('metadata').textContent=dem.source+'\\n'+dem.crs+' · '+fmt(dem.width,0)+' × '+fmt(dem.height,0)+' celdas · '+fmt(dem.dx)+' m\\n'+fmt(terrain.min)+'–'+fmt(terrain.max)+' m\\n'+(dem.warnings.join(' '))+(dem.projectionCaution||'');
  $('mosaicStatus').textContent=files.length+' hojas importadas · '+fmt(dem.valid,0)+' celdas válidas · '+fmt(dem.nodata,0)+' NoData · '+fmt(dem.overlaps,0)+' solapadas. '+dem.warnings.join(' ');
  $('view').value='data';showRaster();map.fitBounds(demBounds(dem));updateStudyPanel();say('Mosaico cargado. Drenaje y curvas de nivel disponibles sobre todo el mosaico.');
-});
+}
+$('buildMosaic').onclick=guard(()=>loadMosaicFiles($('mosaicFiles').files));
 $('mosaicFit').onclick=guard(()=>{need();map.fitBounds(demBounds(dem));});
 
 $('file').onchange=guard(e=>e.target.files[0]&&load(e.target.files[0]));$('remote').onclick=guard(()=>{const u=new URL($('url').value);if(u.protocol!=='https:')throw Error('Introduce una URL HTTPS.');return load(u.href)});$('cancel').onclick=()=>{abort?.abort();worker?.terminate();worker=null;rejectJob?.(Error('Operación cancelada.'));rejectJob=null;say('Operación cancelada.')};
@@ -336,3 +337,8 @@ officialCatalog(map,$('thematicCatalog')||document.querySelector('aside'),()=>{}
 
 $('finishParcel').onclick=()=> $('finish').click();
 $('contours').onclick=guard(()=>{need();const interval=+$('contourInterval').value;let segments;try{segments=contours(dem,interval,{maxSegments:120000});}catch(e){throw Error(e.message+' Para terreno extenso, aumenta el intervalo (ej. 10–20 m) o recorta el MDT.');}if(!segments.length)throw Error('No hay curvas en el rango de elevaciones: reduce el intervalo.');const coordinates=segments.map(seg=>seg.coordinates.map(p=>toLatLng(dem,...p).reverse()));addFeature({type:'MultiLineString',coordinates},{name:'Curvas de nivel · '+fmt(interval)+' m',interval_m:interval,segments:segments.length},'#f3e7cc');$('results').textContent='CURVAS DE NIVEL\nIntervalo '+fmt(interval)+' m\n'+segments.length+' segmentos\nUna capa vectorial de curvas para evitar cientos de capas individuales. No se extrapola a través de NoData.';say(segments.length+' segmentos de curvas generados.');});
+
+initDataManager({map,getDEM:()=>dem,getArea:()=>{
+ if(!zoneBounds||zoneMode||zoneBounds.getWest()===zoneBounds.getEast()||zoneBounds.getSouth()===zoneBounds.getNorth())return null;
+ return {bounds:[zoneBounds.getWest(),zoneBounds.getSouth(),zoneBounds.getEast(),zoneBounds.getNorth()],ring:zonePts.length>=3?zonePts.map(p=>[p.lng,p.lat]):null};
+},loadFiles:loadMosaicFiles,onError:say});

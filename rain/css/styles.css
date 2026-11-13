@@ -139,3 +139,7 @@ body.view3d #legend{display:none}
 .cover-results>div span{color:#c3c8ca;line-height:1.35}
 .cover-results>div strong{color:#f4f5f4;font-variant-numeric:tabular-nums;text-align:right;font-weight:550;white-space:nowrap}
 .cover-swatch{display:inline-block;width:10px;height:10px;border:1px solid #ffffff70;border-radius:2px;vertical-align:middle}
+.panel-brand{display:flex;justify-content:center;align-items:center;padding:18px 12px}.panel-brand img{display:block;max-width:85%;max-height:90px;object-fit:contain}#compatibilitySection details{margin:8px 0}#compatibilitySection p{font-size:12px;line-height:1.5}
+
+
+.data-drop{padding:16px;border:1px dashed #7293a5;border-radius:8px;margin:10px 0;color:#bcd2df}#dataManager a{display:block;margin:8px 0}#dataManager p{font-size:12px;line-height:1.5}

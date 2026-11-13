@@ -17,6 +17,6 @@ let point=false,crs=25830,samples=1,readCount=0;
 globalThis.GeoTIFF={fromBlob:async()=>({getImage:async()=>({getGeoKeys:()=>({ProjectedCSTypeGeoKey:crs,GTRasterTypeGeoKey:point?2:1}),fileDirectory:{ModelPixelScale:[2,4,0],ModelTiepoint:[0,0,0,100,200,0]},getSamplesPerPixel:()=>samples,getWidth:()=>3,getHeight:()=>3,getGDALNoData:()=>-9999,getGDALMetadata:()=>({}),readRasters:async()=>{readCount++;return [0,1,2,3,-9999,5,6,7,8];}})})};
 let loaded=await loadDEM({name:'fixture.tif'});assert.equal(loaded.x0,100);assert.ok(Number.isNaN(loaded.data[4]));assert.equal(loaded.valid,8);
 point=true;loaded=await loadDEM({name:'point.tif'});assert.equal(loaded.x0,99);assert.equal(loaded.y0,202);
-const reads=readCount;await assert.rejects(()=>loadDEM({}, {maxCells:8}),/superan/);assert.equal(readCount,reads);
+const reads=readCount;await assert.rejects(()=>loadDEM({}, {maxCells:0}),/inválido/);assert.equal(readCount,reads);
 crs=4326;await assert.rejects(()=>loadDEM({}),/no admitido/);crs=25830;samples=3;await assert.rejects(()=>loadDEM({}),/una banda/);
 console.log('terrain / DEM contracts: passed');

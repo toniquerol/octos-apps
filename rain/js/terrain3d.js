@@ -160,7 +160,7 @@ export class Terrain3D {
   const x1=d.x0+(i%d.width+.5)*d.dx,y1=d.y0-(Math.floor(i/d.width)+.5)*d.dy;
   const x2=d.x0+(i2%d.width+.5)*d.dx,y2=d.y0-(Math.floor(i2/d.width)+.5)*d.dy;
   const a=d.data[i],b=d.data[i2],z=Number.isFinite(a)&&Number.isFinite(b)?a+(b-a)*t:this.zMin;
-  return new this.THREE.Vector3(((x1+(x2-x1)*t)-this.cx)/this.unit,Math.max(0,z-this.zMin)*this.exaggeration/this.unit+1,((y1+(y2-y1)*t)-this.cy)/this.unit);
+  return new this.THREE.Vector3(((x1+(x2-x1)*t)-this.cx)/this.unit,Math.max(0,z-this.zMin)*this.exaggeration/this.unit+1,(this.cy-(y1+(y2-y1)*t))/this.unit);
  }
  construct(){
   const T=this.THREE,d=this.dem;
@@ -178,7 +178,7 @@ export class Terrain3D {
    const col=Math.min(d.width-1,Math.round(x/(nx-1)*(d.width-1))),row=Math.min(d.height-1,Math.round(y/(ny-1)*(d.height-1)));
    const idx=row*d.width+col,z=d.data[idx],k=y*nx+x;
    const px=d.x0+(col+.5)*d.dx,py=d.y0-(row+.5)*d.dy;
-   pos[k*3]=(px-this.cx)/this.unit;pos[k*3+1]=(Number.isFinite(z)?z-lo:0)*this.exaggeration/this.unit;pos[k*3+2]=(py-this.cy)/this.unit;
+   pos[k*3]=(px-this.cx)/this.unit;pos[k*3+1]=(Number.isFinite(z)?z-lo:0)*this.exaggeration/this.unit;pos[k*3+2]=(this.cy-py)/this.unit;
    valid[k]=Number.isFinite(z)?1:0;
    const t=Number.isFinite(z)?Math.min(1,Math.max(0,(z-lo)/(hi-lo||1))):0;
    color[k*3]=.25+.38*t;color[k*3+1]=.39+.38*t;color[k*3+2]=.31+.24*t;
@@ -187,8 +187,8 @@ export class Terrain3D {
   const indices=[];
   for(let y=0;y<ny-1;y++)for(let x=0;x<nx-1;x++){
    const a=y*nx+x,b=a+1,c=a+nx,d1=c+1;
-   if(valid[a]&&valid[b]&&valid[c])indices.push(a,b,c);
-   if(valid[b]&&valid[c]&&valid[d1])indices.push(b,d1,c);
+   if(valid[a]&&valid[b]&&valid[c])indices.push(a,c,b);
+   if(valid[b]&&valid[c]&&valid[d1])indices.push(b,c,d1);
   }
   const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(pos,3));
   geometry.setAttribute('color',new T.BufferAttribute(color,3));geometry.setAttribute('uv',new T.BufferAttribute(uv,2));
@@ -215,7 +215,7 @@ export class Terrain3D {
   // UV propios sobre la extensión del DEM, independientes de la reproyección Mercator del fondo.
   const geom=sourceGeom.clone(),uv=geom.getAttribute('uv'),positions=geom.getAttribute('position');
   for(let i=0;i<uv.count;i++){
-   const x=this.cx+positions.getX(i)*this.unit,y=this.cy+positions.getZ(i)*this.unit;
+   const x=this.cx+positions.getX(i)*this.unit,y=this.cy-positions.getZ(i)*this.unit;
    uv.setXY(i,(x-this.dem.x0)/(this.dem.width*this.dem.dx),
     1-(this.dem.y0-y)/(this.dem.height*this.dem.dy));
   }
@@ -263,7 +263,7 @@ export class Terrain3D {
    canvas.toDataURL('image/png');
    const uv=stamp.geometry.getAttribute('uv'),arr=uv.array,verts=stamp.geometry.getAttribute('position'),p=verts.array;
    for(let i=0;i<uv.count;i++){
-    const x=this.cx+p[i*3]*this.unit,y=this.cy+p[i*3+2]*this.unit;
+    const x=this.cx+p[i*3]*this.unit,y=this.cy-p[i*3+2]*this.unit;
     const [lon,lat]=lonlat(x,y),[tx,ty]=tile(lon,lat,zoom);
     arr[i*2]=(tx-bbox[0])/(bbox[2]-bbox[0]);
     arr[i*2+1]=1-(ty-bbox[1])/(bbox[3]-bbox[1]);

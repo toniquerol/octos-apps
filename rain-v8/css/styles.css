@@ -1,0 +1,141 @@
+:root{color-scheme:dark;--orange:#ff891f;--muted:#bbbcc1}*{box-sizing:border-box}body{margin:0;background:#202022;color:#fff;font:14px/1.45 system-ui,Segoe UI,sans-serif}header{height:76px;display:flex;align-items:center;gap:15px;padding:12px 22px;border-bottom:1px solid #49494d}header b{font-size:24px;letter-spacing:1px}header em{font-style:normal;color:var(--orange)}header small{display:block;font-size:9px;letter-spacing:2px;color:var(--muted)}header select{margin-left:auto;width:150px}.icon{width:45px;height:45px;background:#eee;border-radius:9px;padding:5px;object-fit:contain}main{display:flex;height:calc(100dvh - 76px)}aside{width:330px;flex:none;overflow:auto;background:#262628;border-right:1px solid #444;padding:16px}body.collapsed aside{display:none}.intro span{font-size:9px;letter-spacing:1px;color:var(--orange)}.intro p{font-size:18px;margin:10px 0 22px}details{border-top:1px solid #49494d;padding:12px 0}summary{font-size:11px;font-weight:700;letter-spacing:1.2px;cursor:pointer;padding:5px 0 12px}button,input,select{font:inherit}button,.upload{border:1px solid #55555b;background:#323235;color:white;padding:10px;border-radius:6px;cursor:pointer}button:hover,.upload:hover{border-color:var(--orange)}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--orange)}button:disabled{opacity:.45;cursor:wait}aside button{margin:4px 0;width:100%;text-align:left}.primary,.upload{background:var(--orange);color:#21160d;border-color:var(--orange);font-weight:650}.upload{display:block;text-align:center}.upload input{display:none}label{display:block;margin:10px 0;color:#d0d0d4;font-size:12px}input:not([type=checkbox],[type=file]),select{width:100%;background:#1c1c1e;color:white;border:1px solid #545459;border-radius:5px;padding:8px;margin-top:5px}input[type=range]{padding:0;accent-color:var(--orange)}input[type=checkbox]{accent-color:var(--orange)}a{color:#ffb06a;font-size:12px}.hint,.notice{font-size:11px;color:#b8b8bd}.notice{border-top:1px solid #555;padding-top:12px}#metadata{font-size:11px;color:#e3bd95;margin:12px 0;white-space:pre-line}.wordmark{width:150px;height:65px;object-fit:contain;margin-top:16px}.mapwrap{flex:1;min-width:0;position:relative}#map{height:100%;background:#c6c7bc}#status,#legend,#results{position:absolute;z-index:600;background:#222225ef;box-shadow:0 4px 16px #0003;border:1px solid #55555a;border-radius:7px;padding:10px 14px;font-size:12px}#status{top:15px;left:15px;right:65px;max-width:600px}#legend{bottom:27px;left:15px;max-width:270px}#legend:empty,#results:empty{display:none}#results{right:15px;bottom:35px;max-width:350px;max-height:36%;overflow:auto;white-space:pre-line}#profileBox{position:absolute;z-index:700;bottom:30px;left:15px;right:15px;padding:10px;background:#232326f5;border:1px solid #666;border-radius:8px}#chart{width:100%;height:180px}#profileInfo{font-size:11px}#closeProfile{float:right;padding:2px 10px}.vertex{background:#ff891f;border:2px solid white;border-radius:50%}.leaflet-control-attribution{color:#333}#report{display:none}.layer-row{border-top:1px solid #555;padding:5px 0}.layer-row button{display:inline-block;width:45px;text-align:center}.layer-row label{display:inline-block;margin-right:5px}@media(max-width:760px){header{padding:10px;gap:8px;height:66px}header b{font-size:18px}header small{font-size:7px}.icon{width:36px;height:36px}header select{width:95px}main{height:calc(100dvh - 66px)}aside{position:absolute;z-index:900;top:66px;bottom:0;width:min(330px,88vw);box-shadow:8px 0 20px #0006}#results{max-width:70%;font-size:11px}#status{font-size:11px}}@media print{body{background:white;color:black}header,aside,#status,#profileBox,.leaflet-control{display:none!important}main{height:140mm;display:block}.mapwrap{height:140mm}#results{display:none}#report{display:block;white-space:pre-line;padding:20px;font-size:11px}#legend{color:black;background:white}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+/* V5.2 · Asistente de flujo con progreso y controles compactos */
+#flowWizard{border:1px solid #67513c;border-radius:9px;background:#2b2928;padding:12px;margin-bottom:14px}
+#flowWizard summary{color:#ffc48c;font-size:12px}
+.flow-step{border-top:1px solid #464346;padding:10px 0}
+.flow-step b{font-size:12px}
+.flow-step p{font-size:11px;color:#c1c1c7;margin:5px 0}
+.flow-step label{margin:8px 0}
+.flow-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+.flow-actions button{font-size:11px;padding:9px 4px;text-align:center}
+.flow-guide-status{font-size:11px;line-height:1.5;white-space:pre-wrap;color:#dceef7;border-left:3px solid #54bcdd;padding:10px;background:#20343d;margin:12px 0}
+.flow-particles{mix-blend-mode:screen}
+
+/* OcToS Rain V6 · selector de mapas y catálogo de servicios transparentes */
+.base-picker{margin-left:auto;display:flex;flex-direction:column;gap:2px;min-width:190px;width:220px;flex:none}
+.base-picker label{font-size:10px;color:#c4c4c8;margin:0;display:flex;justify-content:space-between;gap:6px}
+.base-picker select{margin:0;width:100%;font-size:12px;padding:5px 8px;min-height:26px}
+.base-picker input[type=range]{width:100%;height:12px;accent-color:var(--orange)}
+.base-picker output{color:#ffac6c;white-space:nowrap}
+.official-services{border-top:1px solid #565056;padding-top:10px}
+.official-services>summary{color:#ffc086}
+.service-section{background:#29292b;border:1px solid #47474b;border-radius:7px;margin:8px 0;padding:8px}
+.service-section>summary{font-size:11px;color:#f6f6f6;padding:2px 0 8px;font-weight:650;cursor:pointer}
+.catalog-service{border-top:1px solid #414146;padding:6px 1px}
+.catalog-service>summary{font-size:11px;color:#ededf0;letter-spacing:0;font-weight:500;padding:4px 0;cursor:pointer;overflow-wrap:anywhere}
+.catalog-service .hint{margin:4px 0 8px}
+.catalog-layer-row{border-top:1px solid #3c3c40;padding:6px 0 9px;display:grid;grid-template-columns:1fr 38px;align-items:center;column-gap:8px}
+.catalog-layer-row label{grid-column:1/-1;display:flex;gap:7px;align-items:flex-start;font-size:11px;margin:0 0 4px;cursor:pointer}
+.catalog-layer-row label input{width:14px;min-width:14px;accent-color:#ff891f;margin:2px 0 0}
+.catalog-layer-row span{overflow-wrap:anywhere}
+.catalog-layer-row input[type=range]{grid-column:1;margin:0;width:100%;accent-color:#ff891f}
+.catalog-layer-row small{grid-column:2;text-align:right;color:#ffb579}
+#thematicCatalog .official-services{margin:5px 0 12px}
+@media(max-width:760px){
+ .base-picker{width:130px;min-width:110px;gap:0}
+ .base-picker label{font-size:9px}
+ .base-picker select{font-size:10px;padding:4px 5px;min-height:25px}
+ header{gap:6px}
+}
+
+/* V7 · menú de fondos compacto y vista 3D real del MDT */
+header{position:relative;z-index:1250;overflow:visible}
+.header-actions{margin-left:auto;display:flex;gap:9px;align-items:center;min-width:0}
+.base-menu{position:relative}
+.base-menu>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;white-space:nowrap;border:1px solid #626268;border-radius:8px;background:#303034;padding:9px 12px;font-size:12px;font-weight:650}
+.base-menu>summary::-webkit-details-marker{display:none}
+.base-menu>summary:hover,.base-menu[open]>summary{border-color:var(--orange)}
+#baseMenuName{color:#ffbb85;font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+.base-panel{position:absolute;top:calc(100% + 9px);right:0;width:min(295px,calc(100vw - 22px));background:#27272a;border:1px solid #59595f;border-radius:11px;box-shadow:0 14px 35px #0009;padding:15px;z-index:2200}
+.base-panel label{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:8px 0 5px;font-size:11px}
+.base-panel select{width:100%;margin:3px 0 9px}
+.base-panel input[type=range]{width:100%;margin:0;accent-color:var(--orange)}
+.base-panel output{font-variant-numeric:tabular-nums;color:#ffb879}
+.base-panel .hint{margin:11px 0 0}
+#switch3d{min-width:53px;font-weight:800;background:#303034;border:1px solid #66656a;border-radius:8px;padding:9px 12px;text-align:center}
+#switch3d[aria-pressed=true]{background:#4c341f;border-color:var(--orange);color:#ffb472}
+.rain-3d-view{display:none;position:absolute;inset:0;z-index:530;background:#172431;touch-action:none;overflow:hidden}
+.rain-3d-view.shown{display:block}
+.rain-3d-view canvas{display:block;width:100%;height:100%}
+.controls3d{position:absolute;z-index:720;right:15px;top:15px;background:#24262aef;border:1px solid #5b6669;border-radius:10px;padding:12px;width:min(230px,calc(100% - 30px));box-shadow:0 10px 25px #0007;font-size:11px}
+.controls3d[hidden]{display:none}
+.controls3d strong{display:block;color:#ffbb81;margin-bottom:5px;font-size:12px}
+.controls3d span{display:block;color:#b8c4ca;margin-bottom:9px}
+.controls3d label{display:flex;justify-content:space-between;gap:4px;font-size:11px;margin:8px 0}
+.controls3d input[type=range]{width:100%}
+.controls3d button{width:100%;padding:7px;text-align:center;margin:6px 0}
+.controls3d p{font-size:10px;color:#c2d2de;margin:8px 0 0}
+@media(max-width:760px){
+ header{padding:6px 8px;gap:5px}
+ .header-actions{gap:5px}
+ .base-menu>summary{padding:7px 8px;gap:4px;font-size:11px}
+ #baseMenuName{display:none}
+ #switch3d{min-width:42px;padding:7px 8px;font-size:12px}
+ .base-panel{right:-48px}
+ .controls3d{top:auto;bottom:90px;right:10px;width:min(205px,55vw)}
+}
+
+/* OcToS Rain V7.5 · navegación 3D: rotar, pan y gestos */
+.nav3d-mode{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.nav3d-mode button{margin:0;text-align:center;padding:8px 5px;border:1px solid #555b60;background:#303236;color:#e9e9ed}
+.nav3d-mode button[aria-pressed="true"]{background:#543b25;color:#ffca97;border-color:#ff891f}
+.nav3d-mode button:focus-visible{outline:2px solid #ff891f;outline-offset:2px}
+.rain-3d-view{touch-action:none;user-select:none;-webkit-user-select:none}
+.rain-3d-view:focus-visible{outline:2px solid #ff891f;outline-offset:-3px}
+
+/* OcToS Rain V7.6 · presentación compacta de estudio y cámara 3D */
+.controls3d{
+ top:auto;bottom:20px;right:18px;width:min(275px,calc(100% - 36px));
+ padding:13px 14px;max-height:min(380px,calc(100% - 50px));overflow:auto
+}
+.controls3d strong{font-size:12px;letter-spacing:.07em;margin-bottom:12px}
+.controls3d label{display:flex;align-items:center;justify-content:space-between;margin:6px 0 8px}
+.controls3d input[type=range]{display:block;margin:0;width:100%;accent-color:var(--orange)}
+.terrain-tick-labels{display:flex;justify-content:space-between;color:#babdc2;font-size:10px;margin:2px 0 13px}
+.terrain-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.terrain-actions button{margin:0;padding:10px 5px;text-align:center;font-size:11px;min-height:39px}
+.controls3d .terrain-reset{width:100%;margin:8px 0 0;text-align:center;background:#423222;border-color:#725436}
+.controls3d .terrain-3d-status{font-size:10px;line-height:1.35;color:#c5d6d9;margin:8px 0 0}
+.controls3d .terrain-3d-status:empty{display:none}
+.study-panel{
+ position:absolute;z-index:680;top:66px;left:15px;
+ width:min(325px,calc(100% - 30px));max-height:calc(100% - 125px);overflow:auto;
+ background:#242629f2;border:1px solid #575d60;border-radius:10px;
+ padding:12px;box-shadow:0 7px 20px #0007
+}
+.study-panel[hidden],#studyContent[hidden]{display:none}
+.study-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.study-header strong{font-size:11px;letter-spacing:.07em;color:#ffba80}
+.study-header button{width:25px;height:25px;min-height:25px;padding:0;text-align:center;line-height:1}
+#studyPlan{display:block;width:100%;height:auto;max-height:190px;background:#1f3135;border-radius:6px}
+.study-info{display:grid;gap:0;margin-top:9px}
+.study-info>div{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;border-bottom:1px solid #42464b;padding:5px 0;font-size:11px;align-items:start}
+.study-info span{color:#bbbfc7}
+.study-info strong{color:#f1f2f4;font-weight:500;overflow-wrap:anywhere}
+.leaflet-bottom.leaflet-left{left:50%;transform:translateX(-50%)}
+.leaflet-bottom.leaflet-left .leaflet-control-scale{float:none;clear:none;margin-left:0;margin-bottom:14px}
+body.view3d #legend{display:none}
+@media(max-width:760px){
+ .controls3d{top:auto;right:10px;bottom:15px;width:min(245px,calc(100% - 20px));max-height:45vh}
+ .study-panel{top:55px;left:10px;width:min(285px,70vw);max-height:40vh}
+ .study-info>div{grid-template-columns:78px minmax(0,1fr);font-size:10px}
+ .terrain-actions button{font-size:10px}
+}
+
+/* V8 · ocupación del suelo y coeficientes de escorrentía */
+#landcoverSection{border-top:1px solid #795f47}
+#landcoverSection>summary{color:#ffbf86}
+.cover-code-row{display:block;border-top:1px solid #424245;padding:8px 0;font-size:11px}
+.cover-code-row select{margin:4px 0 0;font-size:11px}
+#coverCodes{max-height:270px;overflow:auto;margin:10px 0}
+#coverCoefficients{display:grid;grid-template-columns:1fr 1fr;gap:4px 9px}
+#coverCoefficients label{font-size:10px;margin:3px 0}
+#coverCoefficients input[type=number]{padding:7px;margin:4px 0}
+.cover-results{border:1px solid #484f51;border-radius:7px;background:#252b2d;margin-top:10px;padding:9px}
+.cover-results:empty{display:none}
+.cover-results>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;border-bottom:1px solid #41494b;padding:6px 2px;font-size:11px;align-items:center}
+.cover-results>div:last-child{border:0}
+.cover-results>div span{color:#c3c8ca;line-height:1.35}
+.cover-results>div strong{color:#f4f5f4;font-variant-numeric:tabular-nums;text-align:right;font-weight:550;white-space:nowrap}
+.cover-swatch{display:inline-block;width:10px;height:10px;border:1px solid #ffffff70;border-radius:2px;vertical-align:middle}
