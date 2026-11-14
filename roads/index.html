@@ -116,9 +116,13 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
     <label class="field">Diámetro exterior (m) <input type="number" id="rbDiameter" min="20" max="150" step="5" value="45"></label>
     <label class="field">Longitud ramal (m) <input type="number" id="rbArmLength" min="10" max="150" step="5" value="35"></label>
     <label class="field">Orientación (°) <input type="number" id="rbOrientation" min="0" max="359" step="5" value="0"></label>
-    <label class="field">Anchura (m) <input type="number" id="rbWidth" min="3" max="15" step=".5" value="7"></label>
+    <label class="field">Carriles en el anillo <select id="rbLanes"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></label>
+    <label class="field">Anchura por carril (m) <input type="number" id="rbLaneWidth" min="3" max="5" step="0.25" value="3.5"></label>
+    <label class="field">Radio entrada orientativo (m) <input type="number" id="rbEntryRadius" min="8" max="60" step="1" value="20"></label>
+    <label class="field">Radio salida orientativo (m) <input type="number" id="rbExitRadius" min="12" max="100" step="1" value="30"></label>
+    <p class="muted" id="rbSectionSummary">Anillo de 2 carriles · 7 m</p>
     <div class="row wrap"><button class="btn grow" id="rbApplyBtn" type="button">Aplicar a rotonda</button><button class="btn danger grow" id="rbDeleteBtn" type="button">Eliminar rotonda</button></div>
-    <p class="muted">Coloca la rotonda con un clic; después selecciónala para editarla o arrastrar su centro. Arrastra los puntos rojos alrededor de la rotonda para orientar cada salida sin cambiar su longitud. Los extremos de las carreteras se ajustan a sus ramales cercanos.</p>
+    <p class="muted">Coloca la rotonda con un clic; después selecciónala para editarla o arrastrar su centro. Arrastra los puntos rojos para orientar cada acceso. Los ramales conectados adoptan los carriles y dimensiones de la carretera. Entradas y salidas curvas, con isletas separadoras. Es un esquema geométrico en planta, no un proyecto de trazado validado.</p>
    </details>
    <p class="muted">Puente y túnel: elige la herramienta y pulsa un tramo del eje. «Normal» elimina esa clasificación. Es una representación en planta; no calcula cotas ni rasantes.</p>
   </div>
@@ -279,20 +283,38 @@ function apply(){const r=roadById(selected);if(!r){status('Selecciona antes una 
 
 // Rotondas: anillo en planta, ramales y conexiones magnéticas a los extremos de las carreteras.
 function roundaboutParams(){
+ const lanes=clamp(Math.round(Number($('rbLanes').value)||2),1,3);
+ const laneWidth=clamp(Number($('rbLaneWidth').value)||3.5,3,5);
  return {arms:clamp(Math.round(Number($('rbArms').value)||4),2,8),
  diameter:clamp(Number($('rbDiameter').value)||45,20,150),
  armLength:clamp(Number($('rbArmLength').value)||35,10,150),
- orientation:((Number($('rbOrientation').value)||0)%360+360)%360,
- width:clamp(Number($('rbWidth').value)||7,3,15)};
+ orientation:((Number($('rbOrientation').value)||0)%360+360)%360,lanes,laneWidth,
+ width:lanes*laneWidth,entryRadius:clamp(Number($('rbEntryRadius').value)||20,8,60),
+ exitRadius:clamp(Number($('rbExitRadius').value)||30,12,100)};
 }
-function validRoundabout(r){return r&&typeof r.id==='string'&&Array.isArray(r.center)&&r.center.length===2&&r.center.every(finite)&&Math.abs(r.center[0])<=85&&Math.abs(r.center[1])<=180&&Number.isInteger(r.arms)&&r.arms>=2&&r.arms<=8&&finite(r.diameter)&&r.diameter>=20&&r.diameter<=150&&finite(r.armLength)&&r.armLength>=10&&r.armLength<=150&&finite(r.orientation)&&finite(r.width)&&r.width>=3&&r.width<=15&&(!('armOffsets' in r)||(Array.isArray(r.armOffsets)&&r.armOffsets.length===r.arms&&r.armOffsets.every(n=>finite(n)&&n>=-180&&n<=180)));}
+function roundaboutDimensions(r){
+ const lanes=clamp(Math.round(Number(r.lanes)||Math.round((Number(r.width)||7)/3.5)),1,3);
+ const laneWidth=clamp(Number(r.laneWidth)||((Number(r.width)||7)/lanes),3,5);
+ const width=lanes*laneWidth,outerRadius=r.diameter/2;
+ return {lanes,laneWidth,width,outerRadius,ringRadius:outerRadius-width/2,
+ islandRadius:Math.max(.5,outerRadius-width),entryRadius:clamp(Number(r.entryRadius)||20,8,60),
+ exitRadius:clamp(Number(r.exitRadius)||30,12,100)};
+}
+function updateRoundaboutUI(){
+ const p=roundaboutParams(),dim=roundaboutDimensions(p);
+ $('rbSectionSummary').textContent=dim.lanes+' carriles anulares · '+format(dim.width)+' m de calzada · Ø isla '+format(dim.islandRadius*2)+' m';
+}
+function validRoundabout(r){return r&&typeof r.id==='string'&&Array.isArray(r.center)&&r.center.length===2&&r.center.every(finite)&&Math.abs(r.center[0])<=85&&Math.abs(r.center[1])<=180&&Number.isInteger(r.arms)&&r.arms>=2&&r.arms<=8&&finite(r.diameter)&&r.diameter>=20&&r.diameter<=150&&finite(r.armLength)&&r.armLength>=10&&r.armLength<=150&&finite(r.orientation)&&finite(r.width)&&r.width>=3&&r.width<=15&&(!('lanes' in r)||(Number.isInteger(r.lanes)&&r.lanes>=1&&r.lanes<=3))&&(!('laneWidth' in r)||(finite(r.laneWidth)&&r.laneWidth>=3&&r.laneWidth<=5))&&(!('entryRadius' in r)||(finite(r.entryRadius)&&r.entryRadius>=8&&r.entryRadius<=60))&&(!('exitRadius' in r)||(finite(r.exitRadius)&&r.exitRadius>=12&&r.exitRadius<=100))&&(!('armOffsets' in r)||(Array.isArray(r.armOffsets)&&r.armOffsets.length===r.arms&&r.armOffsets.every(n=>finite(n)&&n>=-180&&n<=180)));}
 function roundaboutAt(id){return roundabouts.find(r=>r.id===id);}
 function roundaboutGeometry(r){
- const lat=r.center[0],center=xy(r.center,lat),ringRadius=Math.max(r.width+2,r.diameter/2-r.width/2),ring=[];
- const point=(distance,angle)=>ll(add(center,{x:distance*Math.cos(angle),y:distance*Math.sin(angle)}),lat);
- for(let i=0;i<=96;i++)ring.push(point(ringRadius,2*Math.PI*i/96));
- const arms=Array.from({length:r.arms},(_,i)=>{const a=(r.orientation+i*360/r.arms+(r.armOffsets?.[i]??0))*RAD;return {inner:point(ringRadius,a),outer:point(ringRadius+r.armLength,a),index:i};});
- return {ring,arms,islandRadius:Math.max(2,ringRadius-r.width/2-1)};
+ const dim=roundaboutDimensions(r),lat=r.center[0],center=xy(r.center,lat),ring=[];
+ const pt=(radius,a)=>ll(add(center,{x:radius*Math.cos(a),y:radius*Math.sin(a)}),lat);
+ for(let i=0;i<=128;i++)ring.push(pt(dim.ringRadius,2*Math.PI*i/128));
+ const arms=Array.from({length:r.arms},(_,i)=>{
+  const a=(r.orientation+i*360/r.arms+(r.armOffsets?.[i]??0))*RAD;
+  return {inner:pt(dim.ringRadius,a),outer:pt(dim.ringRadius+r.armLength,a),angle:a,index:i};
+ });
+ return {ring,arms,islandRadius:dim.islandRadius,dimensions:dim};
 }
 // Proyectar el cursor al círculo de longitud fija: solo cambia el ángulo del ramal.
 function angularArmPosition(rb,index,latlng){
@@ -301,7 +323,7 @@ function angularArmPosition(rb,index,latlng){
  const angle=length(delta)>0.001?Math.atan2(delta.y,delta.x):(baseDeg+(rb.armOffsets?.[index]??0))*RAD;
  const offset=((angle/RAD-baseDeg+540)%360)-180;
  const axis={x:Math.cos(angle),y:Math.sin(angle)};
- const ringRadius=Math.max(rb.width+2,rb.diameter/2-rb.width/2);
+ const ringRadius=roundaboutDimensions(rb).ringRadius;
  return {offset,angle:((angle/RAD)%360+360)%360,inner:ll(add(center,mul(axis,ringRadius)),lat),point:ll(add(center,mul(axis,ringRadius+rb.armLength)),lat)};
 }
 function findArmSnap(p,maxMeters=30){
@@ -335,7 +357,7 @@ function updateLinkedRoads(rbId){
 function chooseRoundabout(id){
  selectedRoundabout=roundaboutAt(id)?id:null;selected=null;selectedSegment=null;
  const rb=roundaboutAt(selectedRoundabout);
- if(rb){$('rbArms').value=rb.arms;$('rbDiameter').value=rb.diameter;$('rbArmLength').value=rb.armLength;$('rbOrientation').value=rb.orientation;$('rbWidth').value=rb.width;}
+ if(rb){const dim=roundaboutDimensions(rb);$('rbArms').value=rb.arms;$('rbDiameter').value=rb.diameter;$('rbArmLength').value=rb.armLength;$('rbOrientation').value=rb.orientation;$('rbLanes').value=dim.lanes;$('rbLaneWidth').value=dim.laneWidth;$('rbEntryRadius').value=dim.entryRadius;$('rbExitRadius').value=dim.exitRadius;updateRoundaboutUI();}
  render();
 }
 function roundaboutClick(e,rb){
@@ -353,56 +375,140 @@ function applyRoundabout(){
  // El parámetro define la longitud común; cada extremo conserva su ángulo propio.
  r.armOffsets=Array.from({length:p.arms},(_,i)=>existing[i]??0);
  delete r.armLengths;
- updateLinkedRoads(r.id);persist();render();status('Geometría de la rotonda actualizada.');
+ updateLinkedRoads(r.id);updateRoundaboutUI();persist();render();status('Geometría de la rotonda actualizada.');
+}
+/* Glorieta en planta, unidades en metros; transiciones Bézier orientativas. */
+function roundaboutArmRoad(rb,index){
+ for(const road of roads)for(const [end,conn] of Object.entries(road.connections||{}))
+  if((end==='start'||end==='end')&&conn?.roundaboutId===rb.id&&conn.armIndex===index)
+   return {road,end,section:sectionOf(road)};
+ return null;
+}
+function roundaboutArmProfile(rb,index){
+ const match=roundaboutArmRoad(rb,index);
+ if(!match)return {entry:1,exit:1,laneWidth:3.5,shoulder:0,sidewalk:0,median:0,section:'road11'};
+ const sec=match.section;
+ let entry=1,exit=1;
+ if(sec.section==='road21'){entry=match.end==='end'?2:1;exit=match.end==='start'?2:1;}
+ else if(sec.section==='road22'){entry=2;exit=2;}
+ else if(sec.section==='street1'){entry=match.end==='end'?1:0;exit=match.end==='start'?1:0;}
+ return {entry,exit,laneWidth:sec.laneWidth,shoulder:sec.shoulderWidth,sidewalk:sec.sidewalkWidth,
+  median:sec.medianWidth,section:sec.section};
+}
+function cubicRoadPoints(a,b,c,d,n=28){
+ const output=[];
+ for(let i=0;i<=n;i++){
+  const t=i/n,v=1-t;
+  output.push(add(add(mul(a,v*v*v),mul(b,3*v*v*t)),add(mul(c,3*v*t*t),mul(d,t*t*t))));
+ }
+ return output;
+}
+function armTransition(rb,arm){
+ const dim=roundaboutDimensions(rb),p=roundaboutArmProfile(rb,arm.index),lat=rb.center[0];
+ const center=xy(rb.center,lat),dir={x:Math.cos(arm.angle),y:Math.sin(arm.angle)},normal={x:-dir.y,y:dir.x};
+ const at=(radius,n=0)=>add(add(center,mul(dir,radius)),mul(normal,n));
+ const far=dim.ringRadius+rb.armLength,near=dim.ringRadius+dim.width*.12;
+ const entryWidth=p.entry*p.laneWidth,exitWidth=p.exit*p.laneWidth,median=p.entry&&p.exit?p.median:0;
+ const entryFar=at(far,p.exit?(entryWidth+median)/2:0),exitFar=at(far,p.entry?-(exitWidth+median)/2:0);
+ const split=clamp(p.laneWidth*.6+.8,2.2,4.6);
+ const entryNear=at(near,entryWidth/2+split),exitNear=at(near,-exitWidth/2-split);
+ const eB=clamp(dim.entryRadius*.72,5,rb.armLength*.8),eC=clamp(dim.entryRadius*.35,3,22);
+ const xB=clamp(dim.exitRadius*.72,5,rb.armLength*.8),xC=clamp(dim.exitRadius*.4,4,35);
+ const entry=p.entry?cubicRoadPoints(entryFar,sub(entryFar,mul(dir,eB)),sub(entryNear,mul(normal,eC)),entryNear):null;
+ const exit=p.exit?cubicRoadPoints(exitNear,add(exitNear,mul(normal,xC)),sub(exitFar,mul(dir,xB)),exitFar):null;
+ const gap=Math.min(rb.armLength*.74,35),splitHalf=clamp((entryWidth+exitWidth)*.15+.5,1.15,3);
+ const splitter=p.entry&&p.exit?[
+  at(dim.ringRadius+Math.min(5,rb.armLength*.2),0),
+  at(dim.ringRadius+gap*.5,splitHalf),
+  at(dim.ringRadius+gap,splitHalf*.38),
+  at(dim.ringRadius+gap,-splitHalf*.38),
+  at(dim.ringRadius+gap*.5,-splitHalf)
+ ]:null;
+ return {profile:p,entry,exit,splitter,lat};
+}
+function drawRoundaboutRoadways(){
+ roundaboutGroup.clearLayers();
+ const draw=(pts,color,weight,onClick,options={})=>{
+  const line=L.polyline(pts,{color,weight,opacity:1,lineCap:'butt',lineJoin:'round',...options}).addTo(roundaboutGroup);
+  if(onClick)line.on('click',onClick);
+  return line;
+ };
+ for(const rb of roundabouts){
+  const shape=roundaboutGeometry(rb),d=shape.dimensions,onClick=e=>roundaboutClick(e,rb),px=widthInPixels(d.width);
+  const island=L.circle(rb.center,{radius:shape.islandRadius,color:'#292929',weight:1,
+   fillColor:'#505050',fillOpacity:.96,interactive:true}).addTo(roundaboutGroup);
+  island.on('click',onClick);
+  if(visible('layerRoad'))draw(shape.ring,'#292929',px+5,onClick);
+  draw(shape.ring,'#C2CDD0',visible('layerRoad')?px+1:5,onClick);
+  if(visible('layerRoad')&&visible('layerAxes')&&px>3*d.lanes){
+   const origin=xy(rb.center,rb.center[0]);
+   for(let k=1;k<d.lanes;k++){
+    const rr=d.outerRadius-k*d.laneWidth,coords=[];
+    for(let j=0;j<=128;j++){const a=2*Math.PI*j/128;coords.push(ll(add(origin,{x:rr*Math.cos(a),y:rr*Math.sin(a)}),rb.center[0]));}
+    draw(coords,'#F1F1EF',1.2,null,{dashArray:'6 7',interactive:false,opacity:.9});
+   }
+  }
+  for(const arm of shape.arms){
+   const t=armTransition(rb,arm),p=t.profile;
+   for(const [path,count] of [[t.entry,p.entry],[t.exit,p.exit]]){
+    if(!path||!count)continue;
+    const coords=path.map(a=>ll(a,t.lat)),w=widthInPixels(count*p.laneWidth);
+    if(visible('layerRoad')){
+     if(p.sidewalk>0){const sw=widthInPixels(p.sidewalk);
+      draw(coords,'#292929',w+sw*2+5,onClick);draw(coords,'#979A9E',w+sw*2+1,onClick);
+     }
+     if(p.shoulder>0){const sh=widthInPixels(p.shoulder);
+      draw(coords,'#292929',w+sh*2+5,onClick);draw(coords,'#747D83',w+sh*2+1,onClick);
+     }
+     draw(coords,'#292929',w+5,onClick);
+    }
+    draw(coords,'#C2CDD0',visible('layerRoad')?w+1:5,onClick);
+    if(visible('layerRoad')&&visible('layerAxes')&&w>count*3){
+     for(let k=1;k<count;k++)draw(offsetCenterline(coords,(k-count/2)*p.laneWidth),
+      '#F1F1EF',1.2,null,{dashArray:'6 7',interactive:false,opacity:.9});
+    }
+   }
+   if(visible('layerRoad')&&t.splitter){
+    const poly=L.polygon(t.splitter.map(a=>ll(a,t.lat)),{color:'#F1F1EF',weight:1.4,
+      fillColor:'#666D6C',fillOpacity:1,interactive:true}).addTo(roundaboutGroup);
+    poly.on('click',onClick);
+   }
+  }
+ }
 }
 function renderRoundabouts(){
- roundaboutGroup.clearLayers();
+ drawRoundaboutRoadways();
  for(const rb of roundabouts){
-  const shape=roundaboutGeometry(rb),selectedRb=selectedRoundabout===rb.id;
-  const w=pixelWidth(rb.width),outline={color:'#292929',weight:w+5,opacity:.86,lineCap:'butt',lineJoin:'round',interactive:true};
-  const pavement={color:'#C2CDD0',weight:w+1,opacity:.96,lineCap:'butt',lineJoin:'round',interactive:true};
-  const center=L.circle(rb.center,{radius:shape.islandRadius,color:'#292929',weight:1,fillColor:'#505050',fillOpacity:.9});
-  center.on('click',e=>roundaboutClick(e,rb));center.addTo(roundaboutGroup);
-  const rim=L.polyline(shape.ring,outline).addTo(roundaboutGroup);
-  rim.on('click',e=>roundaboutClick(e,rb));
-  const face=L.polyline(shape.ring,pavement).addTo(roundaboutGroup);
-  face.on('click',e=>roundaboutClick(e,rb));
-  shape.arms.forEach(a=>{
-   const border=L.polyline([a.inner,a.outer],outline).addTo(roundaboutGroup);border.on('click',e=>roundaboutClick(e,rb));
-   const line=L.polyline([a.inner,a.outer],pavement).addTo(roundaboutGroup);
-   line.on('click',e=>roundaboutClick(e,rb));
-   const axis=visible('layerAxes')?L.polyline([a.inner,a.outer],{color:'#ffffff',weight:1.2,dashArray:'5 7',interactive:false,opacity:.75,lineCap:'butt'}).addTo(roundaboutGroup):null;
-   if(selectedRb){
+  const shape=roundaboutGeometry(rb);
+  if(selectedRoundabout===rb.id){
+   for(const a of shape.arms){
     const icon=L.divIcon({className:'handle-icon',html:'<div class="rb-arm-handle"></div>',iconSize:[14,14],iconAnchor:[7,7]});
     const tip=L.marker(a.outer,{icon,draggable:mode==='select',zIndexOffset:1750,title:'Girar el ángulo del ramal '+(a.index+1)+' (longitud fija)'}).addTo(markersGroup);
     tip.on('click',e=>L.DomEvent.stopPropagation(e));
     if(mode==='select'){
      tip.on('dragstart',checkpoint);
      tip.on('drag',()=>{
-      const projected=angularArmPosition(rb,a.index,tip.getLatLng());
-      tip.setLatLng(projected.point);
+      const point=angularArmPosition(rb,a.index,tip.getLatLng());
+      tip.setLatLng(point.point);
       if(!Array.isArray(rb.armOffsets))rb.armOffsets=Array(rb.arms).fill(0);
-      rb.armOffsets[a.index]=projected.offset;
-      border.setLatLngs([projected.inner,projected.point]);
-      line.setLatLngs([projected.inner,projected.point]);
-      axis?.setLatLngs([projected.inner,projected.point]);
+      rb.armOffsets[a.index]=point.offset;
+      drawRoundaboutRoadways();
      });
      tip.on('dragend',()=>{
-      const projected=angularArmPosition(rb,a.index,tip.getLatLng());
+      const point=angularArmPosition(rb,a.index,tip.getLatLng());
       if(!Array.isArray(rb.armOffsets))rb.armOffsets=Array(rb.arms).fill(0);
-      rb.armOffsets[a.index]=projected.offset;
+      rb.armOffsets[a.index]=point.offset;
       updateLinkedRoads(rb.id);persist();render();
-      status('Ramal '+(a.index+1)+' · ángulo '+format(projected.angle)+'°; longitud '+format(rb.armLength)+' m.');
+      status('Ramal '+(a.index+1)+' · ángulo '+format(point.angle)+'°; longitud '+format(rb.armLength)+' m.');
      });
     }
    }
-  });
-  if(visible('layerAxes'))L.polyline(shape.ring,{color:'#ffffff',weight:1.2,dashArray:'5 7',interactive:false,opacity:.75,lineCap:'butt',lineJoin:'round'}).addTo(roundaboutGroup);
-  if(selectedRb&&mode==='select'){
-   const icon=L.divIcon({className:'handle-icon',html:'<div class="handle"></div>',iconSize:[14,14],iconAnchor:[7,7]});
-   const handle=L.marker(rb.center,{icon,draggable:true,zIndexOffset:1700}).addTo(markersGroup);
-   handle.on('dragstart',checkpoint);
-   handle.on('dragend',()=>{const p=handle.getLatLng();rb.center=[p.lat,p.lng];updateLinkedRoads(rb.id);persist();render();status('Rotonda desplazada.');});
+   if(mode==='select'){
+    const icon=L.divIcon({className:'handle-icon',html:'<div class="handle"></div>',iconSize:[14,14],iconAnchor:[7,7]});
+    const m=L.marker(rb.center,{icon,draggable:true,zIndexOffset:1700}).addTo(markersGroup);
+    m.on('dragstart',checkpoint);
+    m.on('dragend',()=>{const pos=m.getLatLng();rb.center=[pos.lat,pos.lng];updateLinkedRoads(rb.id);persist();render();status('Rotonda desplazada.');});
+   }
   }
  }
 }
@@ -527,7 +633,7 @@ function finish(save=true){if(save&&draft.length>=2){checkpoint();const r={id:ne
 function insertNode(r,latlng){const lat0=r.nodes.reduce((s,n)=>s+n[0],0)/r.nodes.length,p=xy([latlng.lat,latlng.lng],lat0);let best=Infinity,index=0;for(let i=0;i<r.nodes.length-1;i++){const a=xy(r.nodes[i],lat0),b=xy(r.nodes[i+1],lat0),ab=sub(b,a),q=clamp(dot(sub(p,a),ab)/(dot(ab,ab)||1),0,1),d=dist(p,add(a,mul(ab,q)));if(d<best){best=d;index=i+1;}}checkpoint();repairStructuresAfterInsert(r,index);r.nodes.splice(index,0,[latlng.lat,latlng.lng]);selected=r.id;selectedSegment=null;persist();render();status('Punto insertado en '+r.name+'.');}
 function undo(){if(mode==='draw'&&draft.length){draft.pop();$('finishBtn').disabled=draft.length<2;drawPreview();return;}if(!history.length){status('No hay acciones para deshacer.');return;}const snapshot=JSON.parse(history.pop());roads=Array.isArray(snapshot)?snapshot:snapshot.roads;roundabouts=Array.isArray(snapshot)?[]:(snapshot.roundabouts||[]);if(!roadById(selected))selected=null;if(!roundaboutAt(selectedRoundabout))selectedRoundabout=null;selectedSegment=null;persist();render();status('Última acción deshecha.');}
 function download(name,object){const blob=new Blob([JSON.stringify(object,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function exportGeo(){return {type:'FeatureCollection',name:'OcToS Roads V1',features:roads.map(r=>{const segments=makeGeometry(r).parts;let pts=[];segments.forEach(s=>s.points.forEach(p=>{const last=pts[pts.length-1];if(!last||Math.abs(last[0]-p[0])>1e-9||Math.abs(last[1]-p[1])>1e-9)pts.push(p);}));return {type:'Feature',properties:{name:r.name,roadType:r.type,radius:r.radius,width:r.width,speed:r.speed,section:sectionOf(r).section,laneWidth:sectionOf(r).laneWidth,sidewalkWidth:sectionOf(r).sidewalkWidth,shoulderWidth:sectionOf(r).shoulderWidth,medianWidth:sectionOf(r).medianWidth,structures:r.structures||{},connections:r.connections||{},controlPoints:r.nodes.map(n=>[n[1],n[0]]),speedProfile:segments.map(s=>({speed:s.speed,radius:s.radius,length:s.length}))},geometry:{type:'LineString',coordinates:pts.map(p=>[p[1],p[0]])}};}).concat(roundabouts.map(rb=>({type:'Feature',properties:{featureType:'roundabout',id:rb.id,arms:rb.arms,diameter:rb.diameter,armLength:rb.armLength,armOffsets:rb.armOffsets,orientation:rb.orientation,width:rb.width},geometry:{type:'Point',coordinates:[rb.center[1],rb.center[0]]}})))};}
+function exportGeo(){return {type:'FeatureCollection',name:'OcToS Roads V1',features:roads.map(r=>{const segments=makeGeometry(r).parts;let pts=[];segments.forEach(s=>s.points.forEach(p=>{const last=pts[pts.length-1];if(!last||Math.abs(last[0]-p[0])>1e-9||Math.abs(last[1]-p[1])>1e-9)pts.push(p);}));return {type:'Feature',properties:{name:r.name,roadType:r.type,radius:r.radius,width:r.width,speed:r.speed,section:sectionOf(r).section,laneWidth:sectionOf(r).laneWidth,sidewalkWidth:sectionOf(r).sidewalkWidth,shoulderWidth:sectionOf(r).shoulderWidth,medianWidth:sectionOf(r).medianWidth,structures:r.structures||{},connections:r.connections||{},controlPoints:r.nodes.map(n=>[n[1],n[0]]),speedProfile:segments.map(s=>({speed:s.speed,radius:s.radius,length:s.length}))},geometry:{type:'LineString',coordinates:pts.map(p=>[p[1],p[0]])}};}).concat(roundabouts.map(rb=>({type:'Feature',properties:{featureType:'roundabout',id:rb.id,arms:rb.arms,diameter:rb.diameter,armLength:rb.armLength,armOffsets:rb.armOffsets,orientation:rb.orientation,width:rb.width,lanes:roundaboutDimensions(rb).lanes,laneWidth:roundaboutDimensions(rb).laneWidth,entryRadius:roundaboutDimensions(rb).entryRadius,exitRadius:roundaboutDimensions(rb).exitRadius},geometry:{type:'Point',coordinates:[rb.center[1],rb.center[0]]}})))};}
 function openProject(obj){let next=[],rounds=[];if(obj&&Array.isArray(obj.roads)){next=obj.roads;rounds=Array.isArray(obj.roundabouts)?obj.roundabouts:[];}else if(obj&&obj.type==='FeatureCollection'&&Array.isArray(obj.features)){next=obj.features.filter(f=>f.geometry?.type==='LineString').map(f=>{const p=f.properties||{};let coords=Array.isArray(p.controlPoints)?p.controlPoints:f.geometry.coordinates;return {name:p.name||'Carretera importada',type:p.roadType||'convencional',radius:p.radius,width:p.width,speed:p.speed,section:p.section,laneWidth:p.laneWidth,sidewalkWidth:p.sidewalkWidth,shoulderWidth:p.shoulderWidth,medianWidth:p.medianWidth,structures:p.structures||{},connections:p.connections||{},nodes:coords.map(n=>[n[1],n[0]])};});rounds=obj.features.filter(f=>f.geometry?.type==='Point'&&f.properties?.featureType==='roundabout').map(f=>({...f.properties,id:typeof f.properties.id==='string'?f.properties.id:newId(),center:[f.geometry.coordinates[1],f.geometry.coordinates[0]]}));}else throw Error('Formato no compatible.');if(next.length>300)throw Error('Límite de 300 carreteras por archivo.');
  const cleaned=next.map(r=>({id:newId(),name:String(r.name||'Carretera').slice(0,80),type:['convencional','autopista','urbana','camino'].includes(r.type)?r.type:'convencional',radius:clamp(Number(r.radius)||0,0,5000),width:clamp(Number(r.width)||7,2,50),section:sectionTypes[r.section]?r.section:'road11',laneWidth:sectionOf(r).laneWidth,sidewalkWidth:sectionOf(r).street?sectionOf(r).sidewalkWidth:0,shoulderWidth:sectionOf(r).shoulderWidth,medianWidth:sectionOf(r).medianWidth,speed:clamp(Number(r.speed)||90,10,130),structures:Object.fromEntries(Object.entries(r.structures||{}).filter(([k,v])=>Number.isInteger(Number(k))&&Number(k)>=0&&Number(k)<r.nodes.length-1&&['bridge','tunnel'].includes(v))),connections:Object.fromEntries(Object.entries(r.connections||{}).filter(([key,v])=>['start','end'].includes(key)&&v&&typeof v.roundaboutId==='string'&&Number.isInteger(v.armIndex)&&v.armIndex>=0&&v.armIndex<8)),nodes:r.nodes}));if(!cleaned.every(r=>validNodes(r.nodes)))throw Error('El archivo contiene coordenadas o trazados no válidos.');
  rounds=rounds.map(({armLengths,...rb})=>rb);if(rounds.length>300||!rounds.every(validRoundabout))throw Error('Rotondas del proyecto no válidas.');if(new Set(rounds.map(r=>r.id)).size!==rounds.length)throw Error('Identificadores de rotondas duplicados.');checkpoint();roads=cleaned;roundabouts=rounds;for(const road of roads){for(const [key,v] of Object.entries(road.connections)){const rb=roundaboutAt(v.roundaboutId);if(rb&&v.armIndex<rb.arms)road.nodes[key==='start'?0:road.nodes.length-1]=roundaboutGeometry(rb).arms[v.armIndex].outer.slice();else delete road.connections[key];}}selected=null;selectedRoundabout=null;selectedSegment=null;persist();render();fitAll();status('Archivo cargado: '+roads.length+' carreteras y '+roundabouts.length+' rotondas.');}
@@ -722,6 +828,7 @@ Object.keys(bases).forEach(id=>{const node=document.querySelector('input[name=ba
 layerIds.forEach(id=>$(id).onchange=render);
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 $('finishBtn').onclick=()=>finish();$('cancelBtn').onclick=()=>{if(mode==='draw')finish(false);else setMode('select');};$('undoBtn').onclick=undo;
+['rbLanes','rbLaneWidth','rbDiameter'].forEach(id=>$(id).addEventListener('input',updateRoundaboutUI));
 $('rbApplyBtn').onclick=applyRoundabout;
 $('rbDeleteBtn').onclick=()=>{const rb=roundaboutAt(selectedRoundabout);if(!rb)return status('Selecciona una rotonda.');if(!confirm('¿Eliminar esta rotonda?'))return;checkpoint();roundabouts=roundabouts.filter(r=>r.id!==rb.id);for(const r of roads){for(const [key,con] of Object.entries(r.connections||{}))if(con.roundaboutId===rb.id)delete r.connections[key];}selectedRoundabout=null;persist();render();status('Rotonda eliminada.');};
 $('applyBtn').onclick=apply;$('deleteBtn').onclick=()=>{const r=roadById(selected);if(!r)return status('Selecciona antes una carretera.');if(confirm('¿Eliminar '+r.name+'?')){checkpoint();roads=roads.filter(x=>x.id!==r.id);selected=null;persist();render();}};
@@ -738,7 +845,7 @@ $('toggleLeft').onclick=()=>$('leftPane').classList.toggle('hidden-mobile');$('t
 ['roadType'].forEach(id=>$(id).onchange=()=>{if(!selected){$('speed').value=({convencional:90,autopista:120,urbana:50,camino:30})[$('roadType').value];}drawPreview();});
 ['radius','speed','laneWidth','shoulderWidth','medianWidth','sidewalkWidth'].forEach(id=>$(id).addEventListener('input',()=>{updateSectionUI();drawPreview();}));
 $('roadSection').addEventListener('change',()=>{const type=$('roadSection').value;if(sectionTypes[type].street)$('roadType').value='urbana';applySectionDefaults(type);updateSectionUI();drawPreview();});
-applySectionDefaults($('roadSection').value);updateSectionUI();
+applySectionDefaults($('roadSection').value);updateSectionUI();updateRoundaboutUI();
 map.on('click',e=>{if(mode==='roundabout'){if(roundabouts.length>=300)return status('Máximo 300 rotondas.');checkpoint();const rb={id:newId(),center:[e.latlng.lat,e.latlng.lng],...roundaboutParams()};roundabouts.push(rb);persist();setMode('select');chooseRoundabout(rb.id);status('Rotonda creada. Arrastra su centro o ajusta sus ramales.');return;}if(mode==='draw'){const snap=findArmSnap([e.latlng.lat,e.latlng.lng]);draft.push(snap?snap.point.slice():[e.latlng.lat,e.latlng.lng]);$('finishBtn').disabled=draft.length<2;cursor=null;drawPreview();status('Puntos de control: '+draft.length+'.');}});
 map.on('mousemove',e=>{if(mode==='draw'&&draft.length){cursor=[e.latlng.lat,e.latlng.lng];drawPreview();}});
 map.on('zoomend',render);
