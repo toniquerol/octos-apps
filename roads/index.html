@@ -1299,6 +1299,175 @@ function roadById(id){return roads.find(r=>r.id===id);}
 function newId(){return 'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function setSelection(id){inspectorClosed=false;selectedJunction=null;selectedRoundabout=null;selected=roadById(id)?id:null;if(selectedSegment?.roadId!==selected)selectedSegment=null;const r=roadById(selected);if(r){const sec=sectionOf(r);$('roadName').value=r.name;$('roadType').value=r.type;$('radius').value=r.radius;$('roadSection').value=sec.section;$('laneWidth').value=sec.laneWidth;$('sidewalkWidth').value=sec.sidewalkWidth;$('shoulderWidth').value=sec.shoulderWidth;$('medianWidth').value=sec.medianWidth;$('speed').value=r.speed;updateSectionUI();}render();}
 
+
+/* Puentes: vistas SVG independientes del pavimento y parámetros por segmento.
+   Dos tipologías iniciales; sin cálculo resistente ni cotas de terreno real. */
+const BRIDGE_DEFAULTS={
+ type:'simple',barrierWidth:.5,sidewalkWidth:2,shoulderWidth:1,deckThickness:1.1,
+ clearance:10.6,spanCount:3,pierWidth:1.2,abutmentInset:1.5,
+ archRise:6,archThickness:.8,hangerCount:8
+};
+const BRIDGE_LIMITS={
+ barrierWidth:[.2,2],sidewalkWidth:[0,6],shoulderWidth:[0,4],deckThickness:[.3,4],
+ clearance:[2,60],spanCount:[1,12],pierWidth:[.4,6],abutmentInset:[0,8],
+ archRise:[1,30],archThickness:[.2,3],hangerCount:[2,30]
+};
+let bridgeEditSession=null;
+function bridgeNormalize(raw){
+ const p={...BRIDGE_DEFAULTS},source=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+ p.type=source.type==='arch'?'arch':'simple';
+ for(const [key,limits] of Object.entries(BRIDGE_LIMITS)){
+  const n=Number(source[key]);
+  if(source[key]!=null&&source[key]!==''&&Number.isFinite(n))p[key]=clamp(
+   key==='spanCount'||key==='hangerCount'?Math.round(n):n,limits[0],limits[1]);
+ }
+ return p;
+}
+function bridgeSelectedContext(){
+ if(terrainMode||mode==='draw')return null;
+ const road=roadById(selected);
+ if(!road)return null;
+ const indices=selectedRoadSegments(road).filter(index=>
+  Number.isInteger(index)&&index>=0&&index<road.nodes.length-1&&(road.structures||{})[index]==='bridge')
+  .sort((a,b)=>a-b);
+ if(!indices.length)return null;
+ // Si hay varios grupos separados, se muestra el primero, sin inventar una luz entre ellos.
+ const contiguous=[indices[0]];
+ for(let i=1;i<indices.length&&indices[i]===contiguous[contiguous.length-1]+1;i++)
+  contiguous.push(indices[i]);
+ const geometry=makeGeometry(road);
+ const length=geometry.parts.filter(part=>contiguous.includes(part.segmentIndex))
+  .reduce((sum,part)=>sum+part.length,0);
+ return {road,indices:contiguous,length:Math.max(.1,length),
+  params:bridgeNormalize(road.bridgeDetails?.[contiguous[0]])};
+}
+function bridgeTotalWidth(road,params){
+ const sec=sectionOf(road);
+ return sec.roadWidth+2*(params.shoulderWidth+params.sidewalkWidth+params.barrierWidth);
+}
+function bridgeTransverseSvg(ctx){
+ const sec=sectionOf(ctx.road),p=ctx.params,segments=[],parts=[];
+ const put=(label,m,fill,color)=>{
+  if(m>0)segments.push({label,m,fill,color});
+ };
+ put('B',p.barrierWidth,'#FF6A1A','#12151A');
+ put('ACERA',p.sidewalkWidth,'#9AA6B2','#131A22');
+ put('ARCÉN',p.shoulderWidth,'#687B8C','#FFFFFF');
+ for(let i=0;i<sec.lanes;i++){
+  if(sec.splitAfter&&i===sec.splitAfter)put('MED',sec.medianWidth,'#B79865','#111920');
+  put(sec.splitAfter?(i<sec.splitAfter?'←':'→'):sec.lanes===1?'→':i<sec.lanes/2?'←':'→',sec.laneWidth,'#354656','#F1F1EF');
+ }
+ put('ARCÉN',p.shoulderWidth,'#687B8C','#FFFFFF');
+ put('ACERA',p.sidewalkWidth,'#9AA6B2','#131A22');
+ put('B',p.barrierWidth,'#FF6A1A','#12151A');
+ const total=bridgeTotalWidth(ctx.road,p),scale=638/total,y=65,h=63;
+ let cursor=41;
+ parts.push('<line x1="41" y1="31" x2="679" y2="31" stroke="#E4B68A" stroke-width="1.3"/>');
+ parts.push('<path d="M41 25V39 M679 25V39" stroke="#E4B68A" stroke-width="1.4"/>');
+ parts.push('<text x="360" y="23" font-size="15" text-anchor="middle" fill="#F1F1EF">'+format(total)+' m · TABLERO</text>');
+ for(const segment of segments){
+  const width=segment.m*scale;
+  parts.push('<rect x="'+cursor.toFixed(2)+'" y="'+y+'" width="'+width.toFixed(2)+'" height="'+h+'" fill="'+segment.fill+'" stroke="#D4DCE3" stroke-width=".8"/>');
+  if(width>30)parts.push('<text x="'+(cursor+width/2).toFixed(1)+'" y="97" text-anchor="middle" font-size="'+(width>47?11:9)+'" font-weight="600" fill="'+segment.color+'">'+segment.label+'</text>');
+  if(width>45)parts.push('<text x="'+(cursor+width/2).toFixed(1)+'" y="115" text-anchor="middle" font-size="9" fill="'+segment.color+'">'+format(segment.m)+' m</text>');
+  cursor+=width;
+ }
+ parts.push('<rect x="41" y="128" width="638" height="'+Math.max(8,p.deckThickness*10)+'" rx="2" fill="#A6B0B8" stroke="#E0E5E8" stroke-width="1.4"/>');
+ parts.push('<path d="M41 150H679" stroke="#E0E5E8" stroke-dasharray="6 5" opacity=".65"/>');
+ parts.push('<text x="360" y="167" text-anchor="middle" fill="#B9C7D0" font-size="12">Espesor de tablero '+format(p.deckThickness)+' m · '+(p.type==='arch'?'estructura de arco':'vigas sobre pilas')+'</text>');
+ return '<svg viewBox="0 0 720 185" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sección transversal esquemática del puente">'+parts.join('')+'</svg>';
+}
+function bridgeLongitudinalSvg(ctx){
+ const p=ctx.params,parts=[],start=55,end=745,span=end-start,deckY=94,depth=clamp(p.deckThickness*8,7,27),bottom=deckY+depth;
+ const length=ctx.length;
+ parts.push('<rect x="0" y="0" width="800" height="245" fill="#111820"/>');
+ parts.push('<line x1="'+start+'" y1="30" x2="'+end+'" y2="30" stroke="#FF9D65" stroke-width="1.3"/>');
+ parts.push('<path d="M'+start+' 23V38M'+end+' 23V38" stroke="#FF9D65" stroke-width="1.4"/>');
+ parts.push('<text x="400" y="22" fill="#F1F1EF" text-anchor="middle" font-size="15">'+format(length)+' m · LONGITUD TOTAL</text>');
+ const groundY=214;
+ const valley='M0 162 L55 155 L135 189 L220 '+groundY+' L580 '+groundY+' L665 189 L745 155 L800 162 L800 245 L0 245 Z';
+ parts.push('<path d="'+valley+'" fill="#394047" stroke="#82909B" stroke-width="1.4"/>');
+ parts.push('<path d="M'+start+' '+(deckY-8)+' V'+(groundY+7)+' M'+end+' '+(deckY-8)+' V'+(groundY+7)+'" stroke="#C0CBD2" stroke-dasharray="5 7" opacity=".45"/>');
+ parts.push('<rect x="'+(start-9)+'" y="'+bottom+'" width="16" height="37" fill="#858D94" stroke="#CBD2D7"/>');
+ parts.push('<rect x="'+(end-7)+'" y="'+bottom+'" width="16" height="37" fill="#858D94" stroke="#CBD2D7"/>');
+ if(p.type==='arch'){
+  const rise=Math.min(66,Math.max(17,p.archRise*5));
+  const archY=deckY-rise-8;
+  const path='M'+start+' '+(deckY-2)+' Q400 '+(archY-rise*.55)+' '+end+' '+(deckY-2);
+  parts.push('<path d="'+path+'" fill="none" stroke="#F6A04A" stroke-width="'+Math.max(4,Math.min(14,p.archThickness*8))+'" stroke-linecap="round"/>');
+  for(let i=1;i<=p.hangerCount;i++){
+   const t=i/(p.hangerCount+1),x=start+t*span;
+   const y=(deckY-2)-2*rise*(1-(2*t-1)*(2*t-1))*.7;
+   parts.push('<line x1="'+x.toFixed(1)+'" y1="'+y.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+(deckY-5)+'" stroke="#C5D5DF" stroke-width="1.5"/>');
+  }
+  parts.push('<text x="400" y="170" fill="#FF9D65" font-size="13" text-anchor="middle">Arco superior · flecha '+format(p.archRise)+' m · '+p.hangerCount+' péndolas</text>');
+ }else{
+  const count=p.spanCount;
+  for(let i=1;i<count;i++){
+   const x=start+i*span/count,w=Math.max(4,Math.min(18,p.pierWidth*6));
+   parts.push('<rect x="'+(x-w/2).toFixed(1)+'" y="'+bottom+'" width="'+w.toFixed(1)+'" height="'+(groundY-bottom)+'" fill="#929EA7" stroke="#D1DCE4" stroke-width="1"/>');
+   parts.push('<rect x="'+(x-w/2-5).toFixed(1)+'" y="'+(groundY-3)+'" width="'+(w+10).toFixed(1)+'" height="9" fill="#76828D" stroke="#C9D2D8"/>');
+  }
+  const clear=(length-2*p.abutmentInset-(count-1)*p.pierWidth)/count;
+  parts.push('<text x="400" y="174" fill="#FF9D65" font-size="13" text-anchor="middle">'+p.spanCount+' vano'+(p.spanCount===1?'':'s')+' · luz libre tipo '+format(Math.max(0,clear))+' m</text>');
+ }
+ parts.push('<rect x="'+start+'" y="'+deckY+'" width="'+span+'" height="'+depth+'" rx="2" fill="#ADB9C2" stroke="#F1F1EF" stroke-width="1.6"/>');
+ parts.push('<rect x="'+start+'" y="'+(deckY-5)+'" width="'+span+'" height="5" fill="#424B55"/>');
+ parts.push('<path d="M'+start+' '+(deckY-5)+'H'+end+'" stroke="#D8E4EA" stroke-width="1"/>');
+ parts.push('<path d="M'+start+' '+(deckY-18)+'H'+end+'" stroke="#F1F1EF" stroke-width="1.2" opacity=".8"/>');
+ for(let x=start;x<=end;x+=14)parts.push('<path d="M'+x+' '+(deckY-18)+'V'+(deckY-5)+'" stroke="#A6B5C2" stroke-width="1.2"/>');
+ parts.push('<path d="M'+(end+15)+' '+bottom+'h16 M'+(end+23)+' '+bottom+'v'+(groundY-bottom)+' M'+(end+15)+' '+groundY+'h16" stroke="#E4B68A" stroke-width="1.2"/>');
+ parts.push('<text x="'+(end+36)+'" y="'+((bottom+groundY)/2)+'" transform="rotate(90 '+(end+36)+' '+((bottom+groundY)/2)+')" text-anchor="middle" fill="#F1F1EF" font-size="12">Gálibo '+format(p.clearance)+' m</text>');
+ parts.push('<text x="400" y="233" fill="#A6B0B8" text-anchor="middle" font-size="10">TERRENO ESQUEMÁTICO · No corresponde al MDT real</text>');
+ return '<svg viewBox="0 0 800 245" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Alzado longitudinal del puente">'+parts.join('')+'</svg>';
+}
+function syncBridgePanels(ctx){
+ const panel=$('bridgeLongitudinalPanel'),bridge=ctx||null;
+ panel.hidden=!bridge;
+ $('bridgeTransverseDrawing').hidden=!bridge;
+ $('bridgeTransverseFields').hidden=!bridge;
+ $('sectionPanelDiagram').hidden=!!bridge;
+ $('sectionPanelShoulderField').hidden=!!bridge;
+ $('sectionPanelSidewalkField').hidden=!!bridge;
+ $('sectionPanelNote').textContent=bridge?'Sección de tablero esquemática. Cambios del puente aplicados y guardados al editar.':'Dimensiones por lado. Cambios aplicados y guardados automáticamente. Pulsa una franja para editarla.';
+ if(!bridge)return;
+ const p=bridge.params,road=bridge.road;
+ $('bridgeSelectedSpan').textContent=road.name+' · '+bridge.indices.length+' tramo'+(bridge.indices.length===1?'':'s');
+ $('bridgeType').value=p.type;
+ $('bridgeTotalLength').textContent=format(bridge.length)+' m';
+ for(const key of Object.keys(BRIDGE_LIMITS)){
+  const input=$('bridge'+key[0].toUpperCase()+key.slice(1));
+  if(input&&document.activeElement!==input)input.value=p[key];
+ }
+ for(const id of ['SpanCount','PierWidth','AbutmentInset'])
+  $('bridge'+id+'Field').hidden=p.type!=='simple';
+ for(const id of ['ArchRise','ArchThickness','HangerCount'])
+  $('bridge'+id+'Field').hidden=p.type!=='arch';
+ $('bridgeTransverseDrawing').innerHTML=bridgeTransverseSvg(bridge);
+ $('bridgeLongitudinalDrawing').innerHTML=bridgeLongitudinalSvg(bridge);
+}
+function applyBridgeChange(event){
+ const ctx=bridgeSelectedContext();if(!ctx)return;
+ const field=event?.target?.id||null;
+ const target=event?.target;
+ if(target?.type==='number'&&(target.value===''||!target.validity.valid))return;
+ const data={type:$('bridgeType').value};
+ for(const key of Object.keys(BRIDGE_LIMITS))
+  data[key]=Number($('bridge'+key[0].toUpperCase()+key.slice(1)).value);
+ const next=bridgeNormalize(data);
+ const details=ctx.road.bridgeDetails||{};
+ const needsChange=ctx.indices.some(index=>
+  JSON.stringify(bridgeNormalize(details[index]))!==JSON.stringify(next));
+ if(!needsChange)return;
+ const signature=ctx.road.id+':'+ctx.indices.join(',')+':'+field;
+ if(!bridgeEditSession||bridgeEditSession.signature!==signature)
+  bridgeEditSession={signature,checkpointed:false};
+ if(!bridgeEditSession.checkpointed){checkpoint();bridgeEditSession.checkpointed=true;}
+ ctx.road.bridgeDetails=ctx.road.bridgeDetails||{};
+ for(const index of ctx.indices)ctx.road.bridgeDetails[index]={...next};
+ persist();render();status('Parámetros del puente actualizados.');
+}
+
 /* Esquema de sección transversal: utiliza los mismos parámetros que el inspector. */
 function syncSectionPanel(){
  const road=roadById(selected),panel=$('sectionPanel');
