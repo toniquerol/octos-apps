@@ -700,8 +700,10 @@ function terrainFeatureCollection(){
     addLine(pts,.17,'#F1F1EF','dash');
    }
   }
+  const transitions=[];
   for(const arm of shape.arms){
    const transition=armTransition(rb,arm),profile=transition.profile;
+   transitions.push(transition);
    for(const [pts,count] of [[transition.entry,profile.entry],[transition.exit,profile.exit]]){
     if(!pts||!count)continue;
     const line=pts.map(q=>ll(q,transition.lat));
@@ -710,6 +712,13 @@ function terrainFeatureCollection(){
      addLine(offsetCenterline(line,(k-count/2)*profile.laneWidth),.17,'#F1F1EF','dash');
    }
    if(visible('layerRoad')&&transition.splitter)addPoly(transition.splitter.map(q=>ll(q,transition.lat)),'#666D6C');
+  }
+  if(visible('layerRoad')){
+   const sidewalk=roundaboutSidewalkPaths(rb,shape,transitions);
+   for(const path of [sidewalk.ring,...sidewalk.links]){
+    addLine(path,ROUNDABOUT_OUTER_SIDEWALK+.25,'#292929','casing');
+    addLine(path,ROUNDABOUT_OUTER_SIDEWALK,'#979A9E','shoulder');
+   }
   }
   const bypass=roundaboutSlipGeometry(rb);
   if(bypass){
@@ -860,6 +869,7 @@ function roundaboutRayRadius(r,angle,inset=0){
  const centerX=(ux>=0?1:-1)*L/2;
  return centerX*ux+Math.sqrt(Math.max(0,R*R-centerX*centerX*uy*uy));
 }
+const ROUNDABOUT_OUTER_SIDEWALK=2; // Acera perimetral y en el exterior de los accesos (m).
 function roundaboutDimensions(r){
  const lanes=clamp(Math.round(Number(r.lanes)||Math.round((Number(r.width)||7)/3.5)),1,3);
  const laneWidth=clamp(Number(r.laneWidth)||((Number(r.width)||7)/lanes),3,5);
@@ -1082,19 +1092,23 @@ function armTransition(rb,arm){
  const entryDelta=Math.min(angleMax,Math.max(.23,(entryWidth*.6+3)/Math.max(8,mouthRadiusEntry)));
  const exitDelta=Math.min(angleMax,Math.max(.23,(exitWidth*.6+3)/Math.max(8,mouthRadiusExit)));
  const mouth=(angle,radius)=>add(center,{x:radius*Math.cos(angle),y:radius*Math.sin(angle)});
- const tangent=angle=>({x:-Math.sin(angle),y:Math.cos(angle)});
  const aEntry=arm.angle+entryDelta,aExit=arm.angle-exitDelta;
  const e0=at(far,entryOffset),x3=at(far,exitOffset);
  const e3=mouth(aEntry,roundaboutRayRadius(rb,aEntry,mouthInsetEntry)),x0=mouth(aExit,roundaboutRayRadius(rb,aExit,mouthInsetExit));
  // Siempre se avanza hacia el anillo en la entrada y se sale radialmente en la salida.
  const radialSpan=Math.max(6,far-roundaboutRayRadius(rb,arm.angle));
- const nearControl=clamp(radialSpan*.12,1.5,3.6);
  const farControl=clamp(radialSpan*.32,3.5,15);
- const eTangential=clamp(dim.entryRadius*.09,1,2.5);
- const xTangential=clamp(dim.exitRadius*.09,1,3.5);
+ // Tangente de la envolvente real: funciona también con rotondas ovaladas y alargadas.
+ const outerTangent=(a,inset)=>{
+  const step=.0002;
+  return unit(sub(mouth(a+step,roundaboutRayRadius(rb,a+step,inset)),
+   mouth(a-step,roundaboutRayRadius(rb,a-step,inset))));
+ };
+ const eTangential=clamp(dim.entryRadius*.35,2,Math.min(15,radialSpan*.7));
+ const xTangential=clamp(dim.exitRadius*.35,2,Math.min(15,radialSpan*.7));
  const e1=sub(e0,mul(dir,farControl));
- const e2=sub(add(e3,mul(dir,nearControl)),mul(tangent(aEntry),eTangential));
- const x1=add(add(x0,mul(dir,nearControl)),mul(tangent(aExit),xTangential));
+ const e2=sub(e3,mul(outerTangent(aEntry,mouthInsetEntry),eTangential));
+ const x1=add(x0,mul(outerTangent(aExit,mouthInsetExit),xTangential));
  const x2=sub(x3,mul(dir,farControl));
  const entry=p.entry?cubicRoadPoints(e0,e1,e2,e3,36):null;
  const exit=p.exit?cubicRoadPoints(x0,x1,x2,x3,36):null;
@@ -1144,6 +1158,40 @@ function roundaboutSplitter(rb,geometry){
  }
  return outline;
 }
+/* Acera exterior continua: el anillo enlaza con los bordes exteriores de
+   entrada y salida; el arcén se extingue progresivamente al llegar al anillo. */
+function roundaboutSidewalkPaths(rb,shape,transitions){
+ const lat=rb.center[0],origin=xy(rb.center,lat),half=ROUNDABOUT_OUTER_SIDEWALK/2;
+ const ring=[];
+ for(let i=0;i<=192;i++){
+  const a=i*2*Math.PI/192,r=roundaboutRayRadius(rb,a)+half;
+  ring.push(ll(add(origin,{x:r*Math.cos(a),y:r*Math.sin(a)}),lat));
+ }
+ const links=[];
+ for(let j=0;j<shape.arms.length;j++){
+  const arm=shape.arms[j],t=transitions[j],p=t.profile;
+  for(const [type,count] of [['entry',p.entry],['exit',p.exit]]){
+   if(!count||!t[type])continue;
+   const coords=t[type].map(q=>ll(q,t.lat));
+   const offset=-(count*p.laneWidth/2+half);
+   const base=offsetCenterline(coords,offset);
+   const shoulder=p.shoulder>0?offsetCenterline(coords,offset-p.shoulder):base;
+   const path=base.map((point,i)=>{
+    const distance=type==='entry'?1-i/(base.length-1):i/(base.length-1);
+    const fade=distance*distance*(3-2*distance);
+    return [point[0]+(shoulder[i][0]-point[0])*fade,
+     point[1]+(shoulder[i][1]-point[1])*fade];
+   });
+   // Los dos extremos en boca coinciden exactamente con la acera del anillo.
+   const a=type==='entry'?arm.angle+t.entryDelta:arm.angle-t.exitDelta;
+   const r=roundaboutRayRadius(rb,a)+half;
+   const mouth=ll(add(origin,{x:r*Math.cos(a),y:r*Math.sin(a)}),lat);
+   path[type==='entry'?path.length-1:0]=mouth;
+   links.push(path);
+  }
+ }
+ return {ring,links};
+}
 function drawRoundaboutRoadways(){
  roundaboutGroup.clearLayers();
  const draw=(pts,color,weight,onClick,options={})=>{
@@ -1165,6 +1213,7 @@ function drawRoundaboutRoadways(){
      roadPx:widthInPixels(count*p.laneWidth),laneWidth:p.laneWidth});
    }
   }
+  const sidewalk=roundaboutSidewalkPaths(rb,shape,transitions);
   if(visible('layerRoad')){
    draw(shape.ring,'#292929',ringPx+5,onClick);
    for(const link of links){
@@ -1185,6 +1234,14 @@ function drawRoundaboutRoadways(){
   for(const link of links)draw(link.coords,roundaboutColor,visible('layerRoad')?link.roadPx+1:5,onClick);
   // Un único relleno continuo del anillo cubre las juntas de las curvas de enlace.
   draw(shape.ring,roundaboutColor,visible('layerRoad')?ringPx+1:5,onClick);
+  // Banda continua al exterior de los bordes de calzada; no invade las isletas.
+  if(visible('layerRoad')){
+   const footPx=widthInPixels(ROUNDABOUT_OUTER_SIDEWALK);
+   for(const path of [sidewalk.ring,...sidewalk.links]){
+    draw(path,'#292929',footPx+1.6,onClick);
+    draw(path,'#979A9E',footPx,onClick);
+   }
+  }
   // Bypass independiente, en el cuadrante exterior entre entrada y salida.
   const bypass=roundaboutSlipGeometry(rb);
   if(bypass){
