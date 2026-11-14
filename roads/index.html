@@ -1437,6 +1437,7 @@ function jxDraw(){
   L.polyline(g.points,{color:'#292929',weight:w+5,interactive:false,lineCap:'round'}).addTo(junctionGroup);
   const line=L.polyline(g.points,{color:active?'#FF9D65':'#C2CDD0',weight:w+1,lineCap:'round'}).addTo(junctionGroup);
   line.on('click',e=>{L.DomEvent.stopPropagation(e);if(!['draw','connect','roundabout'].includes(mode))jxChoose(j.id);});
+  if(j.type==='cruce')L.circleMarker(g.to,{radius:4,color:'#292929',weight:1,fillColor:active?'#FF6A1A':'#F1F1EF',fillOpacity:1,interactive:false}).addTo(junctionGroup);
   if(active&&visible('layerNodes'))for(const pos of [g.from,g.to])L.circleMarker(pos,{radius:5,color:'#fff',fillColor:'#FF6A1A',fillOpacity:1,interactive:false}).addTo(junctionGroup);
  }
  if(pendingJunction){const r=roadById(pendingJunction.id);if(r){
@@ -1942,7 +1943,7 @@ document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.data
 $('finishBtn').onclick=()=>finish();$('cancelBtn').onclick=()=>{if(mode==='draw')finish(false);else{selected=null;selectedRoundabout=null;selectedJunction=null;pendingJunction=null;selectedSegment=null;setMode('select');}};$('undoBtn').onclick=undo;
 ['rbArms','rbLanes','rbLaneWidth','rbDiameter','rbOrientation','rbShape','rbElongation','rbAxisAngle','rbSlipEnabled','rbSlipFrom','rbSlipTo','rbSlipRadius'].forEach(id=>$(id).addEventListener('input',updateRoundaboutUI));
 $('rbApplyBtn').onclick=applyRoundabout;
-$('jxApply').onclick=()=>{const j=junctions.find(x=>x.id===selectedJunction);if(!j)return;checkpoint();Object.assign(j,jxParams());persist();render();status('Enlace actualizado.');};
+$('jxApply').onclick=()=>{const j=junctions.find(x=>x.id===selectedJunction);if(!j)return;checkpoint();Object.assign(j,jxParams());persist();jxChoose(j.id);status('Enlace actualizado.');};
 $('jxDelete').onclick=()=>{if(!selectedJunction)return;checkpoint();junctions=junctions.filter(j=>j.id!==selectedJunction);selectedJunction=null;persist();render();status('Enlace eliminado.');};
 $('rbDeleteBtn').onclick=()=>{const rb=roundaboutAt(selectedRoundabout);if(!rb)return status('Selecciona una rotonda.');if(!confirm('¿Eliminar esta rotonda?'))return;checkpoint();roundabouts=roundabouts.filter(r=>r.id!==rb.id);for(const r of roads){for(const [key,con] of Object.entries(r.connections||{}))if(con.roundaboutId===rb.id)delete r.connections[key];}selectedRoundabout=null;persist();render();status('Rotonda eliminada.');};
 $('inspectorClose').onclick=()=>{inspectorClosed=true;syncInspector();};
