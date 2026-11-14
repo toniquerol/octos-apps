@@ -427,9 +427,9 @@ function armTransition(rb,arm){
  const mouthRadiusExit=dim.outerRadius-Math.min(p.laneWidth*p.exit/2,dim.width*.45);
  // Los ramales vecinos restringen la apertura para no invadir sus enlaces.
  const clearance=roundaboutArmClearance(rb,arm);
- const angleMax=clearance*.225;
- const entryDelta=Math.min(angleMax,Math.max(.10,(entryWidth/2+1.4)/Math.max(8,mouthRadiusEntry)));
- const exitDelta=Math.min(angleMax,Math.max(.10,(exitWidth/2+1.4)/Math.max(8,mouthRadiusExit)));
+ const angleMax=clearance*.27;
+ const entryDelta=Math.min(angleMax,Math.max(.23,(entryWidth*.6+3)/Math.max(8,mouthRadiusEntry)));
+ const exitDelta=Math.min(angleMax,Math.max(.23,(exitWidth*.6+3)/Math.max(8,mouthRadiusExit)));
  const mouth=(angle,radius)=>add(center,{x:radius*Math.cos(angle),y:radius*Math.sin(angle)});
  const tangent=angle=>({x:-Math.sin(angle),y:Math.cos(angle)});
  const aEntry=arm.angle+entryDelta,aExit=arm.angle-exitDelta;
@@ -439,8 +439,8 @@ function armTransition(rb,arm){
  const radialSpan=Math.max(6,far-dim.outerRadius);
  const nearControl=clamp(radialSpan*.12,1.5,3.6);
  const farControl=clamp(radialSpan*.32,3.5,15);
- const eTangential=clamp(dim.entryRadius*.17,2,6);
- const xTangential=clamp(dim.exitRadius*.17,2,8);
+ const eTangential=clamp(dim.entryRadius*.09,1,2.5);
+ const xTangential=clamp(dim.exitRadius*.09,1,3.5);
  const e1=sub(e0,mul(dir,farControl));
  const e2=sub(add(e3,mul(dir,nearControl)),mul(tangent(aEntry),eTangential));
  const x1=add(add(x0,mul(dir,nearControl)),mul(tangent(aExit),xTangential));
@@ -501,46 +501,65 @@ function drawRoundaboutRoadways(){
   return line;
  };
  for(const rb of roundabouts){
-  const shape=roundaboutGeometry(rb),d=shape.dimensions,onClick=e=>roundaboutClick(e,rb),px=widthInPixels(d.width);
-  const island=L.circle(rb.center,{radius:shape.islandRadius,color:'#292929',weight:1,
-   fillColor:'#505050',fillOpacity:.96,interactive:true}).addTo(roundaboutGroup);
-  island.on('click',onClick);
-  if(visible('layerRoad'))draw(shape.ring,'#292929',px+5,onClick);
-  draw(shape.ring,'#C2CDD0',visible('layerRoad')?px+1:5,onClick);
-  if(visible('layerRoad')&&visible('layerAxes')&&px>3*d.lanes){
-   const origin=xy(rb.center,rb.center[0]);
-   for(let k=1;k<d.lanes;k++){
-    const rr=d.outerRadius-k*d.laneWidth,coords=[];
-    for(let j=0;j<=128;j++){const a=2*Math.PI*j/128;coords.push(ll(add(origin,{x:rr*Math.cos(a),y:rr*Math.sin(a)}),rb.center[0]));}
-    draw(coords,'#F1F1EF',1.2,null,{dashArray:'6 7',interactive:false,opacity:.9});
-   }
-  }
+  const shape=roundaboutGeometry(rb),d=shape.dimensions,onClick=e=>roundaboutClick(e,rb),ringPx=widthInPixels(d.width);
+  // Agrupar accesos y pintar TODOS los contornos antes de rellenar los carriles:
+  // evita los bordes negros superpuestos en los enlaces y el anillo.
+  const links=[];
   for(const arm of shape.arms){
    const t=armTransition(rb,arm),p=t.profile;
-   for(const [path,count] of [[t.entry,p.entry],[t.exit,p.exit]]){
-    if(!path||!count)continue;
-    const coords=path.map(a=>ll(a,t.lat)),w=widthInPixels(count*p.laneWidth);
-    if(visible('layerRoad')){
-     if(p.sidewalk>0){const sw=widthInPixels(p.sidewalk);
-      draw(coords,'#292929',w+sw*2+5,onClick);draw(coords,'#979A9E',w+sw*2+1,onClick);
-     }
-     if(p.shoulder>0){const sh=widthInPixels(p.shoulder);
-      draw(coords,'#292929',w+sh*2+5,onClick);draw(coords,'#747D83',w+sh*2+1,onClick);
-     }
-     draw(coords,'#292929',w+5,onClick);
-    }
-    draw(coords,'#C2CDD0',visible('layerRoad')?w+1:5,onClick);
-    if(visible('layerRoad')&&visible('layerAxes')&&w>count*3){
-     for(let k=1;k<count;k++)draw(offsetCenterline(coords,(k-count/2)*p.laneWidth),
-      '#F1F1EF',1.2,null,{dashArray:'6 7',interactive:false,opacity:.9});
-    }
-   }
-   if(visible('layerRoad')&&t.splitter){
-    const poly=L.polygon(t.splitter.map(a=>ll(a,t.lat)),{color:'#F1F1EF',weight:1.4,
-      fillColor:'#666D6C',fillOpacity:1,interactive:true}).addTo(roundaboutGroup);
-    poly.on('click',onClick);
+   for(const [pts,count] of [[t.entry,p.entry],[t.exit,p.exit]]){
+    if(!pts||!count)continue;
+    links.push({coords:pts.map(q=>ll(q,t.lat)),count,sidewalk:p.sidewalk,shoulder:p.shoulder,
+     roadPx:widthInPixels(count*p.laneWidth),laneWidth:p.laneWidth});
    }
   }
+  if(visible('layerRoad')){
+   draw(shape.ring,'#292929',ringPx+5,onClick);
+   for(const link of links){
+    const {coords,roadPx:w,sidewalk,shoulder}=link;
+    if(sidewalk>0){
+     const sw=widthInPixels(sidewalk);
+     draw(coords,'#292929',w+sw*2+5,onClick);
+     draw(coords,'#979A9E',w+sw*2+1,onClick);
+    }
+    if(shoulder>0){
+     const sh=widthInPixels(shoulder);
+     draw(coords,'#292929',w+sh*2+5,onClick);
+     draw(coords,'#747D83',w+sh*2+1,onClick);
+    }
+    draw(coords,'#292929',w+5,onClick);
+   }
+  }
+  for(const link of links)draw(link.coords,'#C2CDD0',visible('layerRoad')?link.roadPx+1:5,onClick);
+  // Un único relleno continuo del anillo cubre las juntas de las curvas de enlace.
+  draw(shape.ring,'#C2CDD0',visible('layerRoad')?ringPx+1:5,onClick);
+  if(visible('layerRoad')&&visible('layerAxes')){
+   if(ringPx>3*d.lanes){
+    const origin=xy(rb.center,rb.center[0]);
+    for(let k=1;k<d.lanes;k++){
+     const rr=d.outerRadius-k*d.laneWidth,coords=[];
+     for(let j=0;j<=128;j++){const a=2*Math.PI*j/128;coords.push(ll(add(origin,{x:rr*Math.cos(a),y:rr*Math.sin(a)}),rb.center[0]));}
+     draw(coords,'#F1F1EF',1.2,null,{dashArray:'6 7',interactive:false,opacity:.9});
+    }
+   }
+   for(const link of links)if(link.roadPx>link.count*3){
+    for(let k=1;k<link.count;k++)
+     draw(offsetCenterline(link.coords,(k-link.count/2)*link.laneWidth),
+      '#F1F1EF',1.2,null,{dashArray:'6 7',interactive:false,opacity:.9});
+   }
+  }
+  // Las isletas se sitúan solo en huecos medidos entre bordes de las calzadas.
+  if(visible('layerRoad'))for(const arm of shape.arms){
+   const t=armTransition(rb,arm);
+   if(!t.splitter)continue;
+   const island=L.polygon(t.splitter.map(q=>ll(q,t.lat)),
+    {color:'#F1F1EF',weight:1.4,fillColor:'#666D6C',fillOpacity:1,interactive:true}).addTo(roundaboutGroup);
+   island.on('click',onClick);
+  }
+  // La isleta central cubre posibles extremos de las bandas que entren en su contorno.
+  const centerIsland=L.circle(rb.center,{radius:shape.islandRadius,color:'#292929',weight:1,
+   fillColor:'#505050',fillOpacity:.96,interactive:true}).addTo(roundaboutGroup);
+  centerIsland.on('click',onClick);
  }
 }
 function renderRoundabouts(){
