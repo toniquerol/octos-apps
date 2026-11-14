@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "3.3",
+  "catalogVersion": "3.4",
   "generated": "2026-11-14",
   "reviewPolicy": "Pendiente de comprobación y aprobación manual",
   "items": [
@@ -950,6 +950,117 @@
       "lastChecked": null,
       "license": "ODbL / OpenStreetMap",
       "requiresZoom": 12
+    },
+    {
+      "id": "muc-catalunya-wms",
+      "name": "MUC · Mapa Urbanístic de Catalunya",
+      "url": "https://dtes.gencat.cat/webmap/MUC/service.svc/get",
+      "kind": "WMS",
+      "group": "Urbanismo y planeamiento",
+      "groupTags": [
+        "Capas de contenido"
+      ],
+      "layer": "MUC_2CLAS",
+      "wmsEnabled": [
+        "MUC_2CLAS"
+      ],
+      "wmsOpacities": {},
+      "knownLayers": [
+        {
+          "name": "MUC",
+          "title": "Mapa urbanístico completo"
+        },
+        {
+          "name": "MUC_Codis_Mun",
+          "title": "Códigos urbanísticos municipales"
+        },
+        {
+          "name": "MUC_Codis_Sint",
+          "title": "Códigos del MUC sintético"
+        },
+        {
+          "name": "MUC_1TM",
+          "title": "Términos municipales"
+        },
+        {
+          "name": "MUC_2CLAS",
+          "title": "Clasificación urbanística del suelo"
+        },
+        {
+          "name": "MUC_2CLAS-L",
+          "title": "Límites de clasificación del suelo"
+        },
+        {
+          "name": "MUC_3SECT",
+          "title": "Sectores de desarrollo"
+        },
+        {
+          "name": "MUC_4QUAL",
+          "title": "Calificación urbanística del suelo"
+        },
+        {
+          "name": "MUC_4QUAL-L",
+          "title": "Límites de calificación del suelo"
+        },
+        {
+          "name": "MUC_2CLAS-C_Sint",
+          "title": "Clasificación · códigos sintéticos"
+        },
+        {
+          "name": "MUC_2CLAS-C_Mun",
+          "title": "Clasificación · códigos municipales"
+        },
+        {
+          "name": "MUC_3SECT-C_Sint",
+          "title": "Sectores · códigos sintéticos"
+        },
+        {
+          "name": "MUC_3SECT-C_Mun",
+          "title": "Sectores · códigos municipales"
+        },
+        {
+          "name": "MUC_4QUAL-C_Sint",
+          "title": "Calificación · códigos sintéticos"
+        },
+        {
+          "name": "MUC_4QUAL-C_Mun",
+          "title": "Calificación · códigos municipales"
+        },
+        {
+          "name": "MUC_EIX",
+          "title": "Ejes estructurantes"
+        },
+        {
+          "name": "MUC_AMBIT",
+          "title": "Ámbitos urbanísticos"
+        },
+        {
+          "name": "MUC_TRAN",
+          "title": "Protecciones transversales"
+        },
+        {
+          "name": "MUC_SECTR",
+          "title": "Sectores transversales"
+        },
+        {
+          "name": "MUC_XPROJ",
+          "title": "Redes e infraestructuras proyectadas"
+        }
+      ],
+      "opacity": 0.75,
+      "provider": "Generalitat de Catalunya / MUC",
+      "origin": "Departament de Territori · Mapa urbanístic de Catalunya",
+      "status": "pruebas",
+      "note": "Servicio WMS oficial del MUC. 20 nombres de capas documentados históricamente; consultar GetCapabilities para confirmar la nomenclatura y cobertura actualmente publicadas. Verificación en navegador pendiente (servidor y compatibilidad CORS/HTTPS/EPSG:3857). La cartografía MUC es informativa, no una certificación urbanística. Datos generales vigentes a 01/01/2026 en Catalunya excepto AMB (01/01/2025).",
+      "lastChecked": null,
+      "coverage": "Catalunya",
+      "datasetPage": "https://territori.gencat.cat/ca/06_territori_i_urbanisme/observatori_territori/mapa_urbanistic_de_catalunya/",
+      "serviceDocumentation": "https://territori.gencat.cat/ca/serveis/visors-cartografia/serveis-web-geografics/",
+      "viewCenter": [
+        41.75,
+        1.6
+      ],
+      "viewZoom": 8
     }
   ]
 }
