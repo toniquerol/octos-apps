@@ -972,6 +972,57 @@ function terrainFeatureCollection(){
   addLine(pts,width+1,'#292929','casing');
   addLine(pts,width,color,'surface');
  };
+ if(isTechnicalView()){
+  const design=displayMode==='design';
+  const mark=(point,color='#FF6A1A')=>features.push({type:'Feature',
+   properties:{kind:'technical-node',color},geometry:{type:'Point',coordinates:[point[1],point[0]]}});
+  for(const road of roads){
+   const sec=sectionOf(road),geo=makeGeometry(road);
+   for(const part of geo.parts){
+    addLine(part.points,.45,'#A3E3E9','technical-axis');
+    if(design){
+     const outer=sec.roadWidth/2+sec.shoulderWidth+sec.sidewalkWidth;
+     for(const side of [-1,1]){
+      addLine(offsetCenterline(part.points,side*sec.roadWidth/2),.25,'#BFCBD2','technical-border');
+      if(outer>sec.roadWidth/2)addLine(offsetCenterline(part.points,side*outer),.22,'#8296A5','technical-border');
+     }
+     if(sec.medianWidth>0&&sec.splitAfter)for(const side of [-1,1])
+      addLine(offsetCenterline(part.points,sec.medianOffset+side*sec.medianWidth/2),.22,'#D3B980','technical-border');
+    }
+   }
+   road.nodes.forEach(node=>mark(node,'#FF6A1A'));
+  }
+  for(const rb of roundabouts){
+   const geo=roundaboutGeometry(rb);
+   addLine(geo.ring,.45,'#A3E3E9','technical-axis');
+   if(design){
+    const outer=[],lat=rb.center[0],center=xy(rb.center,lat);
+    for(let i=0;i<=192;i++){
+     const a=i*2*Math.PI/192,r=roundaboutRayRadius(rb,a);
+     outer.push(ll(add(center,{x:r*Math.cos(a),y:r*Math.sin(a)}),lat));
+    }
+    addLine(outer,.25,'#8296A5','technical-border');
+    addLine(geo.island,.25,'#8296A5','technical-border');
+   }
+   mark(rb.center);
+   for(const arm of geo.arms){
+    const t=armTransition(rb,arm),p=t.profile;
+    for(const [path,n] of [[t.entry,p.entry],[t.exit,p.exit]]){
+     if(!path||!n)continue;
+     const coords=path.map(q=>ll(q,t.lat));
+     addLine(coords,.45,'#A3E3E9','technical-axis');
+     if(design)for(const side of [-1,1])
+      addLine(offsetCenterline(coords,side*n*p.laneWidth/2),.25,'#8296A5','technical-border');
+    }
+    mark(arm.outer);
+   }
+  }
+  for(const j of junctions){const geo=jxGeometry(j);if(geo){
+   addLine(geo.points,.45,'#A3E3E9','technical-axis');mark(geo.from);mark(geo.to);
+  }}
+  for(const event of autoEvents)mark(ll(event.p,event.lat0),'#F1F1EF');
+  return {type:'FeatureCollection',features};
+ }
  for(const road of roads){
   const sec=sectionOf(road),geometry=makeGeometry(autoDisplayRoad(road,autoEvents));
   for(const part of geometry.parts){
@@ -1046,6 +1097,13 @@ function terrainAddGeometry(gl){
    paint:{'line-color':['get','color'],'line-width':lw,
     ...(name==='dash'?{'line-dasharray':[3,5]}:{})}});
  }
+ for(const name of ['technical-border','technical-axis']){
+  gl.addLayer({id:'octos-3d-'+name,type:'line',source:TERRAIN_ROADS,filter:kind(name),
+   layout:{'line-join':'round','line-cap':'round'},
+   paint:{'line-color':['get','color'],'line-width':['max',name==='technical-axis'?2:1.2,lw]}});
+ }
+ gl.addLayer({id:'octos-3d-technical-node',type:'circle',source:TERRAIN_ROADS,filter:kind('technical-node'),
+  paint:{'circle-color':['get','color'],'circle-radius':3,'circle-stroke-color':'#101920','circle-stroke-width':1}});
  gl.addLayer({id:'octos-3d-auto-cross-border',type:'fill',source:TERRAIN_ROADS,filter:kind('auto-cross-border'),
   paint:{'fill-color':['get','color'],'fill-opacity':1}});
  gl.addLayer({id:'octos-3d-auto-crossing',type:'fill',source:TERRAIN_ROADS,filter:kind('auto-crossing'),
