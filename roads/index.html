@@ -431,6 +431,11 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 .home-project.active{border-color:#8a724b}
 .home-thumb{border:1px solid #454b4b;background:#161d22;overflow:hidden;border-radius:3px;aspect-ratio:16/9;display:block;width:100%;padding:0;cursor:pointer}
 .home-thumb svg{display:block;width:100%;height:100%}
+.home-preview{position:relative;width:100%;height:100%;background:#17232c;overflow:hidden}
+.home-preview-tiles{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.home-preview-tile{position:absolute;width:256px;height:256px;max-width:none!important;object-fit:fill}
+.home-preview svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.home-preview-attribution{position:absolute;bottom:0;right:0;max-width:100%;padding:2px 4px;background:#111b23cc;color:#f1f1ef;font:8px "IBM Plex Sans",sans-serif;text-align:right;pointer-events:none}
 .home-project-meta{min-width:0}
 .home-project-meta .home-open-name{font:700 12px Manrope,system-ui,sans-serif;color:#F1F1EF;background:none;border:0;padding:0;text-align:left;cursor:pointer;overflow:hidden;text-overflow:ellipsis;max-width:100%;white-space:nowrap}
 .home-project-meta .home-open-name:hover{text-decoration:underline}
@@ -1449,37 +1454,92 @@ function homeRestoreSnapshot(record){
  $('map').classList.remove('mode-draw');
  closeHeaderMenus();render();if(roads.length||roundabouts.length)fitAll();
 }
+/* Miniatura aérea en EPSG:3857: teselas PNOA/IGN para España, respaldo Esri.
+   La capa SVG comparte proyección y encuadre con las imágenes para que el eje coincida. */
 function homePreview(record){
  const lines=Array.isArray(record.roads)?record.roads.slice(0,250):[];
  const points=[];
- for(const road of lines)for(const p of road.nodes||[])if(Array.isArray(p)&&p.length===2)points.push(p);
- for(const rb of record.roundabouts||[])if(Array.isArray(rb.center))points.push(rb.center);
- if(!points.length)return '<svg viewBox="0 0 260 146" aria-label="Proyecto sin trazados"><rect width="260" height="146" fill="#19222a"/><path d="M0 38H260M0 76H260M0 114H260M52 0V146M104 0V146M156 0V146M208 0V146" stroke="#37414a" opacity=".36"/><text x="130" y="78" fill="#8898a2" font-size="12" text-anchor="middle">SIN TRAZADOS</text></svg>';
- const lat0=points.reduce((s,p)=>s+p[0],0)/points.length,cos=Math.max(.1,Math.cos(lat0*RAD));
- const pt=p=>[p[1]*cos,p[0]];
- const xs=points.map(p=>pt(p)[0]),ys=points.map(p=>pt(p)[1]);
+ for(const road of lines)for(const p of road.nodes||[])
+  if(Array.isArray(p)&&p.length===2&&Number.isFinite(p[0])&&Number.isFinite(p[1]))
+   points.push(p);
+ for(const rb of record.roundabouts||[])
+  if(Array.isArray(rb.center)&&rb.center.length===2&&rb.center.every(Number.isFinite))
+   points.push(rb.center);
+ const W=260,H=146,TILE=256,hasGeometry=points.length>0;
+ const project=(p)=>{
+  const lat=clamp(Number(p[0]),-85.05112878,85.05112878),lon=clamp(Number(p[1]),-180,180);
+  const radians=lat*Math.PI/180;
+  return {x:(lon+180)/360*TILE,y:(1-Math.asinh(Math.tan(radians))/Math.PI)/2*TILE};
+ };
+ const centerFallback=project([40.1,-3.7]);
  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
- for(const x of xs){if(x<minX)minX=x;if(x>maxX)maxX=x;}
- for(const y of ys){if(y<minY)minY=y;if(y>maxY)maxY=y;}
- const spanX=Math.max(maxX-minX,(maxY-minY)*.18,1e-5),spanY=Math.max(maxY-minY,(maxX-minX)*.18,1e-5);
- const scale=Math.min(232/spanX,120/spanY),offX=(260-spanX*scale)/2,offY=(146-spanY*scale)/2;
- const coords=p=>{const [x,y]=pt(p);return [(offX+(x-minX)*scale).toFixed(2),(146-offY-(y-minY)*scale).toFixed(2)];};
- let svg='<svg viewBox="0 0 260 146" role="img" aria-label="Previsualización de ejes"><rect width="260" height="146" fill="#19222a"/><path d="M0 36H260M0 73H260M0 110H260M52 0V146M104 0V146M156 0V146M208 0V146" stroke="#40515b" opacity=".3"/>';
+ for(const p of points){
+  const pt=project(p);
+  if(pt.x<minX)minX=pt.x;if(pt.x>maxX)maxX=pt.x;
+  if(pt.y<minY)minY=pt.y;if(pt.y>maxY)maxY=pt.y;
+ }
+ const cx=hasGeometry?(minX+maxX)/2:centerFallback.x;
+ const cy=hasGeometry?(minY+maxY)/2:centerFallback.y;
+ const width=hasGeometry?Math.max(0,maxX-minX):0;
+ const height=hasGeometry?Math.max(0,maxY-minY):0;
+ let zoom=hasGeometry?18:6;
+ if(hasGeometry&&points.length===1)zoom=16;
+ else if(hasGeometry){
+  while(zoom>0&&(width*2**zoom>W-34||height*2**zoom>H-30))zoom--;
+ }
+ const scale=2**zoom,originX=cx*scale-W/2,originY=cy*scale-H/2;
+ const coord=p=>{const q=project(p);return [
+  ((q.x*scale-originX)).toFixed(2),((q.y*scale-originY)).toFixed(2)
+ ];};
+ const inSpain=()=>{
+  const lng=cx/TILE*360-180;
+  const n=Math.PI-2*Math.PI*(cy/TILE);
+  const lat=Math.atan(Math.sinh(n))*180/Math.PI;
+  return (lat>=35&&lat<=44.8&&lng>=-10&&lng<=5.5)||
+   (lat>=27&&lat<=30.5&&lng>=-19&&lng<=-12);
+ };
+ const preferPnoa=inSpain(),tileCount=2**zoom,images=[];
+ for(let ty=Math.floor(originY/TILE);ty<=Math.floor((originY+H-0.001)/TILE);ty++){
+  if(ty<0||ty>=tileCount)continue;
+  for(let tx=Math.floor(originX/TILE);tx<=Math.floor((originX+W-0.001)/TILE);tx++){
+   const x=((tx%tileCount)+tileCount)%tileCount,y=ty,tmsY=tileCount-1-y;
+   const esri='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+zoom+'/'+y+'/'+x;
+   const pnoa='https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/'+zoom+'/'+x+'/'+tmsY+'.jpeg';
+   const source=preferPnoa?pnoa:esri;
+   const fallback=preferPnoa?' data-backup="'+esri+'"':'';
+   images.push('<img class="home-preview-tile" src="'+source+'"'+fallback+
+    ' alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"'+
+    ' style="left:'+(tx*TILE-originX).toFixed(2)+'px;top:'+(ty*TILE-originY).toFixed(2)+'px"'+
+    ' onerror="if(this.dataset.backup){this.src=this.dataset.backup;delete this.dataset.backup;}else{this.style.display='+
+    "'none'"+';}">');
+  }
+ }
+ let overlay='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Previsualización sobre ortofoto">';
+ if(!hasGeometry){
+  overlay+='<rect x="72" y="61" width="116" height="24" rx="4" fill="#101b22bb"/>'+
+   '<text x="130" y="77" fill="#f1f1ef" font-size="11" text-anchor="middle">SIN TRAZADOS</text>';
+ }
  let budget=3200;
  for(const road of lines){
-  const nodes=road.nodes||[];if(nodes.length<2||budget<2)continue;
+  const nodes=Array.isArray(road.nodes)?road.nodes:[];
+  if(nodes.length<2||budget<2)continue;
   const step=Math.max(1,Math.ceil(nodes.length/Math.min(180,budget)));
-  const samples=nodes.filter((_,i)=>i%step===0);
-  if(samples.at(-1)!==nodes.at(-1))samples.push(nodes.at(-1));
-  budget-=samples.length;
-  const path=samples.map(coords).map(c=>c.join(',')).join(' ');
-  svg+='<polyline points="'+path+'" fill="none" stroke="'+categoryColor(road.type)+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />';
+  const sampled=nodes.filter((_,i)=>i%step===0);
+  if(sampled.at(-1)!==nodes.at(-1))sampled.push(nodes.at(-1));
+  const coords=sampled.map(coord).map(q=>q.join(',')).join(' ');
+  budget-=sampled.length;
+  overlay+='<polyline points="'+coords+'" fill="none" stroke="#091923" stroke-width="5.5" opacity=".9" stroke-linejoin="round" stroke-linecap="round"/>'+
+   '<polyline points="'+coords+'" fill="none" stroke="'+categoryColor(road.type)+
+   '" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>';
  }
  for(const rb of (record.roundabouts||[]).slice(0,100)){
-  if(!rb.center)continue;const [x,y]=coords(rb.center);
-  svg+='<circle cx="'+x+'" cy="'+y+'" r="3.5" fill="none" stroke="#FF6A1A" stroke-width="1.5"/>';
+  if(!Array.isArray(rb.center))continue;
+  const [x,y]=coord(rb.center);
+  overlay+='<circle cx="'+x+'" cy="'+y+'" r="4.5" fill="#101b22" stroke="#FF6A1A" stroke-width="2"/>';
  }
- return svg+'</svg>';
+ overlay+='</svg>';
+ return '<div class="home-preview"><div class="home-preview-tiles">'+images.join('')+'</div>'+
+  overlay+'<span class="home-preview-attribution">© IGN/PNOA · © Esri</span></div>';
 }
 function homeRender(){
  const sorted=homeRecords.slice().sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
