@@ -87,11 +87,11 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
  <details class="section" open><summary class="eyebrow">Elemento seleccionado</summary><h2>Información geométrica</h2><div id="selection">Sin selección. Crea un trazado o selecciona una carretera.</div>
   <div class="row wrap" style="margin-top:10px"><button class="btn danger grow" id="deleteBtn">Eliminar carretera</button><button class="btn grow" id="fitBtn">Encuadrar</button></div>
  </details>
- <details class="section" open><summary class="eyebrow">Archivos</summary><div class="row wrap"><button class="btn grow" id="saveBtn">Guardar JSON</button><button class="btn grow" id="openBtn">Abrir archivo</button></div><button class="btn danger" id="clearBtn" style="width:100%;margin-top:8px">Vaciar proyecto</button><p class="muted">Guardado automático en este navegador. Importación y exportación locales; no se envían los trazados a servidores.</p></details>
+ <details class="section" open><summary class="eyebrow">Archivos</summary><div class="row wrap"><button class="btn grow" id="saveBtn">Guardar JSON</button><button class="btn grow" id="openBtn">Abrir archivo</button></div><div class="row wrap" style="margin-top:8px"><button class="btn grow" id="kmlBtn">Importar KML</button><button class="btn grow" id="dwgBtn">Importar DWG</button></div><div class="field"><span>Huso UTM del DWG</span><select id="utmZone"><option value="29">29</option><option value="30">30</option><option value="31" selected>31</option><option value="32">32</option></select></div><div class="field"><span>Hemisferio</span><select id="utmHem"><option value="N" selected>Norte</option><option value="S">Sur</option></select></div><p class="muted">DWG: coordenadas UTM en metros, ETRS89/WGS84, sin origen local. Selecciona el huso antes de importar. KML: WGS84.</p><button class="btn danger" id="clearBtn" style="width:100%;margin-top:8px">Vaciar proyecto</button><p class="muted">Guardado automático en este navegador. Importación y exportación locales; no se envían los trazados a servidores.</p></details>
 </aside>
 </div>
 <footer><span id="status" role="status">Preparado · modo selección</span><span>OcToS 3D Studio © 2026 · Roads V1.0</span></footer>
-<input id="fileInput" type="file" accept=".json,.geojson,application/json" hidden>
+<input id="fileInput" type="file" accept=".json,.geojson,application/json" hidden><input id="kmlFile" type="file" accept=".kml,application/vnd.google-earth.kml+xml,text/xml" hidden><input id="dwgFile" type="file" accept=".dwg,application/acad" hidden>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function(){
@@ -211,6 +211,103 @@ function exportGeo(){return {type:'FeatureCollection',name:'OcToS Roads V1',feat
 function openProject(obj){let next=[];if(obj&&Array.isArray(obj.roads)){next=obj.roads;}else if(obj&&obj.type==='FeatureCollection'&&Array.isArray(obj.features)){next=obj.features.filter(f=>f.geometry?.type==='LineString').map(f=>{const p=f.properties||{};let coords=Array.isArray(p.controlPoints)?p.controlPoints:f.geometry.coordinates;return {name:p.name||'Carretera importada',type:p.roadType||'convencional',radius:p.radius,width:p.width,speed:p.speed,nodes:coords.map(n=>[n[1],n[0]])};});}else throw Error('Formato no compatible.');if(next.length>300)throw Error('Límite de 300 carreteras por archivo.');
  const cleaned=next.map(r=>({id:newId(),name:String(r.name||'Carretera').slice(0,80),type:['convencional','autopista','urbana','camino'].includes(r.type)?r.type:'convencional',radius:clamp(Number(r.radius)||0,0,5000),width:clamp(Number(r.width)||7,2,50),speed:clamp(Number(r.speed)||90,10,130),nodes:r.nodes}));if(!cleaned.every(r=>validNodes(r.nodes)))throw Error('El archivo contiene coordenadas o trazados no válidos.');
  checkpoint();roads=cleaned;selected=null;persist();render();fitAll();status('Archivo cargado: '+roads.length+' carreteras.');}
+
+// Importadores locales. Los archivos CAD/KML no se transmiten a ningún servicio.
+function addImportedRoutes(items,source){
+ if(!items.length)throw Error('No se encontraron trazados lineales válidos.');
+ if(items.length+roads.length>300)throw Error('Máximo 300 carreteras por proyecto.');
+ const fresh=items.map((v,i)=>({id:newId(),name:String(v.name||source+' '+(i+1)).slice(0,80),type:'convencional',radius:0,width:7,speed:90,nodes:v.nodes}));
+ if(!fresh.every(r=>validNodes(r.nodes)))throw Error('Coordenadas incorrectas o más de 4000 puntos por línea.');
+ checkpoint();roads.push(...fresh);selected=fresh[0].id;setMode('select');persist();render();
+ map.fitBounds(L.latLngBounds(fresh.flatMap(r=>r.nodes)).pad(.15));
+ status(source+': importados '+fresh.length+' ejes. Se conservan los trazados anteriores.');
+}
+function parseKml(xml){
+ const doc=new DOMParser().parseFromString(xml,'application/xml');
+ if(doc.getElementsByTagName('parsererror').length)throw Error('KML no válido.');
+ const descendants=(el,name)=>Array.from(el.getElementsByTagName('*')).filter(x=>x.localName===name);
+ const items=[];
+ for(const place of descendants(doc,'Placemark')){
+  const name=(descendants(place,'name')[0]?.textContent||'Carretera KML').trim();
+  descendants(place,'LineString').forEach((line,i)=>{
+   const raw=descendants(line,'coordinates')[0]?.textContent||'';
+   const nodes=raw.trim().split(/\s+/).filter(Boolean).map(v=>{const [lon,lat]=v.split(',').map(Number);return [lat,lon]});
+   if(nodes.length>1)items.push({name:name+(i?' '+(i+1):''),nodes});
+  });
+  descendants(place,'Track').forEach((track,i)=>{
+   const nodes=descendants(track,'coord').map(t=>{const [lon,lat]=t.textContent.trim().split(/\s+/).map(Number);return [lat,lon]});
+   if(nodes.length>1)items.push({name:name+' · track '+(i+1),nodes});
+  });
+ }
+ return items;
+}
+// Transformación inversa elipsoidal GRS80/WGS84: E,N (metros UTM) -> lat,lon (grados).
+function inverseUtm(e,n,zone,hem){
+ if(!finite(e)||!finite(n)||e<100000||e>900000||n<0||n>10000000)throw Error('Coordenadas CAD no válidas en UTM métrico (E/N).');
+ const a=6378137,e2=.00669438002290,k=.9996,ep=e2/(1-e2),x=e-500000,y=(hem==='S'?n-10000000:n)/k;
+ const e4=e2*e2,e6=e4*e2,m=y/(a*(1-e2/4-3*e4/64-5*e6/256)),e1=(1-Math.sqrt(1-e2))/(1+Math.sqrt(1-e2));
+ const p=m+(3*e1/2-27*e1**3/32)*Math.sin(2*m)+(21*e1**2/16-55*e1**4/32)*Math.sin(4*m)+151*e1**3/96*Math.sin(6*m)+1097*e1**4/512*Math.sin(8*m);
+ const si=Math.sin(p),co=Math.cos(p),t=Math.tan(p)**2,c=ep*co*co,N=a/Math.sqrt(1-e2*si*si),R=a*(1-e2)/(1-e2*si*si)**1.5,d=x/(N*k);
+ const lat=p-N*Math.tan(p)/R*(d*d/2-(5+3*t+10*c-4*c*c-9*ep)*d**4/24+(61+90*t+298*c+45*t*t-252*ep-3*c*c)*d**6/720);
+ const lon=(zone*6-183)*RAD+(d-(1+2*t+c)*d**3/6+(5-2*c+28*t-3*c*c+8*ep+24*t*t)*d**5/120)/co;
+ return [lat/RAD,lon/RAD];
+}
+function cadPt(p){return [Number(p?.x),Number(p?.y)]}
+function near(a,b,t=.05){return Math.hypot(a[0]-b[0],a[1]-b[1])<t}
+function bulgeArc(a,b,bulge){
+ if(!bulge||Math.abs(bulge)<1e-8)return [b];
+ const dx=b[0]-a[0],dy=b[1]-a[1],ch=Math.hypot(dx,dy);
+ if(ch<1e-5)return [b];
+ const r=ch*(1+bulge*bulge)/(4*Math.abs(bulge)),h=ch*(1-bulge*bulge)/(4*bulge),cx=(a[0]+b[0])/2-dy/ch*h,cy=(a[1]+b[1])/2+dx/ch*h;
+ const start=Math.atan2(a[1]-cy,a[0]-cx),sweep=4*Math.atan(bulge),count=Math.min(300,Math.max(6,Math.ceil(Math.abs(sweep*r)/6))),out=[];
+ for(let k=1;k<=count;k++){const angle=start+sweep*k/count;out.push([cx+r*Math.cos(angle),cy+r*Math.sin(angle)])}return out;
+}
+function cadPolyline(ent){
+ const v=ent.vertices||[];if(v.length<2)return [];
+ let out=[cadPt(v[0])];
+ for(let i=1;i<v.length;i++)out.push(...bulgeArc(cadPt(v[i-1]),cadPt(v[i]),Number(v[i-1].bulge)||0));
+ if((ent.type==='LWPOLYLINE'&&(ent.flag&512))||(ent.type!=='LWPOLYLINE'&&(ent.flag&1)))out.push(...bulgeArc(cadPt(v.at(-1)),cadPt(v[0]),Number(v.at(-1).bulge)||0));
+ return out;
+}
+function cadArc(ent){
+ const center=cadPt(ent.center),r=Number(ent.radius),start=Number(ent.startAngle),end=Number(ent.endAngle);
+ if(!finite(r)||r<=0||r>200000||!finite(start)||!finite(end))return [];
+ let sweep=((end-start)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);if(sweep<1e-6)sweep=2*Math.PI;
+ const n=Math.min(500,Math.max(8,Math.ceil(sweep*r/6)));return Array.from({length:n+1},(_,i)=>[center[0]+r*Math.cos(start+sweep*i/n),center[1]+r*Math.sin(start+sweep*i/n)]);
+}
+function decodeCadEntities(entities,zone,hem,filename){
+ const vectors=[],lines=[];
+ for(const ent of entities){
+  if(ent?.isInPaperSpace)continue;
+  let points=[];const layer=String(ent?.layer||'0');
+  if(ent.type==='LINE'){const a=cadPt(ent.startPoint),b=cadPt(ent.endPoint);if(a.every(finite)&&b.every(finite)&&!near(a,b))lines.push({layer,points:[a,b]});continue;}
+  if(['LWPOLYLINE','POLYLINE2D','POLYLINE3D'].includes(ent.type))points=cadPolyline(ent);
+  if(ent.type==='ARC')points=cadArc(ent);
+  if(ent.type==='SPLINE'&&ent.fitPoints?.length>1)points=ent.fitPoints.map(cadPt);
+  if(points.length>1)vectors.push({layer,points});
+ }
+ // Agrupación de LINE consecutivas sobre una misma capa: no fusionar capas distintas.
+ const byLayer=new Map();for(const line of lines){if(!byLayer.has(line.layer))byLayer.set(line.layer,[]);byLayer.get(line.layer).push(line.points)}
+ for(const [layer,segs] of byLayer){
+  const index=new Map(),used=new Set(),key=p=>Math.round(p[0]*10)+'/'+Math.round(p[1]*10);
+  segs.forEach((s,i)=>{for(const p of s){const id=key(p);if(!index.has(id))index.set(id,[]);index.get(id).push(i)}});
+  const extend=(arr,head)=>{while(arr.length<4000){const at=head?arr[0]:arr.at(-1),ix=(index.get(key(at))||[]).find(i=>!used.has(i)&&(near(segs[i][0],at)||near(segs[i][1],at)));if(ix===undefined)break;used.add(ix);const next=near(segs[ix][0],at)?segs[ix][1]:segs[ix][0];head?arr.unshift(next):arr.push(next)}};
+  segs.forEach((s,i)=>{if(used.has(i))return;used.add(i);const arr=[...s];extend(arr,false);extend(arr,true);vectors.push({layer,points:arr})});
+ }
+ if(!vectors.length)throw Error('El DWG no contiene LINE, POLYLINE, LWPOLYLINE o ARC importables.');
+ return vectors.map((v,i)=>({name:filename+' · '+v.layer+' '+(i+1),nodes:v.points.map(p=>inverseUtm(p[0],p[1],zone,hem))}));
+}
+async function readDwg(file){
+ if(file.size>30*1024*1024)throw Error('DWG superior a 30 MB: utiliza un archivo más reducido.');
+ const zone=Number($('utmZone').value),hem=$('utmHem').value;
+ status('Decodificando DWG en el navegador…');
+ let mod;try{mod=await import('https://cdn.jsdelivr.net/npm/@mlightcad/libredwg-web@0.7.11/dist/libredwg-web.js')}catch(e){throw Error('No se ha podido cargar el lector DWG WebAssembly. Comprueba la conexión.');}
+ const decoder=await mod.LibreDwg.create(),data=decoder.dwg_read_data(await file.arrayBuffer(),mod.Dwg_File_Type.DWG);
+ if(!data)throw Error('Archivo DWG no reconocido por LibreDWG.');
+ let db;try{db=decoder.convert(data)}finally{decoder.dwg_free(data)}
+ addImportedRoutes(decodeCadEntities(db.entities||[],zone,hem,file.name.replace(/\.dwg$/i,'')),'DWG UTM '+zone+hem);
+}
+
 function fitAll(){const pts=roads.flatMap(r=>r.nodes);if(pts.length)map.fitBounds(L.latLngBounds(pts).pad(.16));else map.setView([41.115,1.245],12);}
 function demo(){if(roads.length&&!confirm('¿Añadir un ejemplo a los trazados existentes?'))return;checkpoint();const p=params();roads.push({id:newId(),name:'Ejemplo geométrico · Tarragona',type:'convencional',radius:160,width:7,speed:90,nodes:[[41.121,1.191],[41.131,1.204],[41.137,1.222],[41.125,1.245],[41.110,1.251],[41.103,1.273]]});selected=roads[roads.length-1].id;persist();setMode('select');setSelection(selected);fitAll();status('Ejemplo sintético, no es cartografía oficial.');}
 Object.keys(bases).forEach(id=>{const node=document.querySelector('input[name=base][value='+id+']');if(node)node.onchange=()=>{setBase(id);status('Fondo: '+node.closest('label').innerText.trim().split('\n')[0]);};});
@@ -224,6 +321,9 @@ $('demoBtn').onclick=demo;$('exportBtn').onclick=()=>download('octos-roads-v1.ge
 $('saveBtn').onclick=()=>download('octos-roads-v1.json',{app:'Octos Roads',version:1,roads});
 $('openBtn').onclick=$('importBtn').onclick=()=>$('fileInput').click();
 $('fileInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const obj=JSON.parse(await file.text());openProject(obj);}catch(err){status('Error al importar: '+err.message);}e.target.value='';};
+$('kmlBtn').onclick=()=>$('kmlFile').click();$('dwgBtn').onclick=()=>$('dwgFile').click();
+$('kmlFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>8*1024*1024)throw Error('KML superior a 8 MB.');addImportedRoutes(parseKml(await file.text()),'KML');}catch(err){status('Error KML: '+err.message)}e.target.value=''};
+$('dwgFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{await readDwg(file)}catch(err){status('Error DWG: '+err.message)}e.target.value=''};
 $('toggleLeft').onclick=()=>$('leftPane').classList.toggle('hidden-mobile');$('toggleRight').onclick=()=>$('rightPane').classList.toggle('hidden-mobile');
 ['roadType'].forEach(id=>$(id).onchange=()=>{if(!selected){$('speed').value=({convencional:90,autopista:120,urbana:50,camino:30})[$('roadType').value];}drawPreview();});
 ['radius','width','speed'].forEach(id=>$(id).addEventListener('input',drawPreview));
