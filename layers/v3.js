@@ -65,12 +65,46 @@ function updateEnabled(x,active){
  x.wmsEnabled=[...new Set(active)];x.wmsOpacities=x.wmsOpacities||{};
  layerField.value=x.wmsEnabled.join(',');persist();
 }
+// Etiquetas del MUC; se conservan los identificadores técnicos para las peticiones WMS.
+const mucDisplayNames=Object.freeze({
+ "MUC":"Mapa urbanístico · vista general",
+ "MUC_Codis_Mun":"Códigos urbanísticos municipales",
+ "MUC_Codis_Sint":"Códigos urbanísticos estándar MUC",
+ "MUC_1TM":"Límites de los términos municipales",
+ "MUC_2CLAS":"Clasificación urbanística del suelo",
+ "MUC_2CLAS-L":"Límites de clasificación del suelo",
+ "MUC_3SECT":"Sectores de desarrollo urbanístico",
+ "MUC_4QUAL":"Calificación urbanística del suelo",
+ "MUC_4QUAL-L":"Límites de calificación urbanística",
+ "MUC_2CLAS-C_Sint":"Clasificación del suelo · códigos MUC",
+ "MUC_2CLAS-C_Mun":"Clasificación del suelo · códigos municipales",
+ "MUC_3SECT-C_Sint":"Sectores de desarrollo · códigos MUC",
+ "MUC_3SECT-C_Mun":"Sectores de desarrollo · códigos municipales",
+ "MUC_4QUAL-C_Sint":"Calificación del suelo · códigos MUC",
+ "MUC_4QUAL-C_Mun":"Calificación del suelo · códigos municipales",
+ "MUC_EIX":"Ejes estructurantes",
+ "MUC_AMBIT":"Ámbitos de planeamiento urbanístico",
+ "MUC_TRAN":"Protecciones urbanísticas transversales",
+ "MUC_SECTR":"Sectores transversales",
+ "MUC_XPROJ":"Redes e infraestructuras proyectadas"
+});
+function mucDisplayName(name,original){
+ if(Object.prototype.hasOwnProperty.call(mucDisplayNames,name))return mucDisplayNames[name];
+ const et=/^ET_(CLAS|QUAL|SECT)_(SINT|MUN)_(\d+M)$/i.exec(name);
+ if(et){
+  const type={CLAS:'Clasificación del suelo',QUAL:'Calificación urbanística',SECT:'Sectores de desarrollo'}[et[1].toUpperCase()];
+  const code={SINT:'códigos estándar MUC',MUN:'códigos municipales'}[et[2].toUpperCase()];
+  return type+' · '+code+' ('+et[3]+')';
+ }
+ return original||name;
+}
 function renderCapabilities(layers,isPreset=false){
  const x=data.find(v=>v.id===selected);if(!x)return;
  const active=new Set(selectedSpecs(x).map(v=>v.name));
  $('found').innerHTML='<div class="v3capTitle">SUBCAPAS WMS · '+layers.length+' · selección múltiple'+(isPreset?' · catálogo sin verificar':'')+'</div>'+layers.map(v=>{
   const checked=active.has(v.name),value=Math.round(clamp(Number(x.wmsOpacities?.[v.name]??x.opacity??.75))*100);
-  return '<div class="v3capRow '+(checked?'checked':'')+'"><label><input type="checkbox" data-v3-layer="'+esc(v.name)+'" '+(checked?'checked':'')+' aria-label="Activar '+esc(v.name)+'"><span class="v3capName">'+esc(v.title||v.name)+'<small>'+esc(v.name)+'</small></span></label><div class="v3capOpacity"><input type="range" min="0" max="100" value="'+value+'" data-v3-opacity="'+esc(v.name)+'" aria-label="Opacidad '+esc(v.name)+'"><output>'+value+'%</output></div></div>';
+  const displayName=x.id==='muc-catalunya-wms'?mucDisplayName(v.name,v.title):v.title||v.name;
+  return '<div class="v3capRow '+(checked?'checked':'')+'"><label><input type="checkbox" data-v3-layer="'+esc(v.name)+'" '+(checked?'checked':'')+' aria-label="Activar '+esc(displayName)+'"><span class="v3capName">'+esc(displayName)+'<small>'+esc(v.name)+'</small></span></label><div class="v3capOpacity"><input type="range" min="0" max="100" value="'+value+'" data-v3-opacity="'+esc(v.name)+'" aria-label="Opacidad '+esc(v.name)+'"><output>'+value+'%</output></div></div>';
  }).join('');
  $('found').querySelectorAll('input[data-v3-layer]').forEach(box=>box.addEventListener('change',()=>{
   const current=data.find(v=>v.id===selected);if(!current)return;
