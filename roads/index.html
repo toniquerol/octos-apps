@@ -430,7 +430,7 @@ if(!window.L){$('status').textContent='No se ha podido cargar Leaflet. Comprueba
 const map=L.map('map',{center:[40.2,-3.7],zoom:6,zoomControl:false,doubleClickZoom:false,preferCanvas:true});
 L.control.zoom({position:'bottomright'}).addTo(map);
 let baseLayer=null,roads=[],roundabouts=[],junctions=[],selected=null,selectedRoundabout=null,selectedJunction=null,pendingJunction=null,selectedSegment=null,mode='select',draft=[],cursor=null,history=[],preview=L.layerGroup().addTo(map);
-const roadsGroup=L.layerGroup().addTo(map),junctionGroup=L.layerGroup().addTo(map),roundaboutGroup=L.layerGroup().addTo(map),markersGroup=L.layerGroup().addTo(map),labelsGroup=L.layerGroup().addTo(map),roundaboutDraftGroup=L.layerGroup().addTo(map);
+const roadsGroup=L.layerGroup().addTo(map),junctionGroup=L.layerGroup().addTo(map),roundaboutGroup=L.layerGroup().addTo(map),markersGroup=L.layerGroup().addTo(map),labelsGroup=L.layerGroup().addTo(map),roundaboutDraftGroup=L.layerGroup().addTo(map),editGuide=L.layerGroup().addTo(map);
 let pendingRoundabout=null,inspectorClosed=false;
 const layerIds=['layerRoad','layerSpeed','layerNodes','layerRadius','layerAxes'];
 const visible=id=>$(id).checked;
@@ -1460,7 +1460,7 @@ function syncInspector(){
  $('deleteBtn').hidden=Boolean(rb);
 }
 function render(){
- roadsGroup.clearLayers();markersGroup.clearLayers();labelsGroup.clearLayers();
+ editGuide.clearLayers();roadsGroup.clearLayers();markersGroup.clearLayers();labelsGroup.clearLayers();
  let total=0;
  roads.forEach(r=>{
   const g=makeGeometry(r);total+=g.total;const isSelected=r.id===selected;
@@ -1472,8 +1472,9 @@ function render(){
   if(r.id===selected&&mode!=='draw'&&visible('layerNodes'))r.nodes.forEach((p,i)=>{
    const icon=L.divIcon({className:'handle-icon',html:'<div class="handle"></div>',iconSize:[14,14],iconAnchor:[7,7]});
    const mark=L.marker(p,{icon,draggable:mode==='select',zIndexOffset:1500}).addTo(markersGroup);
-   mark.on('dragstart',checkpoint);
-   mark.on('dragend',()=>{const latlng=mark.getLatLng(),snap=(i===0||i===r.nodes.length-1)?findArmSnap([latlng.lat,latlng.lng]):null;r.nodes[i]=snap?snap.point.slice():[latlng.lat,latlng.lng];if(i===0||i===r.nodes.length-1){r.connections=r.connections||{};const key=i===0?'start':'end';if(snap)r.connections[key]={roundaboutId:snap.roundaboutId,armIndex:snap.armIndex};else delete r.connections[key];}persist();render();status(snap?'Extremo conectado a rotonda.':'Vértice '+(i+1)+' desplazado.');});
+   mark.on('dragstart',()=>{checkpoint();showEditGuide(r,i,mark.getLatLng());});
+   mark.on('drag',()=>showEditGuide(r,i,mark.getLatLng()));
+   mark.on('dragend',()=>{editGuide.clearLayers();const latlng=mark.getLatLng(),snap=(i===0||i===r.nodes.length-1)?findArmSnap([latlng.lat,latlng.lng]):null;r.nodes[i]=snap?snap.point.slice():[latlng.lat,latlng.lng];if(i===0||i===r.nodes.length-1){r.connections=r.connections||{};const key=i===0?'start':'end';if(snap)r.connections[key]={roundaboutId:snap.roundaboutId,armIndex:snap.armIndex};else delete r.connections[key];}persist();render();status(snap?'Extremo conectado a rotonda.':'Vértice '+(i+1)+' desplazado.');});
    mark.on('click',e=>{L.DomEvent.stopPropagation(e);if(mode==='remove'&&r.nodes.length>2){checkpoint();repairStructuresAfterRemove(r,i,r.nodes.length);const anchors=jxCapture(r);r.nodes.splice(i,1);jxReanchor(r,anchors);persist();setMode('select');status('Vértice eliminado · modo selección.');}else if(mode==='remove')status('Una carretera necesita al menos 2 puntos.');});
   });
  });
@@ -1586,6 +1587,28 @@ function showRoundaboutCreator(latlng){
   status('Rotonda creada · '+rb.arms+' ramales · '+(roundaboutShape(rb)==='circular'?'circular':roundaboutShape(rb)==='stadium'?'alargada':'ovalada')+'.');
  });
  redraw();
+}
+/* Guía provisional de geometría: no altera el proyecto hasta soltar el vértice. */
+function showEditGuide(road,index,latlng){
+ editGuide.clearLayers();
+ if(mode!=='select'||selected!==road.id)return;
+ const nodes=road.nodes.slice();nodes[index]=[latlng.lat,latlng.lng];
+ if(!validNodes(nodes))return;
+ const geometry=makeGeometry({...road,nodes});
+ const start=Math.max(0,index-2),end=Math.min(nodes.length-2,index+1);
+ const parts=geometry.parts.filter(part=>part.segmentIndex>=start&&part.segmentIndex<=end);
+ for(const part of parts)L.polyline(part.points,{color:'#FF6A1A',weight:3,dashArray:'5 7',opacity:.95,interactive:false,lineJoin:'round'}).addTo(editGuide);
+ const nearby=nodes.slice(Math.max(0,index-1),Math.min(nodes.length,index+2));
+ if(nearby.length>1)L.polyline(nearby,{color:'#FF6A1A',weight:1.4,dashArray:'2 8',opacity:.75,interactive:false}).addTo(editGuide);
+ L.circleMarker(nodes[index],{radius:5,color:'#F1F1EF',weight:2,fillColor:'#FF6A1A',fillOpacity:1,interactive:false}).addTo(editGuide);
+ const curves=parts.filter(part=>part.radius>0).slice(0,3);
+ const readings=curves.length?curves:[parts.find(part=>part.segmentIndex===Math.max(0,index-1))||parts[0]].filter(Boolean);
+ for(const part of readings){
+  const middle=part.points[Math.floor(part.points.length/2)];
+  const label=part.radius>0?'R '+Math.round(part.radius)+' m · '+part.speed+' km/h':part.speed+' km/h';
+  L.tooltip({permanent:true,direction:'top',offset:[0,-9],className:'arc-tooltip',interactive:false,opacity:.96})
+   .setLatLng(middle).setContent(label).addTo(editGuide);
+ }
 }
 function drawPreview(){
  preview.clearLayers();if(mode!=='draw'||!draft.length)return;
