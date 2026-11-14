@@ -366,6 +366,32 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 }
 .category-mark{position:relative;display:inline-block;flex:none;width:23px;height:28px;border:1px solid #F1F1EF;border-radius:5px;background:#BB1730;box-shadow:0 0 0 1px #222;overflow:hidden}
 .category-mark::after{content:"";position:absolute;left:0;right:0;bottom:0;height:11px;background:#F1F1EF;border-top:1px solid #1b1b1d2b}
+
+/* Puentes · sección transversal y alzado técnico contextuales, SVG sin dependencias. */
+#sectionPanel .bridge-transverse-drawing[hidden],#sectionPanel .bridge-field-grid[hidden],
+#mapWrap>.bridge-longitudinal-panel[hidden]{display:none!important}
+.bridge-transverse-drawing svg,.bridge-longitudinal-drawing svg{display:block;width:100%;height:auto}
+.bridge-transverse-drawing{min-height:95px}
+.bridge-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px;margin-top:10px;padding-top:10px;border-top:1px solid #414247}
+.bridge-field-grid label,.bridge-longitudinal-parameters label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;color:#d9dadd;min-width:0}
+.bridge-field-grid input,.bridge-longitudinal-parameters input,.bridge-panel-type select{background:#28292d;border:1px solid #53535b;border-radius:5px;color:#F1F1EF;font:11px "IBM Plex Sans",system-ui,sans-serif;padding:6px;min-width:0}
+.bridge-field-grid input,.bridge-longitudinal-parameters input{width:68px;text-align:right;font-variant-numeric:tabular-nums}
+.bridge-field-grid input:focus,.bridge-longitudinal-parameters input:focus,.bridge-panel-type select:focus{outline:1px solid #FF6A1A}
+#mapWrap>.bridge-longitudinal-panel{position:absolute;z-index:1070;left:22%;bottom:49px;width:min(54%,820px);max-height:min(365px,54%);overflow:auto;border:1px solid #5a5b60;border-left:3px solid #FF6A1A;border-radius:8px;background:#1c1d20f2;color:#F1F1EF;box-shadow:0 9px 28px #0009;padding:11px 13px;font:11px "IBM Plex Sans",system-ui,sans-serif;scrollbar-color:#5a5a5c transparent}
+.bridge-panel-head,.bridge-panel-type{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.bridge-panel-head strong{color:#FF6A1A;font-size:10px;letter-spacing:.09em}
+.bridge-panel-head span{font-size:10px;color:#bfc0c4;text-align:right}
+.bridge-panel-type{justify-content:flex-start;font-size:10px}
+.bridge-panel-type select{flex:1;max-width:220px}
+.bridge-longitudinal-drawing{padding:6px 8px;background:#111820;border:1px solid #36414a;border-radius:5px;overflow:hidden}
+.bridge-longitudinal-parameters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px 12px;align-items:center;margin-top:10px}
+.bridge-longitudinal-parameters>div{display:flex;flex-direction:column;gap:3px;font-size:10px;color:#c2c4c6}
+.bridge-longitudinal-parameters>div strong{color:#FF9D65;font-size:12px}
+.bridge-longitudinal-parameters label[hidden]{display:none!important}
+.bridge-panel-note{display:block;font-size:9px;color:#aaafb5;margin-top:9px;line-height:1.35}
+#mapWrap.terrain-active>.bridge-longitudinal-panel{display:none!important}
+@media(max-width:1150px){#mapWrap>.bridge-longitudinal-panel{left:10px;width:calc(100% - 393px);min-width:260px}.bridge-longitudinal-parameters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){#mapWrap>.bridge-longitudinal-panel{left:8px;right:8px;width:auto;min-width:0;bottom:81px;max-height:32%;padding:8px}.bridge-longitudinal-parameters{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#mapWrap>.section-visual-panel{max-height:42%}}
 </style>
 </head>
 <body>
@@ -442,6 +468,7 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
   </label>
   <div class="section-visual-drawing">
    <div id="sectionPanelDiagram" class="section-road-strip" role="group" aria-label="Esquema de carriles, arcenes, mediana y aceras"></div>
+   <div id="bridgeTransverseDrawing" class="bridge-transverse-drawing" hidden aria-label="Sección transversal del puente"></div>
    <div class="section-visual-scale"><span id="sectionPanelDescription"></span><strong id="sectionPanelTotal"></strong></div>
   </div>
   <div class="section-visual-fields">
@@ -450,7 +477,31 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
    <label id="sectionPanelSidewalkField" for="sectionPanelSidewalk" hidden>Acera (m)<input id="sectionPanelSidewalk" type="number" min="0" max="8" step="0.25"></label>
    <label id="sectionPanelMedianField" for="sectionPanelMedian" hidden>Mediana (m)<input id="sectionPanelMedian" type="number" min="0" max="8" step="0.25"></label>
   </div>
-  <small class="section-visual-note">Dimensiones por lado. Cambios aplicados y guardados automáticamente. Pulsa una franja para editarla.</small>
+  <div id="bridgeTransverseFields" class="bridge-field-grid" hidden>
+   <label for="bridgeBarrierWidth">Barrera (m)<input id="bridgeBarrierWidth" type="number" min="0.2" max="2" step="0.1"></label>
+   <label for="bridgeSidewalkWidth">Acera puente (m)<input id="bridgeSidewalkWidth" type="number" min="0" max="6" step="0.25"></label>
+   <label for="bridgeShoulderWidth">Arcén puente (m)<input id="bridgeShoulderWidth" type="number" min="0" max="4" step="0.25"></label>
+   <label for="bridgeDeckThickness">Tablero (m)<input id="bridgeDeckThickness" type="number" min="0.3" max="4" step="0.1"></label>
+  </div>
+  <small id="sectionPanelNote" class="section-visual-note">Dimensiones por lado. Cambios aplicados y guardados automáticamente. Pulsa una franja para editarla.</small>
+ </aside>
+ <aside id="bridgeLongitudinalPanel" class="bridge-longitudinal-panel" hidden aria-label="Sección longitudinal del puente">
+  <div class="bridge-panel-head"><strong>PUENTE · SECCIÓN LONGITUDINAL</strong><span id="bridgeSelectedSpan"></span></div>
+  <div class="bridge-panel-type"><label for="bridgeType">Tipo estructural</label>
+   <select id="bridgeType"><option value="simple">Simple con pilares</option><option value="arch">Puente de arco</option></select>
+  </div>
+  <div id="bridgeLongitudinalDrawing" class="bridge-longitudinal-drawing" role="img" aria-label="Alzado técnico esquemático del puente"></div>
+  <div class="bridge-longitudinal-parameters">
+   <div><span>Longitud sobre eje</span><strong id="bridgeTotalLength">—</strong></div>
+   <label for="bridgeClearance">Gálibo (m)<input id="bridgeClearance" type="number" min="2" max="60" step="0.1"></label>
+   <label id="bridgeSpanCountField" for="bridgeSpanCount">Número de vanos<input id="bridgeSpanCount" type="number" min="1" max="12" step="1"></label>
+   <label id="bridgePierWidthField" for="bridgePierWidth">Pilar (m)<input id="bridgePierWidth" type="number" min="0.4" max="6" step="0.1"></label>
+   <label id="bridgeAbutmentInsetField" for="bridgeAbutmentInset">Estribo (m)<input id="bridgeAbutmentInset" type="number" min="0" max="8" step="0.25"></label>
+   <label id="bridgeArchRiseField" for="bridgeArchRise" hidden>Flecha arco (m)<input id="bridgeArchRise" type="number" min="1" max="30" step="0.25"></label>
+   <label id="bridgeArchThicknessField" for="bridgeArchThickness" hidden>Espesor arco (m)<input id="bridgeArchThickness" type="number" min="0.2" max="3" step="0.1"></label>
+   <label id="bridgeHangerCountField" for="bridgeHangerCount" hidden>Péndolas<input id="bridgeHangerCount" type="number" min="2" max="30" step="1"></label>
+  </div>
+  <small class="bridge-panel-note">Sección esquemática. Longitud calculada sobre los ejes seleccionados; cotas estructurales orientativas, sin cálculo resistente.</small>
  </aside>
  <div class="head-speed" role="img" aria-label="Velocidad geométrica estimada; escala de colores: hasta 40, 60, 80, 100 y 120 kilómetros por hora" title="Estimación preliminar por radio de curvatura; peralte supuesto del 6 % y rozamiento transversal de 0,11. No sustituye una validación normativa ni un proyecto de ingeniería.">
    <div class="head-speed-title">VELOCIDAD GEOMÉTRICA ESTIMADA</div><div class="legend"><span style="background:#C83E42"></span><span style="background:#DB8137"></span><span style="background:#DDC34A"></span><span style="background:#4BA56A"></span><span style="background:#3294B9"></span></div><div class="legend-label"><span>≤40</span><span>60</span><span>80</span><span>100</span><span>120 km/h</span></div>
