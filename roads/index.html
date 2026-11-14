@@ -530,6 +530,117 @@ function makeGeometry(road){
  emit([last,pts[pts.length-1]],0,0,pts.length-2);
  return {parts,arcs,total:parts.reduce((s,p)=>s+p.length,0),minRadius:arcs.length?Math.min(...arcs.map(a=>a.radius)):null};
 }
+
+/* Intersecciones automáticas en T y cruz. Geometría derivada; nunca edita nodos. */
+const AUTO_CROSS_SNAP=8;
+function autoRoadAxis(r,lat0){
+ const segments=[],points=[];let total=0;
+ for(const part of makeGeometry(r).parts)for(const llp of part.points){
+  const p=xy(llp,lat0),q=points[points.length-1];
+  if(q&&dist(p,q)<.05)continue;
+  if(q){const v=sub(p,q),len=length(v);
+   segments.push({a:q,b:p,v:mul(v,1/len),len,at:total,kind:(r.structures||{})[part.segmentIndex]||'normal'});total+=len;}
+  points.push(p);
+ }
+ if(!segments.length)return null;
+ const bounds={minX:Infinity,minY:Infinity,maxX:-Infinity,maxY:-Infinity};
+ for(const p of points){bounds.minX=Math.min(bounds.minX,p.x);bounds.maxX=Math.max(bounds.maxX,p.x);
+  bounds.minY=Math.min(bounds.minY,p.y);bounds.maxY=Math.max(bounds.maxY,p.y);}
+ return {r,segments,points,total,bounds,w:sectionOf(r).roadWidth/2};
+}
+function autoRoadArms(a,k,t){
+ const s=a.segments[k],at=s.at+s.len*t,arms=[];
+ if(at>2)arms.push({v:mul(s.v,-1),w:a.w,len:at,r:a.r});
+ if(a.total-at>2)arms.push({v:s.v,w:a.w,len:a.total-at,r:a.r});
+ return arms;
+}
+function autoCrossEvents(input=roads){
+ if(input.length<2)return [];
+ const lat0=input[0].nodes[0][0],axes=input.map(r=>autoRoadAxis(r,lat0)).filter(Boolean),out=[];
+ const nearRotonda=p=>roundabouts.some(rb=>dist(p,xy(rb.center,lat0))<rb.diameter/2+12);
+ for(let i=0;i<axes.length;i++)for(let j=i+1;j<axes.length;j++){
+  const a=axes[i],b=axes[j],A=a.bounds,B=b.bounds,pad=AUTO_CROSS_SNAP+2;
+  if(A.minX>B.maxX+pad||B.minX>A.maxX+pad||A.minY>B.maxY+pad||B.minY>A.maxY+pad)continue;
+  const register=(p,arms,stub=null)=>{
+   if(arms.length<3||arms.length>4||nearRotonda(p)||out.some(e=>e.a===a.r.id&&e.b===b.r.id&&dist(p,e.p)<12))return;
+   out.push({a:a.r.id,b:b.r.id,p,arms,stub,lat0});
+  };
+  let count=0;
+  for(let u=0;u<a.segments.length&&count<16;u++)for(let v=0;v<b.segments.length&&count<16;v++){
+   const sa=a.segments[u],sb=b.segments[v];if(sa.kind!=='normal'||sb.kind!=='normal'||Math.abs(cross(sa.v,sb.v))<.48)continue;
+   if(Math.max(sa.a.x,sa.b.x)<Math.min(sb.a.x,sb.b.x)-.01||Math.max(sb.a.x,sb.b.x)<Math.min(sa.a.x,sa.b.x)-.01||
+      Math.max(sa.a.y,sa.b.y)<Math.min(sb.a.y,sb.b.y)-.01||Math.max(sb.a.y,sb.b.y)<Math.min(sa.a.y,sa.b.y)-.01)continue;
+   const va=sub(sa.b,sa.a),vb=sub(sb.b,sb.a),d=cross(va,vb);
+   if(Math.abs(d)<1e-9)continue;
+   const ab=sub(sb.a,sa.a),t=cross(ab,vb)/d,s=cross(ab,va)/d;
+   if(t<-.00001||t>1.00001||s<-.00001||s>1.00001)continue;
+   const prior=out.length;
+   register(add(sa.a,mul(va,clamp(t,0,1))),[...autoRoadArms(a,u,clamp(t,0,1)),...autoRoadArms(b,v,clamp(s,0,1))]);
+   if(out.length>prior)count++;
+  }
+  // Encuentro de proximidad: extremo de una vía a <=8 m de otra, sin modificarlo.
+  for(const [branch,main] of [[a,b],[b,a]])for(const ep of [0,branch.points.length-1]){
+   const endpoint=branch.points[ep],first=ep===0,edge=first?branch.segments[0]:branch.segments[branch.segments.length-1];
+   if(edge.kind!=='normal')continue;
+   const dir=first?edge.v:mul(edge.v,-1);
+   let match=null;
+   for(let k=0;k<main.segments.length;k++){
+    const seg=main.segments[k];if(seg.kind!=='normal'||Math.abs(cross(dir,seg.v))<.48)continue;
+    const d=sub(seg.b,seg.a),t=clamp(dot(sub(endpoint,seg.a),d)/(seg.len*seg.len),0,1);
+    const foot=add(seg.a,mul(d,t)),gap=dist(endpoint,foot),distance=seg.at+seg.len*t;
+    if(gap>AUTO_CROSS_SNAP||distance<Math.max(5,main.w)||main.total-distance<Math.max(5,main.w)||match&&gap>=match.gap)continue;
+    match={foot,gap,k,t};
+   }
+   if(match)register(match.foot,[{v:dir,w:branch.w,len:branch.total,r:branch.r},...autoRoadArms(main,match.k,match.t)],
+    match.gap>.1?{a:endpoint,b:match.foot,width:branch.w*2,r:branch.r}:null);
+  }
+ }
+ return out;
+}
+function autoCrossShapes(event){
+ const arms=event.arms.map(a=>({...a,ang:Math.atan2(a.v.y,a.v.x)})).sort((a,b)=>a.ang-b.ang),corners=[];
+ for(let i=0;i<arms.length;i++){
+  const a=arms[i],b=arms[(i+1)%arms.length],theta=(b.ang-a.ang+Math.PI*2)%(Math.PI*2);
+  if(theta<.48||theta>Math.PI*.9)continue;
+  const na={x:-a.v.y,y:a.v.x},nb={x:b.v.y,y:-b.v.x},offsetA=mul(na,a.w),offsetB=mul(nb,b.w);
+  const den=cross(a.v,b.v);if(den<.01)continue;
+  const diff=sub(offsetB,offsetA),sa=cross(diff,b.v)/den,sb=cross(diff,a.v)/den;
+  const intersection=add(event.p,add(offsetA,mul(a.v,sa))),cot=1/Math.tan(theta/2);
+  const R=Math.min(clamp((a.w+b.w)*.9,4,12),Math.max(0,(Math.min(a.len-sa,b.len-sb)-1.5)/cot));
+  if(R<1.5)continue;
+  const p1=add(intersection,mul(a.v,R*cot)),p2=add(intersection,mul(b.v,R*cot)),c=add(p1,mul(na,R));
+  const a0=Math.atan2(p1.y-c.y,p1.x-c.x),a1=Math.atan2(p2.y-c.y,p2.x-c.x);
+  let sweep=Math.atan2(Math.sin(a1-a0),Math.cos(a1-a0));
+  if(sweep>=0)sweep-=2*Math.PI;if(sweep<-Math.PI*1.1)continue;
+  const arc=Array.from({length:17},(_,k)=>add(c,{x:R*Math.cos(a0+sweep*k/16),y:R*Math.sin(a0+sweep*k/16)}));
+  corners.push({polygon:[event.p,...arc],arc});
+ }
+ const geo=pts=>pts.map(p=>ll(p,event.lat0));
+ const fill=visible('layerSpeed')?color(Math.min(...event.arms.map(a=>a.r.speed||90))):'#C2CDD0';
+ return {fill,corners:corners.map(c=>({polygon:geo(c.polygon),arc:geo(c.arc)})),
+  stub:event.stub?{coords:geo([event.stub.a,event.stub.b]),width:event.stub.width,
+   fill:visible('layerSpeed')?color(event.stub.r.speed||90):'#C2CDD0'}:null};
+}
+function drawAutoCrossings(replacement=null){
+ autoCrossGroup.clearLayers();if(!visible('layerRoad'))return;
+ const list=replacement?roads.map(r=>r.id===replacement.id?replacement:r):roads;
+ for(const event of autoCrossEvents(list)){
+  const data=autoCrossShapes(event);
+  if(data.stub){
+   const w=widthInPixels(data.stub.width);
+   L.polyline(data.stub.coords,{color:'#292929',weight:w+5,interactive:false}).addTo(autoCrossGroup);
+   L.polyline(data.stub.coords,{color:data.stub.fill,weight:w+1,interactive:false}).addTo(autoCrossGroup);
+  }
+  for(const c of data.corners)L.polygon(c.polygon,{stroke:false,fillColor:data.fill,fillOpacity:1,interactive:false}).addTo(autoCrossGroup);
+  for(const c of data.corners)L.polyline(c.arc,{color:'#292929',weight:2,interactive:false}).addTo(autoCrossGroup);
+ }
+}
+let lastAutoCrossDrag=0;
+function previewAutoCrossings(road,index,latlng){
+ const now=Date.now();if(now-lastAutoCrossDrag<90)return;lastAutoCrossDrag=now;
+ const nodes=road.nodes.map(p=>p.slice());nodes[index]=[latlng.lat,latlng.lng];
+ drawAutoCrossings({...road,nodes});
+}
 // Mapa oscuro: misma fuente Liberty y paleta NFS DARK que OcToS Drive.
 let baseChange=0,currentBase='pnoa',darkBridgePromise=null;
 function loadDarkBridge(){
