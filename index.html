@@ -82,7 +82,7 @@ footer a{text-decoration:underline;text-underline-offset:3px}
  <div class="access-card">
   <div class="eyebrow">OcToS · Acceso restringido</div>
   <h1 id="access-title">OcToS Apps</h1>
-  <p>Introduce el PIN de seis dígitos para acceder al catálogo de aplicaciones.</p>
+  <p>Introduce el PIN maestro o uno de los PIN secundarios configurados desde OcToS Team.</p>
   <form id="access-form">
    <label for="access-pin">PIN de acceso</label>
    <input id="access-pin" type="password" inputmode="numeric" autocomplete="off" pattern="[0-9]{6}" maxlength="6" minlength="6" required autofocus>
@@ -109,7 +109,8 @@ footer a{text-decoration:underline;text-underline-offset:3px}
 "use strict";
 const pinSalt="792dc348777ee0684dc1eb5dcc6c706a";
 const pinHash="076ee91cf0a5f5d1f317b67acae6b6a4a7545863baf8dfe0d7763a3f2b573234";
-const pbkdfRounds=250000, inactivityMs=15*60*1000, sessionKey="octos-apps-until";
+const pbkdfRounds=250000, inactivityMs=15*60*1000, sessionKey="octos-apps-until",roleKey="octos-apps-role",permissionsKey="octos-permissions-v1";
+let currentAccess=null;
 const root=document.documentElement,gate=document.getElementById("access"),form=document.getElementById("access-form");
 const pin=document.getElementById("access-pin"),error=document.getElementById("access-error"),submit=document.getElementById("access-submit");
 let lastAction=Date.now(),lastSessionWrite=0,failures=0,cooldownUntil=0;
@@ -121,17 +122,51 @@ async function verify(value){
  for(let i=0;i<expected.length;i++)difference|=got[i]^expected[i];
  return difference===0;
 }
-function persist(){try{sessionStorage.setItem(sessionKey,String(Date.now()+inactivityMs))}catch(e){}}
-function clear(){try{sessionStorage.removeItem(sessionKey)}catch(e){}}
-function enter(){root.classList.remove("pin-locked");gate.hidden=true;pin.value="";error.textContent="";lastAction=Date.now();lastSessionWrite=lastAction;persist()}
-function lock(){root.classList.add("pin-locked");gate.hidden=false;pin.value="";error.textContent="";clear();pin.focus()}
+function getProfiles(){
+ try{
+  const value=JSON.parse(localStorage.getItem(permissionsKey)||"[]");
+  return Array.isArray(value)?value.filter(x=>x&&typeof x.id==="string"&&typeof x.salt==="string"&&typeof x.hash==="string"&&Array.isArray(x.apps)&&x.active!==false):[];
+ }catch(e){return []}
+}
+async function verifySecondary(value,profile){
+ try{
+  if(profile.salt.length!==32||profile.hash.length!==64||!/^[0-9a-f]+$/.test(profile.salt+profile.hash))return false;
+  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(value),{name:"PBKDF2"},false,["deriveBits"]);
+  const actual=new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:bytes(profile.salt),iterations:pbkdfRounds,hash:"SHA-256"},key,256));
+  const expected=bytes(profile.hash);let difference=0;
+  for(let i=0;i<expected.length;i++)difference|=actual[i]^expected[i];
+  return difference===0;
+ }catch(e){return false}
+}
+function currentAllowed(){
+ if(!currentAccess||currentAccess.kind==="master")return null;
+ const entry=getProfiles().find(x=>x.id===currentAccess.id);
+ if(!entry)return [];
+ return entry.apps;
+}
+function persist(){try{sessionStorage.setItem(sessionKey,String(Date.now()+inactivityMs));sessionStorage.setItem(roleKey,JSON.stringify(currentAccess))}catch(e){}}
+function clear(){try{sessionStorage.removeItem(sessionKey);sessionStorage.removeItem(roleKey)}catch(e){}}
+function enter(access){
+ currentAccess=access||{kind:"master"};
+ root.classList.remove("pin-locked");gate.hidden=true;pin.value="";error.textContent="";
+ lastAction=Date.now();lastSessionWrite=lastAction;persist();
+}
+function lock(){
+ currentAccess=null;root.classList.add("pin-locked");gate.hidden=false;
+ pin.value="";error.textContent="";clear();pin.focus();
+}
 form.addEventListener("submit",async function(e){
  e.preventDefault();
  if(Date.now()<cooldownUntil){error.textContent="Espera 30 segundos antes de repetir el intento.";return}
  if(!/^[0-9]{6}$/.test(pin.value)){error.textContent="Introduce seis dígitos.";return}
  submit.disabled=true;error.textContent="";
  try{
-  if(await verify(pin.value)){failures=0;enter();return}
+  if(await verify(pin.value)){failures=0;enter({kind:"master"});render();return}
+  for(const profile of getProfiles()){
+   if(await verifySecondary(pin.value,profile)){
+    failures=0;enter({kind:"secondary",id:profile.id});render();return
+   }
+  }
   failures++;pin.value="";pin.focus();
   if(failures>=5){cooldownUntil=Date.now()+30000;failures=0;error.textContent="Demasiados intentos. Espera 30 segundos."}
   else error.textContent="PIN incorrecto.";
@@ -148,7 +183,12 @@ for(const eventName of ["keydown","pointerdown","touchstart"]){
 }
 setInterval(function(){if(!root.classList.contains("pin-locked")&&Date.now()-lastAction>inactivityMs)lock()},30000);
 document.addEventListener("visibilitychange",function(){if(!document.hidden&&!root.classList.contains("pin-locked")&&Date.now()-lastAction>inactivityMs)lock()});
-try{if(Number(sessionStorage.getItem(sessionKey)||0)>Date.now())enter();else clear()}catch(e){}
+try{
+ const stored=JSON.parse(sessionStorage.getItem(roleKey)||"null");
+ const valid=stored&&(stored.kind==="master"||(stored.kind==="secondary"&&getProfiles().some(x=>x.id===stored.id)));
+ if(valid&&Number(sessionStorage.getItem(sessionKey)||0)>Date.now())enter(stored);
+ else clear();
+}catch(e){clear()}
 if(root.classList.contains("pin-locked"))pin.focus();
 
 const repo="toniquerol/octos-apps";
@@ -191,12 +231,14 @@ function placeholder(){
 }
 function render(){
  const query=filter.value.trim().toLocaleLowerCase("es");
- const visible=[...items,wordpress].filter(x=>(x.name+" "+x.type+" "+x.detail).toLocaleLowerCase("es").includes(query));
+ const permitted=currentAllowed();
+ const accessible=[...items,wordpress].filter(x=>!permitted||permitted.includes(x.slug));
+ const visible=accessible.filter(x=>(x.name+" "+x.type+" "+x.detail).toLocaleLowerCase("es").includes(query));
  const frag=document.createDocumentFragment();
  visible.forEach((item,i)=>frag.append(makeCard(item,i)));
  if(!query){const blanks=(3-(visible.length%3))%3;for(let i=0;i<blanks;i++)frag.append(placeholder())}
  catalog.replaceChildren(frag);
- document.getElementById("app-count").textContent=items.length+" aplicaciones + WordPress";
+ document.getElementById("app-count").textContent=currentAccess?.kind==="secondary"?accessible.length+" aplicaciones autorizadas (local)":items.length+" aplicaciones + WordPress";
  document.getElementById("empty").hidden=visible.length!==0;
 }
 filter.addEventListener("input",render);
