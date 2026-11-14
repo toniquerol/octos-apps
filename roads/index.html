@@ -43,6 +43,24 @@ details.section>summary.eyebrow:hover{color:var(--text)}
 .roundabout-options .field input{width:76px}
 .rb-arm-handle{width:14px;height:14px;box-sizing:border-box;border:2px solid #fff;border-radius:50%;background:#C83E42;box-shadow:0 0 0 2px #2228;cursor:grab}
 .rb-arm-handle:active{cursor:grabbing}
+
+/* Creación contextual: compacta, colocada sobre el punto clicado. */
+.rb-create-popup .leaflet-popup-content-wrapper{background:#222226;border:1px solid #4a4b50;border-radius:9px;color:#F1F1EF;box-shadow:0 8px 32px #000a}
+.rb-create-popup .leaflet-popup-content{margin:10px 12px;width:258px!important}
+.rb-create-popup .leaflet-popup-tip{background:#222226}
+.rb-create-popup .leaflet-popup-close-button{color:#F1F1EF!important}
+.rb-create{display:grid;gap:10px;font:12px "IBM Plex Sans",system-ui,sans-serif}
+.rb-create strong{font-size:12px;font-weight:650;color:#F1F1EF}
+.rb-create-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rb-create label{display:grid;gap:4px;color:#bcbcc3;font-size:10px}
+.rb-create input{width:100%;min-width:0;background:#101012;border:1px solid #55565b;border-radius:5px;padding:6px;color:#F1F1EF;font-size:12px}
+.rb-create input[type=range]{padding:0;background:transparent;border:0;accent-color:#FF6A1A;cursor:pointer}
+.rb-create-heading{display:flex;justify-content:space-between;align-items:center}
+.rb-create-heading output{font-size:12px;color:#FF9D65;font-variant-numeric:tabular-nums}
+.rb-create-buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.rb-create button{border-radius:5px;padding:8px 5px;background:#2A2B2F;color:#F1F1EF;border:1px solid #4b4c52;cursor:pointer;font-size:11px}
+.rb-create button[type=submit]{background:#FF6A1A;color:#121212;border-color:#FF6A1A;font-weight:700}
+
 .special-bridge{color:#42d4e4}.special-tunnel{color:#bc9bff}
 
 .tool-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
@@ -113,9 +131,9 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
    </div>
    <details class="roundabout-options" open><summary>Parámetros de rotonda</summary>
     <label class="field">Ramales <input type="number" id="rbArms" min="2" max="8" step="1" value="4"></label>
-    <label class="field">Diámetro exterior (m) <input type="number" id="rbDiameter" min="20" max="150" step="5" value="45"></label>
-    <label class="field">Longitud ramal (m) <input type="number" id="rbArmLength" min="10" max="150" step="5" value="35"></label>
-    <label class="field">Orientación (°) <input type="number" id="rbOrientation" min="0" max="359" step="5" value="0"></label>
+    <label class="field">Diámetro exterior (m) <input type="number" id="rbDiameter" min="20" max="150" step="5" value="40"></label>
+    <label class="field">Longitud ramal (m) <input type="number" id="rbArmLength" min="10" max="150" step="5" value="20"></label>
+    <label class="field">Orientación <output id="rbOrientationValue">0°</output><input type="range" id="rbOrientation" min="0" max="359" step="1" value="0"></label>
     <label class="field">Carriles en el anillo <select id="rbLanes"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></label>
     <label class="field">Anchura por carril (m) <input type="number" id="rbLaneWidth" min="3" max="5" step="0.25" value="3.5"></label>
     <label class="field">Radio entrada orientativo (m) <input type="number" id="rbEntryRadius" min="8" max="60" step="1" value="20"></label>
@@ -173,7 +191,8 @@ if(!window.L){$('status').textContent='No se ha podido cargar Leaflet. Comprueba
 const map=L.map('map',{center:[40.2,-3.7],zoom:6,zoomControl:false,doubleClickZoom:false,preferCanvas:true});
 L.control.zoom({position:'bottomright'}).addTo(map);
 let baseLayer=null,roads=[],roundabouts=[],selected=null,selectedRoundabout=null,selectedSegment=null,mode='select',draft=[],cursor=null,history=[],preview=L.layerGroup().addTo(map);
-const roadsGroup=L.layerGroup().addTo(map),roundaboutGroup=L.layerGroup().addTo(map),markersGroup=L.layerGroup().addTo(map),labelsGroup=L.layerGroup().addTo(map);
+const roadsGroup=L.layerGroup().addTo(map),roundaboutGroup=L.layerGroup().addTo(map),markersGroup=L.layerGroup().addTo(map),labelsGroup=L.layerGroup().addTo(map),roundaboutDraftGroup=L.layerGroup().addTo(map);
+let pendingRoundabout=null;
 const layerIds=['layerRoad','layerSpeed','layerNodes','layerRadius','layerAxes'];
 const visible=id=>$(id).checked;
 const finite=n=>Number.isFinite(n);
@@ -286,8 +305,8 @@ function roundaboutParams(){
  const lanes=clamp(Math.round(Number($('rbLanes').value)||2),1,3);
  const laneWidth=clamp(Number($('rbLaneWidth').value)||3.5,3,5);
  return {arms:clamp(Math.round(Number($('rbArms').value)||4),2,8),
- diameter:clamp(Number($('rbDiameter').value)||45,20,150),
- armLength:clamp(Number($('rbArmLength').value)||35,10,150),
+ diameter:clamp(Number($('rbDiameter').value)||40,20,150),
+ armLength:clamp(Number($('rbArmLength').value)||20,10,150),
  orientation:((Number($('rbOrientation').value)||0)%360+360)%360,lanes,laneWidth,
  width:lanes*laneWidth,entryRadius:clamp(Number($('rbEntryRadius').value)||20,8,60),
  exitRadius:clamp(Number($('rbExitRadius').value)||30,12,100)};
@@ -302,6 +321,7 @@ function roundaboutDimensions(r){
 }
 function updateRoundaboutUI(){
  const p=roundaboutParams(),dim=roundaboutDimensions(p);
+ $('rbOrientationValue').textContent=p.orientation+'°';
  $('rbSectionSummary').textContent=dim.lanes+' carriles anulares · '+format(dim.width)+' m de calzada · Ø isla '+format(dim.islandRadius*2)+' m';
 }
 function validRoundabout(r){return r&&typeof r.id==='string'&&Array.isArray(r.center)&&r.center.length===2&&r.center.every(finite)&&Math.abs(r.center[0])<=85&&Math.abs(r.center[1])<=180&&Number.isInteger(r.arms)&&r.arms>=2&&r.arms<=8&&finite(r.diameter)&&r.diameter>=20&&r.diameter<=150&&finite(r.armLength)&&r.armLength>=10&&r.armLength<=150&&finite(r.orientation)&&finite(r.width)&&r.width>=3&&r.width<=15&&(!('lanes' in r)||(Number.isInteger(r.lanes)&&r.lanes>=1&&r.lanes<=3))&&(!('laneWidth' in r)||(finite(r.laneWidth)&&r.laneWidth>=3&&r.laneWidth<=5))&&(!('entryRadius' in r)||(finite(r.entryRadius)&&r.entryRadius>=8&&r.entryRadius<=60))&&(!('exitRadius' in r)||(finite(r.exitRadius)&&r.exitRadius>=12&&r.exitRadius<=100))&&(!('armOffsets' in r)||(Array.isArray(r.armOffsets)&&r.armOffsets.length===r.arms&&r.armOffsets.every(n=>finite(n)&&n>=-180&&n<=180)));}
@@ -705,6 +725,68 @@ function render(){
  $('roadsList').querySelectorAll('button').forEach(b=>b.onclick=()=>{setMode('select');setSelection(b.dataset.id);});
  drawPreview();
 }
+
+/* El primer clic abre los parámetros antes de insertar la rotonda. */
+function showRoundaboutCreator(latlng){
+ if(roundabouts.length>=300)return status('Máximo 300 rotondas.');
+ if(pendingRoundabout)map.closePopup(pendingRoundabout.popup);
+ const panel=document.createElement('form');
+ panel.className='rb-create';
+ panel.innerHTML='<strong>Nueva rotonda</strong>'+
+  '<div class="rb-create-grid">'+
+  '<label>Ramales<input name="arms" type="number" min="2" max="8" step="1" value="4" required></label>'+
+  '<label>Diámetro exterior (m)<input name="diameter" type="number" min="20" max="150" step="5" value="40" required></label>'+
+  '<label>Longitud ramal (m)<input name="armLength" type="number" min="10" max="150" step="5" value="20" required></label>'+
+  '<label>Carriles del anillo<input name="lanes" type="number" min="1" max="3" step="1" value="2" required></label>'+
+  '<label>Anchura carril (m)<input name="laneWidth" type="number" min="3" max="5" step="0.25" value="3.5" required></label>'+
+  '</div>'+
+  '<label><span class="rb-create-heading">Orientación <output name="angle">0°</output></span>'+
+  '<input name="orientation" type="range" min="0" max="359" step="1" value="0"></label>'+
+  '<div class="rb-create-buttons"><button type="button" data-rb-cancel>Cancelar</button><button type="submit">Crear rotonda</button></div>';
+ const get=name=>panel.querySelector('[name="'+name+'"]');
+ const popup=L.popup({className:'rb-create-popup',minWidth:258,maxWidth:280,offset:[0,-8],autoPan:true,closeButton:true})
+  .setLatLng(latlng).setContent(panel);
+ const sample=()=>{
+  const lanes=clamp(Math.round(Number(get('lanes').value)||2),1,3);
+  const laneWidth=clamp(Number(get('laneWidth').value)||3.5,3,5);
+  return {id:'preview',center:[latlng.lat,latlng.lng],arms:clamp(Math.round(Number(get('arms').value)||4),2,8),
+   diameter:clamp(Number(get('diameter').value)||40,20,150),
+   armLength:clamp(Number(get('armLength').value)||20,10,150),
+   orientation:Number(get('orientation').value)||0,
+   lanes,laneWidth,width:lanes*laneWidth,
+   entryRadius:20,exitRadius:30};
+ };
+ const redraw=()=>{
+  roundaboutDraftGroup.clearLayers();
+  const form=sample(),geom=roundaboutGeometry(form);
+  get('angle').textContent=form.orientation+'°';
+  L.polyline(geom.ring,{color:'#FF6A1A',weight:Math.max(3,widthInPixels(geom.dimensions.width)),opacity:.65,interactive:false,dashArray:'8 6'}).addTo(roundaboutDraftGroup);
+  geom.arms.forEach(a=>L.polyline([a.inner,a.outer],{color:'#FF9D65',weight:3,interactive:false,opacity:.95}).addTo(roundaboutDraftGroup));
+  L.circleMarker(form.center,{radius:4,color:'#FF6A1A',weight:2,fillColor:'#222226',fillOpacity:1,interactive:false}).addTo(roundaboutDraftGroup);
+ };
+ panel.querySelectorAll('input').forEach(input=>input.addEventListener('input',redraw));
+ L.DomEvent.disableClickPropagation(panel);
+ L.DomEvent.disableScrollPropagation(panel);
+ panel.querySelector('[data-rb-cancel]').onclick=()=>{map.closePopup(popup);status('Creación de rotonda cancelada.');};
+ panel.addEventListener('submit',event=>{
+  event.preventDefault();
+  if(!panel.checkValidity()||mode!=='roundabout')return;
+  if(roundabouts.length>=300)return status('Máximo 300 rotondas.');
+  const rb={...sample(),id:newId()};
+  checkpoint();roundabouts.push(rb);persist();
+  map.closePopup(popup);
+  setMode('select');chooseRoundabout(rb.id);
+  status('Rotonda creada: '+rb.arms+' ramales, Ø '+format(rb.diameter)+' m, '+rb.lanes+' carriles.');
+ });
+ popup.on('remove',()=>{
+  roundaboutDraftGroup.clearLayers();
+  if(pendingRoundabout?.popup===popup)pendingRoundabout=null;
+ });
+ pendingRoundabout={popup,latlng};
+ popup.openOn(map);
+ redraw();
+}
+
 function drawPreview(){
  preview.clearLayers();if(mode!=='draw'||!draft.length)return;
  let nodes=draft.slice();if(cursor)nodes.push(cursor);
@@ -712,8 +794,8 @@ function drawPreview(){
  const g=makeGeometry({...params(),nodes});g.parts.forEach(p=>L.polyline(p.points,{color:'#FF6A1A',weight:4,dashArray:'8 7',interactive:false}).addTo(preview));
  draft.forEach(p=>L.circleMarker(p,{radius:4,color:'#fff',weight:2,fillColor:'#FF6A1A',fillOpacity:1,interactive:false}).addTo(preview));
 }
-function setMode(next){if(mode==='draw'&&draft.length&&next!=='draw')finish(false);mode=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('map').classList.toggle('mode-draw',mode==='draw');$('finishBtn').disabled=mode!=='draw'||draft.length<2;
- const hints={select:['Seleccionar / modificar','Pulsa una carretera para seleccionar. Arrastra sus puntos naranjas para ajustar curvas y radios.'],draw:['Nueva carretera','Pulsa sobre el mapa para poner vértices. Mueve el cursor para previsualizar. Pulsa Terminar o Intro.'],insert:['Insertar vértice','Pulsa sobre un tramo de carretera para insertar un punto de control.'],remove:['Eliminar vértice','Selecciona una carretera y pulsa uno de sus puntos naranjas para eliminarlo.'],roundabout:['Insertar rotonda','Configura sus ramales y diámetro; pulsa sobre el mapa para colocarla.'],bridge:['Marcar puente','Pulsa sobre un tramo para clasificarlo como puente (cian).'],tunnel:['Marcar túnel','Pulsa sobre un tramo para clasificarlo como túnel (violeta discontinuo).'],normal:['Devolver a superficie','Pulsa sobre un tramo para quitar la clasificación de puente o túnel.']};
+function setMode(next){if(next!=='roundabout'&&pendingRoundabout)map.closePopup(pendingRoundabout.popup);if(mode==='draw'&&draft.length&&next!=='draw')finish(false);mode=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('map').classList.toggle('mode-draw',mode==='draw');$('finishBtn').disabled=mode!=='draw'||draft.length<2;
+ const hints={select:['Seleccionar / modificar','Pulsa una carretera para seleccionar. Arrastra sus puntos naranjas para ajustar curvas y radios.'],draw:['Nueva carretera','Pulsa sobre el mapa para poner vértices. Mueve el cursor para previsualizar. Pulsa Terminar o Intro.'],insert:['Insertar vértice','Pulsa sobre un tramo de carretera para insertar un punto de control.'],remove:['Eliminar vértice','Selecciona una carretera y pulsa uno de sus puntos naranjas para eliminarlo.'],roundabout:['Insertar rotonda','Pulsa el lugar de inserción. Ajusta dimensiones y orientación en la ventana emergente y confirma.'],bridge:['Marcar puente','Pulsa sobre un tramo para clasificarlo como puente (cian).'],tunnel:['Marcar túnel','Pulsa sobre un tramo para clasificarlo como túnel (violeta discontinuo).'],normal:['Devolver a superficie','Pulsa sobre un tramo para quitar la clasificación de puente o túnel.']};
  $('hintTitle').textContent=hints[mode][0];$('hintText').textContent=hints[mode][1];status('Modo '+hints[mode][0].toLowerCase());render();}
 function finish(save=true){if(save&&draft.length>=2){checkpoint();const r={id:newId(),...params(),nodes:draft.slice()};attachEndpoints(r);roads.push(r);selectedRoundabout=null;selectedSegment=null;selected=r.id;persist();status('Carretera creada con '+draft.length+' puntos.');}draft=[];cursor=null;preview.clearLayers();mode='select';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode==='select'));$('map').classList.remove('mode-draw');$('finishBtn').disabled=true;render();}
 function insertNode(r,latlng){const lat0=r.nodes.reduce((s,n)=>s+n[0],0)/r.nodes.length,p=xy([latlng.lat,latlng.lng],lat0);let best=Infinity,index=0;for(let i=0;i<r.nodes.length-1;i++){const a=xy(r.nodes[i],lat0),b=xy(r.nodes[i+1],lat0),ab=sub(b,a),q=clamp(dot(sub(p,a),ab)/(dot(ab,ab)||1),0,1),d=dist(p,add(a,mul(ab,q)));if(d<best){best=d;index=i+1;}}checkpoint();repairStructuresAfterInsert(r,index);r.nodes.splice(index,0,[latlng.lat,latlng.lng]);selected=r.id;selectedSegment=null;persist();render();status('Punto insertado en '+r.name+'.');}
@@ -914,7 +996,7 @@ Object.keys(bases).forEach(id=>{const node=document.querySelector('input[name=ba
 layerIds.forEach(id=>$(id).onchange=render);
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 $('finishBtn').onclick=()=>finish();$('cancelBtn').onclick=()=>{if(mode==='draw')finish(false);else setMode('select');};$('undoBtn').onclick=undo;
-['rbLanes','rbLaneWidth','rbDiameter'].forEach(id=>$(id).addEventListener('input',updateRoundaboutUI));
+['rbLanes','rbLaneWidth','rbDiameter','rbOrientation'].forEach(id=>$(id).addEventListener('input',updateRoundaboutUI));
 $('rbApplyBtn').onclick=applyRoundabout;
 $('rbDeleteBtn').onclick=()=>{const rb=roundaboutAt(selectedRoundabout);if(!rb)return status('Selecciona una rotonda.');if(!confirm('¿Eliminar esta rotonda?'))return;checkpoint();roundabouts=roundabouts.filter(r=>r.id!==rb.id);for(const r of roads){for(const [key,con] of Object.entries(r.connections||{}))if(con.roundaboutId===rb.id)delete r.connections[key];}selectedRoundabout=null;persist();render();status('Rotonda eliminada.');};
 $('applyBtn').onclick=apply;$('deleteBtn').onclick=()=>{const r=roadById(selected);if(!r)return status('Selecciona antes una carretera.');if(confirm('¿Eliminar '+r.name+'?')){checkpoint();roads=roads.filter(x=>x.id!==r.id);selected=null;persist();render();}};
@@ -932,7 +1014,7 @@ $('toggleLeft').onclick=()=>$('leftPane').classList.toggle('hidden-mobile');$('t
 ['radius','speed','laneWidth','shoulderWidth','medianWidth','sidewalkWidth'].forEach(id=>$(id).addEventListener('input',()=>{updateSectionUI();drawPreview();}));
 $('roadSection').addEventListener('change',()=>{const type=$('roadSection').value;if(sectionTypes[type].street)$('roadType').value='urbana';applySectionDefaults(type);updateSectionUI();drawPreview();});
 applySectionDefaults($('roadSection').value);updateSectionUI();updateRoundaboutUI();
-map.on('click',e=>{if(mode==='roundabout'){if(roundabouts.length>=300)return status('Máximo 300 rotondas.');checkpoint();const rb={id:newId(),center:[e.latlng.lat,e.latlng.lng],...roundaboutParams()};roundabouts.push(rb);persist();setMode('select');chooseRoundabout(rb.id);status('Rotonda creada. Arrastra su centro o ajusta sus ramales.');return;}if(mode==='draw'){const snap=findArmSnap([e.latlng.lat,e.latlng.lng]);draft.push(snap?snap.point.slice():[e.latlng.lat,e.latlng.lng]);$('finishBtn').disabled=draft.length<2;cursor=null;drawPreview();status('Puntos de control: '+draft.length+'.');}});
+map.on('click',e=>{if(mode==='roundabout'){showRoundaboutCreator(e.latlng);return;}if(mode==='draw'){const snap=findArmSnap([e.latlng.lat,e.latlng.lng]);draft.push(snap?snap.point.slice():[e.latlng.lat,e.latlng.lng]);$('finishBtn').disabled=draft.length<2;cursor=null;drawPreview();status('Puntos de control: '+draft.length+'.');}});
 map.on('mousemove',e=>{if(mode==='draw'&&draft.length){cursor=[e.latlng.lat,e.latlng.lng];drawPreview();}});
 map.on('zoomend',render);
 document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.ctrlKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo();return;}if(e.key==='Escape'){if(mode==='draw')finish(false);else setMode('select');}if(e.key==='Enter'&&mode==='draw')finish();if(e.key==='Backspace'&&mode==='draw'){e.preventDefault();undo();}if(e.key.toLowerCase()==='v')setMode('select');if(e.key.toLowerCase()==='d')setMode('draw');if(e.key.toLowerCase()==='i')setMode('insert');if(e.key.toLowerCase()==='x')setMode('remove');});
