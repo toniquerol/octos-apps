@@ -2455,11 +2455,11 @@ function render(){
  const group=$('realRoadsGroup');
  group.hidden=!realRoads.length;
  $('realRoadsCount').textContent='('+realRoads.length+')';
- const categories=[['autopista','Autopista / autovía'],['convencional','Carretera convencional'],['urbana','Vía urbana'],['camino','Camino']];
+ const sourceClass=r=>String(r.official?.attributes?.Tipo_de_via||'Sin clasificación oficial').trim();
+ const categories=Array.from(new Set(realRoads.map(sourceClass))).sort((a,b)=>a.localeCompare(b,'es'));
  const previouslyOpen=new Set(Array.from($('realRoadsList').querySelectorAll('details[open]')).map(d=>d.dataset.category));
- $('realRoadsList').innerHTML=categories.map(([key,label])=>{
-  const items=realRoads.filter(r=>r.type===key);
-  if(!items.length)return '';
+ $('realRoadsList').innerHTML=categories.map(label=>{
+  const items=realRoads.filter(r=>sourceClass(r)===label),key=encodeURIComponent(label.toLowerCase());
   return '<details class="real-road-category" data-category="'+key+'" '+(previouslyOpen.size?previouslyOpen.has(key)?'open':'':'open')+'><summary>'+safe(label)+' · '+items.length+'</summary>'+items.map(roadButton).join('')+'</details>';
  }).join('');
  document.querySelectorAll('#roadsList button[data-id],#realRoadsList button[data-id]').forEach(b=>b.onclick=()=>{setMode('select');setSelection(b.dataset.id);});
