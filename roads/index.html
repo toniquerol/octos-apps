@@ -45,7 +45,16 @@ details.section>summary.eyebrow:hover{color:var(--text)}
 .rb-arm-handle{width:14px;height:14px;box-sizing:border-box;border:2px solid #fff;border-radius:50%;background:#C83E42;box-shadow:0 0 0 2px #2228;cursor:grab}
 .rb-arm-handle:active{cursor:grabbing}
 
-/* Creación contextual: compacta, colocada sobre el punto clicado. */
+/* Creación contextual: editor anclado a la esquina superior derecha del visor. */
+.rb-create-dock{position:absolute;top:12px;right:12px;z-index:1100;width:min(308px,calc(100% - 24px));max-height:calc(100% - 24px);overflow:auto;padding:12px;background:#222226f5;border:1px solid #4a4b50;border-radius:9px;color:#F1F1EF;box-shadow:0 8px 28px #000a;scrollbar-color:#555 transparent}
+.rb-create-dock select{width:100%;background:#101012;border:1px solid #55565b;border-radius:5px;padding:6px;color:#F1F1EF;font-size:12px}
+.rb-create-dock .rb-create-toggle{display:flex;align-items:center;gap:7px;font-size:11px}
+.rb-create-dock .rb-create-toggle input{width:auto;accent-color:#FF6A1A}
+.rb-create-dock .rb-create-heading{min-height:22px}
+.rb-create-dock .rb-create-fields{display:grid;gap:8px}
+.rb-create-dock .rb-create-note{font-size:10px;color:#aaaab0;line-height:1.35}
+@media(max-width:760px){.rb-create-dock{top:8px;right:8px;max-height:calc(100% - 16px)}}
+
 .rb-create-popup .leaflet-popup-content-wrapper{background:#222226;border:1px solid #4a4b50;border-radius:9px;color:#F1F1EF;box-shadow:0 8px 32px #000a}
 .rb-create-popup .leaflet-popup-content{margin:10px 12px;width:258px!important}
 .rb-create-popup .leaflet-popup-tip{background:#222226}
@@ -876,25 +885,50 @@ function render(){
 }
 
 /* El primer clic abre los parámetros antes de insertar la rotonda. */
+function closeRoundaboutCreator(){
+ if(pendingRoundabout?.element)pendingRoundabout.element.remove();
+ pendingRoundabout=null;
+ roundaboutDraftGroup.clearLayers();
+}
 function showRoundaboutCreator(latlng){
  if(roundabouts.length>=300)return status('Máximo 300 rotondas.');
- if(pendingRoundabout)map.closePopup(pendingRoundabout.popup);
- const panel=document.createElement('form');
- panel.className='rb-create';
- panel.innerHTML='<strong>Nueva rotonda</strong>'+
-  '<div class="rb-create-grid">'+
-  '<label>Ramales<input name="arms" type="number" min="2" max="8" step="1" value="4" required></label>'+
-  '<label>Diámetro exterior (m)<input name="diameter" type="number" min="20" max="150" step="5" value="40" required></label>'+
-  '<label>Longitud ramal (m)<input name="armLength" type="number" min="10" max="150" step="5" value="20" required></label>'+
-  '<label>Carriles del anillo<input name="lanes" type="number" min="1" max="3" step="1" value="2" required></label>'+
-  '<label>Anchura carril (m)<input name="laneWidth" type="number" min="3" max="5" step="0.25" value="3.5" required></label>'+
-  '</div>'+
-  '<label><span class="rb-create-heading">Orientación <output name="angle">0°</output></span>'+
-  '<input name="orientation" type="range" min="0" max="359" step="1" value="0"></label>'+
-  '<div class="rb-create-buttons"><button type="button" data-rb-cancel>Cancelar</button><button type="submit">Crear rotonda</button></div>';
- const get=name=>panel.querySelector('[name="'+name+'"]');
- const popup=L.popup({className:'rb-create-popup',minWidth:258,maxWidth:280,offset:[0,-8],autoPan:true,closeButton:true})
-  .setLatLng(latlng).setContent(panel);
+ closeRoundaboutCreator();
+ const dock=document.createElement('div');dock.className='rb-create-dock';
+ dock.setAttribute('role','dialog');dock.setAttribute('aria-label','Crear rotonda');
+ const form=document.createElement('form');form.className='rb-create';
+ form.innerHTML='<div class="rb-create-heading"><strong>CREAR ROTONDA</strong><span>Geometría en planta</span></div>'+
+ '<label>Geometría<select name="shape"><option value="circular">Circular</option><option value="ellipse">Ovalada · elipse</option><option value="stadium">Alargada · dos semicírculos</option></select></label>'+
+ '<div class="rb-create-grid">'+
+ '<label>Ramales<input name="arms" type="number" min="2" max="8" step="1" value="4" required></label>'+
+ '<label>Diámetro menor (m)<input name="diameter" type="number" min="20" max="150" step="5" value="40" required></label>'+
+ '<label>Longitud ramal (m)<input name="armLength" type="number" min="10" max="150" step="5" value="20" required></label>'+
+ '<label>Carriles anulares<input name="lanes" type="number" min="1" max="3" step="1" value="2" required></label>'+
+ '<label>Anchura carril (m)<input name="laneWidth" type="number" min="3" max="5" step=".25" value="3.5" required></label>'+
+ '</div>'+
+ '<div class="rb-create-fields" data-rb-elongation style="display:none">'+
+ '<label>Alargamiento total (m)<input name="elongation" type="number" min="0" max="180" step="5" value="40" required></label>'+
+ '<label><span class="rb-create-heading">Orientación del eje mayor<output data-rb-axis-label>0°</output></span><input name="axisAngle" type="range" min="0" max="359" step="1" value="0"></label></div>'+
+ '<label><span class="rb-create-heading">Orientación de ramales<output data-rb-angle-label>0°</output></span><input name="orientation" type="range" min="0" max="359" step="1" value="0"></label>'+
+ '<label class="rb-create-toggle"><input name="slipEnabled" type="checkbox"> Carril directo de giro a la derecha</label>'+
+ '<div data-rb-slip style="display:none" class="rb-create-fields"><div class="rb-create-grid">'+
+ '<label>Desde el ramal<select name="slipFrom"></select></label>'+
+ '<label>Hasta el ramal<select name="slipTo"></select></label></div>'+
+ '<label>Radio orientativo (m)<input name="slipRadius" type="number" min="12" max="80" value="25"></label>'+
+ '<span class="rb-create-note">Solo se representa entre ramales contiguos, en el sentido permitido.</span></div>'+
+ '<div class="rb-create-buttons"><button type="button" data-rb-cancel>Cancelar</button><button type="submit">Crear rotonda</button></div>';
+ dock.appendChild(form);$('mapWrap').appendChild(dock);
+ pendingRoundabout={element:dock,latlng};
+ const get=id=>form.querySelector('[name="'+id+'"]');
+ const populate=()=>{
+  const arms=clamp(Math.round(Number(get('arms').value)||4),2,8);
+  for(const [name,fallback] of [['slipFrom',arms-1],['slipTo',0]]){
+   const field=get(name),previous=field.value;
+   if(field.options.length===arms)continue;
+   field.replaceChildren();
+   for(let i=0;i<arms;i++){const opt=document.createElement('option');opt.value=i;opt.textContent='Ramal '+(i+1);field.appendChild(opt);}
+   field.value=previous!==''&&Number(previous)<arms?previous:String(fallback);
+  }
+ };
  const sample=()=>{
   const lanes=clamp(Math.round(Number(get('lanes').value)||2),1,3);
   const laneWidth=clamp(Number(get('laneWidth').value)||3.5,3,5);
@@ -902,40 +936,47 @@ function showRoundaboutCreator(latlng){
    diameter:clamp(Number(get('diameter').value)||40,20,150),
    armLength:clamp(Number(get('armLength').value)||20,10,150),
    orientation:Number(get('orientation').value)||0,
-   lanes,laneWidth,width:lanes*laneWidth,
-   entryRadius:20,exitRadius:30};
+   lanes,laneWidth,width:lanes*laneWidth,shape:get('shape').value,
+   elongation:clamp(Number(get('elongation').value)||0,0,180),axisAngle:Number(get('axisAngle').value)||0,
+   entryRadius:20,exitRadius:30,slipEnabled:get('slipEnabled').checked,
+   slipFrom:Number(get('slipFrom').value)||0,slipTo:Number(get('slipTo').value)||0,
+   slipRadius:clamp(Number(get('slipRadius').value)||25,12,80)};
  };
  const redraw=()=>{
+  populate();
+  const v=sample(),g=roundaboutGeometry(v);
+  form.querySelector('[data-rb-elongation]').style.display=v.shape==='circular'?'none':'grid';
+  form.querySelector('[data-rb-slip]').style.display=v.slipEnabled?'grid':'none';
+  form.querySelector('[data-rb-angle-label]').textContent=v.orientation+'°';
+  form.querySelector('[data-rb-axis-label]').textContent=v.axisAngle+'°';
   roundaboutDraftGroup.clearLayers();
-  const form=sample(),geom=roundaboutGeometry(form);
-  get('angle').textContent=form.orientation+'°';
-  L.polyline(geom.ring,{color:'#FF6A1A',weight:Math.max(3,widthInPixels(geom.dimensions.width)),opacity:.65,interactive:false,dashArray:'8 6'}).addTo(roundaboutDraftGroup);
-  geom.arms.forEach(a=>L.polyline([a.inner,a.outer],{color:'#FF9D65',weight:3,interactive:false,opacity:.95}).addTo(roundaboutDraftGroup));
-  L.circleMarker(form.center,{radius:4,color:'#FF6A1A',weight:2,fillColor:'#222226',fillOpacity:1,interactive:false}).addTo(roundaboutDraftGroup);
+  L.polyline(g.ring,{color:'#FF6A1A',weight:Math.max(3,widthInPixels(g.dimensions.width)),opacity:.68,interactive:false,dashArray:'8 6'}).addTo(roundaboutDraftGroup);
+  L.polyline(g.island,{color:'#f1f1ef',weight:1,opacity:.8,interactive:false}).addTo(roundaboutDraftGroup);
+  g.arms.forEach(arm=>L.polyline([arm.inner,arm.outer],{color:'#FF9D65',weight:3,interactive:false,opacity:.95}).addTo(roundaboutDraftGroup));
+  if(v.slipEnabled){const lane=roundaboutSlipGeometry(v);
+   if(lane)L.polyline(lane.path.map(point=>ll(point,lane.lat)),{color:'#FF6A1A',weight:Math.max(3,widthInPixels(lane.laneWidth)),interactive:false,opacity:.8}).addTo(roundaboutDraftGroup);
+  }
+  L.circleMarker(v.center,{radius:4,color:'#FF6A1A',weight:2,fillColor:'#222226',fillOpacity:1,interactive:false}).addTo(roundaboutDraftGroup);
  };
- panel.querySelectorAll('input').forEach(input=>input.addEventListener('input',redraw));
- L.DomEvent.disableClickPropagation(panel);
- L.DomEvent.disableScrollPropagation(panel);
- panel.querySelector('[data-rb-cancel]').onclick=()=>{map.closePopup(popup);status('Creación de rotonda cancelada.');};
- panel.addEventListener('submit',event=>{
+ form.querySelectorAll('input,select').forEach(input=>{
+  input.addEventListener('input',redraw);
+  input.addEventListener('change',redraw);
+ });
+ L.DomEvent.disableClickPropagation(dock);
+ L.DomEvent.disableScrollPropagation(dock);
+ form.querySelector('[data-rb-cancel]').onclick=()=>{closeRoundaboutCreator();status('Creación cancelada.');};
+ form.addEventListener('submit',event=>{
   event.preventDefault();
-  if(!panel.checkValidity()||mode!=='roundabout')return;
+  if(!form.checkValidity()||mode!=='roundabout')return;
   if(roundabouts.length>=300)return status('Máximo 300 rotondas.');
   const rb={...sample(),id:newId()};
-  checkpoint();roundabouts.push(rb);persist();
-  map.closePopup(popup);
+  if(rb.slipFrom===rb.slipTo)rb.slipEnabled=false;
+  checkpoint();roundabouts.push(rb);persist();closeRoundaboutCreator();
   setMode('select');chooseRoundabout(rb.id);
-  status('Rotonda creada: '+rb.arms+' ramales, Ø '+format(rb.diameter)+' m, '+rb.lanes+' carriles.');
+  status('Rotonda creada · '+rb.arms+' ramales · '+(roundaboutShape(rb)==='circular'?'circular':roundaboutShape(rb)==='stadium'?'alargada':'ovalada')+'.');
  });
- popup.on('remove',()=>{
-  roundaboutDraftGroup.clearLayers();
-  if(pendingRoundabout?.popup===popup)pendingRoundabout=null;
- });
- pendingRoundabout={popup,latlng};
- popup.openOn(map);
  redraw();
 }
-
 function drawPreview(){
  preview.clearLayers();if(mode!=='draw'||!draft.length)return;
  let nodes=draft.slice();if(cursor)nodes.push(cursor);
@@ -943,7 +984,7 @@ function drawPreview(){
  const g=makeGeometry({...params(),nodes});g.parts.forEach(p=>L.polyline(p.points,{color:'#FF6A1A',weight:4,dashArray:'8 7',interactive:false}).addTo(preview));
  draft.forEach(p=>L.circleMarker(p,{radius:4,color:'#fff',weight:2,fillColor:'#FF6A1A',fillOpacity:1,interactive:false}).addTo(preview));
 }
-function setMode(next){if(next!=='roundabout'&&pendingRoundabout)map.closePopup(pendingRoundabout.popup);if(mode==='draw'&&draft.length&&next!=='draw')finish(false);mode=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('map').classList.toggle('mode-draw',mode==='draw');$('finishBtn').disabled=mode!=='draw'||draft.length<2;
+function setMode(next){if(next!=='roundabout'&&pendingRoundabout)closeRoundaboutCreator();if(mode==='draw'&&draft.length&&next!=='draw')finish(false);mode=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('map').classList.toggle('mode-draw',mode==='draw');$('finishBtn').disabled=mode!=='draw'||draft.length<2;
  const hints={select:['Seleccionar / modificar','Pulsa una carretera para seleccionar. Arrastra sus puntos naranjas para ajustar curvas y radios.'],draw:['Nueva carretera','Pulsa sobre el mapa para poner vértices. Mueve el cursor para previsualizar. Pulsa Terminar o Intro.'],insert:['Insertar vértice','Pulsa sobre un tramo de carretera para insertar un punto de control.'],remove:['Eliminar vértice','Selecciona una carretera y pulsa uno de sus puntos naranjas para eliminarlo.'],roundabout:['Insertar rotonda','Pulsa el lugar de inserción. Ajusta dimensiones y orientación en la ventana emergente y confirma.'],bridge:['Marcar puente','Pulsa sobre un tramo para clasificarlo como puente (cian).'],tunnel:['Marcar túnel','Pulsa sobre un tramo para clasificarlo como túnel (violeta discontinuo).'],normal:['Devolver a superficie','Pulsa sobre un tramo para quitar la clasificación de puente o túnel.']};
  $('hintTitle').textContent=hints[mode][0];$('hintText').textContent=hints[mode][1];status('Modo '+hints[mode][0].toLowerCase());render();}
 function finish(save=true){if(save&&draft.length>=2){checkpoint();const r={id:newId(),...params(),nodes:draft.slice()};attachEndpoints(r);roads.push(r);selectedRoundabout=null;selectedSegment=null;selected=r.id;persist();status('Carretera creada con '+draft.length+' puntos.');}draft=[];cursor=null;preview.clearLayers();mode='select';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode==='select'));$('map').classList.remove('mode-draw');$('finishBtn').disabled=true;render();}
