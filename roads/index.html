@@ -16,6 +16,12 @@ header{height:70px;border-bottom:1px solid var(--line);display:grid;grid-templat
 .side{min-height:0;overflow:auto;background:var(--panel);padding:15px 13px;scrollbar-color:#555 transparent}.left{border-right:1px solid var(--line)}.right{border-left:1px solid var(--line)}
 .side h2{font-size:13px;margin:2px 0 13px;font-weight:720;letter-spacing:.03em}.section{border-top:1px solid var(--line);padding:14px 0}.section:first-child{border-top:0;padding-top:2px}
 .eyebrow{font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.14em;font-weight:750;margin-bottom:7px}
+details.section>summary.eyebrow{display:flex;align-items:center;justify-content:space-between;list-style:none;cursor:pointer;min-height:30px;margin-bottom:0;padding:4px 2px;border-radius:5px;user-select:none}
+details.section>summary.eyebrow::-webkit-details-marker{display:none}
+details.section>summary.eyebrow::after{content:"+";color:var(--muted);font-size:17px;font-weight:500;line-height:1}
+details.section[open]>summary.eyebrow::after{content:"−"}
+details.section[open]>summary.eyebrow{margin-bottom:7px}
+details.section>summary.eyebrow:hover{color:var(--text)}
 .row{display:flex;gap:8px;align-items:center}.row.wrap{flex-wrap:wrap}.grow{flex:1}.muted{color:var(--muted);font-size:11px;line-height:1.45}.field{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:9px 0;font-size:12px}.field input:not([type=checkbox]),.field select{width:117px;min-width:0;background:#161619;border:1px solid #56565a;border-radius:6px;padding:7px 6px}.field input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
 .radio,.check{display:flex;align-items:flex-start;gap:9px;padding:8px;border-radius:6px;cursor:pointer;font-size:12px}.radio:hover,.check:hover{background:#353539}.radio input,.check input{accent-color:var(--accent);margin:2px 0;flex:0 0 15px}.radio span,.check span{flex:1}.radio small,.check small{display:block;color:var(--muted);font-size:10px}
 .tool{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;margin:5px 0;padding:10px;background:#29292d;border:1px solid #4b4b51;border-radius:7px;font-size:12px}.tool b{font-size:10px;color:var(--muted);font-weight:500}.tool.active{border-color:var(--accent);background:#3e2a20;color:white}.tool.active b{color:#ffa36d}.tool:hover{border-color:var(--accent)}
@@ -39,22 +45,22 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
 </header>
 <div class="layout">
 <aside class="side left hidden-mobile" id="leftPane" aria-label="Fondos y capas">
-  <div class="section"><div class="eyebrow">Visualización</div><h2>Fondos cartográficos</h2>
+  <details class="section" open><summary class="eyebrow">Visualización</summary><h2>Fondos cartográficos</h2>
     <label class="radio"><input type="radio" name="base" value="osm" checked><span>OpenStreetMap<small>Mapa general</small></span></label>
     <label class="radio"><input type="radio" name="base" value="ign"><span>IGN Base<small>Cartografía oficial · España</small></span></label>
     <label class="radio"><input type="radio" name="base" value="gray"><span>IGN Base gris<small>Fondo técnico</small></span></label>
     <label class="radio"><input type="radio" name="base" value="pnoa"><span>PNOA ortofoto<small>Fotografía aérea · España</small></span></label>
     <label class="radio"><input type="radio" name="base" value="relief"><span>IGN Relieve<small>Relieve de terreno</small></span></label>
-  </div>
-  <div class="section"><div class="eyebrow">Proyecto</div><h2>Capas disponibles</h2>
+  </details>
+  <details class="section" open><summary class="eyebrow">Proyecto</summary><h2>Capas disponibles</h2>
     <label class="check"><input type="checkbox" id="layerRoad" checked><span>Calzadas<small>Anchura y contorno proyectado</small></span></label>
     <label class="check"><input type="checkbox" id="layerSpeed" checked><span>Colores por velocidad<small>Segmentación rectas y curvas</small></span></label>
     <label class="check"><input type="checkbox" id="layerNodes" checked><span>Puntos de control<small>Arrastrar para modificar el eje</small></span></label>
     <label class="check"><input type="checkbox" id="layerRadius" checked><span>Radios de curva<small>Etiquetas de curvas circulares</small></span></label>
     <label class="check"><input type="checkbox" id="layerAxes" checked><span>Eje geométrico<small>Línea central discontinua</small></span></label>
-  </div>
-  <div class="section"><div class="eyebrow">Trazados</div><div class="row"><h2 class="grow" style="margin:0 0 8px">Carreteras del proyecto</h2><span class="muted" id="roadCount">0</span></div><div id="roadsList"></div></div>
-  <div class="section"><div class="eyebrow">Lectura de velocidad</div><h2>Velocidad geométrica estimada</h2><div class="legend"><span style="background:#C83E42"></span><span style="background:#DB8137"></span><span style="background:#DDC34A"></span><span style="background:#4BA56A"></span><span style="background:#3294B9"></span></div><div class="legend-label"><span>≤40</span><span>60</span><span>80</span><span>100</span><span>120 km/h</span></div><p class="muted">Estimación preliminar de velocidad según radio, peralte supuesto del 6 % y rozamiento transversal supuesto de 0,11. No constituye validación normativa ni sustituye un proyecto de ingeniería.</p></div>
+  </details>
+  <details class="section" open><summary class="eyebrow">Trazados</summary><div class="row"><h2 class="grow" style="margin:0 0 8px">Carreteras del proyecto</h2><span class="muted" id="roadCount">0</span></div><div id="roadsList"></div></details>
+  <details class="section" open><summary class="eyebrow">Lectura de velocidad</summary><h2>Velocidad geométrica estimada</h2><div class="legend"><span style="background:#C83E42"></span><span style="background:#DB8137"></span><span style="background:#DDC34A"></span><span style="background:#4BA56A"></span><span style="background:#3294B9"></span></div><div class="legend-label"><span>≤40</span><span>60</span><span>80</span><span>100</span><span>120 km/h</span></div><p class="muted">Estimación preliminar de velocidad según radio, peralte supuesto del 6 % y rozamiento transversal supuesto de 0,11. No constituye validación normativa ni sustituye un proyecto de ingeniería.</p></details>
 </aside>
 <section id="mapWrap" aria-label="Mapa y editor">
  <div id="map"></div>
