@@ -136,6 +136,8 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
 .map-inspector-head{display:flex;align-items:center;justify-content:space-between;position:sticky;top:-10px;z-index:3;margin:-10px -12px 10px;padding:12px 12px 9px;background:#222226f7;border-bottom:1px solid #47474c}
 .map-inspector-head strong{font-size:11px;color:var(--accent);font-weight:750;letter-spacing:.10em}
 .map-inspector-head button{border:1px solid #4b4b52;border-radius:5px;background:#2A2B2F;width:25px;height:25px;padding:0;font-size:19px;line-height:1}
+.map-inspector-head #rbApplyBtn{width:auto;height:27px;min-height:0;margin-left:auto;margin-right:8px;padding:4px 9px;border-color:#FF6A1A;color:#F1F1EF;font-size:10px;font-weight:700;line-height:1.2;white-space:nowrap}
+.map-inspector-head #rbApplyBtn:hover{background:#FF6A1A;color:#0E0E10}
 .map-inspector>.map-inspector-head+div{min-height:0}
 .map-inspector .section{border-top:0;padding:0 0 8px}
 .map-inspector .section h2{font-size:12px;margin:5px 0 10px;font-weight:700}
@@ -418,7 +420,7 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
   <div class="map-quick-buttons">  <div class="row wrap" style="margin-top:9px"><button class="btn primary grow" id="finishBtn" disabled>Terminar</button><button class="btn grow" id="cancelBtn">Cancelar</button><button class="btn grow" id="undoBtn">Deshacer</button></div>  <div class="row wrap" style="margin-top:10px"><button class="btn danger grow" id="deleteBtn">Eliminar carretera</button><button class="btn grow" id="fitBtn">Encuadrar</button></div><button type="button" class="btn danger" id="rbDeleteBtn">Eliminar rotonda</button></div>
  </div>
  <div class="map-inspector" id="mapInspector" hidden aria-label="Panel temporal de parámetros">
-  <div class="map-inspector-head"><strong id="inspectorTitle">PARÁMETROS</strong><button type="button" id="inspectorClose" aria-label="Cerrar panel de parámetros" title="Cerrar">×</button></div>
+  <div class="map-inspector-head"><strong id="inspectorTitle">PARÁMETROS</strong><button class="btn" id="rbApplyBtn" type="button" hidden>Aplicar</button><button type="button" id="inspectorClose" aria-label="Cerrar panel de parámetros" title="Cerrar">×</button></div>
   <div id="inspectorRoad"><details class="section" open><summary class="eyebrow">Geometría de proyecto</summary><h2>Parámetros del trazado</h2>
   <label class="field">Nombre <input id="roadName" value="Carretera 1" maxlength="80"></label>
   <label class="field">Categoría <select id="roadType"><option value="convencional">Convencional</option><option value="autopista">Autovía</option><option value="urbana">Urbana</option><option value="camino">Camino</option></select></label>
@@ -459,7 +461,6 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 <label class="field">Radio orientativo (m) <input id="rbSlipRadius" type="number" min="12" max="80" step="1" value="25"></label>
 <p class="muted" id="rbSlipHelp">Solo ramales adyacentes compatibles con la circulación.</p></details>
 <p class="muted" id="rbSectionSummary">Anillo de 2 carriles · 7 m</p>
-    <div class="row wrap"><button class="btn grow" id="rbApplyBtn" type="button">Aplicar a rotonda</button></div>
     <p class="muted">Coloca la rotonda con un clic; después selecciónala para editarla o arrastrar su centro. Arrastra los puntos rojos para orientar cada acceso. Los ramales conectados adoptan los carriles y dimensiones de la carretera. Entradas y salidas curvas, con isletas separadoras. Es un esquema geométrico en planta, no un proyecto de trazado validado.</p>
    </details></div>
   <div id="inspectorDetails"><details class="section" open><summary class="eyebrow">Elemento seleccionado</summary><h2>Información geométrica</h2><div id="selection">Sin selección. Crea un trazado o selecciona una carretera.</div>
@@ -1146,6 +1147,7 @@ function applySectionPanel(){
 function apply(){const r=roadById(selected);if(!r){status('Selecciona antes una carretera.');return;}checkpoint();Object.assign(r,params());persist();render();status('Parámetros actualizados.');}
 
 // Rotondas: anillo en planta, ramales y conexiones magnéticas a los extremos de las carreteras.
+let roundaboutEditSession=null;
 function roundaboutParams(){
  const lanes=clamp(Math.round(Number($('rbLanes').value)||2),1,3);
  const laneWidth=clamp(Number($('rbLaneWidth').value)||3.5,3,5);
@@ -1267,6 +1269,7 @@ function updateLinkedRoads(rbId){
  }
 }
 function chooseRoundabout(id){
+ roundaboutEditSession=null;
  inspectorClosed=false;selectedJunction=null;selectedRoundabout=roundaboutAt(id)?id:null;selected=null;selectedSegment=null;
  const rb=roundaboutAt(selectedRoundabout);
  if(rb){const dim=roundaboutDimensions(rb);$('rbArms').value=rb.arms;$('rbDiameter').value=rb.diameter;$('rbArmLength').value=rb.armLength;$('rbOrientation').value=rb.orientation;$('rbLanes').value=dim.lanes;$('rbLaneWidth').value=dim.laneWidth;$('rbEntryRadius').value=dim.entryRadius;$('rbExitRadius').value=dim.exitRadius;
@@ -1281,18 +1284,28 @@ function roundaboutClick(e,rb){
  chooseRoundabout(rb.id);
  status('Rotonda seleccionada · '+rb.arms+' ramales.');
 }
-function applyRoundabout(){
+function applyRoundabout(event=null){
  const r=roundaboutAt(selectedRoundabout);
  if(!r)return status('Selecciona una rotonda en el mapa para editarla.');
- checkpoint();
  const p=roundaboutParams(),existing=r.armOffsets||[];
- if(p.slipEnabled&&!roundaboutSlipGeometry({...r,...p}))return status('Carril directo no compatible: selecciona la salida contigua del giro a la derecha.');
+ if(p.slipEnabled&&!roundaboutSlipGeometry({...r,...p}))
+  return status('Carril directo no compatible: selecciona la salida contigua del giro a la derecha.');
+ if(!Object.entries(p).some(([key,value])=>r[key]!==value)&&existing.length===p.arms){
+  if(!event)status('Los parámetros de la rotonda ya están aplicados.');
+  return;
+ }
+ // Agrupa los movimientos sucesivos de un mismo control en una sola acción Deshacer.
+ const field=event?.target?.id||null;
+ if(!event||!roundaboutEditSession||roundaboutEditSession.rbId!==r.id||roundaboutEditSession.field!==field){
+  roundaboutEditSession={rbId:r.id,field,checkpointed:false};
+ }
+ if(!roundaboutEditSession.checkpointed){checkpoint();roundaboutEditSession.checkpointed=true;}
  Object.assign(r,p);
- if(p.slipFrom===p.slipTo){r.slipEnabled=false;$('rbSlipEnabled').checked=false;}
- // El parámetro define la longitud común; cada extremo conserva su ángulo propio.
  r.armOffsets=Array.from({length:p.arms},(_,i)=>existing[i]??0);
  delete r.armLengths;
- updateLinkedRoads(r.id);updateRoundaboutUI();persist();render();status('Geometría de la rotonda actualizada.');
+ updateLinkedRoads(r.id);updateRoundaboutUI();persist();render();
+ status(event?'Rotonda actualizada en tiempo real.':'Geometría de la rotonda actualizada.');
+ if(!event)roundaboutEditSession=null;
 }
 /* Glorieta en planta, unidades en metros; transiciones Bézier orientativas. */
 function roundaboutArmRoad(rb,index){
@@ -1766,6 +1779,7 @@ function syncInspector(){
  $('mapInspector').hidden=!visiblePanel;
  syncQuickActions();
  if(!visiblePanel)return;
+ $('rbApplyBtn').hidden=kind!=='roundabout';
  $('inspectorRoad').hidden=kind!=='road';
  $('inspectorRoundabout').hidden=kind!=='roundabout';
  $('inspectorDetails').hidden=drawing||(!rb&&!road);
@@ -2278,8 +2292,25 @@ Object.keys(bases).forEach(id=>{const node=document.querySelector('input[name=ba
 layerIds.forEach(id=>$(id).onchange=render);
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 $('finishBtn').onclick=()=>finish();$('cancelBtn').onclick=()=>{if(mode==='draw')finish(false);else{selected=null;selectedRoundabout=null;selectedJunction=null;pendingJunction=null;selectedSegment=null;setMode('select');}};$('undoBtn').onclick=undo;
-['rbArms','rbLanes','rbLaneWidth','rbDiameter','rbOrientation','rbShape','rbElongation','rbAxisAngle','rbSlipEnabled','rbSlipFrom','rbSlipTo','rbSlipRadius'].forEach(id=>$(id).addEventListener('input',updateRoundaboutUI));
-$('rbApplyBtn').onclick=applyRoundabout;
+const liveRoundaboutFields=['rbArms','rbLanes','rbLaneWidth','rbDiameter','rbArmLength',
+ 'rbOrientation','rbShape','rbElongation','rbAxisAngle','rbEntryRadius','rbExitRadius',
+ 'rbSlipEnabled','rbSlipFrom','rbSlipTo','rbSlipRadius'];
+liveRoundaboutFields.forEach(id=>{
+ const input=$(id);
+ input.addEventListener('input',event=>{
+  updateRoundaboutUI();
+  if(!roundaboutAt(selectedRoundabout)||terrainMode||mode!=='select')return;
+  if(input.type==='number'&&(input.value===''||!input.validity.valid))return;
+  applyRoundabout(event);
+ });
+ input.addEventListener('change',()=>{
+  if(roundaboutEditSession?.field===id)roundaboutEditSession=null;
+ });
+ input.addEventListener('focusout',()=>{
+  if(roundaboutEditSession?.field===id)roundaboutEditSession=null;
+ });
+});
+$('rbApplyBtn').onclick=()=>applyRoundabout();
 $('jxApply').onclick=()=>{const j=junctions.find(x=>x.id===selectedJunction);if(!j)return;checkpoint();Object.assign(j,jxParams());persist();jxChoose(j.id);status('Enlace actualizado.');};
 $('jxDelete').onclick=()=>{if(!selectedJunction)return;checkpoint();junctions=junctions.filter(j=>j.id!==selectedJunction);selectedJunction=null;persist();render();status('Enlace eliminado.');};
 $('rbDeleteBtn').onclick=()=>{const rb=roundaboutAt(selectedRoundabout);if(!rb)return status('Selecciona una rotonda.');if(!confirm('¿Eliminar esta rotonda?'))return;checkpoint();roundabouts=roundabouts.filter(r=>r.id!==rb.id);for(const r of roads){for(const [key,con] of Object.entries(r.connections||{}))if(con.roundaboutId===rb.id)delete r.connections[key];}selectedRoundabout=null;persist();render();status('Rotonda eliminada.');};
