@@ -16,7 +16,7 @@ const ids=new Set(cfg.map(c=>c.id));
 const host=document.querySelector('.mapcontainer');
 if(!host)return;
 const enabled=new Set(),cache=new Map();
-let active=false,focused=null,showFlows=false,direction='ambos',running=false,token=0,sequence=Promise.resolve(),attached=new WeakSet(),lastExtent='';
+let active=false,focused=null,showFlows=false,direction='ambos',running=false,queued=false,token=0,sequence=Promise.resolve(),attached=new WeakSet(),lastExtent='';
 const panel=document.createElement('section');panel.className='mob-panel';panel.hidden=true;panel.setAttribute('aria-label','Capas de movilidad');
 panel.innerHTML='<div class="mob-head"><strong>MOVILIDAD · PUNTOS</strong><button type="button" id="mobCollapse" aria-label="Plegar panel">−</button></div><div class="mob-body"><p class="mob-sub">Ubicaciones reales de OpenStreetMap. Selecciona capas y actualiza el área del mapa.</p><div id="mobCats" class="mob-cats"></div><div class="mob-actions"><button type="button" id="mobLoad">Actualizar zona</button><button type="button" id="mobFlow" aria-pressed="false">Flujos: no</button></div><label class="mob-direction">Sentido <select id="mobDirection"><option value="ambos">Entradas y salidas</option><option value="entradas">Entradas</option><option value="salidas">Salidas</option></select></label><div id="mobState" role="status">Acerca el mapa a una localidad para cargar los puntos.</div><p class="mob-foot">Flujos: conexiones potenciales calculadas por proximidad. No son trayectos, viajeros ni matrices oficiales.</p><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">Datos © OpenStreetMap contributors</a></div>';
 const overlay=document.createElementNS('http://www.w3.org/2000/svg','svg');overlay.setAttribute('class','mob-overlay');overlay.setAttribute('aria-label','Puntos y conexiones potenciales');
@@ -146,7 +146,8 @@ function fetchOne(cat,box){
  });
 }
 function load(){
- if(!active||running)return;
+ if(!active)return;
+ if(running){queued=true;return}
  const area=extent();if(!area){status('Acerca el mapa al menos al zoom 12; se descargan solo áreas locales.');return}
  if(!enabled.size){status('Activa al menos una categoría.');return}
  running=true;const generation=++token;lastExtent=area.box;panel.querySelector('#mobLoad').disabled=true;
@@ -161,14 +162,15 @@ function load(){
     const features=await (sequence=sequence.catch(()=>{}).then(()=>fetchOne(cat,area.box)));
     if(generation!==token||!active)break;
     cache.set(cat.id,{box:area.box,features});successes++;
+    const count=panel.querySelector('#mobCount-'+cat.id);if(count)count.textContent=String(features.length);
    }catch(e){failed.push(cat.title+' ('+e.message+')')}
    draw();
   }
   if(active&&generation===token){
    const n=collect().length;
-   status(n+' puntos visibles en las capas cargadas. '+(failed.length?'No disponible: '+failed.join(', '):'Selecciona un punto para consultar sus datos.'));
+   status(n+' puntos recuperados de OSM. '+(failed.length?'No disponible: '+failed.join(', '):'Selecciona un punto para consultar sus datos.'));
   }
- })().finally(()=>{running=false;panel.querySelector('#mobLoad').disabled=false;draw()});
+ })().finally(()=>{running=false;panel.querySelector('#mobLoad').disabled=false;draw();if(queued&&active){queued=false;load()}});
 }
 function buildControls(){
  for(const c of cfg){
