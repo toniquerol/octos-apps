@@ -248,6 +248,7 @@ header{position:relative;z-index:1400}
     <label class="radio"><input type="radio" name="base" value="gray"><span>IGN Base gris<small>Fondo técnico</small></span></label>
     <label class="radio"><input type="radio" name="base" value="pnoa" checked><span>PNOA ortofoto<small>Fotografía aérea · España</small></span></label>
     <label class="radio"><input type="radio" name="base" value="relief"><span>IGN Relieve<small>Relieve de terreno</small></span></label>
+    <label class="radio"><input type="radio" name="base" value="dark"><span>Mapa oscuro<small>OcToS Drive · vectorial NFS DARK</small></span></label>
    </div></details>
    <details class="viz-group" open><summary class="viz-summary">Geoinformación <span class="viz-count" id="geoCount">—</span></summary><div class="viz-body"><p id="geoInfo" class="muted" role="status">Cargando capas aprobadas de Layers…</p><div id="geoList"></div></div></details>
   </details>
@@ -340,7 +341,8 @@ const bases={
  ign:{url:'https://tms-ign-base.idee.es/1.0.0/IGNBaseTodo/{z}/{x}/{-y}.jpeg',attr:'© IGN / CNIG',tms:true},
  gray:{url:'https://tms-ign-base.idee.es/1.0.0/IGNBaseGris/{z}/{x}/{-y}.jpeg',attr:'© IGN / CNIG',tms:true},
  pnoa:{url:'https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg',attr:'© IGN / CNIG · PNOA',tms:true},
- relief:{url:'https://tms-relieve.idee.es/1.0.0/relieve/{z}/{x}/{-y}.jpeg',attr:'© IGN / CNIG',tms:true}
+ relief:{url:'https://tms-relieve.idee.es/1.0.0/relieve/{z}/{x}/{-y}.jpeg',attr:'© IGN / CNIG',tms:true},
+ dark:{url:'https://tiles.openfreemap.org/styles/liberty',attr:'© OpenFreeMap · OpenMapTiles · OpenStreetMap',vector:true}
 };
 if(!window.L){$('status').textContent='No se ha podido cargar Leaflet. Comprueba la conexión.';return;}
 const map=L.map('map',{center:[40.2,-3.7],zoom:6,zoomControl:false,doubleClickZoom:false,preferCanvas:true});
@@ -446,7 +448,108 @@ function makeGeometry(road){
  emit([last,pts[pts.length-1]],0,0,pts.length-2);
  return {parts,arcs,total:parts.reduce((s,p)=>s+p.length,0),minRadius:arcs.length?Math.min(...arcs.map(a=>a.radius)):null};
 }
-function setBase(id){if(baseLayer)map.removeLayer(baseLayer);const b=bases[id]||bases.osm;baseLayer=L.tileLayer(b.url,{maxZoom:19,attribution:b.attr,tms:b.tms,crossOrigin:true});baseLayer.on('tileerror',()=>{if(!$('status').textContent.includes('Teselas'))status('Teselas del fondo no disponibles. Selecciona otro mapa base.');});baseLayer.addTo(map);}
+// Mapa oscuro: misma fuente Liberty y paleta NFS DARK que OcToS Drive.
+let baseChange=0,currentBase='pnoa',darkBridgePromise=null;
+function loadDarkBridge(){
+ if(L.maplibreGL)return Promise.resolve();
+ if(!darkBridgePromise){
+  const script=url=>new Promise((resolve,reject)=>{const element=document.createElement('script');element.src=url;element.onload=resolve;element.onerror=()=>reject(Error('No se pudo cargar el motor vectorial'));document.head.appendChild(element);});
+  darkBridgePromise=(async()=>{
+   if(!window.maplibregl){
+    const css=document.createElement('link');css.rel='stylesheet';css.href='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';document.head.appendChild(css);
+    await script('https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js');
+   }
+   if(!L.maplibreGL)await script('https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js');
+   if(!L.maplibreGL)throw Error('Adaptador MapLibre/Leaflet no disponible');
+  })().catch(err=>{darkBridgePromise=null;throw err;});
+ }
+ return darkBridgePromise;
+}
+const driveRoads=[
+ {id:'motorway',classes:['motorway'],color:'#FF841C',width:30},
+ {id:'trunk',classes:['trunk'],color:'#999999',width:24},
+ {id:'primary',classes:['primary'],color:'#999999',width:18},
+ {id:'secondary',classes:['secondary'],color:'#999999',width:14},
+ {id:'tertiary',classes:['tertiary'],color:'#999999',width:10},
+ {id:'minor',classes:['minor','service','track','path','street','street_limited','construction'],color:'#999999',width:7}
+];
+function darkMetersToPixels(m){
+ const lat=Math.min(85,Math.abs(map.getCenter().lat));
+ return Math.min(180,Math.max(.6,m/(156543.03392804097*Math.cos(lat*RAD)/Math.pow(2,map.getZoom()))));
+}
+function syncDarkDriveRoads(gl){
+ if(currentBase!=='dark'||!gl||!gl.isStyleLoaded())return;
+ for(const road of driveRoads){
+  const width=darkMetersToPixels(road.width);
+  for(const [prefix,multiplier] of [['road',1],['halo',1.6]]){
+   const id='roads-dark-'+prefix+'-'+road.id;
+   if(gl.getLayer(id))gl.setPaintProperty(id,'line-width',width*multiplier);
+  }
+ }
+}
+function styleDarkDrive(gl){
+ const style=gl.getStyle();
+ if(!style?.layers)return;
+ const source=Object.keys(style.sources||{}).find(id=>style.sources[id].type==='vector'&&/openmaptiles|openfreemap/i.test(id+' '+(style.sources[id].url||'')))||
+  Object.keys(style.sources||{}).find(id=>style.sources[id].type==='vector');
+ for(const layer of style.layers){
+  const id=layer.id,sourceLayer=layer['source-layer']||'',descriptor=(id+' '+sourceLayer).toLowerCase();
+  if((sourceLayer==='transportation'||sourceLayer==='poi')&&source){
+   gl.setLayoutProperty(id,'visibility','none');
+  }else if(layer.type==='background'){
+   gl.setPaintProperty(id,'background-color','#10151c');
+  }else if(layer.type==='fill'){
+   const fill=descriptor.includes('water')?'#122331':descriptor.includes('building')?'#555555':
+    descriptor.includes('park')||descriptor.includes('landcover')?'#151f20':'#171d25';
+   try{gl.setPaintProperty(id,'fill-color',fill);gl.setPaintProperty(id,'fill-opacity',.88);}catch{}
+  }else if(layer.type==='line'&&sourceLayer!=='transportation'){
+   try{gl.setPaintProperty(id,'line-opacity',.35);}catch{}
+  }
+ }
+ if(source){
+  for(const road of driveRoads){
+   const filter=['in',['get','class'],['literal',road.classes]];
+   for(const [prefix,widthFactor,opacity] of [['halo',1.6,.16],['road',1,.95]]){
+    const id='roads-dark-'+prefix+'-'+road.id;
+    if(!gl.getLayer(id))gl.addLayer({id,type:'line',source,'source-layer':'transportation',filter,
+     layout:{'line-join':'round','line-cap':'round'},
+     paint:{'line-color':road.color,'line-opacity':opacity,'line-width':darkMetersToPixels(road.width)*widthFactor}});
+   }
+  }
+ }
+}
+function setBase(id){
+ const b=bases[id]||bases.osm,change=++baseChange;
+ if(b.vector){
+  const previous=baseLayer,previousId=currentBase;
+  status('Cargando Mapa oscuro de OcToS Drive…');
+  loadDarkBridge().then(()=>{
+   if(change!==baseChange)return;
+   const layer=L.maplibreGL({style:b.url,attribution:b.attr,interactive:false}).addTo(map);
+   const gl=layer.getMaplibreMap();
+   baseLayer=layer;currentBase=id;
+   if(previous)map.removeLayer(previous);
+   const onStyle=()=>{
+    if(baseLayer!==layer)return;
+    try{styleDarkDrive(gl);syncDarkDriveRoads(gl);}
+    catch(err){status('No se pudo configurar el estilo oscuro: '+err.message);}
+   };
+   gl.on('style.load',onStyle);
+   if(gl.isStyleLoaded())onStyle();
+  }).catch(err=>{
+   if(change!==baseChange)return;
+   status('No se pudo cargar Mapa oscuro: '+err.message);
+   const radio=document.querySelector('input[name=base][value="'+previousId+'"]');
+   if(radio)radio.checked=true;
+  });
+  return;
+ }
+ if(baseLayer)map.removeLayer(baseLayer);
+ baseLayer=L.tileLayer(b.url,{maxZoom:19,attribution:b.attr,tms:b.tms,crossOrigin:true});
+ baseLayer.on('tileerror',()=>{if(!$('status').textContent.includes('Teselas'))status('Teselas del fondo no disponibles. Selecciona otro mapa base.');});
+ baseLayer.addTo(map);currentBase=id;
+}
+map.on('zoomend moveend',()=>{if(currentBase==='dark'&&baseLayer?.getMaplibreMap)syncDarkDriveRoads(baseLayer.getMaplibreMap());});
 function status(msg){$('status').textContent=msg;}
 function checkpoint(){history.push(JSON.stringify({roads,roundabouts}));if(history.length>30)history.shift();}
 function persist(){try{localStorage.setItem(K,JSON.stringify({version:1,roads,roundabouts}));}catch(e){status('No se ha podido guardar automáticamente. Usa Guardar JSON.');}}
