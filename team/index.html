@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0E0E10"><title>OcToS Team · V1.0</title>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0E0E10"><title>OcToS Team · V2.0</title>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <style>
 :root{--bg:#0e0e10;--panel:#1a1b1e;--panel2:#232428;--line:#383a40;--ink:#f1f1ef;--muted:#92949b;--accent:#ff6a1a}
@@ -18,19 +18,33 @@ svg [data-pick]{cursor:pointer}svg .pod:hover>rect:first-child,svg .pod.selected
 .inspector{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;min-height:450px}.inspector-head{font-size:11px;letter-spacing:.18em;color:var(--accent)}.inspector h2{font-size:22px;margin:28px 0 8px;line-height:1.2}.inspector .tag{width:max-content;font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:1px solid #64666c;border-radius:5px;padding:7px 9px;color:#b7b8be}.inspector p{font-size:13px;line-height:1.7;color:#acadb3}.divider{height:1px;background:var(--line);margin:24px 0}.inspector .meta{font-size:11px;color:var(--muted)}.inspector .meta strong{display:block;color:var(--ink);font-size:13px;margin-top:8px;font-weight:500}.inspector .bottom{font-size:11px;color:#86888f;margin-top:auto;padding-top:28px}.legend{display:flex;gap:20px;flex-wrap:wrap;color:#9c9ea4;font-size:11px;padding:16px 3px}.dot{width:8px;height:8px;display:inline-block;border-radius:50%;background:#ff6a1a;margin-right:7px}.dot.muted{background:#666970}.view{display:none}.view.active{display:block}.empty{border:1px solid var(--line);border-radius:14px;padding:45px;background:var(--panel)}.empty h2{font-size:24px}.empty p{font-size:13px;color:var(--muted)}
 footer{border-top:1px solid var(--line);padding:20px clamp(16px,3vw,44px);display:flex;justify-content:space-between;color:#77797e;font-size:10px;letter-spacing:.08em}
 @media(max-width:1050px){.menu-grid{grid-template-columns:repeat(2,1fr)}.room-layout{grid-template-columns:1fr}.inspector{min-height:210px}.hero-index{display:none}}@media(max-width:610px){header{padding:0 14px;height:64px}.brand-sub,.version{display:none}nav button{padding:8px;font-size:11px}.word{font-size:16px}main{padding:18px 13px 35px}.hero{padding:18px 0 22px}.stats{grid-template-columns:repeat(2,1fr)}.stat{padding:15px}.menu-grid{grid-template-columns:1fr}.tile{min-height:190px}.room-top{align-items:start;flex-direction:column}.map-wrap{min-height:230px}.legend{gap:10px}.room-top h1{font-size:21px}}
+
+/* Indicadores de telemetría (V2): no alteran la geometría de la sala */
+svg .station .agent-indicator{transition:fill .25s ease}
+svg .station[data-status="idle"] .agent-indicator,
+svg .station[data-status="completed"] .agent-indicator{fill:#369D69}
+svg .station[data-status="running"] .agent-indicator{fill:#D94A45}
+svg .station[data-status="waiting"] .agent-indicator{fill:#DBA53E}
+svg .station[data-status="unknown"] .agent-indicator{fill:#74767C}
+svg .station .agent-indicator.blink{animation:team-finished-blink .9s steps(1,end) infinite}
+@keyframes team-finished-blink{0%,49%{opacity:1}50%,100%{opacity:.14}}
+.telemetry-check{border-left:1px solid var(--line);padding:5px 0 5px 12px;color:var(--muted);font-size:11px;white-space:nowrap}
+.telemetry-check.error{color:#d9a75b}
+.legend .dot.running{background:#D94A45}.legend .dot.idle{background:#369D69}.legend .dot.unknown{background:#74767C}
+@media(prefers-reduced-motion:reduce){svg .station .agent-indicator.blink{animation:none;stroke:#f1f1ef;stroke-width:4}}
 </style></head>
-<body><header><div class="brand"><div class="mark" aria-hidden="true"><svg viewBox="0 0 36 36" fill="none"><rect x="2" y="2" width="22" height="31" rx="3" stroke="#777"/><path d="M13 13v17M5 22h17" stroke="#858585"/><path d="M13 7h13" stroke="#ff6a1a" stroke-dasharray="2 2"/><circle cx="30" cy="13" r="3" fill="#ff6a1a"/><circle cx="30" cy="25" r="3" fill="#ff6a1a"/></svg></div><div><div class="word">OcToS <span style="color:var(--accent)">TEAM</span></div><div class="brand-sub">Coordinación interna</div></div></div><nav><button data-page="home" class="active">Inicio</button><button data-page="room">Sala</button><span class="version">V1.0</span></nav></header>
+<body><header><div class="brand"><div class="mark" aria-hidden="true"><svg viewBox="0 0 36 36" fill="none"><rect x="2" y="2" width="22" height="31" rx="3" stroke="#777"/><path d="M13 13v17M5 22h17" stroke="#858585"/><path d="M13 7h13" stroke="#ff6a1a" stroke-dasharray="2 2"/><circle cx="30" cy="13" r="3" fill="#ff6a1a"/><circle cx="30" cy="25" r="3" fill="#ff6a1a"/></svg></div><div><div class="word">OcToS <span style="color:var(--accent)">TEAM</span></div><div class="brand-sub">Coordinación interna</div></div></div><nav><button data-page="home" class="active">Inicio</button><button data-page="room">Sala</button><span class="version">V2.0</span></nav></header>
 <main>
-<section id="home" class="view active"><div class="hero"><div><div class="eyebrow">Aplicación / 01 · Sistema interno</div><h1>Un equipo.<br>Cuatro unidades.</h1><p>Entorno visual para organizar la estructura de trabajo OcToS. Distribución de puestos, responsabilidades y coordinación central. Primera versión de representación.</p></div><div class="hero-index">01</div></div>
+<section id="home" class="view active"><div class="hero"><div><div class="eyebrow">Aplicación / 01 · Sistema interno</div><h1>Un equipo.<br>Cuatro unidades.</h1><p>Entorno visual para organizar la estructura de trabajo OcToS. Distribución de puestos, responsabilidades y coordinación central. Indicadores de actividad visual por puesto.</p></div><div class="hero-index">01</div></div>
 <div class="stats"><div class="stat"><b>04</b><span>Grupos de trabajo</span></div><div class="stat"><b>08</b><span>Agentes especializados</span></div><div class="stat"><b>01</b><span>Dirección central</span></div><div class="stat"><b>02</b><span>Puestos exteriores</span></div></div>
-<div class="section-title"><h2>Menú principal</h2><small>MÓDULOS DE TEAM · V1.0</small></div>
+<div class="section-title"><h2>Menú principal</h2><small>MÓDULOS DE TEAM · V2.0</small></div>
 <div class="menu-grid">
 <button class="tile primary" data-page="room"><div class="tile-top"><span class="tile-index">MÓDULO 01</span><span class="tile-icon">▦</span></div><h3>Sala de trabajo</h3><p>Plano cenital, cuatro grupos, dirección y sala exterior. Selección de puestos.</p><span class="go">ABRIR SALA</span></button>
 <button class="tile" data-page="structure"><div class="tile-top"><span class="tile-index">MÓDULO 02</span><span class="tile-icon">⑂</span></div><h3>Organigrama</h3><p>Jerarquía funcional del equipo. Módulo reservado para una próxima versión.</p><span class="go">VER ESTRUCTURA</span></button>
 <button class="tile" data-page="inbox"><div class="tile-top"><span class="tile-index">MÓDULO 03</span><span class="tile-icon">↧</span></div><h3>Entrada / Input</h3><p>Recepción y distribución de encargos. Preparado para su desarrollo posterior.</p><span class="go">VER MÓDULO</span></button>
 <button class="tile" data-page="system"><div class="tile-top"><span class="tile-index">MÓDULO 04</span><span class="tile-icon">⌘</span></div><h3>Configuración</h3><p>Parámetros de puestos y equipos. Reservado, sin funciones activas.</p><span class="go">VER MÓDULO</span></button>
 </div></section>
-<section id="room" class="view"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Planta conceptual · Selecciona un puesto o una unidad en el esquema</p></div><div class="actions"><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
+<section id="room" class="view"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Planta conceptual · Selecciona un puesto o una unidad en el esquema</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
 <div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="0 0 1238 765" role="img" aria-label="Plano cenital de OcToS Team: cuatro grupos, dirección y sala de entrada y trabajador principal">
 <defs><pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M26 0H0V26" fill="none" stroke="#FFFFFF" stroke-opacity=".035" stroke-width="1"/></pattern><filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="9" stdDeviation="10" flood-color="#000" flood-opacity=".3"/></filter></defs>
 <rect x="0" y="0" width="1238" height="765" rx="14" fill="#111214"/><rect width="1238" height="765" fill="url(#grid)"/>
@@ -60,6 +74,7 @@ footer{border-top:1px solid var(--line);padding:20px clamp(16px,3vw,44px);displa
 <text x="109" y="307" class="label pod-sub">Identidad e interfaces</text></g>
 <g class="station" data-pick="agent-1" tabindex="0" role="button" aria-label="Agente 1, Identidad">
 <rect x="150" y="339" width="92" height="39" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
+<circle class="agent-indicator" cx="229" cy="350" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A01: sin datos</title></circle>
 <rect x="181" y="344" width="30" height="13" rx="2" fill="#17181B" stroke="#7E8085"/>
 <path d="M186 358h20" stroke="#FF6A1A" opacity=".75"/>
 <circle cx="196" cy="405" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
@@ -68,6 +83,7 @@ footer{border-top:1px solid var(--line);padding:20px clamp(16px,3vw,44px);displa
 </g>
 <g class="station" data-pick="agent-2" tabindex="0" role="button" aria-label="Agente 2, Interfaces">
 <rect x="311" y="339" width="92" height="39" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
+<circle class="agent-indicator" cx="390" cy="350" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A02: sin datos</title></circle>
 <rect x="342" y="344" width="30" height="13" rx="2" fill="#17181B" stroke="#7E8085"/>
 <path d="M347 358h20" stroke="#FF6A1A" opacity=".75"/>
 <circle cx="357" cy="405" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
@@ -81,6 +97,7 @@ footer{border-top:1px solid var(--line);padding:20px clamp(16px,3vw,44px);displa
 <text x="514" y="307" class="label pod-sub">Cartografía e integración</text></g>
 <g class="station" data-pick="agent-3" tabindex="0" role="button" aria-label="Agente 3, Cartografía">
 <rect x="555" y="339" width="92" height="39" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
+<circle class="agent-indicator" cx="634" cy="350" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A03: sin datos</title></circle>
 <rect x="586" y="344" width="30" height="13" rx="2" fill="#17181B" stroke="#7E8085"/>
 <path d="M591 358h20" stroke="#FF6A1A" opacity=".75"/>
 <circle cx="601" cy="405" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
@@ -89,6 +106,7 @@ footer{border-top:1px solid var(--line);padding:20px clamp(16px,3vw,44px);displa
 </g>
 <g class="station" data-pick="agent-4" tabindex="0" role="button" aria-label="Agente 4, Integración">
 <rect x="716" y="339" width="92" height="39" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
+<circle class="agent-indicator" cx="795" cy="350" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A04: sin datos</title></circle>
 <rect x="747" y="344" width="30" height="13" rx="2" fill="#17181B" stroke="#7E8085"/>
 <path d="M752 358h20" stroke="#FF6A1A" opacity=".75"/>
 <circle cx="762" cy="405" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
@@ -102,6 +120,7 @@ footer{border-top:1px solid var(--line);padding:20px clamp(16px,3vw,44px);displa
 <text x="109" y="512" class="label pod-sub">Herramientas y extensión</text></g>
 <g class="station" data-pick="agent-5" tabindex="0" role="button" aria-label="Agente 5, Desarrollo Ruby">
 <rect x="150" y="544" width="92" height="39" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
+<circle class="agent-indicator" cx="229" cy="555" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A05: sin datos</title></circle>
 <rect x="181" y="549" width="30" height="13" rx="2" fill="#17181B" stroke="#7E8085"/>
 <path d="M186 563h20" stroke="#FF6A1A" opacity=".75"/>
 <circle cx="196" cy="610" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
@@ -110,6 +129,7 @@ footer{border-top:1px solid var(--line);padding:20px clamp(16px,3vw,44px);displa
 </g>
 <g class="station" data-pick="agent-6" tabindex="0" role="button" aria-label="Agente 6, Herramientas 3D">
 <rect x="311" y="544" width="92" height="39" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
+<circle class="agent-indicator" cx="390" cy="555" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A06: sin datos</title></circle>
 <rect x="342" y="549" width="30" height="13" rx="2" fill="#17181B" stroke="#7E8085"/>
 <path d="M347 563h20" stroke="#FF6A1A" opacity=".75"/>
 <circle cx="357" cy="610" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
@@ -123,6 +143,7 @@ footer{border-top:1px solid var(--line);padding:20px clamp(16px,3vw,44px);displa
 <text x="514" y="512" class="label pod-sub">Investigación y prototipos</text></g>
 <g class="station" data-pick="agent-7" tabindex="0" role="button" aria-label="Agente 7, Investigación">
 <rect x="555" y="544" width="92" height="39" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
+<circle class="agent-indicator" cx="634" cy="555" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A07: sin datos</title></circle>
 <rect x="586" y="549" width="30" height="13" rx="2" fill="#17181B" stroke="#7E8085"/>
 <path d="M591 563h20" stroke="#FF6A1A" opacity=".75"/>
 <circle cx="601" cy="610" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
@@ -131,6 +152,7 @@ footer{border-top:1px solid var(--line);padding:20px clamp(16px,3vw,44px);displa
 </g>
 <g class="station" data-pick="agent-8" tabindex="0" role="button" aria-label="Agente 8, Prototipos">
 <rect x="716" y="544" width="92" height="39" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
+<circle class="agent-indicator" cx="795" cy="555" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A08: sin datos</title></circle>
 <rect x="747" y="549" width="30" height="13" rx="2" fill="#17181B" stroke="#7E8085"/>
 <path d="M752 563h20" stroke="#FF6A1A" opacity=".75"/>
 <circle cx="762" cy="610" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
@@ -153,19 +175,81 @@ footer{border-top:1px solid var(--line);padding:20px clamp(16px,3vw,44px);displa
 <circle cx="1075" cy="596" r="17" fill="#56575E" stroke="#A7A8AD" stroke-width="2"/>
 </g>
 <text x="48" y="736" class="label plan-caption">SIMULACIÓN VISUAL · SIN CONEXIONES OPERATIVAS</text>
-<text x="1196" y="736" class="label plan-caption" text-anchor="end">OcToS TEAM / V1.0</text>
-</svg></div><div class="legend"><span><i class="dot"></i>Dirección / enlace</span><span><i class="dot muted"></i>Puestos y equipos</span><span>Los biombos delimitan las cuatro unidades</span></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo o uno de los dos puestos exteriores para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div class="bottom">Representación conceptual. No hay agentes conectados ni ejecución automática en esta versión.</div></aside></div></section>
+<text x="1196" y="736" class="label plan-caption" text-anchor="end">OcToS TEAM / V2.0</text>
+</svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo o uno de los dos puestos exteriores para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div class="bottom">Representación conceptual. No hay agentes conectados ni ejecución automática en esta versión.</div></aside></div></section>
 <section id="structure" class="view"><div class="eyebrow">Módulo 02</div><div class="empty"><h2>Organigrama</h2><p>Jerarquía preparada: dirección, cuatro unidades y ocho agentes. La vista gráfica interactiva se incorporará posteriormente.</p><button class="outline" data-page="room">Ver distribución en sala</button></div></section>
 <section id="inbox" class="view"><div class="eyebrow">Módulo 03</div><div class="empty"><h2>Entrada / Input</h2><p>Módulo reservado a solicitudes y flujos de trabajo. En V1 únicamente se representa su puesto conectado con dirección.</p><button class="outline" data-page="room">Ver puesto Input</button></div></section>
 <section id="system" class="view"><div class="eyebrow">Módulo 04</div><div class="empty"><h2>Configuración</h2><p>Área reservada a la definición de agentes, equipos y permisos en versiones posteriores.</p><button class="outline" data-page="home">Volver al inicio</button></div></section>
-</main><footer><span>OcToS 3D STUDIO · TEAM</span><span>V1.0 / ESTRUCTURA VISUAL</span></footer>
+</main><footer><span>OcToS 3D STUDIO · TEAM</span><span>V2.0 / MONITOR DE ACTIVIDAD</span></footer>
 <script>
 (function(){
 var details={"chief":{"type":"Dirección","name":"Jefe de equipo","zone":"Sala de trabajo","desc":"Coordinación de los cuatro grupos. Recibe la entrada de información desde Input y organiza el flujo general."},"input":{"type":"Sala exterior","name":"Input","zone":"Conectado con Dirección","desc":"Puesto de entrada. Recibe solicitudes, materiales e instrucciones para su traslado a la dirección."},"worker":{"type":"Sala exterior","name":"Trabajador principal","zone":"Área de trabajo independiente","desc":"Puesto principal exterior, separado del espacio de los cuatro grupos."},"group-1":{"type":"Unidad 01","name":"Imagen corporativa","zone":"Sala de trabajo","desc":"Agentes 01 y 02: identidad visual e interfaces."},"group-2":{"type":"Unidad 02","name":"Sistemas de referencia y WMS","zone":"Sala de trabajo","desc":"Agentes 03 y 04: cartografía, fuentes e integración."},"group-3":{"type":"Unidad 03","name":"SketchUp y Caja Ruby","zone":"Sala de trabajo","desc":"Agentes 05 y 06: desarrollo Ruby y herramientas 3D."},"group-4":{"type":"Unidad 04","name":"I+D+i","zone":"Sala de trabajo","desc":"Agentes 07 y 08: investigación y prototipado."},"agent-1":{"type":"Agente 01","name":"Identidad","zone":"Grupo 01","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-2":{"type":"Agente 02","name":"Interfaces","zone":"Grupo 01","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-3":{"type":"Agente 03","name":"Cartografía","zone":"Grupo 02","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-4":{"type":"Agente 04","name":"Integración","zone":"Grupo 02","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-5":{"type":"Agente 05","name":"Desarrollo Ruby","zone":"Grupo 03","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-6":{"type":"Agente 06","name":"Herramientas 3D","zone":"Grupo 03","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-7":{"type":"Agente 07","name":"Investigación","zone":"Grupo 04","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-8":{"type":"Agente 08","name":"Prototipos","zone":"Grupo 04","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."}};
 var zoom=1;
+
+/* Telemetría ligera mediante status.json. La aplicación solo observa estados
+   que otro proceso publique; no lee actividad de ChatGPT automáticamente. */
+var completedEvents=Object.create(null);
+var currentStates=Object.create(null);
+var labels={idle:"Disponible",waiting:"En espera",running:"Trabajando",completed:"Finalizado",unknown:"Sin datos"};
+function setAgentState(id,record){
+  var node=document.querySelector('#floor .station[data-pick="'+id+'"]');
+  if(!node)return;
+  var val=record&&typeof record.state==="string"?record.state:"unknown";
+  if(val==="working"||val==="busy")val="running";
+  if(!Object.prototype.hasOwnProperty.call(labels,val))val="unknown";
+  var signal=String(record&&record.task_id||"")+"|"+String(record&&record.changed_at||"")+"|"+val;
+  if(val==="completed"){
+    if(!completedEvents[id]||completedEvents[id].signal!==signal){
+      completedEvents[id]={signal:signal,seenAt:Date.now()};
+    }
+  }else{
+    delete completedEvents[id];
+  }
+  currentStates[id]=val;
+  node.dataset.status=val;
+  var title=node.querySelector(".agent-indicator title");
+  if(title)title.textContent=id.toUpperCase().replace("AGENT-","A")+" · "+labels[val];
+  if(document.querySelector("#floor .station.selected")===node)updateSelectedStatus(id);
+}
+function refreshBlink(){
+  for(var i=1;i<=8;i++){
+    var id="agent-"+i,node=document.querySelector('#floor .station[data-pick="'+id+'"]');
+    if(!node)continue;
+    var circle=node.querySelector(".agent-indicator");
+    if(circle)circle.classList.toggle("blink",!!completedEvents[id]&&(Date.now()-completedEvents[id].seenAt<15000));
+  }
+}
+function updateSelectedStatus(id){
+  if(id.indexOf("agent-")!==0)return;
+  var item=details[id];if(!item)return;
+  var status=labels[currentStates[id]||"unknown"];
+  document.getElementById("detail-desc").textContent=item.desc+" Estado: "+status+".";
+}
+async function readTelemetry(){
+  var output=document.getElementById("telemetry-check");
+  try{
+    var response=await fetch("./status.json?t="+Date.now(),{cache:"no-store"});
+    if(!response.ok)throw new Error("HTTP "+response.status);
+    var data=await response.json();
+    if(!data||!data.agents||typeof data.agents!=="object")throw new Error("Datos no válidos");
+    for(var i=1;i<=8;i++){var id="agent-"+i;setAgentState(id,data.agents[id]);}
+    output.classList.remove("error");
+    output.textContent="Consultado: "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    refreshBlink();
+  }catch(error){
+    output.classList.add("error");
+    output.textContent="Sin conexión de estados";
+    for(var i=1;i<=8;i++)setAgentState("agent-"+i,{state:"unknown"});
+    refreshBlink();
+  }
+}
+readTelemetry();
+setInterval(readTelemetry,10000);
+setInterval(refreshBlink,250);
+
 function page(name){document.querySelectorAll('.view').forEach(function(el){el.classList.toggle('active',el.id===name)});document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('active',b.dataset.page===name)});window.scrollTo({top:0,behavior:'instant'})}
 document.querySelectorAll('[data-page]').forEach(function(b){b.addEventListener('click',function(){page(b.dataset.page)})});
-function pick(el){var item=details[el.dataset.pick];if(!item)return;document.querySelectorAll('#floor .selected').forEach(function(n){n.classList.remove('selected')});el.classList.add('selected');document.getElementById('detail-title').textContent=item.name;document.getElementById('detail-tag').textContent=item.type;document.getElementById('detail-desc').textContent=item.desc;document.getElementById('detail-zone').textContent=item.zone}
+function pick(el){var item=details[el.dataset.pick];if(!item)return;document.querySelectorAll('#floor .selected').forEach(function(n){n.classList.remove('selected')});el.classList.add('selected');document.getElementById('detail-title').textContent=item.name;document.getElementById('detail-tag').textContent=item.type;document.getElementById('detail-desc').textContent=item.desc;document.getElementById('detail-zone').textContent=item.zone;updateSelectedStatus(el.dataset.pick)}
 document.querySelectorAll('#floor [data-pick]').forEach(function(el){el.addEventListener('click',function(e){e.stopPropagation();pick(el)});el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(el)}})});
 function changeZoom(n){zoom=Math.min(1.65,Math.max(.65,n));document.getElementById('floor').style.transform='scale('+zoom+')'}
 document.getElementById('plus').onclick=function(){changeZoom(zoom+.15)};document.getElementById('minus').onclick=function(){changeZoom(zoom-.15)};document.getElementById('reset').onclick=function(){changeZoom(1)};
