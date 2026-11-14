@@ -413,13 +413,13 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 @media(max-width:760px){.head-actions #homeReturnBtn{display:inline-flex;font-size:10px;padding:5px 8px;min-height:30px}}
 #homeScreen{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;padding:28px 18px;background:#11171d;color:#F1F1EF;isolation:isolate;overflow:auto}
 #homeScreen[hidden]{display:none!important}
-#homeMap{position:absolute;inset:0;z-index:-2;opacity:.78;filter:saturate(.72) brightness(.67);pointer-events:none}
+#homeMap{position:absolute;inset:0;z-index:-2;pointer-events:none;background:#080c12 url("https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-iberia-nocturna.jpg") center center / cover no-repeat;filter:brightness(.79) contrast(1.08)}
 #homeScreen:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(90deg,#10151c99,#11151a52 52%,#10151ca0),linear-gradient(0deg,#0e0e10bd,transparent 45%,#0e0e1088)}
 #homeScreen .leaflet-container{background:#1c2730}
 .home-shell{width:min(760px,100%);max-height:calc(100dvh - 56px);display:flex;flex-direction:column;align-items:center;gap:20px}
 .home-identity{display:flex;flex-direction:column;align-items:center;gap:0;flex:none;width:100%}
 .home-identity img{display:block;width:min(460px,87%);height:auto;max-height:184px;object-fit:contain;filter:drop-shadow(0 10px 22px #000a)}
-.home-identity p{font:700 11px Manrope,system-ui,sans-serif;color:#c9cdd0;letter-spacing:.20em;text-align:center;margin:5px 0 0;text-shadow:0 1px 8px #000}
+.home-identity p{font:700 clamp(19px,2.4vw,29px) Manrope,system-ui,sans-serif;color:#F1F1EF;letter-spacing:.12em;text-align:center;margin:13px 0 0;text-shadow:0 2px 12px #000;line-height:1.25}
 .home-library{width:min(680px,100%);min-height:0;display:flex;flex-direction:column;padding:17px 18px 13px;background:#1b1d1beb;border:1px solid #535652;border-radius:8px;box-shadow:0 18px 55px #000b;backdrop-filter:blur(6px)}
 .home-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:17px}
 .home-actions .btn{min-height:37px;padding:8px 13px}
@@ -443,7 +443,7 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 .home-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:10px;border-top:1px solid #414442;font-size:10px;color:#b0b7b1}
 .home-footer output{min-width:0;overflow-wrap:anywhere}
 #homeScreen button:focus-visible{outline:2px solid #FF6A1A;outline-offset:2px}
-@media(max-width:650px){#homeScreen{padding:16px 10px}.home-shell{max-height:calc(100dvh - 32px);gap:12px}.home-identity img{width:min(330px,86%)}.home-identity p{font-size:9px;letter-spacing:.12em}.home-library{padding:12px}.home-project{grid-template-columns:102px minmax(0,1fr);gap:8px;padding:7px}.home-project-actions{grid-column:1/-1;flex-direction:row;justify-content:flex-end}.home-projects{max-height:49vh}.home-actions .btn{flex:1}.home-project-meta small{font-size:9px}}
+@media(max-width:650px){#homeScreen{padding:16px 10px}.home-shell{max-height:calc(100dvh - 32px);gap:12px}.home-identity img{width:min(330px,86%)}.home-identity p{font-size:clamp(15px,4vw,20px);letter-spacing:.08em}.home-library{padding:12px}.home-project{grid-template-columns:102px minmax(0,1fr);gap:8px;padding:7px}.home-project-actions{grid-column:1/-1;flex-direction:row;justify-content:flex-end}.home-projects{max-height:49vh}.home-actions .btn{flex:1}.home-project-meta small{font-size:9px}}
 
 </style>
 </head>
@@ -452,7 +452,7 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
  <div id="homeMap" aria-hidden="true"></div>
  <div class="home-shell">
   <div class="home-identity">
-   <img src="../rain/assets/logo.png" alt="OcToS 3D Studio" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/toniquerol/octos-apps/main/rain/assets/logo.png'">
+   <img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-logo.png" alt="OcToS 3D Studio">
    <p>ROADS · CONSTRUCCIÓN GEOMÉTRICA</p>
   </div>
   <div class="home-library">
@@ -1496,15 +1496,9 @@ function homeRender(){
  $('homeProjects').querySelectorAll('[data-home-remove]').forEach(b=>b.onclick=()=>homeDeleteProject(b.dataset.homeRemove));
 }
 function homeInitMap(){
- if(homeMap||!window.L)return;
- try{
-  homeMap=L.map('homeMap',{center:[28,7],zoom:3,minZoom:2,maxZoom:6,zoomControl:false,
-   attributionControl:true,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,
-   touchZoom:false,boxZoom:false,keyboard:false});
-  L.tileLayer('https://basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
-   {subdomains:'abcd',maxZoom:19,attribution:'© OpenStreetMap contributors · © CARTO'}).addTo(homeMap);
- }catch(error){$('homeMessage').textContent='El mapa de fondo no está disponible; los proyectos siguen accesibles.';}
+ // Fondo fijo: no depende de servicios de teselas ni del motor cartográfico.
 }
+
 async function homeInitialize(){
  try{homeDb=await homeOpenDb();}catch{homeDb=null;}
  try{homeRecords=await homeReadAll();}catch(error){
