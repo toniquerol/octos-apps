@@ -2115,6 +2115,11 @@ function render(){
   // Puntos de control y nodos de intersección visibles incluso sin selección.
   for(const r of roads){
    const isSelected=r.id===selected;
+   if(isSelected&&selectedRoadSegments(r).length){
+    const marked=new Set(selectedRoadSegments(r));
+    for(const part of makeGeometry(r).parts)if(marked.has(part.segmentIndex))
+     L.polyline(part.points,{color:'#F1F1EF',weight:3.5,opacity:1,interactive:false}).addTo(technicalGroup);
+   }
    for(let i=0;i<r.nodes.length;i++){
     if(isSelected&&visible('layerNodes'))continue; // Los tiradores editables ya están en markersGroup.
     const end=i===0||i===r.nodes.length-1;
