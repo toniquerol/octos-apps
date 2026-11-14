@@ -335,7 +335,8 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
  #mapWrap .map-nav-dock{right:194px;bottom:28px;gap:4px}
  #mapWrap .map-nav-dock button{width:32px;height:32px}
 }
-.category-mark{display:inline-block;flex:none;width:10px;height:10px;border:1px solid #ffffff66;border-radius:50%;background:#FF6A1A}
+.category-mark{position:relative;display:inline-block;flex:none;width:23px;height:28px;border:1px solid #F1F1EF;border-radius:5px;background:#BB1730;box-shadow:0 0 0 1px #222;overflow:hidden}
+.category-mark::after{content:"";position:absolute;left:0;right:0;bottom:0;height:11px;background:#F1F1EF;border-top:1px solid #1b1b1d2b}
 </style>
 </head>
 <body>
@@ -426,7 +427,7 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
   <div class="map-inspector-head"><strong id="inspectorTitle">PARÁMETROS</strong><button class="btn" id="rbApplyBtn" type="button" hidden>Aplicar</button><button type="button" id="inspectorClose" aria-label="Cerrar panel de parámetros" title="Cerrar">×</button></div>
   <div id="inspectorRoad"><details class="section" open><summary class="eyebrow">Geometría de proyecto</summary><h2>Parámetros del trazado</h2>
   <label class="field">Nombre <input id="roadName" value="Carretera 1" maxlength="80"></label>
-  <label class="field">Categoría <span id="roadCategorySwatch" class="category-mark" aria-hidden="true"></span><select id="roadType"><option value="autopista">Autopista</option><option value="convencional" selected>Convencional</option><option value="urbana">Urbana</option><option value="camino">Camino</option></select></label>
+  <label class="field">Categoría <span id="roadCategorySwatch" class="category-mark" aria-hidden="true"></span><select id="roadType"><option value="autopista">Autopista / autovía</option><option value="convencional" selected>Convencional</option><option value="urbana">Urbana</option><option value="camino">Camino</option></select></label>
   <label class="field">Radio objetivo (m) <input id="radius" type="number" min="0" max="5000" step="10" value="160"></label>
   <label class="field">Sección transversal <select id="roadSection">
    <option value="road22">4 carriles (2+2)</option>
@@ -529,7 +530,7 @@ const sectionTypes={
  street1:{name:'1 carril (1)',lanes:1,lane:3.50,shoulder:0,median:0,walk:1.80,lines:[]}
 };
 const canonicalSection=id=>id==='street2'?'road11':id==='street1'?'road1':sectionTypes[id]?id:'road11';
-const categoryColors={autopista:'#3294B9',convencional:'#FF6A1A',urbana:'#4BA56A',camino:'#A3A6AD'};
+const categoryColors={autopista:'#14558F',convencional:'#BB1730',urbana:'#F58A19',camino:'#E7CD16'};
 const categoryColor=type=>categoryColors[type]||categoryColors.convencional;
 function sectionOf(r){
  const key=sectionTypes[r.section]?r.section:'road11',config=sectionTypes[key],section=canonicalSection(key);
@@ -639,7 +640,7 @@ function autoCrossEvents(input=roads){
   const register=(p,arms,stub=null)=>{
    if(arms.length<3||arms.length>4||nearRotonda(p)||out.some(e=>e.a===a.r.id&&e.b===b.r.id&&dist(p,e.p)<12))return;
    // Una vía de calzadas separadas no forma un cruce en X a nivel.
-   if(arms.length===4&&[a.r,b.r].some(r=>sectionOf(r).medianWidth>0||r.type==='autopista'))return;
+   if(arms.length===4&&[a.r,b.r].some(r=>sectionOf(r).medianWidth>0))return;
    const candidate={a:a.r.id,b:b.r.id,p,arms,stub,lat0};
    if(arms.length===3&&!autoTConnection(candidate))return;
    out.push(candidate);
