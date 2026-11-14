@@ -621,7 +621,7 @@ function autoTConnection(event){
  if(dist(end,event.p)>AUTO_CROSS_SNAP+.5)return null;
  const target=add(event.p,mul(branch.v,distance));
  const neighbor=xy(branchRoad.nodes[start?1:branchRoad.nodes.length-2],event.lat0);
- if(dist(neighbor,target)<1.5||dot(sub(neighbor,target),branch.v)<1.5)return null;
+ if(dist(neighbor,target)<Math.max(5,sectionOf(branchRoad).roadWidth/2+2)||dot(sub(neighbor,target),branch.v)<1.5)return null;
  return {main:mainRoad,branch:branchRoad,branchArm:branch,forward,
   direction:side<0?'directo':'contrario',start,target,lat0:event.lat0,
   width:sectionOf(branchRoad).roadWidth};
