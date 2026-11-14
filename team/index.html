@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0E0E10"><title>OcToS Team · V2.1</title>
+<html lang="es" class="pin-locked"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0E0E10"><title>OcToS Team · V2.1</title>
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <style>
 :root{--bg:#0e0e10;--panel:#1a1b1e;--panel2:#232428;--line:#383a40;--ink:#f1f1ef;--muted:#92949b;--accent:#ff6a1a}
@@ -32,8 +32,38 @@ svg .station .agent-indicator.blink{animation:team-finished-blink .9s steps(1,en
 .telemetry-check.error{color:#d9a75b}
 .legend .dot.running{background:#D94A45}.legend .dot.idle{background:#369D69}.legend .dot.unknown{background:#74767C}
 @media(prefers-reduced-motion:reduce){svg .station .agent-indicator.blink{animation:none;stroke:#f1f1ef;stroke-width:4}}
+
+/* Acceso OcToS Team (interfaz local; no equivale a autenticación de servidor) */
+html.pin-locked,html.pin-locked body{height:100%;overflow:hidden}
+html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
+#team-access[hidden]{display:none}
+#team-access{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:24px;background:#0e0e10;color:#f1f1ef}
+.team-access-card{width:min(100%,384px);padding:36px;border:1px solid #383a40;border-radius:16px;background:#1a1b1e;box-shadow:0 20px 70px #0007}
+.team-access-overline{color:#ff6a1a;letter-spacing:.18em;font-size:11px;font-weight:700;text-transform:uppercase}
+.team-access-card h1{font-size:27px;letter-spacing:-.04em;margin:14px 0 8px}
+.team-access-card p{font-size:12px;color:#a6a7ad;line-height:1.55;margin:0 0 27px}
+.team-access-card label{display:block;font-size:12px;margin-bottom:10px}
+.team-access-card input{display:block;width:100%;border:1px solid #55585f;background:#0e0e10;color:#f1f1ef;border-radius:9px;padding:14px 15px;letter-spacing:.22em;font-size:20px;outline:none}
+.team-access-card input:focus{border-color:#ff6a1a}
+.team-access-card button{display:block;width:100%;margin-top:14px;border:1px solid #ff6a1a;border-radius:9px;background:#ff6a1a;color:#0e0e10;font-size:13px;font-weight:700;padding:14px;cursor:pointer}
+.team-access-card button:disabled{opacity:.6;cursor:wait}
+#team-access-error{min-height:21px;color:#ff9675;font-size:12px;margin-top:13px}
 </style></head>
-<body><header><div class="brand"><div class="mark" aria-hidden="true"><svg viewBox="0 0 36 36" fill="none"><rect x="2" y="2" width="22" height="31" rx="3" stroke="#777"/><path d="M13 13v17M5 22h17" stroke="#858585"/><path d="M13 7h13" stroke="#ff6a1a" stroke-dasharray="2 2"/><circle cx="30" cy="13" r="3" fill="#ff6a1a"/><circle cx="30" cy="25" r="3" fill="#ff6a1a"/></svg></div><div><div class="word">OcToS <span style="color:var(--accent)">TEAM</span></div><div class="brand-sub">Coordinación interna</div></div></div><nav><button data-page="home" class="active">Inicio</button><button data-page="room">Sala</button><span class="version">V2.1</span></nav></header>
+<body>
+<section id="team-access" role="dialog" aria-modal="true" aria-labelledby="team-access-title">
+ <div class="team-access-card">
+  <div class="team-access-overline">OcToS · Acceso restringido</div>
+  <h1 id="team-access-title">OcToS Team</h1>
+  <p>Introduce el PIN de seis dígitos para acceder al panel.</p>
+  <form id="team-access-form">
+   <label for="team-access-pin">PIN de acceso</label>
+   <input id="team-access-pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6" autocomplete="off" required autofocus>
+   <button id="team-access-submit" type="submit">Acceder</button>
+   <div id="team-access-error" role="status" aria-live="polite"></div>
+  </form>
+ </div>
+</section>
+<header><div class="brand"><div class="mark" aria-hidden="true"><svg viewBox="0 0 36 36" fill="none"><rect x="2" y="2" width="22" height="31" rx="3" stroke="#777"/><path d="M13 13v17M5 22h17" stroke="#858585"/><path d="M13 7h13" stroke="#ff6a1a" stroke-dasharray="2 2"/><circle cx="30" cy="13" r="3" fill="#ff6a1a"/><circle cx="30" cy="25" r="3" fill="#ff6a1a"/></svg></div><div><div class="word">OcToS <span style="color:var(--accent)">TEAM</span></div><div class="brand-sub">Coordinación interna</div></div></div><nav><button data-page="home" class="active">Inicio</button><button data-page="room">Sala</button><span class="version">V2.1</span></nav></header>
 <main>
 <section id="home" class="view active"><div class="hero"><div><div class="eyebrow">Aplicación / 01 · Sistema interno</div><h1>Un equipo.<br>Cuatro unidades.</h1><p>Entorno visual para organizar la estructura de trabajo OcToS. Distribución de puestos, responsabilidades y coordinación central. Indicadores de actividad visual por puesto.</p></div><div class="hero-index">01</div></div>
 <div class="stats"><div class="stat"><b>04</b><span>Grupos de trabajo</span></div><div class="stat"><b>08</b><span>Agentes especializados</span></div><div class="stat"><b>01</b><span>Dirección central</span></div><div class="stat"><b>02</b><span>Puestos exteriores</span></div></div>
@@ -310,4 +340,52 @@ document.querySelectorAll('#floor [data-pick]').forEach(function(el){el.addEvent
 function changeZoom(n){zoom=Math.min(1.65,Math.max(.65,n));document.getElementById('floor').style.transform='scale('+zoom+')'}
 document.getElementById('plus').onclick=function(){changeZoom(zoom+.15)};document.getElementById('minus').onclick=function(){changeZoom(zoom-.15)};document.getElementById('reset').onclick=function(){changeZoom(1)};
 })();
-</script></body></html>
+</script>
+<script>
+/* PIN de interfaz: clave no escrita en texto plano. GitHub Pages sigue siendo alojamiento público. */
+(function(){
+"use strict";
+const PIN_SALT="792dc348777ee0684dc1eb5dcc6c706a";
+const PIN_HASH="076ee91cf0a5f5d1f317b67acae6b6a4a7545863baf8dfe0d7763a3f2b573234";
+const ROUNDS=250000,TTL=15*60*1000,SESSION_KEY="octos-team-access-until";
+const root=document.documentElement,gate=document.getElementById("team-access"),form=document.getElementById("team-access-form");
+const pin=document.getElementById("team-access-pin"),error=document.getElementById("team-access-error"),submit=document.getElementById("team-access-submit");
+let lastActivity=Date.now(),failures=0,lockedUntil=0,lastSessionRefresh=0;
+function hexBytes(hex){return Uint8Array.from(hex.match(/.{2}/g).map(x=>parseInt(x,16)))}
+async function verify(value){
+ const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(value),{name:"PBKDF2"},false,["deriveBits"]);
+ const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:hexBytes(PIN_SALT),iterations:ROUNDS,hash:"SHA-256"},k,256);
+ const actual=new Uint8Array(bits),expected=hexBytes(PIN_HASH);
+ let different=0;for(let i=0;i<expected.length;i++)different|=actual[i]^expected[i];
+ return different===0;
+}
+function persist(){try{sessionStorage.setItem(SESSION_KEY,String(Date.now()+TTL))}catch(e){}}
+function clear(){try{sessionStorage.removeItem(SESSION_KEY)}catch(e){}}
+function enter(){root.classList.remove("pin-locked");gate.hidden=true;pin.value="";error.textContent="";lastActivity=Date.now();lastSessionRefresh=lastActivity;persist()}
+function lock(){clear();root.classList.add("pin-locked");gate.hidden=false;pin.value="";error.textContent="";pin.focus()}
+try{const expiry=Number(sessionStorage.getItem(SESSION_KEY)||0);if(expiry>Date.now())enter();else clear()}catch(e){}
+form.addEventListener("submit",async function(event){
+ event.preventDefault();
+ if(Date.now()<lockedUntil){error.textContent="Espera 30 segundos antes de volver a intentarlo.";return}
+ if(!/^[0-9]{6}$/.test(pin.value)){error.textContent="Introduce seis dígitos.";return}
+ submit.disabled=true;error.textContent="";
+ try{
+  if(await verify(pin.value)){failures=0;enter();return}
+  failures++;pin.value="";pin.focus();
+  if(failures>=5){lockedUntil=Date.now()+30000;failures=0;error.textContent="Demasiados intentos. Espera 30 segundos."}
+  else error.textContent="PIN incorrecto.";
+ }catch(e){error.textContent="No se ha podido verificar el PIN en este navegador."}
+ finally{submit.disabled=false}
+});
+for(const ev of ["keydown","pointerdown","touchstart"]){
+ document.addEventListener(ev,function(){
+  if(root.classList.contains("pin-locked"))return;
+  lastActivity=Date.now();if(lastActivity-lastSessionRefresh>30000){persist();lastSessionRefresh=lastActivity}
+ },{passive:true});
+}
+setInterval(function(){if(!root.classList.contains("pin-locked")&&Date.now()-lastActivity>TTL)lock()},30000);
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&!root.classList.contains("pin-locked")&&Date.now()-lastActivity>TTL)lock()});
+if(root.classList.contains("pin-locked"))pin.focus();
+})();
+</script>
+</body></html>
