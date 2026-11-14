@@ -68,14 +68,14 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
  <div class="mapbadge" id="mapBadge">0 carreteras · 0 km</div>
 </section>
 <aside class="side right hidden-mobile" id="rightPane" aria-label="Herramientas de dibujo">
- <div class="section"><div class="eyebrow">Constructor</div><h2>Herramientas de dibujo</h2>
+ <details class="section" open><summary class="eyebrow">Constructor</summary><h2>Herramientas de dibujo</h2>
   <button class="tool active" data-mode="select"><span>Seleccionar / modificar</span><b>V</b></button>
   <button class="tool" data-mode="draw"><span>Nueva carretera</span><b>D</b></button>
   <button class="tool" data-mode="insert"><span>Insertar punto en eje</span><b>I</b></button>
   <button class="tool" data-mode="remove"><span>Eliminar punto</span><b>X</b></button>
   <div class="row wrap" style="margin-top:9px"><button class="btn primary grow" id="finishBtn" disabled>Terminar</button><button class="btn grow" id="cancelBtn">Cancelar</button><button class="btn grow" id="undoBtn">Deshacer</button></div>
- </div>
- <div class="section"><div class="eyebrow">Geometría de proyecto</div><h2>Parámetros del trazado</h2>
+ </details>
+ <details class="section" open><summary class="eyebrow">Geometría de proyecto</summary><h2>Parámetros del trazado</h2>
   <label class="field">Nombre <input id="roadName" value="Carretera 1" maxlength="80"></label>
   <label class="field">Categoría <select id="roadType"><option value="convencional">Convencional</option><option value="autopista">Autovía</option><option value="urbana">Urbana</option><option value="camino">Camino</option></select></label>
   <label class="field">Radio objetivo (m) <input id="radius" type="number" min="0" max="5000" step="10" value="160"></label>
@@ -83,11 +83,11 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
   <label class="field">Velocidad límite (km/h) <input id="speed" type="number" min="10" max="130" step="10" value="90"></label>
   <p class="muted">Las curvas se generan automáticamente con arcos circulares tangentes. Si no cabe el radio objetivo entre dos vértices, se reduce y se recalcula la velocidad. Radio 0 = poligonal sin suavizado.</p>
   <button class="btn" id="applyBtn" style="width:100%">Aplicar al tramo seleccionado</button>
- </div>
- <div class="section"><div class="eyebrow">Elemento seleccionado</div><h2>Información geométrica</h2><div id="selection">Sin selección. Crea un trazado o selecciona una carretera.</div>
+ </details>
+ <details class="section" open><summary class="eyebrow">Elemento seleccionado</summary><h2>Información geométrica</h2><div id="selection">Sin selección. Crea un trazado o selecciona una carretera.</div>
   <div class="row wrap" style="margin-top:10px"><button class="btn danger grow" id="deleteBtn">Eliminar carretera</button><button class="btn grow" id="fitBtn">Encuadrar</button></div>
- </div>
- <div class="section"><div class="eyebrow">Archivos</div><div class="row wrap"><button class="btn grow" id="saveBtn">Guardar JSON</button><button class="btn grow" id="openBtn">Abrir archivo</button></div><button class="btn danger" id="clearBtn" style="width:100%;margin-top:8px">Vaciar proyecto</button><p class="muted">Guardado automático en este navegador. Importación y exportación locales; no se envían los trazados a servidores.</p></div>
+ </details>
+ <details class="section" open><summary class="eyebrow">Archivos</summary><div class="row wrap"><button class="btn grow" id="saveBtn">Guardar JSON</button><button class="btn grow" id="openBtn">Abrir archivo</button></div><button class="btn danger" id="clearBtn" style="width:100%;margin-top:8px">Vaciar proyecto</button><p class="muted">Guardado automático en este navegador. Importación y exportación locales; no se envían los trazados a servidores.</p></details>
 </aside>
 </div>
 <footer><span id="status" role="status">Preparado · modo selección</span><span>OcToS 3D Studio © 2026 · Roads V1.0</span></footer>
