@@ -45,6 +45,9 @@ details.section>summary.eyebrow:hover{color:var(--text)}
 .roundabout-options .field input{width:76px}
 .rb-arm-handle{width:14px;height:14px;box-sizing:border-box;border:2px solid #fff;border-radius:50%;background:#C83E42;box-shadow:0 0 0 2px #2228;cursor:grab}
 .rb-arm-handle:active{cursor:grabbing}
+.rb-rotate-handle{width:24px;height:24px;display:grid;place-items:center;box-sizing:border-box;border:2px solid #FF6A1A;border-radius:50%;background:#202125;color:#F1F1EF;box-shadow:0 0 0 3px #0E0E10a8;cursor:grab;touch-action:none}
+.rb-rotate-handle:active{cursor:grabbing}
+.rb-rotate-handle svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
 
 /* Creación contextual: editor anclado a la esquina superior derecha del visor. */
 .rb-create-dock{position:absolute;top:12px;right:12px;z-index:1100;width:min(308px,calc(100% - 24px));max-height:calc(100% - 24px);overflow:auto;padding:12px;background:#222226f5;border:1px solid #4a4b50;border-radius:9px;color:#F1F1EF;box-shadow:0 8px 28px #000a;scrollbar-color:#555 transparent}
@@ -1565,6 +1568,41 @@ function drawRoundaboutRoadways(){
   centerIsland.on('click',onClick);
  }
 }
+/* Tirador de rotación a una distancia fija en pantalla del centro de la rotonda.
+   La posición se independiza del zoom; giro en grados antihorarios. */
+function roundaboutRotationHandlePosition(rb){
+ const center=map.latLngToLayerPoint(L.latLng(rb.center));
+ const theta=(rb.orientation+45)*RAD,distance=34;
+ return map.layerPointToLatLng(L.point(center.x+Math.cos(theta)*distance,
+  center.y-Math.sin(theta)*distance));
+}
+function roundaboutRotationAngle(rb,latlng){
+ const center=map.latLngToLayerPoint(L.latLng(rb.center));
+ const pointer=map.latLngToLayerPoint(latlng),dx=pointer.x-center.x,dy=center.y-pointer.y;
+ if(Math.hypot(dx,dy)<5)return null;
+ return Math.atan2(dy,dx)/RAD;
+}
+/* Actualiza las capas viales sin recrear los tiradores que se están arrastrando. */
+function redrawRotatingRoundabout(rb){
+ updateLinkedRoads(rb.id);
+ const events=autoCrossEvents();
+ roadsGroup.clearLayers();
+ for(const road of roads){
+  const geometry=makeGeometry(autoDisplayRoad(road,events));
+  for(const part of geometry.parts){
+   const structure=(road.structures||{})[part.segmentIndex]||'normal';
+   paintRoadPart(road,part,false,false,structure,e=>{
+    L.DomEvent.stopPropagation(e);
+    if(mode==='connect')jxClick(road,e.latlng);
+    else if(mode==='insert')insertNode(road,e.latlng);
+    else if(['bridge','tunnel','normal'].includes(mode))setSectionType(road,part.segmentIndex,mode);
+    else if(mode!=='draw'&&mode!=='roundabout')selectRoadPart(road,part.segmentIndex);
+   },e=>{L.DomEvent.stopPropagation(e);if(mode==='select'&&selected===road.id)insertNode(road,e.latlng);});
+  }
+ }
+ drawAutoCrossings(null,events);
+ drawRoundaboutRoadways();
+}
 function renderRoundabouts(){
  drawRoundaboutRoadways();
  for(const rb of roundabouts){
@@ -1593,6 +1631,42 @@ function renderRoundabouts(){
     }
    }
    if(mode==='select'){
+    const rotateIcon=L.divIcon({className:'handle-icon',html:'<div class="rb-rotate-handle" title="Arrastra para girar toda la rotonda"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 9a8 8 0 1 0 1 6"/><path d="M20 3v6h-6"/></svg></div>',iconSize:[24,24],iconAnchor:[12,12]});
+    const rotationPoint=roundaboutRotationHandlePosition(rb);
+    const rotationGuide=L.polyline([rb.center,rotationPoint],{color:'#FF6A1A',weight:1.5,dashArray:'4 5',opacity:.9,interactive:false}).addTo(markersGroup);
+    const rotate=L.marker(rotationPoint,{icon:rotateIcon,draggable:true,zIndexOffset:1850,title:'Rotar rotonda completa'}).addTo(markersGroup);
+    rotate.on('click',e=>L.DomEvent.stopPropagation(e));
+    let rotationStart=null,lastRotationFrame=0;
+    rotate.on('dragstart',()=>{
+     checkpoint();roundaboutEditSession=null;
+     rotationStart={orientation:rb.orientation,axisAngle:rb.axisAngle||0,
+      pointer:roundaboutRotationAngle(rb,rotate.getLatLng())};
+    });
+    rotate.on('drag',()=>{
+     if(!rotationStart||rotationStart.pointer===null)return;
+     const pointer=roundaboutRotationAngle(rb,rotate.getLatLng());
+     if(pointer===null)return;
+     const delta=pointer-rotationStart.pointer;
+     rb.orientation=((rotationStart.orientation+delta)%360+360)%360;
+     rb.axisAngle=((rotationStart.axisAngle+delta)%360+360)%360;
+     const position=roundaboutRotationHandlePosition(rb);
+     rotate.setLatLng(position);rotationGuide.setLatLngs([rb.center,position]);
+     $('rbOrientation').value=rb.orientation;
+     $('rbAxisAngle').value=rb.axisAngle;
+     $('rbOrientationValue').textContent=Math.round(rb.orientation)+'°';
+     $('rbAxisValue').textContent=Math.round(rb.axisAngle)+'°';
+     const now=Date.now();
+     if(now-lastRotationFrame>=45){redrawRotatingRoundabout(rb);lastRotationFrame=now;}
+    });
+    rotate.on('dragend',()=>{
+     if(!rotationStart)return;
+     const pointer=roundaboutRotationAngle(rb,rotate.getLatLng());
+     // El último cuadro también actualiza las carreteras enlazadas.
+     redrawRotatingRoundabout(rb);
+     persist();render();
+     status('Rotonda girada · orientación '+format(rb.orientation)+'°.');
+     rotationStart=null;
+    });
     const icon=L.divIcon({className:'handle-icon',html:'<div class="handle"></div>',iconSize:[14,14],iconAnchor:[7,7]});
     const m=L.marker(rb.center,{icon,draggable:true,zIndexOffset:1700}).addTo(markersGroup);
     m.on('dragstart',checkpoint);
