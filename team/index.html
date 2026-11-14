@@ -429,6 +429,7 @@ window.addEventListener("popstate",function(){
  if(teamHistory[teamHistory.length-1]===p)teamHistory.pop();
  page(p,false);
 });
+window.octosTeamNavigate=page;
 page(initial,false);
 function pick(el){var item=details[el.dataset.pick];if(!item)return;document.querySelectorAll('#floor .selected').forEach(function(n){n.classList.remove('selected')});el.classList.add('selected');document.getElementById('detail-title').textContent=item.name;document.getElementById('detail-tag').textContent=item.type;document.getElementById('detail-desc').textContent=item.desc;document.getElementById('detail-zone').textContent=item.zone;updateSelectedStatus(el.dataset.pick)}
 document.querySelectorAll('#floor [data-pick]').forEach(function(el){el.addEventListener('click',function(e){e.stopPropagation();pick(el)});el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(el)}})});
@@ -477,7 +478,7 @@ function enter(role){
  root.classList.remove("pin-locked");gate.hidden=true;pin.value="";error.textContent="";
  lastActivity=Date.now();lastSessionRefresh=lastActivity;persist();
  document.querySelectorAll('[data-page="permissions"]').forEach(el=>el.hidden=!window.octosTeamIsMaster);
- if(!window.octosTeamIsMaster&&location.hash==="#permissions")location.hash="#room";
+ if(!window.octosTeamIsMaster&&location.hash==="#permissions"){history.replaceState({octosTeamPage:"room"},"","#room");window.octosTeamNavigate("room",false)}
 }
 function lock(){
  clear();currentRole=null;window.octosTeamIsMaster=null;root.classList.add("pin-locked");
