@@ -563,6 +563,8 @@ function autoCrossEvents(input=roads){
   if(A.minX>B.maxX+pad||B.minX>A.maxX+pad||A.minY>B.maxY+pad||B.minY>A.maxY+pad)continue;
   const register=(p,arms,stub=null)=>{
    if(arms.length<3||arms.length>4||nearRotonda(p)||out.some(e=>e.a===a.r.id&&e.b===b.r.id&&dist(p,e.p)<12))return;
+   // Una vía de calzadas separadas no forma un cruce en X a nivel.
+   if(arms.length===4&&[a.r,b.r].some(r=>sectionOf(r).medianWidth>0||r.type==='autopista'))return;
    out.push({a:a.r.id,b:b.r.id,p,arms,stub,lat0});
   };
   let count=0;
@@ -597,42 +599,99 @@ function autoCrossEvents(input=roads){
  }
  return out;
 }
+
+/* La vía principal son los dos brazos continuos; el brazo único es la secundaria.
+   En secciones 2+2, el lado queda definido por el sentido del eje de la principal:
+   derecha del eje -> sentido directo; izquierda -> sentido contrario. */
+function autoTConnection(event){
+ const a=event.arms.filter(x=>x.r.id===event.a),b=event.arms.filter(x=>x.r.id===event.b);
+ const main=a.length===2&&b.length===1?a:b.length===2&&a.length===1?b:null;
+ if(!main)return null;
+ const branch=main===a?b[0]:a[0],mainRoad=main[0].r,branchRoad=branch.r;
+ const forward=main[1].v,side=cross(forward,branch.v),sin=Math.abs(side);
+ if(sin<.48)return null;
+ const mainWidth=sectionOf(mainRoad).roadWidth;
+ const distance=(mainWidth/2)/sin;
+ const end0=xy(branchRoad.nodes[0],event.lat0);
+ const end1=xy(branchRoad.nodes[branchRoad.nodes.length-1],event.lat0);
+ const start=dist(end0,event.p)<dist(end1,event.p);
+ const end=start?end0:end1;
+ if(dist(end,event.p)>AUTO_CROSS_SNAP+.5)return null;
+ const target=add(event.p,mul(branch.v,distance));
+ const neighbor=xy(branchRoad.nodes[start?1:branchRoad.nodes.length-2],event.lat0);
+ if(dist(neighbor,target)<1.5||dot(sub(neighbor,target),branch.v)<1.5)return null;
+ return {main:mainRoad,branch:branchRoad,branchArm:branch,forward,
+  direction:side<0?'directo':'contrario',start,target,lat0:event.lat0,
+  width:sectionOf(branchRoad).roadWidth};
+}
+function autoDisplayRoad(road,events){
+ const connections=events.map(autoTConnection).filter(t=>t?.branch.id===road.id);
+ if(!connections.length)return road;
+ const nodes=road.nodes.map(p=>p.slice());
+ for(const t of connections)nodes[t.start?0:nodes.length-1]=ll(t.target,t.lat0);
+ return {...road,nodes};
+}
 function autoCrossShapes(event){
+ const t=autoTConnection(event);
  const arms=event.arms.map(a=>({...a,ang:Math.atan2(a.v.y,a.v.x)})).sort((a,b)=>a.ang-b.ang),corners=[];
  for(let i=0;i<arms.length;i++){
   const a=arms[i],b=arms[(i+1)%arms.length],theta=(b.ang-a.ang+Math.PI*2)%(Math.PI*2);
   if(theta<.48||theta>Math.PI*.9)continue;
-  const na={x:-a.v.y,y:a.v.x},nb={x:b.v.y,y:-b.v.x},offsetA=mul(na,a.w),offsetB=mul(nb,b.w);
-  const den=cross(a.v,b.v);if(den<.01)continue;
+  // Intersección de los dos límites de calzada, no de sus ejes centrales.
+  const normalA={x:-a.v.y,y:a.v.x},normalB={x:b.v.y,y:-b.v.x};
+  const offsetA=mul(normalA,a.w),offsetB=mul(normalB,b.w),den=cross(a.v,b.v);
+  if(den<.01)continue;
   const diff=sub(offsetB,offsetA),sa=cross(diff,b.v)/den,sb=cross(diff,a.v)/den;
-  const intersection=add(event.p,add(offsetA,mul(a.v,sa))),cot=1/Math.tan(theta/2);
-  const R=Math.min(clamp((a.w+b.w)*.9,4,12),Math.max(0,(Math.min(a.len-sa,b.len-sb)-1.5)/cot));
-  if(R<1.5)continue;
-  const p1=add(intersection,mul(a.v,R*cot)),p2=add(intersection,mul(b.v,R*cot)),c=add(p1,mul(na,R));
-  const a0=Math.atan2(p1.y-c.y,p1.x-c.x),a1=Math.atan2(p2.y-c.y,p2.x-c.x);
+  const corner=add(event.p,add(offsetA,mul(a.v,sa)));
+  const cot=1/Math.tan(theta/2),available=Math.min(a.len-sa,b.len-sb)-1.5;
+  const radius=Math.min(clamp(Math.min(a.w,b.w)*1.6,3.5,11),Math.max(0,available/cot));
+  if(radius<2)continue;
+  const p1=add(corner,mul(a.v,radius*cot)),p2=add(corner,mul(b.v,radius*cot));
+  const center=add(p1,mul(normalA,radius));
+  const a0=Math.atan2(p1.y-center.y,p1.x-center.x),a1=Math.atan2(p2.y-center.y,p2.x-center.x);
   let sweep=Math.atan2(Math.sin(a1-a0),Math.cos(a1-a0));
-  if(sweep>=0)sweep-=2*Math.PI;if(sweep<-Math.PI*1.1)continue;
-  const arc=Array.from({length:17},(_,k)=>add(c,{x:R*Math.cos(a0+sweep*k/16),y:R*Math.sin(a0+sweep*k/16)}));
-  corners.push({polygon:[event.p,...arc],arc});
+  if(sweep>=0)sweep-=2*Math.PI;
+  if(sweep<-Math.PI*1.1)continue;
+  const points=Array.from({length:21},(_,k)=>{
+   const angle=a0+sweep*k/20;
+   return add(center,{x:radius*Math.cos(angle),y:radius*Math.sin(angle)});
+  });
+  const secA=sectionOf(a.r),secB=sectionOf(b.r);
+  const borderA=secA.sidewalkWidth||secA.shoulderWidth,borderB=secB.sidewalkWidth||secB.shoulderWidth;
+  const border=Math.min(Math.max(borderA,borderB),radius-1);
+  const outer=border>0?Array.from({length:21},(_,k)=>{
+   const angle=a0+sweep*k/20,rr=radius-border;
+   return add(center,{x:rr*Math.cos(angle),y:rr*Math.sin(angle)});
+  }):null;
+  const geo=pts=>pts.map(p=>ll(p,event.lat0));
+  corners.push({fill:geo([corner,...points]),border:outer?geo([...points,...outer.reverse()]):null,
+   borderColor:secA.sidewalkWidth||secB.sidewalkWidth?'#979A9E':'#747D83'});
  }
  const geo=pts=>pts.map(p=>ll(p,event.lat0));
- const fill=visible('layerSpeed')?color(Math.min(...event.arms.map(a=>a.r.speed||90))):'#C2CDD0';
- return {fill,corners:corners.map(c=>({polygon:geo(c.polygon),arc:geo(c.arc)})),
-  stub:event.stub?{coords:geo([event.stub.a,event.stub.b]),width:event.stub.width,
-   fill:visible('layerSpeed')?color(event.stub.r.speed||90):'#C2CDD0'}:null};
+ const mainColor=t?t.main.speed:Math.min(...event.arms.map(a=>a.r.speed||90));
+ const branchColor=t?t.branch.speed:mainColor;
+ const fill=visible('layerSpeed')?color(branchColor):'#C2CDD0';
+ let throat=null;
+ if(t){
+  const d=t.branchArm.v,n={x:-d.y,y:d.x},half=t.width/2;
+  const far=add(t.target,mul(d,Math.min(10,t.branchArm.len*.3)));
+  throat={fill:geo([add(t.target,mul(n,half)),add(far,mul(n,half)),
+   sub(far,mul(n,half)),sub(t.target,mul(n,half))])};
+ }
+ return {fill,corners,throat,priority:t?{main:t.main.id,branch:t.branch.id,side:t.direction}:null};
 }
-function drawAutoCrossings(replacement=null){
+function drawAutoCrossings(replacement=null,precomputed=null){
  autoCrossGroup.clearLayers();if(!visible('layerRoad'))return;
  const list=replacement?roads.map(r=>r.id===replacement.id?replacement:r):roads;
- for(const event of autoCrossEvents(list)){
+ const events=precomputed||autoCrossEvents(list);
+ for(const event of events){
   const data=autoCrossShapes(event);
-  if(data.stub){
-   const w=widthInPixels(data.stub.width);
-   L.polyline(data.stub.coords,{color:'#292929',weight:w+5,interactive:false}).addTo(autoCrossGroup);
-   L.polyline(data.stub.coords,{color:data.stub.fill,weight:w+1,interactive:false}).addTo(autoCrossGroup);
-  }
-  for(const c of data.corners)L.polygon(c.polygon,{stroke:false,fillColor:data.fill,fillOpacity:1,interactive:false}).addTo(autoCrossGroup);
-  for(const c of data.corners)L.polyline(c.arc,{color:'#292929',weight:2,interactive:false}).addTo(autoCrossGroup);
+  // La garganta tapa el arcén de la principal, sin invadir su calzada ni su mediana.
+  if(data.throat)L.polygon(data.throat.fill,{stroke:false,fillColor:data.fill,fillOpacity:1,interactive:false}).addTo(autoCrossGroup);
+  for(const corner of data.corners)if(corner.border)
+   L.polygon(corner.border,{stroke:false,fillColor:corner.borderColor,fillOpacity:1,interactive:false}).addTo(autoCrossGroup);
+  for(const corner of data.corners)
+   L.polygon(corner.fill,{stroke:false,fillColor:data.fill,fillOpacity:1,interactive:false}).addTo(autoCrossGroup);
  }
 }
 let lastAutoCrossDrag=0;
