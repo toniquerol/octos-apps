@@ -183,7 +183,16 @@ function buildControls(){
  }
  panel.querySelector('#mobLoad').onclick=load;
  panel.querySelector('#mobFlow').onclick=()=>{
-  showFlows=!showFlows;const b=panel.querySelector('#mobFlow');b.textContent='Flujos: '+(showFlows?'sí':'no');b.setAttribute('aria-pressed',String(showFlows));draw();
+  showFlows=!showFlows;const b=panel.querySelector('#mobFlow');b.textContent='Flujos: '+(showFlows?'sí':'no');b.setAttribute('aria-pressed',String(showFlows));
+  if(showFlows){
+   const hasHome=enabled.has('viviendas')||enabled.has('poblacion');
+   const hasDestination=[...enabled].some(id=>id!=='viviendas'&&id!=='poblacion');
+   for(const id of [!hasHome?'viviendas':null,!hasDestination?'empleo':null].filter(Boolean)){
+    enabled.add(id);const check=catBox.querySelector('input[value="'+id+'"]');if(check)check.checked=true;
+   }
+   load();
+  }
+  draw();
  };
  panel.querySelector('#mobDirection').onchange=e=>{direction=e.target.value;draw()};
  panel.querySelector('#mobCollapse').onclick=()=>{
