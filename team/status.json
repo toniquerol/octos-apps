@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "updated_at": null,
+  "agents": {
+    "agent-1": {
+      "state": "unknown",
+      "task_id": null,
+      "changed_at": null
+    },
+    "agent-2": {
+      "state": "unknown",
+      "task_id": null,
+      "changed_at": null
+    },
+    "agent-3": {
+      "state": "unknown",
+      "task_id": null,
+      "changed_at": null
+    },
+    "agent-4": {
+      "state": "unknown",
+      "task_id": null,
+      "changed_at": null
+    },
+    "agent-5": {
+      "state": "unknown",
+      "task_id": null,
+      "changed_at": null
+    },
+    "agent-6": {
+      "state": "unknown",
+      "task_id": null,
+      "changed_at": null
+    },
+    "agent-7": {
+      "state": "unknown",
+      "task_id": null,
+      "changed_at": null
+    },
+    "agent-8": {
+      "state": "unknown",
+      "task_id": null,
+      "changed_at": null
+    }
+  }
+}
