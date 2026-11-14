@@ -723,6 +723,22 @@ function drawRoundaboutRoadways(){
       '#F1F1EF',1.2,null,{dashArray:'6 7',interactive:false,opacity:.9});
    }
   }
+  // Flechas orientativas, visibles solo cuando la escala permite leer el carril.
+  if(visible('layerRoad')&&visible('layerAxes')&&widthInPixels(3.5)>8){
+   const arrow=(pts,index)=>{
+    if(!pts||pts.length<5)return;
+    const k=clamp(index,2,pts.length-3),lat=pts[k][0],center=xy(pts[k],lat);
+    const dir=unit(sub(xy(pts[k+2],lat),xy(pts[k-2],lat)));
+    if(length(dir)<.01)return;
+    const n={x:-dir.y,y:dir.x},tip=add(center,mul(dir,2));
+    const tail=sub(center,mul(dir,1.8));
+    draw([ll(add(tail,mul(n,1.05)),lat),ll(tip,lat)],'#F1F1EF',1.3,null,{interactive:false});
+    draw([ll(sub(tail,mul(n,1.05)),lat),ll(tip,lat)],'#F1F1EF',1.3,null,{interactive:false});
+   };
+   for(const idx of [24,72,120,168])arrow(shape.ring,idx);
+   for(const link of links)arrow(link.coords,Math.floor(link.coords.length*.52));
+   if(bypass)arrow(bypass.path.map(p=>ll(p,bypass.lat)),Math.floor(bypass.path.length*.52));
+  }
   // Las isletas se sitúan solo en huecos medidos entre bordes de las calzadas.
   if(visible('layerRoad'))for(const t of transitions){
    if(!t.splitter)continue;
@@ -877,7 +893,7 @@ function render(){
  $('mapBadge').textContent=roads.length+' carretera'+(roads.length===1?'':'s')+' · '+roundabouts.length+' rotonda'+(roundabouts.length===1?'':'s')+' · '+format(total/1000)+' km';
  const r=roadById(selected);
  const rb=roundaboutAt(selectedRoundabout),seg=selectedSegment?.roadId===r?.id?selectedSegment:null;
- $('selection').innerHTML=rb?'<b>Rotonda</b><br>'+rb.arms+' ramales · Ø '+format(rb.diameter)+' m · '+roundaboutDimensions(rb).lanes+' carriles anulares de '+format(roundaboutDimensions(rb).laneWidth)+' m<br>Orientación '+format(rb.orientation)+'° · ramales '+format(rb.armLength)+' m'+''+Array.from({length:rb.arms},(_,i)=>{const road=roundaboutArmRoad(rb,i);if(!road)return '';const p=roundaboutArmProfile(rb,i);return '<br>Ramal '+(i+1)+': '+safe(road.road.name)+' · '+p.entry+' entrada / '+p.exit+' salida · '+format(p.laneWidth)+' m/carril';}).join('')
+ $('selection').innerHTML=rb?'<b>Rotonda</b><br>'+rb.arms+' ramales · '+(roundaboutShape(rb)==='stadium'?'Alargada':roundaboutShape(rb)==='ellipse'?'Ovalada':'Circular')+' · Ø menor '+format(rb.diameter)+' m'+(roundaboutShape(rb)!=='circular'?' · alargamiento '+format(rb.elongation||0)+' m':'')+' · '+roundaboutDimensions(rb).lanes+' carriles anulares de '+format(roundaboutDimensions(rb).laneWidth)+' m'+(rb.slipEnabled?' · carril directo':'')+'<br>Orientación '+format(rb.orientation)+'° · ramales '+format(rb.armLength)+' m'+''+Array.from({length:rb.arms},(_,i)=>{const road=roundaboutArmRoad(rb,i);if(!road)return '';const p=roundaboutArmProfile(rb,i);return '<br>Ramal '+(i+1)+': '+safe(road.road.name)+' · '+p.entry+' entrada / '+p.exit+' salida · '+format(p.laneWidth)+' m/carril';}).join('')
  :r?'<b>'+safe(r.name)+'</b><br>'+r.nodes.length+' puntos · '+format(makeGeometry(r).total/1000)+' km<br>Radio mínimo: '+(makeGeometry(r).minRadius===null?'Sin curvas':format(makeGeometry(r).minRadius)+' m')+'<br>'+sectionOf(r).name+' · '+sectionOf(r).lanes+' carriles · carril '+format(sectionOf(r).laneWidth)+' m'+(sectionOf(r).street?' · aceras '+format(sectionOf(r).sidewalkWidth)+' m/lado':' · arcenes '+format(sectionOf(r).shoulderWidth)+' m/lado')+(sectionOf(r).medianWidth?' · separador '+format(sectionOf(r).medianWidth)+' m':'')+' · plataforma '+format(sectionOf(r).totalWidth)+' m · límite '+r.speed+' km/h'+(seg?'<br><b>Tramo '+(seg.index+1)+': '+(({bridge:'Puente',tunnel:'Túnel'})[(r.structures||{})[seg.index]]||'Superficie')+'</b>':''):'Sin selección. Crea un trazado o selecciona una rotonda.';
  $('roadsList').innerHTML=roads.map(r=>'<button class="roaditem'+(r.id===selected?' selected':'')+'" data-id="'+r.id+'"><span class="dot"></span><span>'+safe(r.name)+'</span></button>').join('')||'<span class="muted">Aún no hay carreteras dibujadas.</span>';
  $('roadsList').querySelectorAll('button').forEach(b=>b.onclick=()=>{setMode('select');setSelection(b.dataset.id);});
