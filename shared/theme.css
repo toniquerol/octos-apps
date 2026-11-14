@@ -1,5 +1,11 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Roboto:wght@400;500;600;700&display=swap");
 html.octos-themed{color-scheme:dark;background:var(--ot-background)}
 html.octos-themed body{background:var(--ot-background);color:var(--ot-text);font-size:var(--ot-fontSize);--orange:var(--ot-accent);--accent:var(--ot-accent);--bg:var(--ot-background);--panel:var(--ot-panel);--ink:var(--ot-text)}
+/* Three independent typographic roles configured in Templates master. */
+.octos-themed body{font-family:var(--ot-fontSecondary),system-ui,sans-serif!important}
+.octos-themed h1,.octos-themed .ot-head-title strong{font-family:var(--ot-fontPrimary),system-ui,sans-serif!important}
+.octos-themed h2,.octos-themed h3,.octos-themed h4,.octos-themed h5,.octos-themed h6,.octos-themed .eyebrow,.octos-themed .ot-head-title small{font-family:var(--ot-fontSecondary),system-ui,sans-serif!important}
+.octos-themed button,.octos-themed input[type=button],.octos-themed input[type=submit],.octos-themed input[type=reset],.octos-themed [role=button]{font-family:var(--ot-fontButtons),system-ui,sans-serif!important}
 .octos-themed body>header{height:var(--ot-headerHeight)!important;box-sizing:border-box;display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:var(--ot-gap);padding:8px 16px!important;background:var(--ot-background)!important;position:relative;z-index:1200}
 .ot-head-left,.ot-head-right{display:flex;align-items:center;gap:var(--ot-gap);min-width:0}.ot-head-right{justify-content:flex-end}
 /* Search in the shared header, after the logo and before the centered title. */
