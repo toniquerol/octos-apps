@@ -273,6 +273,24 @@ header{position:relative;z-index:1400}
  #mapWrap>.mapbadge{bottom:11px;left:50%}
 }
 
+
+/* Terreno real: vista MapLibre solo-lectura; el editor Leaflet queda intacto. */
+.terrain-3d-view{position:absolute;inset:0;z-index:420;background:#10151c}
+.terrain-3d-view[hidden]{display:none!important}
+.terrain-mode-btn{position:absolute;bottom:195px;right:13px;z-index:1160;min-width:34px;height:33px;border:1px solid #626269;border-radius:5px;color:#F1F1EF;background:#202125ee;font:700 12px "IBM Plex Sans",system-ui,sans-serif;cursor:pointer}
+.terrain-mode-btn:hover,.terrain-mode-btn[aria-pressed=true]{border-color:#FF6A1A;color:#FF9D65}
+.terrain-mode-btn:disabled{opacity:.65;cursor:progress}
+#mapWrap.terrain-active #map{visibility:hidden}
+#mapWrap.terrain-active .map-quick-actions,#mapWrap.terrain-active .map-inspector,#mapWrap.terrain-active .rb-create-dock{display:none!important}
+body.terrain-readonly .head-tools,body.terrain-readonly .fixed-roundabout,body.terrain-readonly .head-elements{pointer-events:none;opacity:.38}
+body.terrain-readonly .head-actions{pointer-events:none;opacity:.5}
+body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
+#terrain3DView .maplibregl-ctrl-top-right{top:10px;right:8px}
+#terrain3DView .maplibregl-ctrl-bottom-right{bottom:2px}
+#mapWrap.terrain-active>.mapbadge{display:none}
+@media(max-width:760px){.terrain-mode-btn{right:7px;bottom:184px;height:31px}
+ #terrain3DView .maplibregl-ctrl-top-right{right:5px;top:8px}}
+
 </style>
 </head>
 <body>
@@ -322,6 +340,8 @@ header{position:relative;z-index:1400}
 </aside>
 <section id="mapWrap" aria-label="Mapa y editor">
  <div id="map"></div>
+ <div id="terrain3DView" class="terrain-3d-view" hidden aria-label="Vista de relieve real en 3D"></div>
+ <button type="button" id="terrainModeBtn" class="terrain-mode-btn" aria-pressed="false" title="Visualizar el relieve real en 3D, solo lectura">3D</button>
  <div class="head-speed" role="img" aria-label="Velocidad geométrica estimada; escala de colores: hasta 40, 60, 80, 100 y 120 kilómetros por hora" title="Estimación preliminar por radio de curvatura; peralte supuesto del 6 % y rozamiento transversal de 0,11. No sustituye una validación normativa ni un proyecto de ingeniería.">
    <div class="head-speed-title">VELOCIDAD GEOMÉTRICA ESTIMADA</div><div class="legend"><span style="background:#C83E42"></span><span style="background:#DB8137"></span><span style="background:#DDC34A"></span><span style="background:#4BA56A"></span><span style="background:#3294B9"></span></div><div class="legend-label"><span>≤40</span><span>60</span><span>80</span><span>100</span><span>120 km/h</span></div>
   </div>
@@ -611,6 +631,197 @@ function setBase(id){
  baseLayer.addTo(map);currentBase=id;
 }
 map.on('zoomend moveend',()=>{if(currentBase==='dark'&&baseLayer?.getMaplibreMap)syncDarkDriveRoads(baseLayer.getMaplibreMap());});
+
+/* Vista 3D independiente de la edición 2D. No modifica roads, roundabouts ni su almacenamiento.
+   Elevaciones: Mapzen Terrain Tiles / AWS Open Data, Terrarium 256 px, hasta zoom 14.
+   Atribución: Mapzen; en Europa, Copernicus EU-DEM, demás fuentes según Tilezen. */
+const TERRAIN_TILES='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+let terrainMode=false,terrainBusy=false,terrainMap=null,terrainEntryBase=null;
+const TERRAIN_SOURCE='octos-aws-dem',TERRAIN_ROADS='octos-roads-3d';
+function terrainPixelWidthExpression(){
+ const cos=Math.max(.12,Math.cos(map.getCenter().lat*RAD));
+ const scale=z=>Math.pow(2,z)/(156543.033928041*cos);
+ return ['interpolate',['exponential',2],['zoom'],
+  0,['*',['get','w'],scale(0)],19,['*',['get','w'],scale(19)]];
+}
+function terrainFeatureCollection(){
+ const features=[],toGeo=pts=>pts.map(p=>[p[1],p[0]]);
+ const addLine=(pts,w,fill,kind='surface')=>{
+  if(!pts||pts.length<2||!w)return;
+  features.push({type:'Feature',properties:{kind,w,color:fill},geometry:{type:'LineString',coordinates:toGeo(pts)}});
+ };
+ const addPoly=(pts,fill)=>{
+  if(!pts||pts.length<3)return;
+  const points=toGeo(pts),first=points[0],last=points[points.length-1];
+  if(first[0]!==last[0]||first[1]!==last[1])points.push(first.slice());
+  features.push({type:'Feature',properties:{kind:'island',color:fill},geometry:{type:'Polygon',coordinates:[points]}});
+ };
+ const paint=(pts,width,color,shoulder=0,sidewalk=0)=>{
+  if(!visible('layerRoad'))return;
+  if(sidewalk>0){addLine(pts,width+2*sidewalk+1.0,'#292929','casing');addLine(pts,width+2*sidewalk,'#979A9E','shoulder');}
+  if(shoulder>0){addLine(pts,width+2*shoulder+1,'#292929','casing');addLine(pts,width+2*shoulder,'#747D83','shoulder');}
+  addLine(pts,width+1,'#292929','casing');
+  addLine(pts,width,color,'surface');
+ };
+ for(const road of roads){
+  const sec=sectionOf(road),geometry=makeGeometry(road);
+  for(const part of geometry.parts){
+   const structure=(road.structures||{})[part.segmentIndex];
+   const color3D=structure==='bridge'?'#42d4e4':structure==='tunnel'?'#bc9bff':
+    visible('layerSpeed')?color(part.speed):'#C2CDD0';
+   paint(part.points,sec.roadWidth,color3D,sec.shoulderWidth,sec.sidewalkWidth);
+   if(visible('layerRoad')&&visible('layerAxes')){
+    if(sec.shoulderWidth>0)for(const side of [-1,1])
+     addLine(offsetCenterline(part.points,side*sec.roadWidth/2),.17,'#F1F1EF','marking');
+    if(sec.medianWidth>0&&sec.splitAfter){
+     addLine(offsetCenterline(part.points,sec.medianOffset),sec.medianWidth,'#3C4145','median');
+     for(const side of [-1,1])addLine(offsetCenterline(part.points,sec.medianOffset+side*sec.medianWidth/2),.17,'#F1F1EF','marking');
+    }
+    for(const mark of sec.lines){
+     const offset=mark.offset*sec.laneWidth+
+      (sec.splitAfter&&mark.offset*sec.laneWidth<sec.medianOffset?-sec.medianWidth/2:sec.splitAfter?sec.medianWidth/2:0);
+     addLine(offsetCenterline(part.points,offset),.17,'#F1F1EF',mark.solid?'marking':'dash');
+    }
+   }
+  }
+ }
+ for(const rb of roundabouts){
+  const shape=roundaboutGeometry(rb),dim=shape.dimensions;
+  paint(shape.ring,dim.width,'#C2CDD0');
+  if(visible('layerRoad')){
+   addPoly(shape.island,'#505050');
+   if(visible('layerAxes'))for(let k=1;k<dim.lanes;k++){
+    const lat=rb.center[0],origin=xy(rb.center,lat),pts=[];
+    for(let i=0;i<=192;i++){const a=i*2*Math.PI/192,r=roundaboutRayRadius(rb,a,k*dim.laneWidth);
+     pts.push(ll(add(origin,{x:r*Math.cos(a),y:r*Math.sin(a)}),lat));}
+    addLine(pts,.17,'#F1F1EF','dash');
+   }
+  }
+  for(const arm of shape.arms){
+   const transition=armTransition(rb,arm),profile=transition.profile;
+   for(const [pts,count] of [[transition.entry,profile.entry],[transition.exit,profile.exit]]){
+    if(!pts||!count)continue;
+    const line=pts.map(q=>ll(q,transition.lat));
+    paint(line,count*profile.laneWidth,'#C2CDD0',profile.shoulder,profile.sidewalk);
+    if(visible('layerRoad')&&visible('layerAxes'))for(let k=1;k<count;k++)
+     addLine(offsetCenterline(line,(k-count/2)*profile.laneWidth),.17,'#F1F1EF','dash');
+   }
+   if(visible('layerRoad')&&transition.splitter)addPoly(transition.splitter.map(q=>ll(q,transition.lat)),'#666D6C');
+  }
+  const bypass=roundaboutSlipGeometry(rb);
+  if(bypass){
+   paint(bypass.path.map(q=>ll(q,bypass.lat)),bypass.laneWidth,'#C2CDD0');
+   if(visible('layerRoad')&&bypass.island)addPoly(bypass.island.map(q=>ll(q,bypass.lat)),'#666D6C');
+  }
+ }
+ return {type:'FeatureCollection',features};
+}
+function terrainUpdateGeoJSON(){
+ if(!terrainMap||!terrainMode)return;
+ const source=terrainMap.getSource(TERRAIN_ROADS);
+ if(source)source.setData(terrainFeatureCollection());
+}
+function terrainAddGeometry(gl){
+ gl.addSource(TERRAIN_ROADS,{type:'geojson',data:terrainFeatureCollection()});
+ const lw=terrainPixelWidthExpression(),kind=name=>['==',['get','kind'],name];
+ for(const name of ['casing','shoulder','surface','median','marking','dash']){
+  gl.addLayer({id:'octos-3d-'+name,type:'line',source:TERRAIN_ROADS,filter:kind(name),
+   layout:{'line-join':'round','line-cap':'butt'},
+   paint:{'line-color':['get','color'],'line-width':lw,
+    ...(name==='dash'?{'line-dasharray':[3,5]}:{})}});
+ }
+ gl.addLayer({id:'octos-3d-island',type:'fill',source:TERRAIN_ROADS,filter:kind('island'),
+  paint:{'fill-color':['get','color'],'fill-opacity':.96}});
+}
+function terrainTileAt(lat,lng,zoom){
+ const z=clamp(Math.floor(zoom),3,10),n=2**z;
+ const x=clamp(Math.floor((lng+180)/360*n),0,n-1);
+ const latitude=clamp(lat,-85,85)*RAD;
+ const y=clamp(Math.floor((1-Math.asinh(Math.tan(latitude))/Math.PI)/2*n),0,n-1);
+ return TERRAIN_TILES.replace('{z}',z).replace('{x}',x).replace('{y}',y);
+}
+async function terrainCheckDEM(){
+ const point=map.getCenter(),abort=new AbortController();
+ const timeout=setTimeout(()=>abort.abort(),8000);
+ try{
+  const response=await fetch(terrainTileAt(point.lat,point.lng,map.getZoom()),{signal:abort.signal,cache:'force-cache'});
+  if(!response.ok)throw Error('DEM HTTP '+response.status);
+  const type=response.headers.get('content-type')||'';
+  if(type&&!type.includes('image')&&!type.includes('octet-stream'))throw Error('Formato DEM no compatible');
+  const blob=await response.blob();
+  if(blob.size<50)throw Error('Tesela de elevación vacía');
+ }finally{clearTimeout(timeout);}
+}
+function terrainSwitchUI(active){
+ terrainMode=active;
+ $('terrainModeBtn').textContent=active?'2D':'3D';
+ $('terrainModeBtn').setAttribute('aria-pressed',String(active));
+ $('terrainModeBtn').title=active?'Volver al editor 2D':'Visualizar relieve real 3D (solo lectura)';
+ $('mapWrap').classList.toggle('terrain-active',active);
+ document.body.classList.toggle('terrain-readonly',active);
+ $('terrain3DView').hidden=!active;
+}
+function terrainStop(restore=true){
+ if(terrainMap){
+  const gl=terrainMap,center=gl.getCenter(),zoom=gl.getZoom();
+  terrainMap=null;gl.remove();
+  if(restore)map.setView([center.lat,center.lng],Math.max(2,Math.min(19,zoom)),{animate:false});
+ }
+ terrainSwitchUI(false);
+ map.invalidateSize();
+ // Al entrar se libera el contexto MapLibre del fondo 2D para limitar GPU.
+ if(!baseLayer&&terrainEntryBase){
+  const current=terrainEntryBase;terrainEntryBase=null;
+  setBase(current);
+ }
+ if(restore){render();status('Editor 2D restaurado; geometrías intactas.');}
+}
+async function terrainStart(){
+ if(terrainBusy||terrainMode)return;
+ if(draft.length){status('Termina o cancela el trazado actual antes de activar 3D.');return;}
+ terrainBusy=true;$('terrainModeBtn').disabled=true;
+ status('Comprobando servicio público DEM…');
+ try{
+  await terrainCheckDEM();
+  await loadDarkBridge();
+  if(mode!=='select')setMode('select');
+  const point=map.getCenter();
+  // Nunca mantener dos contextos MapLibre activos a la vez.
+  if(baseLayer&&bases[currentBase]?.vector){
+   terrainEntryBase=currentBase;
+   ++baseChange;map.removeLayer(baseLayer);baseLayer=null;
+  }
+  $('terrain3DView').hidden=false;
+  const gl=new maplibregl.Map({container:'terrain3DView',style:bases.dark.url,
+   center:[point.lng,point.lat],zoom:map.getZoom(),pitch:60,bearing:0,
+   maxPitch:80,maxZoom:19,antialias:false,attributionControl:true});
+  terrainMap=gl;
+  gl.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
+  await new Promise((resolve,reject)=>{
+   const timeout=setTimeout(()=>reject(Error('Tiempo agotado al cargar el mapa 3D')),13000);
+   gl.once('load',()=>{clearTimeout(timeout);resolve();});
+   gl.once('error',event=>{if(!gl.isStyleLoaded()){clearTimeout(timeout);reject(event.error||Error('Error de estilo 3D'));}});
+  });
+  styleDarkDrive(gl);
+  gl.addSource(TERRAIN_SOURCE,{type:'raster-dem',tiles:[TERRAIN_TILES],
+   tileSize:256,encoding:'terrarium',minzoom:0,maxzoom:14,
+   attribution:'Relieve © Mapzen Terrain Tiles / AWS Open Data · Europa: Copernicus EU-DEM'});
+  gl.setTerrain({source:TERRAIN_SOURCE,exaggeration:1});
+  terrainAddGeometry(gl);
+  gl.on('error',event=>{
+   const msg=event.error?.message||'';
+   if(event.sourceId===TERRAIN_SOURCE||msg.includes('elevation-tiles-prod'))
+    status('No se pudo cargar alguna tesela DEM. Vuelve a 2D si el relieve no aparece.');
+  });
+  terrainSwitchUI(true);
+  status('Vista 3D · relieve real, carreteras ajustadas al terreno · edición disponible en 2D.');
+ }catch(error){
+  terrainStop(false);
+  status('Vista 3D no disponible ('+(error?.message||'error DEM')+'). El editor 2D sigue operativo.');
+ }finally{terrainBusy=false;$('terrainModeBtn').disabled=false;}
+}
+$('terrainModeBtn').onclick=()=>{if(terrainBusy)return;if(terrainMode)terrainStop();else terrainStart();};
+
 function status(msg){$('status').textContent=msg;}
 function checkpoint(){history.push(JSON.stringify({roads,roundabouts}));if(history.length>30)history.shift();}
 function persist(){try{localStorage.setItem(K,JSON.stringify({version:1,roads,roundabouts}));}catch(e){status('No se ha podido guardar automáticamente. Usa Guardar JSON.');}}
@@ -1182,6 +1393,7 @@ function render(){
  $('roadsList').querySelectorAll('button').forEach(b=>b.onclick=()=>{setMode('select');setSelection(b.dataset.id);});
  drawPreview();
  syncInspector();
+ if(terrainMode)terrainUpdateGeoJSON();
 }
 
 /* El primer clic abre los parámetros antes de insertar la rotonda. */
@@ -1287,7 +1499,7 @@ function drawPreview(){
  const g=makeGeometry({...params(),nodes});g.parts.forEach(p=>L.polyline(p.points,{color:'#FF6A1A',weight:4,dashArray:'8 7',interactive:false}).addTo(preview));
  draft.forEach(p=>L.circleMarker(p,{radius:4,color:'#fff',weight:2,fillColor:'#FF6A1A',fillOpacity:1,interactive:false}).addTo(preview));
 }
-function setMode(next){if(next==='draw')inspectorClosed=false;if(next!=='roundabout'&&pendingRoundabout)closeRoundaboutCreator();if(mode==='draw'&&draft.length&&next!=='draw')finish(false);mode=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('map').classList.toggle('mode-draw',mode==='draw');$('finishBtn').disabled=mode!=='draw'||draft.length<2;
+function setMode(next){if(terrainMode){status('El modo 3D es solo de visualización. Vuelve a 2D para editar.');return;}if(next==='draw')inspectorClosed=false;if(next!=='roundabout'&&pendingRoundabout)closeRoundaboutCreator();if(mode==='draw'&&draft.length&&next!=='draw')finish(false);mode=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('map').classList.toggle('mode-draw',mode==='draw');$('finishBtn').disabled=mode!=='draw'||draft.length<2;
  const hints={select:['Seleccionar / modificar','Pulsa una carretera para seleccionar. Arrastra sus puntos naranjas para ajustar curvas y radios.'],draw:['Nueva carretera','Pulsa sobre el mapa para poner vértices. Mueve el cursor para previsualizar. Pulsa Terminar o Intro.'],insert:['Insertar vértice','Pulsa sobre un tramo de carretera para insertar un punto de control.'],remove:['Eliminar vértice','Selecciona una carretera y pulsa uno de sus puntos naranjas para eliminarlo.'],roundabout:['Insertar rotonda','Pulsa el lugar de inserción. Ajusta dimensiones y orientación en la ventana emergente y confirma.'],bridge:['Marcar puente','Pulsa sobre un tramo para clasificarlo como puente (cian).'],tunnel:['Marcar túnel','Pulsa sobre un tramo para clasificarlo como túnel (violeta discontinuo).'],normal:['Devolver a superficie','Pulsa sobre un tramo para quitar la clasificación de puente o túnel.']};
  $('hintTitle').textContent=hints[mode][0];$('hintText').textContent=hints[mode][1];status('Modo '+hints[mode][0].toLowerCase());render();}
 function finish(save=true){if(save&&draft.length>=2){checkpoint();const r={id:newId(),...params(),nodes:draft.slice()};attachEndpoints(r);roads.push(r);inspectorClosed=false;selectedRoundabout=null;selectedSegment=null;selected=r.id;persist();status('Carretera creada con '+draft.length+' puntos.');}draft=[];cursor=null;preview.clearLayers();mode='select';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode==='select'));$('map').classList.remove('mode-draw');$('finishBtn').disabled=true;render();}
