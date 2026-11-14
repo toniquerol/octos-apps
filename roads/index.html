@@ -427,7 +427,7 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 .home-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;font:700 12px Manrope,system-ui,sans-serif;padding-bottom:9px;border-bottom:1px solid #414442}
 .home-heading span:last-child{font:500 10px "IBM Plex Sans",system-ui,sans-serif;color:#9fa5a4}
 .home-projects{overflow:auto;min-height:72px;max-height:min(41vh,380px);display:grid;gap:8px;padding:9px 1px 4px;scrollbar-color:#535653 transparent}
-.home-project{display:grid;grid-template-columns:178px minmax(0,1fr) auto;gap:13px;align-items:center;background:#222421;border:1px solid #444941;padding:9px;border-radius:6px;min-width:0}
+.home-project{display:grid;grid-template-columns:178px minmax(0,1fr) 165px;gap:13px;align-items:center;background:#222421;border:1px solid #444941;padding:9px;border-radius:6px;min-width:0}
 .home-project.active{border-color:#8a724b}
 .home-thumb{border:1px solid #454b4b;background:#161d22;overflow:hidden;border-radius:3px;aspect-ratio:16/9;display:block;width:100%;padding:0;cursor:pointer}
 .home-thumb svg{display:block;width:100%;height:100%}
@@ -439,11 +439,15 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 .home-project-actions button{background:#2a2d2b;border:1px solid #4e534e;border-radius:4px;color:#F1F1EF;padding:6px 9px;font-size:10px;cursor:pointer}
 .home-project-actions button:hover{border-color:#FF6A1A}
 .home-project-actions button[data-home-remove]{color:#e4a9a1}
+.home-export-controls{display:flex;align-items:stretch;gap:5px;min-width:0}
+.home-export-controls select{min-width:0;width:72px;flex:1;background:#1c1e1c;border:1px solid #505650;border-radius:4px;color:#F1F1EF;font:10px "IBM Plex Sans",system-ui,sans-serif;padding:5px 3px}
+.home-export-controls button{flex:none;white-space:nowrap;font-size:10px;padding:6px 7px}
+.home-project-actions{min-width:165px}
 .home-empty{border:1px dashed #50534f;border-radius:5px;color:#b8bfbc;font-size:11px;text-align:center;padding:26px 16px}
 .home-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:10px;border-top:1px solid #414442;font-size:10px;color:#b0b7b1}
 .home-footer output{min-width:0;overflow-wrap:anywhere}
 #homeScreen button:focus-visible{outline:2px solid #FF6A1A;outline-offset:2px}
-@media(max-width:650px){#homeScreen{padding:16px 10px}.home-shell{max-height:calc(100dvh - 32px);gap:12px}.home-identity img{width:min(330px,86%)}.home-identity p{font-size:clamp(15px,4vw,20px);letter-spacing:.08em}.home-library{padding:12px}.home-project{grid-template-columns:102px minmax(0,1fr);gap:8px;padding:7px}.home-project-actions{grid-column:1/-1;flex-direction:row;justify-content:flex-end}.home-projects{max-height:49vh}.home-actions .btn{flex:1}.home-project-meta small{font-size:9px}}
+@media(max-width:650px){#homeScreen{padding:16px 10px}.home-shell{max-height:calc(100dvh - 32px);gap:12px}.home-identity img{width:min(330px,86%)}.home-identity p{font-size:clamp(15px,4vw,20px);letter-spacing:.08em}.home-library{padding:12px}.home-project{grid-template-columns:102px minmax(0,1fr);gap:8px;padding:7px}.home-project-actions{grid-column:1/-1;flex-direction:row;justify-content:flex-end;align-items:center;flex-wrap:wrap;min-width:0}.home-export-controls{flex:1;max-width:230px}.home-export-controls select{width:90px}.home-projects{max-height:49vh}.home-actions .btn{flex:1}.home-project-meta small{font-size:9px}}
 
 </style>
 </head>
@@ -1488,13 +1492,118 @@ function homeRender(){
    '<div class="home-project-meta"><button type="button" class="home-open-name" data-home-open="'+safe(p.id)+'">'+safe(p.name)+'</button>'+
    '<small>'+safe(date)+'<br>'+segments+'<br>Guardado local</small></div>'+
    '<div class="home-project-actions"><button type="button" data-home-open="'+safe(p.id)+'">Abrir</button>'+
+   '<div class="home-export-controls"><select data-home-export-format="'+safe(p.id)+'" aria-label="Formato para exportar '+safe(p.name)+'">'+
+   '<option value="json">JSON</option><option value="geojson">GeoJSON</option><option value="kml">KML</option></select>'+
+   '<button type="button" data-home-export="'+safe(p.id)+'">Exportar</button></div>'+
    '<button type="button" data-home-rename="'+safe(p.id)+'">Renombrar</button>'+
    '<button type="button" data-home-remove="'+safe(p.id)+'">Eliminar</button></div></article>';
  }).join(''):'<div class="home-empty">No hay proyectos guardados. Crea uno para empezar.</div>';
  $('homeProjects').querySelectorAll('[data-home-open]').forEach(b=>b.onclick=()=>homeOpenProject(b.dataset.homeOpen));
  $('homeProjects').querySelectorAll('[data-home-rename]').forEach(b=>b.onclick=()=>homeRenameProject(b.dataset.homeRename));
+ $('homeProjects').querySelectorAll('[data-home-export]').forEach(b=>b.onclick=()=>homeExportProject(b.dataset.homeExport));
  $('homeProjects').querySelectorAll('[data-home-remove]').forEach(b=>b.onclick=()=>homeDeleteProject(b.dataset.homeRemove));
 }
+
+/* Exportaciones de biblioteca independientes del proyecto activo.
+   JSON: copia editable íntegra; GeoJSON/KML: ejes, puntos de glorieta y
+   referencias lineales de enlaces para programas GIS. */
+function homeExportGeoJSON(project){
+ const features=[],roadsById=new Map((project.roads||[]).map(r=>[r.id,r]));
+ for(const road of project.roads||[]){
+  if(!validNodes(road.nodes))throw Error('La carretera '+road.name+' contiene coordenadas inválidas.');
+  const parts=makeGeometry(road).parts,coordinates=[];
+  for(const part of parts)for(const node of part.points){
+   const p=[node[1],node[0]],prev=coordinates[coordinates.length-1];
+   if(!prev||Math.abs(prev[0]-p[0])>1e-9||Math.abs(prev[1]-p[1])>1e-9)coordinates.push(p);
+  }
+  if(coordinates.length<2)coordinates.push(...road.nodes.map(p=>[p[1],p[0]]));
+  features.push({type:'Feature',geometry:{type:'LineString',coordinates},properties:{
+   id:road.id,name:road.name,featureType:'road',roadType:road.type,
+   radius:road.radius,width:road.width,speed:road.speed,
+   section:road.section,laneWidth:road.laneWidth,shoulderWidth:road.shoulderWidth,
+   medianWidth:road.medianWidth,sidewalkWidth:road.sidewalkWidth,
+   structures:road.structures||{},bridgeDetails:road.bridgeDetails||{},
+   connections:road.connections||{},controlPoints:road.nodes.map(p=>[p[1],p[0]]),
+   importGroup:road.importGroup||null,official:road.official||null
+  }});
+ }
+ for(const rb of project.roundabouts||[]){
+  if(!validRoundabout(rb))throw Error('Una rotonda contiene coordenadas o parámetros inválidos.');
+  const {center,...props}=rb;
+  features.push({type:'Feature',geometry:{type:'Point',coordinates:[center[1],center[0]]},
+   properties:{featureType:'roundabout',...props,name:'Rotonda '+(props.id||'')}});
+ }
+ const anchor=(road,ref)=>{
+  if(!road||!ref||!Number.isInteger(ref.i)||ref.i<0||ref.i>=road.nodes.length-1)return null;
+  const a=road.nodes[ref.i],b=road.nodes[ref.i+1],t=Math.max(0,Math.min(1,Number(ref.t)||0));
+  return [a[1]+(b[1]-a[1])*t,a[0]+(b[0]-a[0])*t];
+ };
+ for(const junction of project.junctions||[]){
+  const a=anchor(roadsById.get(junction.fromId),junction.from);
+  const b=anchor(roadsById.get(junction.toId),junction.to);
+  if(!a||!b)throw Error('Un enlace referencia una carretera o segmento inexistente.');
+  features.push({type:'Feature',geometry:{type:'LineString',coordinates:[a,b]},
+   properties:{featureType:'junction',name:'Enlace '+(junction.id||''),connection:junction,
+    geometryNote:'Línea de referencia entre anclajes, no curva de construcción'}});
+ }
+ return {type:'FeatureCollection',name:project.name||'OcToS Roads',features};
+}
+function homeXmlEscape(value){
+ return String(value??'').replace(/[&<>"']/g,c=>({
+  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'
+ })[c]);
+}
+function homeExportKML(project){
+ const geo=homeExportGeoJSON(project);
+ const placemarks=geo.features.map(feature=>{
+  const p=feature.properties||{},g=feature.geometry||{},name=homeXmlEscape(p.name||'Elemento');
+  const geometry=g.type==='Point'?
+   '<Point><coordinates>'+g.coordinates.join(',')+',0</coordinates></Point>':
+   '<LineString><tessellate>1</tessellate><coordinates>'+
+   g.coordinates.map(c=>c.join(',')+',0').join(' ')+'</coordinates></LineString>';
+  const data=Object.entries(p).filter(([key])=>key!=='name').map(([key,value])=>
+   '<Data name="'+homeXmlEscape(key)+'"><value>'+homeXmlEscape(
+    value&&typeof value==='object'?JSON.stringify(value):value
+   )+'</value></Data>').join('');
+  return '<Placemark><name>'+name+'</name><ExtendedData>'+data+'</ExtendedData>'+geometry+'</Placemark>';
+ }).join('');
+ return '<?xml version="1.0" encoding="UTF-8"?>\n'+
+  '<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>'+
+  homeXmlEscape(project.name||'OcToS Roads')+'</name>'+placemarks+'</Document></kml>';
+}
+function homeDownloadFile(filename,content,mime){
+ const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob);
+ const link=document.createElement('a');link.href=url;link.download=filename;
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+async function homeExportProject(id){
+ const select=Array.from($('homeProjects').querySelectorAll('[data-home-export-format]'))
+  .find(el=>el.dataset.homeExportFormat===id);
+ const format=select?.value||'json';
+ await homeSaveChain; // Include all latest changes of the active project.
+ const project=homeRecords.find(p=>p.id===id);if(!project)return;
+ try{
+  const base=(project.name||'proyecto').normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
+   .replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,70)||'proyecto';
+  let content,mime,extension;
+  if(format==='json'){
+   content=JSON.stringify({app:'OcToS Roads',version:1,name:project.name,
+    roads:project.roads||[],roundabouts:project.roundabouts||[],
+    junctions:project.junctions||[]},null,2);
+   mime='application/json;charset=utf-8';extension='json';
+  }else if(format==='geojson'){
+   content=JSON.stringify(homeExportGeoJSON(project),null,2);
+   mime='application/geo+json;charset=utf-8';extension='geojson';
+  }else if(format==='kml'){
+   content=homeExportKML(project);
+   mime='application/vnd.google-earth.kml+xml;charset=utf-8';extension='kml';
+  }else throw Error('Formato de exportación no reconocido.');
+  homeDownloadFile('octos-roads-'+base+'.'+extension,content,mime);
+  $('homeMessage').textContent='Exportación iniciada: '+project.name+' ('+extension.toUpperCase()+').';
+ }catch(error){$('homeMessage').textContent='No se pudo exportar: '+error.message;}
+}
+
 function homeInitMap(){
  // Fondo fijo: no depende de servicios de teselas ni del motor cartográfico.
 }
