@@ -406,6 +406,7 @@ var currentPage=initial;
 history.replaceState({octosTeamPage:initial},"","#"+initial);
 function page(name,record=true){
  if(!validPages.has(name))return;
+ if(name==="permissions"&&window.octosTeamIsMaster===false){name="room"}
  if(name!==currentPage&&record){
   teamHistory.push(currentPage);
   history.pushState({octosTeamPage:name},"","#"+name);
@@ -441,7 +442,8 @@ document.getElementById('plus').onclick=function(){changeZoom(zoom+.15)};documen
 "use strict";
 const PIN_SALT="792dc348777ee0684dc1eb5dcc6c706a";
 const PIN_HASH="076ee91cf0a5f5d1f317b67acae6b6a4a7545863baf8dfe0d7763a3f2b573234";
-const ROUNDS=250000,TTL=15*60*1000,SESSION_KEY="octos-team-access-until";
+const ROUNDS=250000,TTL=15*60*1000,SESSION_KEY="octos-team-access-until",TEAM_ROLE_KEY="octos-team-access-role",PROFILE_STORE="octos-permissions-v1";
+let currentRole=null;window.octosTeamIsMaster=null;
 const root=document.documentElement,gate=document.getElementById("team-access"),form=document.getElementById("team-access-form");
 const pin=document.getElementById("team-access-pin"),error=document.getElementById("team-access-error"),submit=document.getElementById("team-access-submit");
 let lastActivity=Date.now(),failures=0,lockedUntil=0,lastSessionRefresh=0;
@@ -453,18 +455,53 @@ async function verify(value){
  let different=0;for(let i=0;i<expected.length;i++)different|=actual[i]^expected[i];
  return different===0;
 }
-function persist(){try{sessionStorage.setItem(SESSION_KEY,String(Date.now()+TTL))}catch(e){}}
-function clear(){try{sessionStorage.removeItem(SESSION_KEY)}catch(e){}}
-function enter(){root.classList.remove("pin-locked");gate.hidden=true;pin.value="";error.textContent="";lastActivity=Date.now();lastSessionRefresh=lastActivity;persist()}
-function lock(){clear();root.classList.add("pin-locked");gate.hidden=false;pin.value="";error.textContent="";pin.focus()}
-try{const expiry=Number(sessionStorage.getItem(SESSION_KEY)||0);if(expiry>Date.now())enter();else clear()}catch(e){}
+function readProfiles(){
+ try{
+  const x=JSON.parse(localStorage.getItem(PROFILE_STORE)||"[]");
+  return Array.isArray(x)?x.filter(p=>p&&typeof p.id==="string"&&p.active!==false&&Array.isArray(p.apps)&&p.apps.includes("team")&&typeof p.salt==="string"&&typeof p.hash==="string"):[];
+ }catch(e){return []}
+}
+async function verifySecondary(value,profile){
+ try{
+  if(!/^[0-9a-f]{32}$/.test(profile.salt)||!/^[0-9a-f]{64}$/.test(profile.hash))return false;
+  const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(value),{name:"PBKDF2"},false,["deriveBits"]);
+  const a=new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:hexBytes(profile.salt),iterations:ROUNDS,hash:"SHA-256"},k,256));
+  const b=hexBytes(profile.hash);let diff=0;for(let i=0;i<b.length;i++)diff|=a[i]^b[i];
+  return diff===0;
+ }catch(e){return false}
+}
+function persist(){try{sessionStorage.setItem(SESSION_KEY,String(Date.now()+TTL));sessionStorage.setItem(TEAM_ROLE_KEY,JSON.stringify(currentRole))}catch(e){}}
+function clear(){try{sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(TEAM_ROLE_KEY)}catch(e){}}
+function enter(role){
+ currentRole=role;window.octosTeamIsMaster=role.kind==="master";
+ root.classList.remove("pin-locked");gate.hidden=true;pin.value="";error.textContent="";
+ lastActivity=Date.now();lastSessionRefresh=lastActivity;persist();
+ document.querySelectorAll('[data-page="permissions"]').forEach(el=>el.hidden=!window.octosTeamIsMaster);
+ if(!window.octosTeamIsMaster&&location.hash==="#permissions")location.hash="#room";
+}
+function lock(){
+ clear();currentRole=null;window.octosTeamIsMaster=null;root.classList.add("pin-locked");
+ gate.hidden=false;pin.value="";error.textContent="";pin.focus();
+ document.querySelectorAll('[data-page="permissions"]').forEach(el=>el.hidden=true);
+}
+try{
+ const role=JSON.parse(sessionStorage.getItem(TEAM_ROLE_KEY)||"null");
+ const valid=role&&(role.kind==="master"||(role.kind==="secondary"&&readProfiles().some(p=>p.id===role.id)));
+ if(valid&&Number(sessionStorage.getItem(SESSION_KEY)||0)>Date.now())enter(role);
+ else{clear();document.querySelectorAll('[data-page="permissions"]').forEach(el=>el.hidden=true)}
+}catch(e){clear()}
 form.addEventListener("submit",async function(event){
  event.preventDefault();
  if(Date.now()<lockedUntil){error.textContent="Espera 30 segundos antes de volver a intentarlo.";return}
  if(!/^[0-9]{6}$/.test(pin.value)){error.textContent="Introduce seis dígitos.";return}
  submit.disabled=true;error.textContent="";
  try{
-  if(await verify(pin.value)){failures=0;enter();return}
+  if(await verify(pin.value)){failures=0;enter({kind:"master"});return}
+  for(const profile of readProfiles()){
+   if(await verifySecondary(pin.value,profile)){
+    failures=0;enter({kind:"secondary",id:profile.id});return;
+   }
+  }
   failures++;pin.value="";pin.focus();
   if(failures>=5){lockedUntil=Date.now()+30000;failures=0;error.textContent="Demasiados intentos. Espera 30 segundos."}
   else error.textContent="PIN incorrecto.";
