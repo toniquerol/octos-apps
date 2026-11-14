@@ -292,6 +292,44 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 @media(max-width:760px){.terrain-mode-btn{right:7px;bottom:184px;height:31px}
  #terrain3DView .maplibregl-ctrl-top-right{right:5px;top:8px}}
 
+
+/* OcToS Roads · sección transversal contextual y navegación agrupada */
+#mapWrap .map-nav-dock{position:absolute;z-index:1250;right:252px;bottom:34px;display:flex;gap:5px;align-items:center}
+#mapWrap .map-nav-dock button{position:static;inset:auto;display:grid;place-items:center;flex:none;width:34px;height:34px;min-width:0;padding:0;border:1px solid #626269;border-radius:5px;background:#202125f2;color:#F1F1EF;font:700 17px "IBM Plex Sans",system-ui,sans-serif;line-height:1;cursor:pointer}
+#mapWrap .map-nav-dock .terrain-mode-btn{font-size:12px}
+#mapWrap .map-nav-dock button:hover,#mapWrap .map-nav-dock button:focus-visible,#mapWrap .map-nav-dock .terrain-mode-btn[aria-pressed=true]{border-color:#FF6A1A;color:#FF9D65}
+#mapWrap .map-nav-dock button:disabled{opacity:.45;cursor:default}
+#mapWrap>.section-visual-panel{position:absolute;z-index:1150;right:14px;bottom:96px;width:362px;max-width:calc(100% - 28px);max-height:calc(100% - 114px);overflow:auto;padding:12px 13px 11px;background:#1c1d20f2;color:#F1F1EF;border:1px solid #56565c;border-radius:8px;box-shadow:0 7px 23px #0009;font-family:"IBM Plex Sans",system-ui,sans-serif;scrollbar-color:#5a5a5c transparent}
+#mapWrap>.section-visual-panel[hidden]{display:none!important}
+.section-visual-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.section-visual-head strong{color:#FF6A1A;font-size:10px;letter-spacing:.08em;white-space:nowrap}
+.section-visual-head span{color:#bfc0c4;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+.section-visual-type{display:flex;align-items:center;gap:10px;justify-content:space-between;color:#d7d7db;font-size:10px;margin-bottom:10px}
+.section-visual-type select{min-width:0;flex:1;max-width:217px;color:#F1F1EF;background:#28292d;border:1px solid #50515a;border-radius:5px;padding:6px;font:inherit}
+.section-visual-drawing{padding:13px 10px 9px;background:#12151a;border:1px solid #353a42;border-radius:6px;overflow:hidden}
+.section-visual-drawing .section-road-strip{display:flex;min-height:66px;border-block:2px solid #656d76;box-shadow:0 5px 9px #0006;overflow:hidden}
+.section-road-strip .section-part{display:flex;flex:1 1 0;min-width:0;align-items:center;justify-content:center;flex-direction:column;gap:3px;position:relative;background:#353c43;color:#F1F1EF;border:none;border-right:1px dashed #c2c4c599;cursor:pointer;overflow:hidden;font:700 16px "IBM Plex Sans",system-ui,sans-serif;padding:3px 1px}
+.section-road-strip .section-part:last-child{border-right:none}
+.section-road-strip .section-part span{font-size:10px;font-weight:500;white-space:nowrap}
+.section-road-strip .section-part[data-part=sidewalk]{background:#9ba0a5;color:#1a1d22;border-inline:2px solid #e6e6e3;font-size:10px}
+.section-road-strip .section-part[data-part=shoulder]{background:#686e75;color:#f1f1ef;border-right:1px solid #e6e6e3;font-size:10px}
+.section-road-strip .section-part[data-part=median]{background:repeating-linear-gradient(120deg,#4a5556,#4a5556 7px,#647071 7px,#647071 13px);border-inline:2px solid #F1F1EF;font-size:10px}
+.section-road-strip .section-part[data-direction=reverse]{border-right:1px dashed #e7e7e699}
+.section-road-strip .section-part:hover,.section-road-strip .section-part:focus-visible{filter:brightness(1.25);outline:2px solid #FF6A1A;outline-offset:-2px}
+.section-visual-scale{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:9px;font-size:10px;color:#d0d1d3}
+.section-visual-scale strong{color:#FF9D65;font-size:11px;font-variant-numeric:tabular-nums}
+.section-visual-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px;margin-top:11px}
+.section-visual-fields label{display:flex;align-items:center;justify-content:space-between;min-width:0;gap:5px;color:#d7d7d9;font-size:10px}
+.section-visual-fields label[hidden]{display:none!important}
+.section-visual-fields input{width:70px;min-width:0;padding:6px 5px;color:#F1F1EF;background:#28292d;border:1px solid #53535b;border-radius:5px;font:11px "IBM Plex Sans",system-ui,sans-serif;text-align:right;font-variant-numeric:tabular-nums}
+.section-visual-fields input:focus,.section-visual-type select:focus{outline:1px solid #FF6A1A;border-color:#FF6A1A}
+.section-visual-note{display:block;color:#a5a8ad;font-size:9px;line-height:1.3;margin-top:9px}
+#mapWrap.terrain-active .section-visual-panel{display:none!important}
+@media(max-width:760px){
+ #mapWrap>.section-visual-panel{right:8px;bottom:85px;width:340px;max-width:calc(100% - 16px);max-height:calc(100% - 101px);padding:10px}
+ #mapWrap .map-nav-dock{right:194px;bottom:28px;gap:4px}
+ #mapWrap .map-nav-dock button{width:32px;height:32px}
+}
 </style>
 </head>
 <body>
@@ -343,7 +381,35 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
  <div id="map"></div>
  <div id="junctionDock" class="junction-dock" hidden><strong>ENLACES · PARÁMETROS</strong><label>Tipo<select id="jxType"><option value="cruce">Cruce a nivel</option><option value="entrada">Incorporación · aceleración</option><option value="salida">Salida · desaceleración</option></select></label><label>Carril auxiliar (m)<input type="number" min="20" max="800" step="10" id="jxLength" value="150"></label><label>Transición (m)<input type="number" min="10" max="300" step="5" id="jxTaper" value="65"></label><label>Radio orientativo (m)<input type="number" min="10" max="500" step="5" id="jxRadius" value="60"></label><label>Anchura carril (m)<input type="number" min="2.5" max="5" step=".25" id="jxWidth" value="3.5"></label><small id="jxInfo">Pulsa primero una carretera secundaria y después la principal. Los enlaces siguen los ejes cuando se modifican.</small><div class="row wrap"><button type="button" class="btn primary grow" id="jxApply">Aplicar</button><button type="button" class="btn danger grow" id="jxDelete">Eliminar</button></div><small>Esquema preliminar en planta. Radio visual orientativo; sin validación normativa.</small></div>
  <div id="terrain3DView" class="terrain-3d-view" hidden aria-label="Vista de relieve real en 3D"></div>
- <button type="button" id="terrainModeBtn" class="terrain-mode-btn" aria-pressed="false" title="Visualizar el relieve real en 3D, solo lectura">3D</button>
+ <div id="mapNavDock" class="map-nav-dock" role="group" aria-label="Controles de navegación del mapa">
+  <button type="button" id="terrainModeBtn" class="terrain-mode-btn" aria-pressed="false" title="Visualizar el relieve real en 3D, solo lectura">3D</button>
+  <button type="button" id="zoomPlusBtn" title="Acercar el mapa" aria-label="Acercar el mapa">+</button>
+  <button type="button" id="zoomMinusBtn" title="Alejar el mapa" aria-label="Alejar el mapa">−</button>
+ </div>
+
+ <aside id="sectionPanel" class="section-visual-panel" hidden aria-label="Sección transversal de la carretera seleccionada">
+  <div class="section-visual-head"><strong>SECCIÓN TRANSVERSAL</strong><span id="sectionPanelRoadName"></span></div>
+  <label class="section-visual-type" for="sectionPanelType">Configuración
+   <select id="sectionPanelType">
+    <option value="road11">Carretera 1+1 · 2 carriles</option>
+    <option value="road21">Carretera 2+1 · 3 carriles</option>
+    <option value="road22">Carretera 2+2 · 4 carriles</option>
+    <option value="street2">Calle · doble sentido</option>
+    <option value="street1">Calle · sentido único</option>
+   </select>
+  </label>
+  <div class="section-visual-drawing">
+   <div id="sectionPanelDiagram" class="section-road-strip" role="group" aria-label="Esquema de carriles, arcenes, mediana y aceras"></div>
+   <div class="section-visual-scale"><span id="sectionPanelDescription"></span><strong id="sectionPanelTotal"></strong></div>
+  </div>
+  <div class="section-visual-fields">
+   <label for="sectionPanelLane">Carril (m)<input id="sectionPanelLane" type="number" min="2" max="5" step="0.25"></label>
+   <label id="sectionPanelShoulderField" for="sectionPanelShoulder">Arcén (m)<input id="sectionPanelShoulder" type="number" min="0" max="4" step="0.25"></label>
+   <label id="sectionPanelSidewalkField" for="sectionPanelSidewalk" hidden>Acera (m)<input id="sectionPanelSidewalk" type="number" min="0" max="8" step="0.25"></label>
+   <label id="sectionPanelMedianField" for="sectionPanelMedian" hidden>Mediana (m)<input id="sectionPanelMedian" type="number" min="0" max="8" step="0.25"></label>
+  </div>
+  <small class="section-visual-note">Dimensiones por lado. Cambios aplicados y guardados automáticamente. Pulsa una franja para editarla.</small>
+ </aside>
  <div class="head-speed" role="img" aria-label="Velocidad geométrica estimada; escala de colores: hasta 40, 60, 80, 100 y 120 kilómetros por hora" title="Estimación preliminar por radio de curvatura; peralte supuesto del 6 % y rozamiento transversal de 0,11. No sustituye una validación normativa ni un proyecto de ingeniería.">
    <div class="head-speed-title">VELOCIDAD GEOMÉTRICA ESTIMADA</div><div class="legend"><span style="background:#C83E42"></span><span style="background:#DB8137"></span><span style="background:#DDC34A"></span><span style="background:#4BA56A"></span><span style="background:#3294B9"></span></div><div class="legend-label"><span>≤40</span><span>60</span><span>80</span><span>100</span><span>120 km/h</span></div>
   </div>
@@ -428,7 +494,7 @@ const bases={
 };
 if(!window.L){$('status').textContent='No se ha podido cargar Leaflet. Comprueba la conexión.';return;}
 const map=L.map('map',{center:[40.2,-3.7],zoom:6,maxZoom:20,zoomControl:false,doubleClickZoom:false,preferCanvas:true});
-L.control.zoom({position:'bottomright'}).addTo(map);
+// Zoom +/− controlado por el panel inferior de navegación.
 let baseLayer=null,roads=[],roundabouts=[],junctions=[],selected=null,selectedRoundabout=null,selectedJunction=null,pendingJunction=null,selectedSegment=null,mode='select',draft=[],cursor=null,history=[],preview=L.layerGroup().addTo(map);
 const roadsGroup=L.layerGroup().addTo(map),autoCrossGroup=L.layerGroup().addTo(map),junctionGroup=L.layerGroup().addTo(map),roundaboutGroup=L.layerGroup().addTo(map),markersGroup=L.layerGroup().addTo(map),labelsGroup=L.layerGroup().addTo(map),roundaboutDraftGroup=L.layerGroup().addTo(map),editGuide=L.layerGroup().addTo(map);
 let pendingRoundabout=null,inspectorClosed=false;
@@ -983,7 +1049,7 @@ async function terrainStart(){
    center:[point.lng,point.lat],zoom:map.getZoom(),pitch:60,bearing:0,
    maxPitch:80,maxZoom:20,antialias:false,attributionControl:true});
   terrainMap=gl;
-  gl.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
+  gl.addControl(new maplibregl.NavigationControl({showZoom:false,showCompass:true,visualizePitch:true}),'top-right');
   await new Promise((resolve,reject)=>{
    const timeout=setTimeout(()=>reject(Error('Tiempo agotado al cargar el mapa 3D')),13000);
    gl.once('load',()=>{clearTimeout(timeout);resolve();});
@@ -1008,6 +1074,8 @@ async function terrainStart(){
  }finally{terrainBusy=false;$('terrainModeBtn').disabled=false;}
 }
 $('terrainModeBtn').onclick=()=>{if(terrainBusy)return;if(terrainMode)terrainStop();else terrainStart();};
+$('zoomPlusBtn').onclick=()=>{const current=terrainMode&&terrainMap?terrainMap:map;current.zoomIn();};
+$('zoomMinusBtn').onclick=()=>{const current=terrainMode&&terrainMap?terrainMap:map;current.zoomOut();};
 
 function status(msg){$('status').textContent=msg;}
 function checkpoint(){history.push(JSON.stringify({roads,roundabouts,junctions}));if(history.length>30)history.shift();}
@@ -1015,6 +1083,66 @@ function persist(){try{localStorage.setItem(K,JSON.stringify({version:1,roads,ro
 function roadById(id){return roads.find(r=>r.id===id);}
 function newId(){return 'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function setSelection(id){inspectorClosed=false;selectedJunction=null;selectedRoundabout=null;selected=roadById(id)?id:null;const r=roadById(selected);if(r){const sec=sectionOf(r);$('roadName').value=r.name;$('roadType').value=r.type;$('radius').value=r.radius;$('roadSection').value=sec.section;$('laneWidth').value=sec.laneWidth;$('sidewalkWidth').value=sec.street?sec.sidewalkWidth:1.8;$('shoulderWidth').value=sec.shoulderWidth;$('medianWidth').value=sec.medianWidth;$('speed').value=r.speed;updateSectionUI();}render();}
+
+/* Esquema de sección transversal: utiliza los mismos parámetros que el inspector. */
+function syncSectionPanel(){
+ const road=roadById(selected),panel=$('sectionPanel');
+ panel.hidden=!road||!!selectedRoundabout||mode==='draw'||terrainMode;
+ if(panel.hidden)return;
+ const sec=sectionOf(road),conf=sectionTypes[sec.section];
+ $('sectionPanelRoadName').textContent=road.name;
+ $('sectionPanelType').value=sec.section;
+ for(const [id,value] of [['sectionPanelLane',sec.laneWidth],['sectionPanelShoulder',sec.shoulderWidth],
+  ['sectionPanelSidewalk',sec.sidewalkWidth],['sectionPanelMedian',sec.medianWidth]])
+  $(id).value=value;
+ $('sectionPanelShoulderField').hidden=conf.street;
+ $('sectionPanelSidewalkField').hidden=!conf.street;
+ $('sectionPanelMedianField').hidden=!conf.splitAfter;
+ const parts=[],segment=(part,width,sign,focus,label)=>{
+  if(width<=0)return;
+  parts.push('<button type="button" class="section-part" data-part="'+part+'" data-focus="'+focus+
+   '" style="flex:'+Math.max(.2,width)+' 1 0" title="'+label+' · '+format(width)+' m">'+
+   (part==='lane'?sign+'<span>'+format(width)+' m</span>':label.slice(0,2).toUpperCase())+'</button>');
+ };
+ if(sec.sidewalkWidth>0)segment('sidewalk',sec.sidewalkWidth,'','sectionPanelSidewalk','Acera');
+ if(sec.shoulderWidth>0)segment('shoulder',sec.shoulderWidth,'','sectionPanelShoulder','Arcén');
+ for(let i=0;i<conf.lanes;i++){
+  if(conf.splitAfter&&i===conf.splitAfter&&sec.medianWidth>0)
+   segment('median',sec.medianWidth,'','sectionPanelMedian','Mediana');
+  const arrow=conf.section==='street1'?'→':conf.splitAfter?(i<conf.splitAfter?'←':'→'):(conf.lanes===1?'→':i<conf.lanes/2?'←':'→');
+  segment('lane',sec.laneWidth,arrow,'sectionPanelLane','Carril');
+ }
+ if(sec.shoulderWidth>0)segment('shoulder',sec.shoulderWidth,'','sectionPanelShoulder','Arcén');
+ if(sec.sidewalkWidth>0)segment('sidewalk',sec.sidewalkWidth,'','sectionPanelSidewalk','Acera');
+ $('sectionPanelDiagram').innerHTML=parts.join('');
+ $('sectionPanelDescription').textContent=conf.lanes+' carril'+(conf.lanes===1?'':'es')+' × '+format(sec.laneWidth)+' m';
+ $('sectionPanelTotal').textContent=format(sec.totalWidth)+' m plataforma';
+}
+function applySectionPanel(){
+ const road=roadById(selected);
+ if(!road||terrainMode)return;
+ const type=$('sectionPanelType').value,conf=sectionTypes[type];
+ if(!conf)return;
+ const number=(id,defaultValue,min,max)=>{
+  const raw=Number($(id).value);
+  return clamp(Number.isFinite(raw)&&$(id).value!==''?raw:defaultValue,min,max);
+ };
+ const laneWidth=number('sectionPanelLane',conf.lane,2,5);
+ const shoulderWidth=conf.street?0:number('sectionPanelShoulder',conf.shoulder,0,4);
+ const sidewalkWidth=conf.street?number('sectionPanelSidewalk',conf.walk||0,0,8):0;
+ const medianWidth=conf.splitAfter?number('sectionPanelMedian',conf.median,0,8):0;
+ const next={section:type,laneWidth,shoulderWidth,sidewalkWidth,medianWidth,width:conf.lanes*laneWidth,
+  type:conf.street?'urbana':road.type};
+ if(!Object.entries(next).some(([key,value])=>road[key]!==value)){syncSectionPanel();return;}
+ checkpoint();Object.assign(road,next);
+ $('roadSection').value=type;
+ $('roadType').value=road.type;
+ $('laneWidth').value=laneWidth;
+ $('shoulderWidth').value=shoulderWidth;
+ $('sidewalkWidth').value=sidewalkWidth;
+ $('medianWidth').value=medianWidth;
+ updateSectionUI();persist();render();status('Sección transversal actualizada.');
+}
 function apply(){const r=roadById(selected);if(!r){status('Selecciona antes una carretera.');return;}checkpoint();Object.assign(r,params());persist();render();status('Parámetros actualizados.');}
 
 // Rotondas: anillo en planta, ramales y conexiones magnéticas a los extremos de las carreteras.
@@ -1631,6 +1759,7 @@ function jxDraw(){
 }
 
 function syncInspector(){
+ syncSectionPanel();
  const road=roadById(selected),rb=roundaboutAt(selectedRoundabout),drawing=mode==='draw';
  const kind=mode==='roundabout'?'':drawing?'road':rb?'roundabout':road?'road':'';
  const visiblePanel=!!kind&&!inspectorClosed;
@@ -2173,6 +2302,21 @@ $('dwgFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try
 $('toggleLeft').onclick=()=>$('leftPane').classList.toggle('hidden-mobile');
 ['roadType'].forEach(id=>$(id).onchange=()=>{if(!selected){$('speed').value=({convencional:90,autopista:120,urbana:50,camino:30})[$('roadType').value];}drawPreview();});
 ['radius','speed','laneWidth','shoulderWidth','medianWidth','sidewalkWidth'].forEach(id=>$(id).addEventListener('input',()=>{updateSectionUI();drawPreview();}));
+$('sectionPanelType').addEventListener('change',()=>{
+ const conf=sectionTypes[$('sectionPanelType').value];
+ $('sectionPanelLane').value=conf.lane;
+ $('sectionPanelShoulder').value=conf.shoulder;
+ $('sectionPanelSidewalk').value=conf.walk||0;
+ $('sectionPanelMedian').value=conf.median||0;
+ applySectionPanel();
+});
+['sectionPanelLane','sectionPanelShoulder','sectionPanelSidewalk','sectionPanelMedian'].forEach(id=>$(id).addEventListener('change',applySectionPanel));
+$('sectionPanelDiagram').addEventListener('click',e=>{
+ const part=e.target.closest('[data-focus]');
+ if(!part)return;
+ const input=$(part.dataset.focus);
+ if(input&&!input.closest('[hidden]')){input.focus();input.select();}
+});
 $('roadSection').addEventListener('change',()=>{const type=$('roadSection').value;if(sectionTypes[type].street)$('roadType').value='urbana';applySectionDefaults(type);updateSectionUI();drawPreview();});
 applySectionDefaults($('roadSection').value);updateSectionUI();updateRoundaboutUI();
 map.on('click',e=>{if(mode==='roundabout'){showRoundaboutCreator(e.latlng);return;}if(mode==='draw'){const snap=findArmSnap([e.latlng.lat,e.latlng.lng]);draft.push(snap?snap.point.slice():[e.latlng.lat,e.latlng.lng]);$('finishBtn').disabled=draft.length<2;cursor=null;drawPreview();status('Puntos de control: '+draft.length+'.');return;}if(selected||selectedRoundabout||selectedJunction||pendingJunction||selectedSegment){selected=null;selectedRoundabout=null;selectedJunction=null;pendingJunction=null;selectedSegment=null;render();status('Selección borrada.');}});
