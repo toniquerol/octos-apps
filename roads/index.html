@@ -172,8 +172,8 @@ function render(){
   const g=makeGeometry(r);total+=g.total;const isSelected=r.id===selected;
   g.parts.forEach(part=>{
    const w=pixelWidth(r.width);
-   if(visible('layerRoad'))L.polyline(part.points,{color:isSelected?'#ffce9f':'#292929',weight:w+5,opacity:.86,interactive:false,lineCap:'round',lineJoin:'round'}).addTo(roadsGroup);
-   const line=L.polyline(part.points,{color:visible('layerSpeed')?color(part.speed):'#C2CDD0',weight:visible('layerRoad')?w+1:5,opacity:.96,lineCap:'round',lineJoin:'round'});
+   if(visible('layerRoad'))L.polyline(part.points,{color:isSelected?'#ffce9f':'#292929',weight:w+5,opacity:.86,interactive:false,lineCap:'butt',lineJoin:'round'}).addTo(roadsGroup);
+   const line=L.polyline(part.points,{color:visible('layerSpeed')?color(part.speed):'#C2CDD0',weight:visible('layerRoad')?w+1:5,opacity:.96,lineCap:'butt',lineJoin:'round'});
    line.on('click',e=>{L.DomEvent.stopPropagation(e);if(mode==='draw')return;if(mode==='insert')insertNode(r,e.latlng);else setSelection(r.id);});line.addTo(roadsGroup);
    if(visible('layerAxes'))L.polyline(part.points,{color:'#ffffff',weight:1.2,dashArray:'5 7',interactive:false,opacity:.75}).addTo(roadsGroup);
   });
