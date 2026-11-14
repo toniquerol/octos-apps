@@ -229,6 +229,50 @@ header{position:relative;z-index:1400}
 .geo-drag-handle svg{width:15px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
 .geo-entry.geo-dragging{opacity:.7;outline:1px dashed #FF6A1A;outline-offset:-1px}
 
+
+/* Herramientas y paneles compactos en posiciones persistentes */
+.head-left{min-width:0}
+.head-left .head-tools{margin-right:0}
+.drawing-gap{flex:0 0 var(--drawing-gap,20px);height:44px;min-width:10px;max-width:165px;display:flex;align-items:center;justify-content:center;cursor:col-resize;touch-action:none;user-select:none}
+.drawing-gap::before{content:"";height:31px;width:2px;border-radius:2px;background:linear-gradient(#b98eaa,#b98eaa);opacity:.78}
+.drawing-gap:hover::before,.drawing-gap:focus-visible::before{background:var(--accent);width:3px}
+.fixed-roundabout{flex:none;display:flex}
+.fixed-roundabout .tool{width:46px;height:48px;min-width:0;aspect-ratio:auto;margin:0;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center}
+.fixed-roundabout .tool svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.fixed-roundabout .tool span{font-size:9px;line-height:1;white-space:nowrap}
+.head-elements{grid-template-columns:repeat(3,46px)}
+#mapWrap>.head-speed{position:absolute;bottom:33px;right:13px;width:224px;min-width:0;max-width:calc(100% - 26px);margin:0;padding:8px 10px 7px;z-index:570;background:#1b1b1ee9;border:1px solid #505057;border-radius:7px;box-shadow:0 3px 13px #0007;pointer-events:none}
+#mapWrap>.head-speed .head-speed-title{font-size:9px;letter-spacing:.01em}
+#mapWrap>.head-speed .legend{margin:5px 0 3px}
+#mapWrap>.head-speed .legend span{height:6px}
+#mapWrap>.head-speed .legend-label{font-size:8px}
+#mapWrap .leaflet-bottom.leaflet-right .leaflet-control-zoom{margin-bottom:122px}
+.project-layer-dock{position:absolute;bottom:14px;left:14px;z-index:1050;width:min(285px,calc(100% - 28px));padding:0;background:#222226f2;border:1px solid #515157;border-radius:8px;box-shadow:0 6px 20px #0009;overflow:hidden;color:var(--text)}
+.project-layer-dock>summary{display:flex;align-items:center;gap:8px;padding:10px 11px;font-size:11px;font-weight:700;letter-spacing:.045em;list-style:none;cursor:pointer}
+.project-layer-dock>summary::-webkit-details-marker{display:none}
+.project-layer-dock>summary::before{content:"▸";font-size:11px;color:var(--accent)}
+.project-layer-dock[open]>summary::before{content:"▾"}
+.project-layer-dock>summary span{margin-left:auto;color:var(--muted);font-weight:400}
+.project-layer-dock .project-layer-body{overflow:auto;resize:vertical;height:auto;min-height:108px;max-height:min(52vh,480px);padding:2px 9px 10px;border-top:1px solid #444449;scrollbar-color:#555 transparent}
+.project-layer-dock .check{font-size:11px;padding:6px 4px}
+.project-layer-dock .check small{font-size:9px}
+#mapWrap>.mapbadge{left:50%;transform:translateX(-50%);bottom:12px;white-space:nowrap;z-index:560}
+@media(max-width:1200px){
+ .head-left .head-tools{margin-left:8px}
+ .drawing-gap{flex-basis:12px}
+ #mapWrap>.head-speed{display:block}
+}
+@media(max-width:760px){
+ .head-left{display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap}
+ .drawing-gap{flex:0 0 10px;height:32px}
+ .fixed-roundabout .tool{width:43px;height:46px}
+ .head-elements{grid-template-columns:repeat(3,43px)}
+ #mapWrap>.head-speed{right:7px;bottom:28px;width:178px}
+ #mapWrap .leaflet-bottom.leaflet-right .leaflet-control-zoom{margin-bottom:115px}
+ .project-layer-dock{bottom:10px;left:8px;width:min(255px,calc(100% - 16px))}
+ #mapWrap>.mapbadge{bottom:11px;left:50%}
+}
+
 </style>
 </head>
 <body>
@@ -238,12 +282,10 @@ header{position:relative;z-index:1400}
    <button type="button" class="tool" data-mode="draw" title="Nueva carretera (D)" aria-label="Nueva carretera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20C9 20 9 6 17 6"/><path d="M17 2v8M13 6h8"/></svg><span>Nueva</span></button>
    <button type="button" class="tool" data-mode="insert" title="Insertar punto en eje (I)" aria-label="Insertar punto en eje"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 21 5"/><circle cx="12" cy="12" r="5"/><path d="M12 9v6M9 12h6"/></svg><span>Insertar</span></button>
    <button type="button" class="tool" data-mode="remove" title="Eliminar punto (X)" aria-label="Eliminar punto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 21 5"/><circle cx="12" cy="12" r="5"/><path d="m10 10 4 4m0-4-4 4"/></svg><span>Eliminar</span></button>
-  </div><div class="head-speed" role="img" aria-label="Velocidad geométrica estimada; escala de colores: hasta 40, 60, 80, 100 y 120 kilómetros por hora" title="Estimación preliminar por radio de curvatura; peralte supuesto del 6 % y rozamiento transversal de 0,11. No sustituye una validación normativa ni un proyecto de ingeniería.">
-   <div class="head-speed-title">VELOCIDAD GEOMÉTRICA ESTIMADA</div><div class="legend"><span style="background:#C83E42"></span><span style="background:#DB8137"></span><span style="background:#DDC34A"></span><span style="background:#4BA56A"></span><span style="background:#3294B9"></span></div><div class="legend-label"><span>≤40</span><span>60</span><span>80</span><span>100</span><span>120 km/h</span></div>
-  </div></div>
+  </div><div id="drawingGap" class="drawing-gap" role="separator" aria-label="Separación ajustable entre dibujo y rotonda" aria-orientation="vertical" aria-valuemin="10" aria-valuemax="165" tabindex="0" title="Arrastra para ajustar la separación"></div><div class="fixed-roundabout"><button type="button" class="tool" data-mode="roundabout" title="Insertar rotonda sobre el mapa" aria-label="Insertar rotonda"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg><span>Rotonda</span></button></div></div>
+</div>
   <div class="brand"><b>OcToS <span>Roads</span></b><small>CONSTRUCCIÓN GEOMÉTRICA · V1.0</small></div>
   <div class="head-right"><div class="special-tool-grid head-elements" role="group" aria-label="Rotondas, puentes y túneles">
-    <button type="button" class="tool" data-mode="roundabout" title="Insertar rotonda sobre el mapa" aria-label="Insertar rotonda"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg><span>Rotonda</span></button>
     <button type="button" class="tool" data-mode="bridge" title="Marcar un segmento como puente" aria-label="Asignar puente a un tramo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 10h20M2 14h20M5 14v7M19 14v7M5 10V5M19 10V5M2 21h20"/></svg><span>Puente</span></button>
     <button type="button" class="tool" data-mode="tunnel" title="Marcar un segmento como túnel" aria-label="Asignar túnel a un tramo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V10a9 9 0 0 1 18 0v11M8 21V11a4 4 0 0 1 8 0v10M1 21h22"/></svg><span>Túnel</span></button>
     <button type="button" class="tool" data-mode="normal" title="Devolver un segmento a superficie" aria-label="Quitar clasificación de puente o túnel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 16h20M5 16l4-5 4 5 4-8 3 8"/></svg><span>Normal</span></button>
@@ -258,7 +300,7 @@ header{position:relative;z-index:1400}
  </div>
  <div class="menu-anchor" id="layerMenuAnchor"><button class="btn" type="button" id="layersBtn" aria-expanded="false" aria-controls="layerMenu">Capas</button>
   <div class="head-dropdown layers-dropdown" id="layerMenu" hidden>
-   <details class="viz-group" open><summary class="viz-summary">Fondos cartográficos</summary><div class="viz-body">
+   <details class="viz-group"><summary class="viz-summary">Fondos cartográficos</summary><div class="viz-body">
     <label class="radio"><input type="radio" name="base" value="dark" checked><span>Mapa oscuro<small>OcToS Drive · vectorial NFS DARK</small></span></label>
     <label class="radio"><input type="radio" name="base" value="osm"><span>OpenStreetMap<small>Mapa general</small></span></label>
     <label class="radio"><input type="radio" name="base" value="ign"><span>IGN Base<small>Cartografía oficial · España</small></span></label>
@@ -266,14 +308,8 @@ header{position:relative;z-index:1400}
     <label class="radio"><input type="radio" name="base" value="pnoa"><span>PNOA ortofoto<small>Fotografía aérea · España</small></span></label>
     <label class="radio"><input type="radio" name="base" value="relief"><span>IGN Relieve<small>Relieve de terreno</small></span></label>
    </div></details>
-   <details class="viz-group" open><summary class="viz-summary">Geoinformación <span class="viz-count" id="geoCount">—</span></summary><div class="viz-body"><div id="geoList"></div><p id="geoInfo" class="muted geo-note" role="status">Cargando capas aprobadas de Layers…</p></div></details>
-     <details class="section" open><summary class="eyebrow">Proyecto</summary><h2>Capas disponibles</h2>
-    <label class="check"><input type="checkbox" id="layerRoad" checked><span>Calzadas<small>Anchura y contorno proyectado</small></span></label>
-    <label class="check"><input type="checkbox" id="layerSpeed" checked><span>Colores por velocidad<small>Segmentación rectas y curvas</small></span></label>
-    <label class="check"><input type="checkbox" id="layerNodes" checked><span>Puntos de control<small>Arrastrar para modificar el eje</small></span></label>
-    <label class="check"><input type="checkbox" id="layerRadius"><span>Radios de curva<small>Etiquetas de curvas circulares</small></span></label>
-    <label class="check"><input type="checkbox" id="layerAxes" checked><span>Marcas de carril<small>Separaciones y líneas blancas según sección</small></span></label>
-  </details>
+   <details class="viz-group"><summary class="viz-summary">Geoinformación <span class="viz-count" id="geoCount">—</span></summary><div class="viz-body"><div id="geoList"></div><p id="geoInfo" class="muted geo-note" role="status">Cargando capas aprobadas de Layers…</p></div></details>
+
   </div>
  </div>
 </div></div>
@@ -287,6 +323,9 @@ header{position:relative;z-index:1400}
 </aside>
 <section id="mapWrap" aria-label="Mapa y editor">
  <div id="map"></div>
+ <div class="head-speed" role="img" aria-label="Velocidad geométrica estimada; escala de colores: hasta 40, 60, 80, 100 y 120 kilómetros por hora" title="Estimación preliminar por radio de curvatura; peralte supuesto del 6 % y rozamiento transversal de 0,11. No sustituye una validación normativa ni un proyecto de ingeniería.">
+   <div class="head-speed-title">VELOCIDAD GEOMÉTRICA ESTIMADA</div><div class="legend"><span style="background:#C83E42"></span><span style="background:#DB8137"></span><span style="background:#DDC34A"></span><span style="background:#4BA56A"></span><span style="background:#3294B9"></span></div><div class="legend-label"><span>≤40</span><span>60</span><span>80</span><span>100</span><span>120 km/h</span></div>
+  </div>
  <div class="map-callout map-quick-actions" id="mapQuickActions" aria-label="Acciones rápidas" hidden>
   <strong id="hintTitle">EDICIÓN</strong><div id="hintText"></div>
   <div class="map-quick-buttons">  <div class="row wrap" style="margin-top:9px"><button class="btn primary grow" id="finishBtn" disabled>Terminar</button><button class="btn grow" id="cancelBtn">Cancelar</button><button class="btn grow" id="undoBtn">Deshacer</button></div>  <div class="row wrap" style="margin-top:10px"><button class="btn danger grow" id="deleteBtn">Eliminar carretera</button><button class="btn grow" id="fitBtn">Encuadrar</button></div><button type="button" class="btn danger" id="rbDeleteBtn">Eliminar rotonda</button></div>
@@ -340,6 +379,13 @@ header{position:relative;z-index:1400}
 
  </details></div>
  </div>
+     <details id="projectLayerDock" class="project-layer-dock"><summary>CAPAS DEL PROYECTO <span>5</span></summary><div class="project-layer-body" id="projectLayerBody">
+    <label class="check"><input type="checkbox" id="layerRoad" checked><span>Calzadas<small>Anchura y contorno proyectado</small></span></label>
+    <label class="check"><input type="checkbox" id="layerSpeed" checked><span>Colores por velocidad<small>Segmentación rectas y curvas</small></span></label>
+    <label class="check"><input type="checkbox" id="layerNodes" checked><span>Puntos de control<small>Arrastrar para modificar el eje</small></span></label>
+    <label class="check"><input type="checkbox" id="layerRadius"><span>Radios de curva<small>Etiquetas de curvas circulares</small></span></label>
+    <label class="check"><input type="checkbox" id="layerAxes" checked><span>Marcas de carril<small>Separaciones y líneas blancas según sección</small></span></label>
+</div></details>
  <div class="mapbadge" id="mapBadge">0 carreteras · 0 km</div>
 </section>
 
@@ -1357,6 +1403,42 @@ async function readDwg(file){
 const GEO_KEY='octos-roads-geo-v1',LAYERS_KEY='octos-layers-v2',geoOverlays=new Map();
 const geoPane=map.createPane('octos-roads-geoinfo');geoPane.style.zIndex='350';geoPane.style.pointerEvents='none';
 let geoCatalog=[],geoFinger='',geoRevision=0;
+
+/* Separador de herramientas: el usuario controla el hueco entre dibujar e insertar rotonda. */
+const drawingGap=$('drawingGap'),drawingGapKey='octos-roads-drawing-gap-v1';
+function setDrawingGap(px){
+ const value=clamp(Math.round(px),10,165);
+ drawingGap.style.setProperty('--drawing-gap',value+'px');
+ drawingGap.setAttribute('aria-valuenow',String(value));
+ return value;
+}
+let drawingGapValue=20;
+try{drawingGapValue=Number(localStorage.getItem(drawingGapKey))||20;}catch{}
+setDrawingGap(drawingGapValue);
+drawingGap.addEventListener('pointerdown',event=>{
+ if(event.button!==0||matchMedia('(max-width:760px)').matches)return;
+ event.preventDefault();drawingGap.setPointerCapture(event.pointerId);
+ const startX=event.clientX,startWidth=Number(drawingGap.getAttribute('aria-valuenow'))||20;
+ const move=e=>setDrawingGap(startWidth+e.clientX-startX);
+ const done=()=>{drawingGap.removeEventListener('pointermove',move);drawingGap.removeEventListener('pointerup',done);drawingGap.removeEventListener('pointercancel',done);try{localStorage.setItem(drawingGapKey,drawingGap.getAttribute('aria-valuenow'));}catch{}};
+ drawingGap.addEventListener('pointermove',move);drawingGap.addEventListener('pointerup',done);drawingGap.addEventListener('pointercancel',done);
+});
+drawingGap.addEventListener('keydown',event=>{
+ const delta=event.key==='ArrowRight'?8:event.key==='ArrowLeft'?-8:0;
+ if(!delta)return;event.preventDefault();
+ const v=setDrawingGap((Number(drawingGap.getAttribute('aria-valuenow'))||20)+delta);
+ try{localStorage.setItem(drawingGapKey,String(v));}catch{}
+});
+/* El árbol del proyecto permanece anclado al mapa; la altura se ajusta verticalmente. */
+const projectLayerBody=$('projectLayerBody'),projectLayerHeightKey='octos-roads-project-height-v1';
+try{const h=Number(localStorage.getItem(projectLayerHeightKey));if(h>=108&&h<=600)projectLayerBody.style.height=h+'px';}catch{}
+if(typeof ResizeObserver!=='undefined'){
+ new ResizeObserver(entries=>{if(!$('projectLayerDock').open)return;
+  const h=Math.round(entries[0]?.contentRect.height||0);
+  if(h>=108){try{localStorage.setItem(projectLayerHeightKey,String(h));}catch{}}
+ }).observe(projectLayerBody);
+}
+
 function geoKind(item){return String(item.kind||'').toUpperCase();}
 function supportedGeo(item){return geoKind(item)==='WMS'?!!String(item.layer||item.wmsEnabled?.join(',')||'').trim():['XYZ','TMS'].includes(geoKind(item))&&String(item.url||'').includes('{z}');}
 function geoSaved(){try{return JSON.parse(localStorage.getItem(GEO_KEY)||'{}')||{};}catch{return {};}}
@@ -1364,8 +1446,13 @@ function geoPrefsWrite(obj){try{localStorage.setItem(GEO_KEY,JSON.stringify(obj)
 const GEO_ORDER_KEY='octos-roads-geo-order-v1';
 function geoStoredOrder(){try{const v=JSON.parse(localStorage.getItem(GEO_ORDER_KEY)||'[]');return Array.isArray(v)?v.filter(x=>typeof x==='string'):[];}catch{return [];}}
 function geoApplyOrder(items){
- const positions=new Map(geoStoredOrder().map((id,i)=>[id,i]));
- return items.slice().sort((a,b)=>(positions.get(a.id)??Infinity)-(positions.get(b.id)??Infinity));
+ const positions=new Map(geoStoredOrder().map((id,i)=>[id,i])),prefs=geoSaved();
+ return items.slice().sort((a,b)=>(Number(Boolean(prefs[b.id]?.enabled))-Number(Boolean(prefs[a.id]?.enabled)))||((positions.get(a.id)??Infinity)-(positions.get(b.id)??Infinity)));
+}
+function geoPrioritizeActive(){
+ const parent=$('geoList'),ordered=geoApplyOrder(geoCatalog);
+ for(const item of ordered){const card=[...parent.children].find(x=>x.dataset.geoId===item.id);if(card)parent.append(card);}
+ geoCatalog=ordered;geoStackLayers();
 }
 function geoStackLayers(){
  const size=geoCatalog.length;
@@ -1466,7 +1553,7 @@ function renderGeo(items,warning=''){
     const v=geoSaved();v[item.id]={...(v[item.id]||{}),opacity};geoPrefsWrite(v);
    };
    control.append(slider,output);box.append(control);
-   checkbox.onchange=()=>geoCheckboxChanged(item.id,checkbox.checked);
+   checkbox.onchange=()=>{geoCheckboxChanged(item.id,checkbox.checked);geoPrioritizeActive();};
    if(checkbox.checked&&!geoOverlays.has(item.id))geoCheckboxChanged(item.id,true);
   }else box.classList.add('geo-disabled');
   parent.append(box);
