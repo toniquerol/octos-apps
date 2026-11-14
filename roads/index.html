@@ -169,11 +169,49 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
  .map-inspector{top:73px;left:8px;width:min(305px,calc(100% - 16px));max-height:calc(100% - 84px)}
 }
 
+
+/* Roads · cabecera con menús integrados, editor temporal y mapa a dos columnas. */
+header{position:relative;z-index:1400}
+.layout{grid-template-columns:276px minmax(0,1fr)}
+.head-actions{gap:7px}
+.menu-anchor{position:relative;flex:none}
+.menu-anchor>.btn[aria-expanded=true]{border-color:var(--accent);color:var(--text)}
+.head-dropdown{position:absolute;top:calc(100% + 12px);right:0;width:min(360px,calc(100vw - 22px));max-height:calc(100dvh - 110px);overflow:auto;overscroll-behavior:contain;background:#222226;box-shadow:0 10px 36px #000c;border:1px solid #515157;border-radius:9px;padding:13px 14px;z-index:1600;scrollbar-color:#57575a transparent}
+.head-dropdown[hidden],.map-quick-actions[hidden],.map-quick-actions [hidden]{display:none!important}
+.head-dropdown .section{padding:9px 0}
+.head-dropdown .section:first-of-type{border-top:0}
+.head-dropdown .section h2{font-size:12px}
+.dropdown-label{font-size:10px;letter-spacing:.08em;font-weight:750;color:var(--accent);margin:0 0 9px}
+.head-dropdown .viz-group{margin:7px 0}
+.head-dropdown .field{margin-top:8px}
+.head-dropdown .radio,.head-dropdown .check{font-size:11px}
+.head-dropdown .field select{max-width:150px}
+.files-dropdown{width:min(345px,calc(100vw - 22px))}
+.map-callout.map-quick-actions{pointer-events:auto;top:14px;left:14px;padding:10px 12px;width:min(315px,calc(100% - 28px));max-width:none;z-index:1080}
+.map-quick-actions strong{font-size:11px;color:#fff}
+.map-quick-actions #hintText{font-size:10px;color:#bcbcc4;line-height:1.35;margin:5px 0 8px}
+.map-quick-buttons{display:flex;gap:6px;flex-wrap:wrap}
+.map-quick-buttons .row{display:contents}
+.map-quick-buttons .btn{flex:1 0 auto;padding:6px 8px;min-height:30px;font-size:11px}
+.map-quick-buttons .btn[hidden]{display:none!important}
+.map-inspector{top:150px;max-height:calc(100% - 166px)}
+#mapQuickActions[hidden]+.map-inspector{top:14px;max-height:calc(100% - 28px)}
+@media(max-width:1000px) and (min-width:761px){.layout{grid-template-columns:230px minmax(0,1fr)}}
+@media(max-width:760px){
+ .layout{display:block;height:calc(100dvh - 159px - 31px)}
+ .head-actions{gap:3px}
+ .head-actions>.btn,.head-actions .menu-anchor>.btn{font-size:9px;padding:4px 5px;min-height:28px}
+ .head-dropdown{top:calc(100% + 14px);max-height:calc(100dvh - 188px)}
+ .map-callout.map-quick-actions{top:8px;left:8px;width:min(305px,calc(100% - 16px))}
+ .map-inspector{top:139px;left:8px;width:min(305px,calc(100% - 16px));max-height:calc(100% - 149px)}
+ #mapQuickActions[hidden]+.map-inspector{top:8px;max-height:calc(100% - 16px)}
+}
+
 </style>
 </head>
 <body>
 <header>
-  <div class="head-left"><button class="btn mobile-toggle" id="toggleLeft" title="Fondos y capas">Capas</button><div class="logo" aria-label="OcToS">T</div><div class="tool-grid head-tools" role="group" aria-label="Herramientas de dibujo">
+  <div class="head-left"><button class="btn mobile-toggle" id="toggleLeft" title="Lista de trazados">Trazados</button><div class="logo" aria-label="OcToS">T</div><div class="tool-grid head-tools" role="group" aria-label="Herramientas de dibujo">
    <button type="button" class="tool active" data-mode="select" title="Seleccionar / modificar (V)" aria-label="Seleccionar o modificar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3 19 12l-7 1-3 7z"/></svg><span>Selecc.</span></button>
    <button type="button" class="tool" data-mode="draw" title="Nueva carretera (D)" aria-label="Nueva carretera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20C9 20 9 6 17 6"/><path d="M17 2v8M13 6h8"/></svg><span>Nueva</span></button>
    <button type="button" class="tool" data-mode="insert" title="Insertar punto en eje (I)" aria-label="Insertar punto en eje"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 21 5"/><circle cx="12" cy="12" r="5"/><path d="M12 9v6M9 12h6"/></svg><span>Insertar</span></button>
@@ -187,11 +225,19 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
     <button type="button" class="tool" data-mode="bridge" title="Marcar un segmento como puente" aria-label="Asignar puente a un tramo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 10h20M2 14h20M5 14v7M19 14v7M5 10V5M19 10V5M2 21h20"/></svg><span>Puente</span></button>
     <button type="button" class="tool" data-mode="tunnel" title="Marcar un segmento como túnel" aria-label="Asignar túnel a un tramo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V10a9 9 0 0 1 18 0v11M8 21V11a4 4 0 0 1 8 0v10M1 21h22"/></svg><span>Túnel</span></button>
     <button type="button" class="tool" data-mode="normal" title="Devolver un segmento a superficie" aria-label="Quitar clasificación de puente o túnel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 16h20M5 16l4-5 4 5 4-8 3 8"/></svg><span>Normal</span></button>
-   </div><div class="head-actions"><button class="btn mobile-toggle" id="toggleRight">Dibujo</button><button class="btn compact" id="demoBtn">Ejemplo</button><button class="btn compact" id="importBtn">Importar</button><button class="btn" id="exportBtn">GeoJSON</button></div></div>
-</header>
-<div class="layout">
-<aside class="side left hidden-mobile" id="leftPane" aria-label="Fondos y capas">
-  <details class="section" open><summary class="eyebrow">Visualización</summary>
+   </div><div class="head-actions">
+ <button class="btn compact" type="button" id="saveViewBtn" title="Guardar la posición y el zoom actuales como vista de inicio">Guardar vista</button>
+ <div class="menu-anchor" id="fileMenuAnchor"><button class="btn compact" type="button" id="importBtn" aria-expanded="false" aria-controls="fileMenu">Importar</button>
+  <div class="head-dropdown files-dropdown" id="fileMenu" hidden>
+   <div class="dropdown-label">ARCHIVOS · IMPORTAR Y EXPORTAR</div>
+    <details class="section" open><summary class="eyebrow">Archivos</summary><div class="row wrap"><button class="btn grow" id="saveBtn">Guardar JSON</button><button class="btn grow" id="openBtn">Abrir archivo</button></div><div class="row wrap" style="margin-top:8px"><button class="btn grow" id="kmlBtn">Importar KML</button><button class="btn grow" id="dwgBtn">Importar DWG</button></div><div class="field"><span>Huso UTM del DWG</span><select id="utmZone"><option value="29">29</option><option value="30">30</option><option value="31" selected>31</option><option value="32">32</option></select></div><div class="field"><span>Hemisferio</span><select id="utmHem"><option value="N" selected>Norte</option><option value="S">Sur</option></select></div><p class="muted">DWG: coordenadas UTM en metros, ETRS89/WGS84, sin origen local. Selecciona el huso antes de importar. KML: WGS84.</p><button class="btn danger" id="clearBtn" style="width:100%;margin-top:8px">Vaciar proyecto</button><p class="muted">Guardado automático en este navegador. Importación y exportación locales; no se envían los trazados a servidores.</p></details>
+   <button type="button" class="btn" id="exportBtn" style="width:100%;margin-top:10px">Exportar GeoJSON</button>
+  </div>
+ </div>
+ <div class="menu-anchor" id="layerMenuAnchor"><button class="btn" type="button" id="layersBtn" aria-expanded="false" aria-controls="layerMenu">Capas</button>
+  <div class="head-dropdown layers-dropdown" id="layerMenu" hidden>
+   <div class="dropdown-label">CAPAS CARTOGRÁFICAS Y DIBUJO</div>
+     <details class="section" open><summary class="eyebrow">Visualización</summary>
    <details class="viz-group" open><summary class="viz-summary">Fondos cartográficos</summary><div class="viz-body">
     <label class="radio"><input type="radio" name="base" value="osm"><span>OpenStreetMap<small>Mapa general</small></span></label>
     <label class="radio"><input type="radio" name="base" value="ign"><span>IGN Base<small>Cartografía oficial · España</small></span></label>
@@ -201,19 +247,30 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
    </div></details>
    <details class="viz-group" open><summary class="viz-summary">Geoinformación <span class="viz-count" id="geoCount">—</span></summary><div class="viz-body"><p id="geoInfo" class="muted" role="status">Cargando capas aprobadas de Layers…</p><div id="geoList"></div></div></details>
   </details>
-  <details class="section" open><summary class="eyebrow">Proyecto</summary><h2>Capas disponibles</h2>
+     <details class="section" open><summary class="eyebrow">Proyecto</summary><h2>Capas disponibles</h2>
     <label class="check"><input type="checkbox" id="layerRoad" checked><span>Calzadas<small>Anchura y contorno proyectado</small></span></label>
     <label class="check"><input type="checkbox" id="layerSpeed" checked><span>Colores por velocidad<small>Segmentación rectas y curvas</small></span></label>
     <label class="check"><input type="checkbox" id="layerNodes" checked><span>Puntos de control<small>Arrastrar para modificar el eje</small></span></label>
     <label class="check"><input type="checkbox" id="layerRadius"><span>Radios de curva<small>Etiquetas de curvas circulares</small></span></label>
     <label class="check"><input type="checkbox" id="layerAxes" checked><span>Marcas de carril<small>Separaciones y líneas blancas según sección</small></span></label>
   </details>
+  </div>
+ </div>
+</div></div>
+</header>
+<div class="layout">
+<aside class="side left hidden-mobile" id="leftPane" aria-label="Fondos y capas">
+
+
   <details class="section" open><summary class="eyebrow">Trazados</summary><div class="row"><h2 class="grow" style="margin:0 0 8px">Carreteras del proyecto</h2><span class="muted" id="roadCount">0</span></div><div id="roadsList"></div></details>
 
 </aside>
 <section id="mapWrap" aria-label="Mapa y editor">
  <div id="map"></div>
- <div class="map-callout" aria-live="polite"><strong id="hintTitle">Seleccionar o dibujar</strong><div id="hintText">Activa «Nueva carretera» y marca los vértices sobre el mapa. Después pulsa «Terminar».</div></div>
+ <div class="map-callout map-quick-actions" id="mapQuickActions" aria-label="Acciones rápidas" hidden>
+  <strong id="hintTitle">EDICIÓN</strong><div id="hintText"></div>
+  <div class="map-quick-buttons">  <div class="row wrap" style="margin-top:9px"><button class="btn primary grow" id="finishBtn" disabled>Terminar</button><button class="btn grow" id="cancelBtn">Cancelar</button><button class="btn grow" id="undoBtn">Deshacer</button></div>  <div class="row wrap" style="margin-top:10px"><button class="btn danger grow" id="deleteBtn">Eliminar carretera</button><button class="btn grow" id="fitBtn">Encuadrar</button></div><button type="button" class="btn danger" id="rbDeleteBtn">Eliminar rotonda</button></div>
+ </div>
  <div class="map-inspector" id="mapInspector" hidden aria-label="Panel temporal de parámetros">
   <div class="map-inspector-head"><strong id="inspectorTitle">PARÁMETROS</strong><button type="button" id="inspectorClose" aria-label="Cerrar panel de parámetros" title="Cerrar">×</button></div>
   <div id="inspectorRoad"><details class="section" open><summary class="eyebrow">Geometría de proyecto</summary><h2>Parámetros del trazado</h2>
@@ -256,25 +313,16 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
 <label class="field">Radio orientativo (m) <input id="rbSlipRadius" type="number" min="12" max="80" step="1" value="25"></label>
 <p class="muted" id="rbSlipHelp">Solo ramales adyacentes compatibles con la circulación.</p></details>
 <p class="muted" id="rbSectionSummary">Anillo de 2 carriles · 7 m</p>
-    <div class="row wrap"><button class="btn grow" id="rbApplyBtn" type="button">Aplicar a rotonda</button><button class="btn danger grow" id="rbDeleteBtn" type="button">Eliminar rotonda</button></div>
+    <div class="row wrap"><button class="btn grow" id="rbApplyBtn" type="button">Aplicar a rotonda</button></div>
     <p class="muted">Coloca la rotonda con un clic; después selecciónala para editarla o arrastrar su centro. Arrastra los puntos rojos para orientar cada acceso. Los ramales conectados adoptan los carriles y dimensiones de la carretera. Entradas y salidas curvas, con isletas separadoras. Es un esquema geométrico en planta, no un proyecto de trazado validado.</p>
    </details></div>
   <div id="inspectorDetails"><details class="section" open><summary class="eyebrow">Elemento seleccionado</summary><h2>Información geométrica</h2><div id="selection">Sin selección. Crea un trazado o selecciona una carretera.</div>
-  <div class="row wrap" style="margin-top:10px"><button class="btn danger grow" id="deleteBtn">Eliminar carretera</button><button class="btn grow" id="fitBtn">Encuadrar</button></div>
+
  </details></div>
  </div>
  <div class="mapbadge" id="mapBadge">0 carreteras · 0 km</div>
 </section>
-<aside class="side right hidden-mobile" id="rightPane" aria-label="Herramientas de dibujo">
- <details class="section" open><summary class="eyebrow">Constructor</summary>
 
-  <p class="muted">Las herramientas de dibujo y elementos viarios están fijas en la cabecera. Selecciona un elemento para editar sus parámetros en el visor.</p>
-  <div class="row wrap" style="margin-top:9px"><button class="btn primary grow" id="finishBtn" disabled>Terminar</button><button class="btn grow" id="cancelBtn">Cancelar</button><button class="btn grow" id="undoBtn">Deshacer</button></div>
- </details>
- 
- 
- <details class="section" open><summary class="eyebrow">Archivos</summary><div class="row wrap"><button class="btn grow" id="saveBtn">Guardar JSON</button><button class="btn grow" id="openBtn">Abrir archivo</button></div><div class="row wrap" style="margin-top:8px"><button class="btn grow" id="kmlBtn">Importar KML</button><button class="btn grow" id="dwgBtn">Importar DWG</button></div><div class="field"><span>Huso UTM del DWG</span><select id="utmZone"><option value="29">29</option><option value="30">30</option><option value="31" selected>31</option><option value="32">32</option></select></div><div class="field"><span>Hemisferio</span><select id="utmHem"><option value="N" selected>Norte</option><option value="S">Sur</option></select></div><p class="muted">DWG: coordenadas UTM en metros, ETRS89/WGS84, sin origen local. Selecciona el huso antes de importar. KML: WGS84.</p><button class="btn danger" id="clearBtn" style="width:100%;margin-top:8px">Vaciar proyecto</button><p class="muted">Guardado automático en este navegador. Importación y exportación locales; no se envían los trazados a servidores.</p></details>
-</aside>
 </div>
 <footer><span id="status" role="status">Preparado · modo selección</span><span>OcToS 3D Studio © 2026 · Roads V1.0</span></footer>
 <input id="fileInput" type="file" accept=".json,.geojson,application/json" hidden><input id="kmlFile" type="file" accept=".kml,application/vnd.google-earth.kml+xml,text/xml" hidden><input id="dwgFile" type="file" accept=".dwg,application/acad" hidden>
@@ -929,6 +977,7 @@ function syncInspector(){
  const kind=mode==='roundabout'?'':drawing?'road':rb?'roundabout':road?'road':'';
  const visiblePanel=!!kind&&!inspectorClosed;
  $('mapInspector').hidden=!visiblePanel;
+ syncQuickActions();
  if(!visiblePanel)return;
  $('inspectorRoad').hidden=kind!=='road';
  $('inspectorRoundabout').hidden=kind!=='roundabout';
@@ -1266,12 +1315,58 @@ window.addEventListener('storage',event=>{if(event.key===LAYERS_KEY)syncLayersGe
 window.addEventListener('focus',syncLayersGeo);
 syncLayersGeo();
 
+
+/* Menús de herramientas y capas: controles existentes, sin duplicar DOM ni IDs. */
+function closeHeaderMenus(){
+ for(const [panel,button] of [['fileMenu','importBtn'],['layerMenu','layersBtn']]){
+  $(panel).hidden=true;$(button).setAttribute('aria-expanded','false');
+ }
+}
+function toggleHeaderMenu(panel,button){
+ const next=$(panel).hidden;closeHeaderMenus();
+ $(panel).hidden=!next;$(button).setAttribute('aria-expanded',String(next));
+}
+const VIEW_KEY='octos-roads-saved-view-v1';
+function saveHomeView(){
+ const pos=map.getCenter(),zoom=map.getZoom();
+ const data={lat:pos.lat,lng:pos.lng,zoom,base:document.querySelector('input[name="base"]:checked')?.value||'pnoa'};
+ try{localStorage.setItem(VIEW_KEY,JSON.stringify(data));status('Vista de inicio guardada · zoom '+zoom+'.');}
+ catch(e){status('No se pudo guardar la vista en este navegador.');}
+}
+function restoreHomeView(){
+ try{
+  const data=JSON.parse(localStorage.getItem(VIEW_KEY)||'null');
+  if(!data||!Number.isFinite(data.lat)||!Number.isFinite(data.lng)||Math.abs(data.lat)>85||Math.abs(data.lng)>180||!Number.isFinite(data.zoom)||data.zoom<1||data.zoom>19)return false;
+  if(bases[data.base]){const input=document.querySelector('input[name="base"][value="'+data.base+'"]');if(input)input.checked=true;setBase(data.base);}
+  map.setView([data.lat,data.lng],data.zoom);
+  return true;
+ }catch{return false;}
+}
+function syncQuickActions(){
+ const road=roadById(selected),rb=roundaboutAt(selectedRoundabout);
+ const isDrawing=mode==='draw',hasSelection=!!road||!!rb;
+ const active=isDrawing||hasSelection;
+ $('mapQuickActions').hidden=!active;
+ if(!active)return;
+ $('finishBtn').hidden=!isDrawing;
+ $('cancelBtn').hidden=!isDrawing&&!hasSelection;
+ $('undoBtn').hidden=!isDrawing&&!hasSelection;
+ $('undoBtn').disabled=history.length===0;
+ $('deleteBtn').hidden=!road||isDrawing;
+ $('rbDeleteBtn').hidden=!rb||isDrawing;
+ $('fitBtn').hidden=!hasSelection||isDrawing;
+ if(!isDrawing){
+  $('hintTitle').textContent=rb?'Rotonda seleccionada':'Carretera seleccionada';
+  $('hintText').textContent=rb?rb.arms+' ramales · '+(roundaboutShape(rb)==='circular'?'circular':'alargada / ovalada'):road.name;
+ }
+}
+
 function fitAll(){const pts=roads.flatMap(r=>r.nodes).concat(roundabouts.flatMap(r=>[r.center,...roundaboutGeometry(r).arms.map(a=>a.outer)]));if(pts.length)map.fitBounds(L.latLngBounds(pts).pad(.16));else map.setView([40.2,-3.7],6);}
 function demo(){if(roads.length&&!confirm('¿Añadir un ejemplo a los trazados existentes?'))return;checkpoint();const p=params();roads.push({id:newId(),name:'Ejemplo geométrico · Tarragona',type:'convencional',radius:160,width:7,speed:90,nodes:[[41.121,1.191],[41.131,1.204],[41.137,1.222],[41.125,1.245],[41.110,1.251],[41.103,1.273]]});selected=roads[roads.length-1].id;persist();setMode('select');setSelection(selected);fitAll();status('Ejemplo sintético, no es cartografía oficial.');}
 Object.keys(bases).forEach(id=>{const node=document.querySelector('input[name=base][value='+id+']');if(node)node.onchange=()=>{setBase(id);status('Fondo: '+node.closest('label').innerText.trim().split('\n')[0]);};});
 layerIds.forEach(id=>$(id).onchange=render);
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
-$('finishBtn').onclick=()=>finish();$('cancelBtn').onclick=()=>{if(mode==='draw')finish(false);else setMode('select');};$('undoBtn').onclick=undo;
+$('finishBtn').onclick=()=>finish();$('cancelBtn').onclick=()=>{if(mode==='draw')finish(false);else{selected=null;selectedRoundabout=null;selectedSegment=null;setMode('select');}};$('undoBtn').onclick=undo;
 ['rbArms','rbLanes','rbLaneWidth','rbDiameter','rbOrientation','rbShape','rbElongation','rbAxisAngle','rbSlipEnabled','rbSlipFrom','rbSlipTo','rbSlipRadius'].forEach(id=>$(id).addEventListener('input',updateRoundaboutUI));
 $('rbApplyBtn').onclick=applyRoundabout;
 $('rbDeleteBtn').onclick=()=>{const rb=roundaboutAt(selectedRoundabout);if(!rb)return status('Selecciona una rotonda.');if(!confirm('¿Eliminar esta rotonda?'))return;checkpoint();roundabouts=roundabouts.filter(r=>r.id!==rb.id);for(const r of roads){for(const [key,con] of Object.entries(r.connections||{}))if(con.roundaboutId===rb.id)delete r.connections[key];}selectedRoundabout=null;persist();render();status('Rotonda eliminada.');};
@@ -1279,14 +1374,19 @@ $('inspectorClose').onclick=()=>{inspectorClosed=true;syncInspector();};
 $('applyBtn').onclick=apply;$('deleteBtn').onclick=()=>{const r=roadById(selected);if(!r)return status('Selecciona antes una carretera.');if(confirm('¿Eliminar '+r.name+'?')){checkpoint();roads=roads.filter(x=>x.id!==r.id);selected=null;persist();render();}};
 $('fitBtn').onclick=()=>{const r=roadById(selected),rb=roundaboutAt(selectedRoundabout);if(r)map.fitBounds(L.latLngBounds(r.nodes).pad(.2));else if(rb)map.fitBounds(L.latLngBounds(roundaboutGeometry(rb).arms.map(a=>a.outer)).pad(.4));else fitAll();};
 $('clearBtn').onclick=()=>{if(!roads.length&&!roundabouts.length)return;if(confirm('¿Vaciar todas las carreteras y rotondas del proyecto?')){checkpoint();roads=[];roundabouts=[];selected=null;selectedRoundabout=null;selectedSegment=null;persist();render();}};
-$('demoBtn').onclick=demo;$('exportBtn').onclick=()=>download('octos-roads-v1.geojson',exportGeo());
+$('saveViewBtn').onclick=saveHomeView;
+$('importBtn').onclick=()=>toggleHeaderMenu('fileMenu','importBtn');
+$('layersBtn').onclick=()=>toggleHeaderMenu('layerMenu','layersBtn');
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.menu-anchor'))closeHeaderMenus();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHeaderMenus();});
+$('exportBtn').onclick=()=>{closeHeaderMenus();download('octos-roads-v1.geojson',exportGeo());};
 $('saveBtn').onclick=()=>download('octos-roads-v1.json',{app:'Octos Roads',version:1,roads,roundabouts});
-$('openBtn').onclick=$('importBtn').onclick=()=>$('fileInput').click();
+$('openBtn').onclick=()=>{closeHeaderMenus();$('fileInput').click();};
 $('fileInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const obj=JSON.parse(await file.text());openProject(obj);}catch(err){status('Error al importar: '+err.message);}e.target.value='';};
 $('kmlBtn').onclick=()=>$('kmlFile').click();$('dwgBtn').onclick=()=>$('dwgFile').click();
 $('kmlFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>8*1024*1024)throw Error('KML superior a 8 MB.');addImportedRoutes(parseKml(await file.text()),'KML');}catch(err){status('Error KML: '+err.message)}e.target.value=''};
 $('dwgFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{await readDwg(file)}catch(err){status('Error DWG: '+err.message)}e.target.value=''};
-$('toggleLeft').onclick=()=>$('leftPane').classList.toggle('hidden-mobile');$('toggleRight').onclick=()=>$('rightPane').classList.toggle('hidden-mobile');
+$('toggleLeft').onclick=()=>$('leftPane').classList.toggle('hidden-mobile');
 ['roadType'].forEach(id=>$(id).onchange=()=>{if(!selected){$('speed').value=({convencional:90,autopista:120,urbana:50,camino:30})[$('roadType').value];}drawPreview();});
 ['radius','speed','laneWidth','shoulderWidth','medianWidth','sidewalkWidth'].forEach(id=>$(id).addEventListener('input',()=>{updateSectionUI();drawPreview();}));
 $('roadSection').addEventListener('change',()=>{const type=$('roadSection').value;if(sectionTypes[type].street)$('roadType').value='urbana';applySectionDefaults(type);updateSectionUI();drawPreview();});
@@ -1296,7 +1396,7 @@ map.on('mousemove',e=>{if(mode==='draw'&&draft.length){cursor=[e.latlng.lat,e.la
 map.on('zoomend',render);
 document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.ctrlKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo();return;}if(e.key==='Escape'){if(mode==='draw')finish(false);else setMode('select');}if(e.key==='Enter'&&mode==='draw')finish();if(e.key==='Backspace'&&mode==='draw'){e.preventDefault();undo();}if(e.key.toLowerCase()==='v')setMode('select');if(e.key.toLowerCase()==='d')setMode('draw');if(e.key.toLowerCase()==='i')setMode('insert');if(e.key.toLowerCase()==='x')setMode('remove');});
 try{const d=JSON.parse(localStorage.getItem(K)||'null');if(d&&Array.isArray(d.roads)&&d.roads.every(r=>validNodes(r.nodes))){roads=d.roads;roundabouts=Array.isArray(d.roundabouts)&&d.roundabouts.every(validRoundabout)?d.roundabouts.map(({armLengths,...rb})=>rb):[];}}catch(e){}
-setBase('pnoa');render();setMode('select');if(roads.length)fitAll();
+setBase('pnoa');render();setMode('select');if(!restoreHomeView()&&(roads.length||roundabouts.length))fitAll();
 })();
 </script>
 </body></html>
