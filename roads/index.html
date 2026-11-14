@@ -336,6 +336,9 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
  #mapWrap .map-nav-dock button{width:32px;height:32px}
 }
 
+/* Marcadores técnicos de cruce: T y X derivados de la topología de ejes. */
+.technical-intersection-marker{background:transparent;border:none;pointer-events:none}
+.technical-intersection-marker span{width:19px;height:19px;display:grid;place-items:center;border:1.5px solid #FF6A1A;background:#15232B;border-radius:5px;color:#F1F1EF;font:700 12px "IBM Plex Sans",system-ui,sans-serif;box-shadow:0 0 0 2px #0E0E10B0}
 /* Selector de vista: no altera la geometría ni la herramienta de edición. */
 .road-view-modes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;flex:0 1 336px;min-width:244px;width:336px;margin-left:auto}
 .road-view-modes button{height:43px;min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;border:1px solid #4A4B52;border-radius:6px;color:#D3D4D8;background:#28292D;font:600 10px "IBM Plex Sans",system-ui,sans-serif;cursor:pointer}
@@ -815,7 +818,7 @@ function autoCrossShapes(event){
  return {fill,corners,throat,priority:t?{main:t.main.id,branch:t.branch.id,side:t.direction}:null};
 }
 function drawAutoCrossings(replacement=null,precomputed=null){
- autoCrossGroup.clearLayers();if(!visible('layerRoad'))return;
+ autoCrossGroup.clearLayers();if(isTechnicalView()||!visible('layerRoad'))return;
  const list=replacement?roads.map(r=>r.id===replacement.id?replacement:r):roads;
  const events=precomputed||autoCrossEvents(list);
  for(const event of events){
@@ -1534,6 +1537,39 @@ function roundaboutSplitter(rb,geometry){
 }
 function drawRoundaboutRoadways(){
  roundaboutGroup.clearLayers();
+ if(isTechnicalView()){
+  for(const rb of roundabouts){
+   const shape=roundaboutGeometry(rb),design=displayMode==='design';
+   const onClick=e=>roundaboutClick(e,rb);
+   const axis=(pts,color,width,dashed=false)=>{
+    const line=L.polyline(pts,{color,weight:width,dashArray:dashed?'6 6':null,opacity:.97,lineCap:'round',interactive:true}).addTo(roundaboutGroup);
+    line.on('click',onClick);
+    return line;
+   };
+   if(design){
+    const center=xy(rb.center,rb.center[0]),outer=[];
+    for(let i=0;i<=192;i++){
+     const angle=i*Math.PI*2/192,r=roundaboutRayRadius(rb,angle);
+     outer.push(ll(add(center,{x:r*Math.cos(angle),y:r*Math.sin(angle)}),rb.center[0]));
+    }
+    axis(outer,'#92A3AD',1.3);
+    axis(shape.island,'#92A3AD',1.3);
+   }
+   axis(shape.ring,'#A3E3E9',design?1.7:2.6,!design);
+   for(const arm of shape.arms){
+    const t=armTransition(rb,arm),p=t.profile;
+    for(const [path,count] of [[t.entry,p.entry],[t.exit,p.exit]]){
+     if(!path||!count)continue;
+     const coords=path.map(q=>ll(q,t.lat));
+     if(design)for(const side of [-1,1])
+      axis(offsetCenterline(coords,side*count*p.laneWidth/2),'#8296A5',1.1);
+     axis(coords,'#A3E3E9',design?1.7:2.3,!design);
+    }
+   }
+   L.circleMarker(rb.center,{radius:3,color:'#FF6A1A',weight:1,fillColor:'#0E0E10',fillOpacity:1,interactive:false}).addTo(roundaboutGroup);
+  }
+  return;
+ }
  const draw=(pts,color,weight,onClick,options={})=>{
   const line=L.polyline(pts,{color,weight,opacity:1,lineCap:'butt',lineJoin:'round',...options}).addTo(roundaboutGroup);
   if(onClick)line.on('click',onClick);
@@ -1782,6 +1818,32 @@ function paintRoadPart(r,part,isSelected,activeSegment,structure,clickHandler,do
  const shoulderPx=sec.shoulderWidth>0?widthInPixels(sec.shoulderWidth):0;
  const base={lineCap:'butt',lineJoin:'round',interactive:false};
  const stroke=(points,color,weight,extras={})=>L.polyline(points,{...base,color,weight,opacity:1,...extras}).addTo(roadsGroup);
+ if(isTechnicalView()){
+  const design=displayMode==='design';
+  if(design){
+   // Eje, bordes de calzada, arcenes, aceras y mediana se dibujan como líneas CAD.
+   const outside=sec.roadWidth/2+sec.shoulderWidth+sec.sidewalkWidth;
+   const withShoulder=sec.roadWidth/2+sec.shoulderWidth;
+   for(const side of [-1,1]){
+    if(outside>sec.roadWidth/2)stroke(offsetCenterline(part.points,side*outside),'#8296A5',1.15,{opacity:.9});
+    if(sec.shoulderWidth>0)stroke(offsetCenterline(part.points,side*withShoulder),'#5F7789',.95,{dashArray:'7 5',opacity:.8});
+    stroke(offsetCenterline(part.points,side*sec.roadWidth/2),'#BECBD2',1.4,{opacity:.95});
+   }
+   if(sec.medianWidth>0&&sec.splitAfter)for(const side of [-1,1])
+    stroke(offsetCenterline(part.points,sec.medianOffset+side*sec.medianWidth/2),'#D3B980',1.25,{opacity:.9});
+   for(const mark of sec.lines){
+    const distance=mark.offset*sec.laneWidth+(sec.splitAfter&&mark.offset*sec.laneWidth<sec.medianOffset?-sec.medianWidth/2:sec.splitAfter?sec.medianWidth/2:0);
+    stroke(offsetCenterline(part.points,distance),'#748B9B',.8,{dashArray:mark.solid?null:'4 7',opacity:.9});
+   }
+  }
+  const axisColor=structure==='bridge'?'#68D8EA':structure==='tunnel'?'#BBA5F5':isSelected?'#FF6A1A':design?'#A3E3E9':'#A9CFDF';
+  stroke(part.points,axisColor,design?1.85:2.5,{dashArray:structure==='tunnel'?'8 6':null,opacity:1});
+  // La banda de pulsación es invisible para no desdibujar el eje.
+  const hit=stroke(part.points,axisColor,12,{opacity:.004,interactive:true});
+  hit.on('click',clickHandler);
+  if(doubleClickHandler)hit.on('dblclick',doubleClickHandler);
+  return;
+ }
  if(visible('layerRoad')){
   if(walkPx>0){
    stroke(part.points,'#292929',roadPx+2*(shoulderPx+walkPx)+5);
@@ -1891,9 +1953,15 @@ function jxDraw(){
  junctionGroup.clearLayers();
  $('junctionDock').hidden=!(mode==='connect'||selectedJunction);if(mode==='connect'&&!selectedJunction)$('jxInfo').textContent=pendingJunction?'Origen seleccionado. Pulsa la carretera de destino.':'Pulsa primero la carretera secundaria y después la principal.';
  $('jxApply').disabled=!selectedJunction;$('jxDelete').disabled=!selectedJunction;
- if(!visible('layerRoad'))return;
+ if(!visible('layerRoad')&&!isTechnicalView())return;
  for(const j of junctions){const g=jxGeometry(j);if(!g)continue;
   const w=widthInPixels(j.width),active=j.id===selectedJunction;
+  if(isTechnicalView()){
+   const line=L.polyline(g.points,{color:active?'#FF6A1A':'#A3E3E9',weight:active?3:2,dashArray:displayMode==='axes'?'5 6':null,lineCap:'round'}).addTo(junctionGroup);
+   line.on('click',e=>{L.DomEvent.stopPropagation(e);if(!['draw','connect','roundabout'].includes(mode))jxChoose(j.id);});
+   for(const p of [g.from,g.to])L.circleMarker(p,{radius:4,color:'#FF6A1A',weight:1.3,fillColor:'#16232D',fillOpacity:1,interactive:false}).addTo(junctionGroup);
+   continue;
+  }
   L.polyline(g.points,{color:'#292929',weight:w+5,interactive:false,lineCap:'round'}).addTo(junctionGroup);
   const line=L.polyline(g.points,{color:active?'#FF9D65':'#C2CDD0',weight:w+1,lineCap:'round'}).addTo(junctionGroup);
   line.on('click',e=>{L.DomEvent.stopPropagation(e);if(!['draw','connect','roundabout'].includes(mode))jxChoose(j.id);});
@@ -1921,7 +1989,7 @@ function syncInspector(){
  $('deleteBtn').hidden=Boolean(rb);
 }
 function render(){
- editGuide.clearLayers();roadsGroup.clearLayers();markersGroup.clearLayers();labelsGroup.clearLayers();
+ editGuide.clearLayers();technicalGroup.clearLayers();roadsGroup.clearLayers();markersGroup.clearLayers();labelsGroup.clearLayers();
  const autoEvents=autoCrossEvents();
  let total=0;
  roads.forEach(r=>{
@@ -1930,7 +1998,7 @@ function render(){
    const structure=(r.structures||{})[part.segmentIndex]||'normal',activeSegment=selectedSegment?.roadId===r.id&&selectedSegment.index===part.segmentIndex;
    paintRoadPart(r,part,isSelected,activeSegment,structure,e=>{L.DomEvent.stopPropagation(e);if(mode==='connect'){jxClick(r,e.latlng);return;}if(mode==='draw'||mode==='roundabout')return;if(mode==='insert')insertNode(r,e.latlng);else if(['bridge','tunnel','normal'].includes(mode))setSectionType(r,part.segmentIndex,mode);else selectRoadPart(r,part.segmentIndex);},e=>{L.DomEvent.stopPropagation(e);if(mode==='select'&&selected===r.id)insertNode(r,e.latlng);});
   });
-  if(visible('layerRadius'))g.arcs.forEach(a=>{L.tooltip({permanent:true,direction:'center',className:'arc-tooltip',interactive:false,opacity:.94}).setLatLng(a.middle).setContent('R '+Math.round(a.radius)+' m · '+a.speed+' km/h').addTo(labelsGroup);});
+  if(visible('layerRadius')&&!(isTechnicalView()&&r.id===selected))g.arcs.forEach(a=>{L.tooltip({permanent:true,direction:'center',className:'arc-tooltip',interactive:false,opacity:.94}).setLatLng(a.middle).setContent('R '+Math.round(a.radius)+' m · '+a.speed+' km/h').addTo(labelsGroup);});
   if(r.id===selected&&mode!=='draw')showEditGuide(r,null,null,g);
   if(r.id===selected&&mode!=='draw'&&visible('layerNodes'))r.nodes.forEach((p,i)=>{
    const icon=L.divIcon({className:'handle-icon',html:'<div class="handle"></div>',iconSize:[14,14],iconAnchor:[7,7]});
@@ -1942,6 +2010,29 @@ function render(){
   });
  });
  drawAutoCrossings(null,autoEvents);renderRoundabouts();jxDraw();
+ if(isTechnicalView()){
+  // Puntos de control y nodos de intersección visibles incluso sin selección.
+  for(const r of roads){
+   const isSelected=r.id===selected;
+   for(let i=0;i<r.nodes.length;i++){
+    if(isSelected&&visible('layerNodes'))continue; // Los tiradores editables ya están en markersGroup.
+    const end=i===0||i===r.nodes.length-1;
+    L.circleMarker(r.nodes[i],{radius:end?4.3:3.2,color:end?'#FF6A1A':'#BED8E0',
+     weight:end?1.6:1.2,fillColor:'#111920',fillOpacity:1,interactive:false}).addTo(technicalGroup);
+   }
+  }
+  for(const evt of autoEvents){
+   const type=evt.arms.length===3?'T':'+';
+   const icon=L.divIcon({className:'technical-intersection-marker',html:'<span>'+type+'</span>',
+    iconSize:[19,19],iconAnchor:[9.5,9.5]});
+   L.marker(ll(evt.p,evt.lat0),{icon,interactive:false,zIndexOffset:1000}).addTo(technicalGroup);
+  }
+  for(const rb of roundabouts){
+   const g=roundaboutGeometry(rb);
+   for(const arm of g.arms)L.circleMarker(arm.outer,{radius:4,color:'#FF6A1A',weight:1.4,
+    fillColor:'#16232D',fillOpacity:1,interactive:false}).addTo(technicalGroup);
+  }
+ }
  $('roadCount').textContent=roads.length+' tramos · '+roundabouts.length+' rotondas · '+junctions.length+' enlaces';
  $('mapBadge').textContent=roads.length+' carretera'+(roads.length===1?'':'s')+' · '+roundabouts.length+' rotonda'+(roundabouts.length===1?'':'s')+' · '+format(total/1000)+' km · '+junctions.length+' enlaces';
  const r=roadById(selected);
