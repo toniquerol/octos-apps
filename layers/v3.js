@@ -65,10 +65,10 @@ function updateEnabled(x,active){
  x.wmsEnabled=[...new Set(active)];x.wmsOpacities=x.wmsOpacities||{};
  layerField.value=x.wmsEnabled.join(',');persist();
 }
-function renderCapabilities(layers){
+function renderCapabilities(layers,isPreset=false){
  const x=data.find(v=>v.id===selected);if(!x)return;
  const active=new Set(selectedSpecs(x).map(v=>v.name));
- $('found').innerHTML='<div class="v3capTitle">SUBCAPAS WMS · '+layers.length+' · selección múltiple</div>'+layers.map(v=>{
+ $('found').innerHTML='<div class="v3capTitle">SUBCAPAS WMS · '+layers.length+' · selección múltiple'+(isPreset?' · catálogo sin verificar':'')+'</div>'+layers.map(v=>{
   const checked=active.has(v.name),value=Math.round(clamp(Number(x.wmsOpacities?.[v.name]??x.opacity??.75))*100);
   return '<div class="v3capRow '+(checked?'checked':'')+'"><label><input type="checkbox" data-v3-layer="'+esc(v.name)+'" '+(checked?'checked':'')+' aria-label="Activar '+esc(v.name)+'"><span class="v3capName">'+esc(v.title||v.name)+'<small>'+esc(v.name)+'</small></span></label><div class="v3capOpacity"><input type="range" min="0" max="100" value="'+value+'" data-v3-opacity="'+esc(v.name)+'" aria-label="Opacidad '+esc(v.name)+'"><output>'+value+'%</output></div></div>';
  }).join('');
@@ -110,7 +110,7 @@ test=async function(){
   else{$('found').innerHTML=layers.slice(0,150).map(v=>'<div class="found"><span>'+esc(v.title||v.name)+'</span><button data-layer="'+esc(v.name)+'">Elegir</button></div>').join('');$('found').querySelectorAll('button').forEach(b=>b.onclick=()=>{layerField.value=b.dataset.layer;preview()})}
  }catch(e){if(id!==selected)return;x.lastChecked={at:new Date().toISOString(),result:'no comprobado',error:e.message};persist();setPreviewStatus('GetCapabilities: '+e.message+' (posible CORS)')}
 };
-select=function(id){clearLeaf();$('found').replaceChildren();originalSelect(id);const x=data.find(v=>v.id===id);if(x?.kind==='WMS'&&Array.isArray(x.wmsEnabled)){layerField.value=x.wmsEnabled.join(',');preview()}};
+select=function(id){clearLeaf();$('found').replaceChildren();originalSelect(id);const x=data.find(v=>v.id===id);if(x?.kind==='WMS'&&Array.isArray(x.wmsEnabled)){layerField.value=x.wmsEnabled.join(',');if(x.knownLayers?.length)renderCapabilities(x.knownLayers,true);if(x.viewCenter?.length===2&&Number.isFinite(x.viewZoom)){if(map)map.setView(x.viewCenter,x.viewZoom);if(map3d)map3d.jumpTo({center:[x.viewCenter[1],x.viewCenter[0]],zoom:x.viewZoom})}preview()}};
 layerField.addEventListener('change',()=>{const x=data.find(v=>v.id===selected);if(x?.kind!=='WMS')return;updateEnabled(x,names(layerField.value));$('found').replaceChildren();preview()});
 $('test').onclick=()=>test();$('preview').onclick=()=>preview();
 let compareMap=null,compareSource=null,compareListener=null,compareActive=false;
