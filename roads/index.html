@@ -134,6 +134,7 @@ function makeGeometry(road){
  const pts=nodes.map(p=>xy(p,lat0)), parts=[],arcs=[];
  let last=pts[0];const cap=road.speed;
  const emit=(list,r,turn)=>{if(list.length<2)return;const len=list.reduce((s,p,i)=>i?s+dist(p,list[i-1]):0,0);if(len<0.02)return;const speed=r>0?clamp(Math.round(Math.sqrt(127*r*(.06+.11))/10)*10,20,cap):cap;parts.push({points:list.map(p=>ll(p,lat0)),speed,radius:r,length:len,turn});};
+ if(road.radius===0){emit(pts,0,0);return {parts,arcs,total:parts.reduce((s,p)=>s+p.length,0),minRadius:null};}
  for(let i=1;i<pts.length-1;i++){
   const p=pts[i],prior=pts[i-1],next=pts[i+1],inlen=dist(prior,p),outlen=dist(p,next);
   if(inlen<.1||outlen<.1)continue;
@@ -216,6 +217,7 @@ function openProject(obj){let next=[];if(obj&&Array.isArray(obj.roads)){next=obj
 function addImportedRoutes(items,source){
  if(!items.length)throw Error('No se encontraron trazados lineales válidos.');
  if(items.length+roads.length>300)throw Error('Máximo 300 carreteras por proyecto.');
+ if(items.reduce((sum,r)=>sum+r.nodes.length,0)+roads.reduce((sum,r)=>sum+r.nodes.length,0)>25000)throw Error('Límite de 25.000 vértices por proyecto para mantener el visor fluido.');
  const fresh=items.map((v,i)=>({id:newId(),name:String(v.name||source+' '+(i+1)).slice(0,80),type:'convencional',radius:0,width:7,speed:90,nodes:v.nodes}));
  if(!fresh.every(r=>validNodes(r.nodes)))throw Error('Coordenadas incorrectas o más de 4000 puntos por línea.');
  checkpoint();roads.push(...fresh);selected=fresh[0].id;setMode('select');persist();render();
@@ -278,7 +280,7 @@ function cadArc(ent){
 function decodeCadEntities(entities,zone,hem,filename){
  const vectors=[],lines=[];
  for(const ent of entities){
-  if(ent?.isInPaperSpace)continue;
+  if(!ent||ent.isInPaperSpace)continue;
   let points=[];const layer=String(ent?.layer||'0');
   if(ent.type==='LINE'){const a=cadPt(ent.startPoint),b=cadPt(ent.endPoint);if(a.every(finite)&&b.every(finite)&&!near(a,b))lines.push({layer,points:[a,b]});continue;}
   if(['LWPOLYLINE','POLYLINE2D','POLYLINE3D'].includes(ent.type))points=cadPolyline(ent);
