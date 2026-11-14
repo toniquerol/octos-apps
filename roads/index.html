@@ -507,6 +507,52 @@ function roundaboutArmProfile(rb,index){
  return {entry,exit,laneWidth:sec.laneWidth,shoulder:sec.shoulderWidth,sidewalk:sec.sidewalkWidth,
   median:sec.medianWidth,section:sec.section};
 }
+
+/* Carril segregado de giro a la derecha entre dos ramales consecutivos
+   alrededor del exterior de la rotonda. Representación en planta, no rasante. */
+function roundaboutSlipGeometry(rb){
+ if(!rb.slipEnabled)return null;
+ const shape=roundaboutGeometry(rb),from=shape.arms[rb.slipFrom],to=shape.arms[rb.slipTo];
+ if(!from||!to||from.index===to.index)return null;
+ const normAngle=a=>((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+ const ordered=[...shape.arms].sort((a,b)=>normAngle(a.angle)-normAngle(b.angle));
+ const i=ordered.findIndex(a=>a.index===from.index);
+ if(ordered[(i+1)%ordered.length]?.index!==to.index)return null;
+ const theta=(normAngle(to.angle)-normAngle(from.angle)+Math.PI*2)%(Math.PI*2);
+ if(theta<.15||theta>Math.PI*.85)return null;
+ const fromProfile=roundaboutArmProfile(rb,from.index),toProfile=roundaboutArmProfile(rb,to.index);
+ if(!fromProfile.entry||!toProfile.exit)return null;
+ const startTransition=armTransition(rb,from),endTransition=armTransition(rb,to);
+ if(!startTransition.entry||!endTransition.exit)return null;
+ const start=startTransition.entry[6],end=endTransition.exit[endTransition.exit.length-7];
+ const origin=xy(rb.center,rb.center[0]),vector=q=>sub(q,origin);
+ const startAng=normAngle(Math.atan2(vector(start).y,vector(start).x)),endAng=normAngle(Math.atan2(vector(end).y,vector(end).x));
+ const span=(endAng-startAng+Math.PI*2)%(Math.PI*2);
+ if(span<.10||span>Math.PI)return null;
+ const laneWidth=Math.min(fromProfile.laneWidth,toProfile.laneWidth);
+ const radius=clamp(Number(rb.slipRadius)||25,12,80),gap=Math.max(laneWidth*1.25+1.5,4+radius*.22);
+ const startRadius=length(vector(start)),endRadius=length(vector(end));
+ const at=(a,d)=>add(origin,{x:Math.cos(a)*d,y:Math.sin(a)*d}),path=[],outerIsland=[],innerIsland=[];
+ for(let j=0;j<=48;j++){
+  const t=j/48,a=startAng+span*t;
+  const base=roundaboutRayRadius(rb,a)+gap;
+  const startBase=roundaboutRayRadius(rb,startAng)+gap,endBase=roundaboutRayRadius(rb,endAng)+gap;
+  const blendS=(1-t)**4,blendE=t**4;
+  const dist=Math.max(roundaboutRayRadius(rb,a)+laneWidth*.5+.4,
+   base+(startRadius-startBase)*blendS+(endRadius-endBase)*blendE);
+  path.push(at(a,dist));
+  if(j>=15&&j<=33&&j%3===0){
+   innerIsland.push(at(a,roundaboutRayRadius(rb,a)+.9));
+   outerIsland.push(at(a,dist-laneWidth/2-.75));
+  }
+ }
+ // El primer y último punto quedan unidos exactamente a los centros de entrada/salida.
+ path[0]=start;path[path.length-1]=end;
+ let island=null;
+ if(innerIsland.length>=4&&outerIsland.every((p,k)=>length(vector(p))-length(vector(innerIsland[k]))>1.5))
+  island=[...innerIsland,...outerIsland.reverse()];
+ return {path,island,lat:rb.center[0],laneWidth,from:from.index,to:to.index};
+}
 function cubicRoadPoints(a,b,c,d,n=28){
  const output=[];
  for(let i=0;i<=n;i++){
@@ -548,7 +594,7 @@ function armTransition(rb,arm){
  const e0=at(far,entryOffset),x3=at(far,exitOffset);
  const e3=mouth(aEntry,roundaboutRayRadius(rb,aEntry,mouthInsetEntry)),x0=mouth(aExit,roundaboutRayRadius(rb,aExit,mouthInsetExit));
  // Siempre se avanza hacia el anillo en la entrada y se sale radialmente en la salida.
- const radialSpan=Math.max(6,far-dim.outerRadius);
+ const radialSpan=Math.max(6,far-roundaboutRayRadius(rb,arm.angle));
  const nearControl=clamp(radialSpan*.12,1.5,3.6);
  const farControl=clamp(radialSpan*.32,3.5,15);
  const eTangential=clamp(dim.entryRadius*.09,1,2.5);
@@ -646,6 +692,13 @@ function drawRoundaboutRoadways(){
   for(const link of links)draw(link.coords,'#C2CDD0',visible('layerRoad')?link.roadPx+1:5,onClick);
   // Un único relleno continuo del anillo cubre las juntas de las curvas de enlace.
   draw(shape.ring,'#C2CDD0',visible('layerRoad')?ringPx+1:5,onClick);
+  // Bypass independiente, en el cuadrante exterior entre entrada y salida.
+  const bypass=roundaboutSlipGeometry(rb);
+  if(bypass){
+   const coords=bypass.path.map(q=>ll(q,bypass.lat)),w=widthInPixels(bypass.laneWidth);
+   if(visible('layerRoad'))draw(coords,'#292929',w+5,onClick);
+   draw(coords,'#C2CDD0',visible('layerRoad')?w+1:5,onClick);
+  }
   if(visible('layerRoad')&&visible('layerAxes')){
    if(ringPx>3*d.lanes){
     const origin=xy(rb.center,rb.center[0]);
@@ -666,6 +719,10 @@ function drawRoundaboutRoadways(){
    if(!t.splitter)continue;
    const island=L.polygon(t.splitter.map(q=>ll(q,t.lat)),
     {color:'#F1F1EF',weight:1.4,fillColor:'#666D6C',fillOpacity:1,interactive:true}).addTo(roundaboutGroup);
+   island.on('click',onClick);
+  }
+  if(visible('layerRoad')&&bypass?.island){
+   const island=L.polygon(bypass.island.map(q=>ll(q,bypass.lat)),{color:'#F1F1EF',weight:1.1,fillColor:'#666D6C',fillOpacity:1,interactive:true}).addTo(roundaboutGroup);
    island.on('click',onClick);
   }
   // La isleta central cubre posibles extremos de las bandas que entren en su contorno.
