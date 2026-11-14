@@ -2680,6 +2680,34 @@ function realClipLine(points,box){
  }
  flush();return paths;
 }
+// Reducir los vértices de los ejes oficiales sin perder la forma en curvas.
+function realSampleNodes(points,spacing=100,tolerance=3){
+ if(points.length<2)return points.map(p=>[p[1],p[0]]);
+ const lat0=(points[0][1]+points[points.length-1][1])/2;
+ const projected=points.map(p=>xy([p[1],p[0]],lat0));
+ const keep=new Uint8Array(projected.length);
+ keep[0]=1;keep[projected.length-1]=1;
+ const stack=[[0,projected.length-1]];
+ while(stack.length){
+  const [start,end]=stack.pop(),a=projected[start],b=projected[end],ab=sub(b,a),ab2=dot(ab,ab);
+  let farthest=0,at=-1;
+  for(let i=start+1;i<end;i++){
+   const ap=sub(projected[i],a),t=ab2>0?clamp(dot(ap,ab)/ab2,0,1):0;
+   const deviation=dist(projected[i],add(a,mul(ab,t)));
+   if(deviation>farthest){farthest=deviation;at=i;}
+  }
+  if(farthest>tolerance){keep[at]=1;stack.push([start,at],[at,end]);}
+ }
+ const nodes=[[points[0][1],points[0][0]]];
+ let previous=0;
+ for(let i=1;i<projected.length;i++){
+  if(!keep[i])continue;
+  const a=projected[previous],b=projected[i],pieces=Math.max(1,Math.ceil(dist(a,b)/spacing));
+  for(let part=1;part<=pieces;part++)nodes.push(ll(add(a,mul(sub(b,a),part/pieces)),lat0));
+  previous=i;
+ }
+ return nodes;
+}
 function realCategory(props){
  const kind=String(props.Tipo_de_via||'').toLowerCase();
  if(/autopista|autovía|autovia/.test(kind))return 'autopista';
@@ -2724,7 +2752,7 @@ async function importRealArea(){
     realClipLine(line,box).forEach((clipped,partIndex)=>{
      const key='hermes19:'+id+':'+sectionIndex+':'+partIndex;
      if(existing.has(key))return;
-     const nodes=clipped.map(p=>[p[1],p[0]]);
+     const nodes=realSampleNodes(clipped);
      if(!validNodes(nodes))throw Error('Un eje supera 4.000 vértices o contiene coordenadas no válidas. Reduce el área.');
      const type=realCategory(props),name=String(props.Carretera||'Carretera oficial');
      fresh.push({id:newId(),name:name.slice(0,80),type,radius:0,width:7,speed:90,
