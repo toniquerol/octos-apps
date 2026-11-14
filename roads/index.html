@@ -69,6 +69,7 @@ details.section>summary.eyebrow:hover{color:var(--text)}
 .rb-create-heading output{font-size:12px;color:#FF9D65;font-variant-numeric:tabular-nums}
 .rb-create-buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .rb-create button{border-radius:5px;padding:8px 5px;background:#2A2B2F;color:#F1F1EF;border:1px solid #4b4c52;cursor:pointer;font-size:11px}
+.rb-create button:disabled{opacity:.45;cursor:not-allowed}
 .rb-create button[type=submit]{background:#FF6A1A;color:#121212;border-color:#FF6A1A;font-weight:700}
 
 .special-bridge{color:#42d4e4}.special-tunnel{color:#bc9bff}
@@ -407,7 +408,11 @@ function updateRoundaboutUI(){
  $('rbAxisValue').textContent=value.axisAngle+'°';
  $('rbOrientationValue').textContent=value.orientation+'°';
  $('rbSectionSummary').textContent=dim.lanes+' carriles · calzada '+format(dim.width)+' m · exterior '+format(value.diameter+(elongated?value.elongation:0))+' × '+format(value.diameter)+' m';
- $('rbSlipHelp').textContent=value.slipEnabled?'Solo se dibuja entre una entrada y la salida contigua compatibles con el sentido de circulación.':'Carril de giro directo opcional por el exterior del anillo.';
+ const current=roundaboutAt(selectedRoundabout);
+ const compatible=!value.slipEnabled||Boolean(roundaboutSlipGeometry({...value,id:current?.id||'preview',center:current?.center||[41,1],armOffsets:current?.armOffsets}));
+ $('rbSlipHelp').textContent=!value.slipEnabled?'Carril de giro directo opcional por el exterior del anillo.':compatible?
+  'Carril directo compatible: giro a la derecha hacia la salida contigua.':'Selección incompatible: elige la salida inmediatamente siguiente en sentido antihorario.';
+
 }
 function validRoundabout(r){return r&&typeof r.id==='string'&&Array.isArray(r.center)&&r.center.length===2&&r.center.every(finite)&&Math.abs(r.center[0])<=85&&Math.abs(r.center[1])<=180&&Number.isInteger(r.arms)&&r.arms>=2&&r.arms<=8&&finite(r.diameter)&&r.diameter>=20&&r.diameter<=150&&finite(r.armLength)&&r.armLength>=10&&r.armLength<=150&&finite(r.orientation)&&finite(r.width)&&r.width>=3&&r.width<=15
  &&(!('shape' in r)||['circular','ellipse','stadium'].includes(r.shape))
@@ -491,6 +496,7 @@ function applyRoundabout(){
  if(!r)return status('Selecciona una rotonda en el mapa para editarla.');
  checkpoint();
  const p=roundaboutParams(),existing=r.armOffsets||[];
+ if(p.slipEnabled&&!roundaboutSlipGeometry({...r,...p}))return status('Carril directo no compatible: selecciona la salida contigua del giro a la derecha.');
  Object.assign(r,p);
  if(p.slipFrom===p.slipTo){r.slipEnabled=false;$('rbSlipEnabled').checked=false;}
  // El parámetro define la longitud común; cada extremo conserva su ángulo propio.
@@ -969,9 +975,12 @@ function showRoundaboutCreator(latlng){
   L.polyline(g.ring,{color:'#FF6A1A',weight:Math.max(3,widthInPixels(g.dimensions.width)),opacity:.68,interactive:false,dashArray:'8 6'}).addTo(roundaboutDraftGroup);
   L.polyline(g.island,{color:'#f1f1ef',weight:1,opacity:.8,interactive:false}).addTo(roundaboutDraftGroup);
   g.arms.forEach(arm=>L.polyline([arm.inner,arm.outer],{color:'#FF9D65',weight:3,interactive:false,opacity:.95}).addTo(roundaboutDraftGroup));
-  if(v.slipEnabled){const lane=roundaboutSlipGeometry(v);
-   if(lane)L.polyline(lane.path.map(point=>ll(point,lane.lat)),{color:'#FF6A1A',weight:Math.max(3,widthInPixels(lane.laneWidth)),interactive:false,opacity:.8}).addTo(roundaboutDraftGroup);
-  }
+  const lane=v.slipEnabled?roundaboutSlipGeometry(v):null;
+  const allowed=!v.slipEnabled||!!lane;
+  const note=form.querySelector('.rb-create-note'),submit=form.querySelector('[type=submit]');
+  submit.disabled=!allowed;
+  note.textContent=allowed?'Se representa entre una entrada y la salida contigua compatibles.':'El carril directo requiere una salida contigua en sentido antihorario.';
+  if(lane)L.polyline(lane.path.map(point=>ll(point,lane.lat)),{color:'#FF6A1A',weight:Math.max(3,widthInPixels(lane.laneWidth)),interactive:false,opacity:.8}).addTo(roundaboutDraftGroup);
   L.circleMarker(v.center,{radius:4,color:'#FF6A1A',weight:2,fillColor:'#222226',fillOpacity:1,interactive:false}).addTo(roundaboutDraftGroup);
  };
  form.querySelectorAll('input,select').forEach(input=>{
@@ -983,7 +992,7 @@ function showRoundaboutCreator(latlng){
  form.querySelector('[data-rb-cancel]').onclick=()=>{closeRoundaboutCreator();status('Creación cancelada.');};
  form.addEventListener('submit',event=>{
   event.preventDefault();
-  if(!form.checkValidity()||mode!=='roundabout')return;
+  if(!form.checkValidity()||mode!=='roundabout'||form.querySelector('[type=submit]').disabled)return;
   if(roundabouts.length>=300)return status('Máximo 300 rotondas.');
   const rb={...sample(),id:newId()};
   if(rb.slipFrom===rb.slipTo)rb.slipEnabled=false;
