@@ -28,6 +28,40 @@ details.section>summary.eyebrow:hover{color:var(--text)}
 .radio,.check{display:flex;align-items:flex-start;gap:9px;padding:8px;border-radius:6px;cursor:pointer;font-size:12px}.radio:hover,.check:hover{background:#353539}.radio input,.check input{accent-color:var(--accent);margin:2px 0;flex:0 0 15px}.radio span,.check span{flex:1}.radio small,.check small{display:block;color:var(--muted);font-size:10px}
 .tool{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;margin:5px 0;padding:10px;background:#29292d;border:1px solid #4b4b51;border-radius:7px;font-size:12px}.tool b{font-size:10px;color:var(--muted);font-weight:500}.tool.active{border-color:var(--accent);background:#3e2a20;color:white}.tool.active b{color:#ffa36d}.tool:hover{border-color:var(--accent)}
 
+
+/* Herramientas y escala de velocidad permanentes en cabecera. */
+.head-left,.head-right{min-width:0}
+.head-actions{display:flex;align-items:center;gap:7px;flex:none}
+.head-speed{width:280px;min-width:215px;max-width:calc(100% - 54px);margin-left:auto}
+.head-speed-title{font-size:10px;font-weight:750;letter-spacing:.055em;color:var(--text);white-space:nowrap}
+.head-speed .legend{margin:5px 0 3px;gap:3px}
+.head-speed .legend span{height:7px}
+.head-speed .legend-label{font-size:9px}
+.head-tools{display:grid;grid-template-columns:repeat(4,46px);gap:5px;flex:none}
+.head-tools .tool{height:48px;width:46px;min-width:0;aspect-ratio:auto;margin:0;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center}
+.head-tools .tool svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.head-tools .tool span{font-size:9px;line-height:1;white-space:nowrap}
+.right .section>.special-constructor{border-top:0;margin-top:0;padding-top:0}
+@media(max-width:1200px) and (min-width:761px){
+ header{height:104px;grid-template-rows:44px 52px;gap:0 8px}
+ .head-left{grid-column:1;grid-row:1}.brand{grid-column:2;grid-row:1}
+ .head-right{grid-column:1/-1;grid-row:2;justify-content:center}
+ .layout{height:calc(100dvh - 104px - 31px)}
+ .head-speed{min-width:0;width:240px}.head-speed-title{font-size:9px}
+}
+@media(max-width:760px){
+ header{height:108px;grid-template-rows:44px 56px;grid-template-columns:1fr auto 1fr;gap:0 5px;padding:0 7px}
+ .head-left{grid-column:1;grid-row:1}.brand{grid-column:2;grid-row:1}
+ .head-right{display:contents}
+ .head-actions{grid-column:3;grid-row:1;justify-self:end;gap:4px}
+ .head-tools{grid-column:1/-1;grid-row:2;justify-self:center;grid-template-columns:repeat(4,43px);gap:6px}
+ .head-tools .tool{width:43px;height:46px}
+ .head-actions #exportBtn{display:none}
+ .head-speed{display:none}
+ .layout{height:calc(100dvh - 108px - 31px)}
+ .side{top:108px}
+}
+
 /* Roads · herramientas viarias compactas, sin alterar el tema ni la versión. */
 .special-constructor{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
 .special-tool-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
@@ -82,9 +116,16 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
 </head>
 <body>
 <header>
-  <div class="head-left"><button class="btn mobile-toggle" id="toggleLeft" title="Fondos y capas">Capas</button><div class="logo" aria-label="OcToS">T</div></div>
+  <div class="head-left"><button class="btn mobile-toggle" id="toggleLeft" title="Fondos y capas">Capas</button><div class="logo" aria-label="OcToS">T</div><div class="head-speed" role="img" aria-label="Velocidad geométrica estimada; escala de colores: hasta 40, 60, 80, 100 y 120 kilómetros por hora" title="Estimación preliminar por radio de curvatura; peralte supuesto del 6 % y rozamiento transversal de 0,11. No sustituye una validación normativa ni un proyecto de ingeniería.">
+   <div class="head-speed-title">VELOCIDAD GEOMÉTRICA ESTIMADA</div><div class="legend"><span style="background:#C83E42"></span><span style="background:#DB8137"></span><span style="background:#DDC34A"></span><span style="background:#4BA56A"></span><span style="background:#3294B9"></span></div><div class="legend-label"><span>≤40</span><span>60</span><span>80</span><span>100</span><span>120 km/h</span></div>
+  </div></div>
   <div class="brand"><b>OcToS <span>Roads</span></b><small>CONSTRUCCIÓN GEOMÉTRICA · V1.0</small></div>
-  <div class="head-right"><button class="btn mobile-toggle" id="toggleRight">Dibujo</button><button class="btn compact" id="demoBtn">Ejemplo</button><button class="btn compact" id="importBtn">Importar</button><button class="btn" id="exportBtn">GeoJSON</button></div>
+  <div class="head-right"><div class="tool-grid head-tools" role="group" aria-label="Herramientas de dibujo">
+   <button type="button" class="tool active" data-mode="select" title="Seleccionar / modificar (V)" aria-label="Seleccionar o modificar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3 19 12l-7 1-3 7z"/></svg><span>Selecc.</span></button>
+   <button type="button" class="tool" data-mode="draw" title="Nueva carretera (D)" aria-label="Nueva carretera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20C9 20 9 6 17 6"/><path d="M17 2v8M13 6h8"/></svg><span>Nueva</span></button>
+   <button type="button" class="tool" data-mode="insert" title="Insertar punto en eje (I)" aria-label="Insertar punto en eje"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 21 5"/><circle cx="12" cy="12" r="5"/><path d="M12 9v6M9 12h6"/></svg><span>Insertar</span></button>
+   <button type="button" class="tool" data-mode="remove" title="Eliminar punto (X)" aria-label="Eliminar punto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 21 5"/><circle cx="12" cy="12" r="5"/><path d="m10 10 4 4m0-4-4 4"/></svg><span>Eliminar</span></button>
+  </div><div class="head-actions"><button class="btn mobile-toggle" id="toggleRight">Dibujo</button><button class="btn compact" id="demoBtn">Ejemplo</button><button class="btn compact" id="importBtn">Importar</button><button class="btn" id="exportBtn">GeoJSON</button></div></div>
 </header>
 <div class="layout">
 <aside class="side left hidden-mobile" id="leftPane" aria-label="Fondos y capas">
@@ -106,7 +147,7 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
     <label class="check"><input type="checkbox" id="layerAxes" checked><span>Marcas de carril<small>Separaciones y líneas blancas según sección</small></span></label>
   </details>
   <details class="section" open><summary class="eyebrow">Trazados</summary><div class="row"><h2 class="grow" style="margin:0 0 8px">Carreteras del proyecto</h2><span class="muted" id="roadCount">0</span></div><div id="roadsList"></div></details>
-  <details class="section" open><summary class="eyebrow">Lectura de velocidad</summary><h2>Velocidad geométrica estimada</h2><div class="legend"><span style="background:#C83E42"></span><span style="background:#DB8137"></span><span style="background:#DDC34A"></span><span style="background:#4BA56A"></span><span style="background:#3294B9"></span></div><div class="legend-label"><span>≤40</span><span>60</span><span>80</span><span>100</span><span>120 km/h</span></div><p class="muted">Estimación preliminar de velocidad según radio, peralte supuesto del 6 % y rozamiento transversal supuesto de 0,11. No constituye validación normativa ni sustituye un proyecto de ingeniería.</p></details>
+
 </aside>
 <section id="mapWrap" aria-label="Mapa y editor">
  <div id="map"></div>
@@ -114,13 +155,8 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
  <div class="mapbadge" id="mapBadge">0 carreteras · 0 km</div>
 </section>
 <aside class="side right hidden-mobile" id="rightPane" aria-label="Herramientas de dibujo">
- <details class="section" open><summary class="eyebrow">Constructor</summary><h2>Herramientas de dibujo</h2>
-  <div class="tool-grid" role="group" aria-label="Herramientas de dibujo">
-   <button type="button" class="tool active" data-mode="select" title="Seleccionar / modificar (V)" aria-label="Seleccionar o modificar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3 19 12l-7 1-3 7z"/></svg><span>Selecc.</span></button>
-   <button type="button" class="tool" data-mode="draw" title="Nueva carretera (D)" aria-label="Nueva carretera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20C9 20 9 6 17 6"/><path d="M17 2v8M13 6h8"/></svg><span>Nueva</span></button>
-   <button type="button" class="tool" data-mode="insert" title="Insertar punto en eje (I)" aria-label="Insertar punto en eje"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 21 5"/><circle cx="12" cy="12" r="5"/><path d="M12 9v6M9 12h6"/></svg><span>Insertar</span></button>
-   <button type="button" class="tool" data-mode="remove" title="Eliminar punto (X)" aria-label="Eliminar punto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 21 5"/><circle cx="12" cy="12" r="5"/><path d="m10 10 4 4m0-4-4 4"/></svg><span>Eliminar</span></button>
-  </div>
+ <details class="section" open><summary class="eyebrow">Constructor</summary>
+
   <div class="special-constructor">
    <div class="eyebrow">Elementos viarios</div>
    <div class="special-tool-grid" role="group" aria-label="Rotondas, puentes y túneles">
