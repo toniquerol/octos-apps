@@ -952,16 +952,18 @@ const HILLSHADE_SOURCE='octos-relieve-dem',HILLSHADE_LAYER='octos-relieve-sombra
 /* Iluminación cartográfica del MDT: 135º desde el norte = sureste.
    Es sombreado de pendientes, no sombras proyectadas de edificios u objetos. */
 function syncReliefHillshade(gl){
- if(!gl||!gl.isStyleLoaded())return;
- if(!gl.getSource(HILLSHADE_SOURCE)){
-  gl.addSource(HILLSHADE_SOURCE,{type:'raster-dem',tiles:[TERRAIN_TILES],tileSize:256,
+ if(!gl||!gl.getStyle()?.layers)return;
+ // En 3D se reutiliza el DEM del terreno, sin duplicar teselas.
+ const source=gl.getSource(TERRAIN_SOURCE)?TERRAIN_SOURCE:HILLSHADE_SOURCE;
+ if(!gl.getSource(source)){
+  gl.addSource(source,{type:'raster-dem',tiles:[TERRAIN_TILES],tileSize:256,
    encoding:'terrarium',minzoom:0,maxzoom:14,
    attribution:'Relieve: Mapzen Terrain Tiles / AWS Open Data'});
  }
  if(!gl.getLayer(HILLSHADE_LAYER)){
   const layers=gl.getStyle().layers||[];
   const firstRoadOrLabel=layers.find(layer=>layer['source-layer']==='transportation'||layer.type==='symbol');
-  gl.addLayer({id:HILLSHADE_LAYER,type:'hillshade',source:HILLSHADE_SOURCE,
+  gl.addLayer({id:HILLSHADE_LAYER,type:'hillshade',source,
    layout:{visibility:$('hillshadeEnabled').checked?'visible':'none'},
    paint:{
     'hillshade-illumination-direction':135,
