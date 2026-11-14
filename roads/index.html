@@ -403,7 +403,8 @@ function cubicRoadPoints(a,b,c,d,n=28){
  }
  return output;
 }
-/* Entradas por el lado horario del acceso y salidas por el antihorario.
+/* En circulación por la derecha: entrada al lado antihorario del acceso,
+   salida al lado horario, respecto a su eje radial.
    La curva usa radio como escala de suavizado; no es un arco circular normativo. */
 function roundaboutArmClearance(rb,arm){
  const angles=Array.from({length:rb.arms},(_,i)=>
@@ -419,8 +420,8 @@ function armTransition(rb,arm){
  const totalWidth=(p.entry+p.exit)*p.laneWidth+(p.entry&&p.exit?p.median:0);
  const entryWidth=p.entry*p.laneWidth,exitWidth=p.exit*p.laneWidth;
  // El extremo coincide con la sección completa de la carretera conectada.
- const entryOffset=-totalWidth/2+entryWidth/2;
- const exitOffset=totalWidth/2-exitWidth/2;
+ const entryOffset=totalWidth/2-entryWidth/2;
+ const exitOffset=-totalWidth/2+exitWidth/2;
  const at=(radius,offset=0)=>add(add(center,mul(dir,radius)),mul(norm,offset));
  const mouthRadiusEntry=dim.outerRadius-Math.min(p.laneWidth*p.entry/2,dim.width*.45);
  const mouthRadiusExit=dim.outerRadius-Math.min(p.laneWidth*p.exit/2,dim.width*.45);
@@ -431,7 +432,7 @@ function armTransition(rb,arm){
  const exitDelta=Math.min(angleMax,Math.max(.10,(exitWidth/2+1.4)/Math.max(8,mouthRadiusExit)));
  const mouth=(angle,radius)=>add(center,{x:radius*Math.cos(angle),y:radius*Math.sin(angle)});
  const tangent=angle=>({x:-Math.sin(angle),y:Math.cos(angle)});
- const aEntry=arm.angle-entryDelta,aExit=arm.angle+exitDelta;
+ const aEntry=arm.angle+entryDelta,aExit=arm.angle-exitDelta;
  const e0=at(far,entryOffset),x3=at(far,exitOffset);
  const e3=mouth(aEntry,mouthRadiusEntry),x0=mouth(aExit,mouthRadiusExit);
  // Siempre se avanza hacia el anillo en la entrada y se sale radialmente en la salida.
@@ -474,7 +475,7 @@ function roundaboutSplitter(rb,geometry){
   const en=lateralAt(entry,radial),ex=lateralAt(exit,radial);
   if(en===null||ex===null)continue;
   // Bordes interiores de las calzadas y un resguardo de 0,45 m.
-  const left=en+p.entry*p.laneWidth/2+.45,right=ex-p.exit*p.laneWidth/2-.45;
+  const left=ex+p.exit*p.laneWidth/2+.45,right=en-p.entry*p.laneWidth/2-.45;
   if(right-left<1.4){if(samples.length>0)break;continue;}
   samples.push({radial,mid:(left+right)/2,half:Math.min(2.2,(right-left)/2-.1)});
  }
