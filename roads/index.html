@@ -122,20 +122,72 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
  .layout{height:calc(100dvh - 108px - 31px)}
  .side{top:108px}
 }
+
+/* Barra de herramientas persistente y editor contextual sobre el mapa. */
+.head-left,.head-right{min-width:0}
+.head-left .head-tools{margin-left:clamp(8px,6vw,110px);margin-right:8px}
+.head-elements{grid-template-columns:repeat(4,46px);gap:5px;flex:none;margin-left:auto;margin-right:clamp(12px,4vw,68px)}
+.head-elements .tool{width:46px;height:48px;min-width:0;aspect-ratio:auto;margin:0;padding:4px 2px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px}
+.head-elements .tool svg{width:18px;height:18px}
+.head-elements .tool span{font-size:9px;line-height:1;white-space:nowrap}
+.map-inspector{position:absolute;left:16px;top:98px;z-index:1050;width:min(315px,calc(100% - 32px));height:max-content;max-height:calc(100% - 116px);overflow:auto;background:#222226f4;border:1px solid #515157;border-radius:9px;padding:10px 12px 13px;box-shadow:0 8px 28px #0009;scrollbar-color:#5b5b5f transparent}
+.map-inspector[hidden],.map-inspector [hidden]{display:none!important}
+.map-inspector-head{display:flex;align-items:center;justify-content:space-between;position:sticky;top:-10px;z-index:3;margin:-10px -12px 10px;padding:12px 12px 9px;background:#222226f7;border-bottom:1px solid #47474c}
+.map-inspector-head strong{font-size:11px;color:var(--accent);font-weight:750;letter-spacing:.10em}
+.map-inspector-head button{border:1px solid #4b4b52;border-radius:5px;background:#2A2B2F;width:25px;height:25px;padding:0;font-size:19px;line-height:1}
+.map-inspector>.map-inspector-head+div{min-height:0}
+.map-inspector .section{border-top:0;padding:0 0 8px}
+.map-inspector .section h2{font-size:12px;margin:5px 0 10px;font-weight:700}
+.map-inspector .section>summary.eyebrow{display:none}
+.map-inspector .section[open]>summary.eyebrow{display:none}
+.map-inspector .roundabout-options{margin-top:0}
+.map-inspector #inspectorRoundabout>.roundabout-options>summary{display:none}
+.map-inspector .field{font-size:11px;gap:7px;margin:8px 0}
+.map-inspector .field input:not([type=checkbox]),.map-inspector .field select{width:120px;max-width:57%}
+.map-inspector .field input[type=range]{width:96px;max-width:43%;accent-color:var(--accent)}
+.map-inspector .roundabout-options .field input{width:112px}
+.map-inspector #inspectorDetails{margin-top:6px;border-top:1px solid #45454a;padding-top:10px}
+.map-inspector #inspectorDetails .section h2{margin-top:3px}
+@media(max-width:1500px) and (min-width:1201px){
+ .head-left .head-tools{margin-left:clamp(8px,2vw,30px)}
+ .head-elements{margin-right:12px}
+ .head-speed{min-width:185px;width:225px}
+}
+@media(max-width:1200px) and (min-width:761px){
+ .head-left .head-tools{margin-left:8px}
+ .head-speed{display:none}
+ .head-elements{margin:0 24px 0 0}
+ .head-right{justify-content:center}
+}
+@media(max-width:760px){
+ header{height:159px;grid-template-rows:44px 52px 55px}
+ .layout{height:calc(100dvh - 159px - 31px)}
+ .side{top:159px}
+ .head-left .head-tools{grid-column:1/-1;grid-row:2;justify-self:center;margin:0;grid-template-columns:repeat(4,43px)}
+ .head-elements{grid-column:1/-1;grid-row:3;justify-self:center;grid-template-columns:repeat(4,43px);margin:0}
+ .head-elements .tool{width:43px;height:46px}
+ .map-inspector{top:73px;left:8px;width:min(305px,calc(100% - 16px));max-height:calc(100% - 84px)}
+}
+
 </style>
 </head>
 <body>
 <header>
-  <div class="head-left"><button class="btn mobile-toggle" id="toggleLeft" title="Fondos y capas">Capas</button><div class="logo" aria-label="OcToS">T</div><div class="head-speed" role="img" aria-label="Velocidad geométrica estimada; escala de colores: hasta 40, 60, 80, 100 y 120 kilómetros por hora" title="Estimación preliminar por radio de curvatura; peralte supuesto del 6 % y rozamiento transversal de 0,11. No sustituye una validación normativa ni un proyecto de ingeniería.">
-   <div class="head-speed-title">VELOCIDAD GEOMÉTRICA ESTIMADA</div><div class="legend"><span style="background:#C83E42"></span><span style="background:#DB8137"></span><span style="background:#DDC34A"></span><span style="background:#4BA56A"></span><span style="background:#3294B9"></span></div><div class="legend-label"><span>≤40</span><span>60</span><span>80</span><span>100</span><span>120 km/h</span></div>
-  </div></div>
-  <div class="brand"><b>OcToS <span>Roads</span></b><small>CONSTRUCCIÓN GEOMÉTRICA · V1.0</small></div>
-  <div class="head-right"><div class="tool-grid head-tools" role="group" aria-label="Herramientas de dibujo">
+  <div class="head-left"><button class="btn mobile-toggle" id="toggleLeft" title="Fondos y capas">Capas</button><div class="logo" aria-label="OcToS">T</div><div class="tool-grid head-tools" role="group" aria-label="Herramientas de dibujo">
    <button type="button" class="tool active" data-mode="select" title="Seleccionar / modificar (V)" aria-label="Seleccionar o modificar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3 19 12l-7 1-3 7z"/></svg><span>Selecc.</span></button>
    <button type="button" class="tool" data-mode="draw" title="Nueva carretera (D)" aria-label="Nueva carretera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20C9 20 9 6 17 6"/><path d="M17 2v8M13 6h8"/></svg><span>Nueva</span></button>
    <button type="button" class="tool" data-mode="insert" title="Insertar punto en eje (I)" aria-label="Insertar punto en eje"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 21 5"/><circle cx="12" cy="12" r="5"/><path d="M12 9v6M9 12h6"/></svg><span>Insertar</span></button>
    <button type="button" class="tool" data-mode="remove" title="Eliminar punto (X)" aria-label="Eliminar punto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 21 5"/><circle cx="12" cy="12" r="5"/><path d="m10 10 4 4m0-4-4 4"/></svg><span>Eliminar</span></button>
-  </div><div class="head-actions"><button class="btn mobile-toggle" id="toggleRight">Dibujo</button><button class="btn compact" id="demoBtn">Ejemplo</button><button class="btn compact" id="importBtn">Importar</button><button class="btn" id="exportBtn">GeoJSON</button></div></div>
+  </div><div class="head-speed" role="img" aria-label="Velocidad geométrica estimada; escala de colores: hasta 40, 60, 80, 100 y 120 kilómetros por hora" title="Estimación preliminar por radio de curvatura; peralte supuesto del 6 % y rozamiento transversal de 0,11. No sustituye una validación normativa ni un proyecto de ingeniería.">
+   <div class="head-speed-title">VELOCIDAD GEOMÉTRICA ESTIMADA</div><div class="legend"><span style="background:#C83E42"></span><span style="background:#DB8137"></span><span style="background:#DDC34A"></span><span style="background:#4BA56A"></span><span style="background:#3294B9"></span></div><div class="legend-label"><span>≤40</span><span>60</span><span>80</span><span>100</span><span>120 km/h</span></div>
+  </div></div>
+  <div class="brand"><b>OcToS <span>Roads</span></b><small>CONSTRUCCIÓN GEOMÉTRICA · V1.0</small></div>
+  <div class="head-right"><div class="special-tool-grid head-elements" role="group" aria-label="Rotondas, puentes y túneles">
+    <button type="button" class="tool" data-mode="roundabout" title="Insertar rotonda sobre el mapa" aria-label="Insertar rotonda"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg><span>Rotonda</span></button>
+    <button type="button" class="tool" data-mode="bridge" title="Marcar un segmento como puente" aria-label="Asignar puente a un tramo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 10h20M2 14h20M5 14v7M19 14v7M5 10V5M19 10V5M2 21h20"/></svg><span>Puente</span></button>
+    <button type="button" class="tool" data-mode="tunnel" title="Marcar un segmento como túnel" aria-label="Asignar túnel a un tramo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V10a9 9 0 0 1 18 0v11M8 21V11a4 4 0 0 1 8 0v10M1 21h22"/></svg><span>Túnel</span></button>
+    <button type="button" class="tool" data-mode="normal" title="Devolver un segmento a superficie" aria-label="Quitar clasificación de puente o túnel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 16h20M5 16l4-5 4 5 4-8 3 8"/></svg><span>Normal</span></button>
+   </div><div class="head-actions"><button class="btn mobile-toggle" id="toggleRight">Dibujo</button><button class="btn compact" id="demoBtn">Ejemplo</button><button class="btn compact" id="importBtn">Importar</button><button class="btn" id="exportBtn">GeoJSON</button></div></div>
 </header>
 <div class="layout">
 <aside class="side left hidden-mobile" id="leftPane" aria-label="Fondos y capas">
@@ -162,20 +214,30 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
 <section id="mapWrap" aria-label="Mapa y editor">
  <div id="map"></div>
  <div class="map-callout" aria-live="polite"><strong id="hintTitle">Seleccionar o dibujar</strong><div id="hintText">Activa «Nueva carretera» y marca los vértices sobre el mapa. Después pulsa «Terminar».</div></div>
- <div class="mapbadge" id="mapBadge">0 carreteras · 0 km</div>
-</section>
-<aside class="side right hidden-mobile" id="rightPane" aria-label="Herramientas de dibujo">
- <details class="section" open><summary class="eyebrow">Constructor</summary>
-
-  <div class="special-constructor">
-   <div class="eyebrow">Elementos viarios</div>
-   <div class="special-tool-grid" role="group" aria-label="Rotondas, puentes y túneles">
-    <button type="button" class="tool" data-mode="roundabout" title="Insertar rotonda sobre el mapa" aria-label="Insertar rotonda"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg><span>Rotonda</span></button>
-    <button type="button" class="tool" data-mode="bridge" title="Marcar un segmento como puente" aria-label="Asignar puente a un tramo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 10h20M2 14h20M5 14v7M19 14v7M5 10V5M19 10V5M2 21h20"/></svg><span>Puente</span></button>
-    <button type="button" class="tool" data-mode="tunnel" title="Marcar un segmento como túnel" aria-label="Asignar túnel a un tramo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V10a9 9 0 0 1 18 0v11M8 21V11a4 4 0 0 1 8 0v10M1 21h22"/></svg><span>Túnel</span></button>
-    <button type="button" class="tool" data-mode="normal" title="Devolver un segmento a superficie" aria-label="Quitar clasificación de puente o túnel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 16h20M5 16l4-5 4 5 4-8 3 8"/></svg><span>Normal</span></button>
-   </div>
-   <details class="roundabout-options" open><summary>Parámetros de rotonda</summary>
+ <div class="map-inspector" id="mapInspector" hidden aria-label="Panel temporal de parámetros">
+  <div class="map-inspector-head"><strong id="inspectorTitle">PARÁMETROS</strong><button type="button" id="inspectorClose" aria-label="Cerrar panel de parámetros" title="Cerrar">×</button></div>
+  <div id="inspectorRoad"><details class="section" open><summary class="eyebrow">Geometría de proyecto</summary><h2>Parámetros del trazado</h2>
+  <label class="field">Nombre <input id="roadName" value="Carretera 1" maxlength="80"></label>
+  <label class="field">Categoría <select id="roadType"><option value="convencional">Convencional</option><option value="autopista">Autovía</option><option value="urbana">Urbana</option><option value="camino">Camino</option></select></label>
+  <label class="field">Radio objetivo (m) <input id="radius" type="number" min="0" max="5000" step="10" value="160"></label>
+  <label class="field">Sección transversal <select id="roadSection">
+   <option value="road11">Carretera 1+1 · 2 carriles</option>
+   <option value="road21">Carretera 2+1 · 3 carriles</option>
+   <option value="road22">Carretera 2+2 · 4 carriles</option>
+   <option value="street2">Calle · doble sentido</option>
+   <option value="street1">Calle · sentido único</option>
+  </select></label>
+  <label class="field">Anchura por carril (m) <input id="laneWidth" type="number" min="2" max="5" step="0.25" value="3.5"></label>
+  <label class="field" id="shoulderField">Arcén exterior por lado (m) <input id="shoulderWidth" type="number" min="0" max="4" step="0.25" value="1.5"></label>
+  <label class="field" id="medianField" style="display:none">Separación central (m) <input id="medianWidth" type="number" min="0" max="8" step="0.25" value="0"></label>
+  <label class="field" id="sidewalkField" style="display:none">Acera por lado (m) <input id="sidewalkWidth" type="number" min="0" max="8" step="0.25" value="1.5"></label>
+  <p class="muted" id="sectionSummary">2 carriles · calzada 7 m · arcenes 1,5 m por lado · plataforma 10 m.</p>
+  <p class="muted">Secciones iniciales: Norma 3.1-IC, tabla 7.1; carretera 2+1, OC 1/2021, tabla 6.1. Calles: valores urbanos orientativos. Dimensiones editables; no es una validación normativa.</p>
+  <label class="field">Velocidad límite (km/h) <input id="speed" type="number" min="10" max="130" step="10" value="90"></label>
+  <p class="muted">Las curvas se generan automáticamente con arcos circulares tangentes. Si no cabe el radio objetivo entre dos vértices, se reduce y se recalcula la velocidad. Radio 0 = poligonal sin suavizado.</p>
+  <button class="btn" id="applyBtn" style="width:100%">Aplicar al tramo seleccionado</button>
+ </details></div>
+  <div id="inspectorRoundabout"><details class="roundabout-options" open><summary>Parámetros de rotonda</summary>
     <label class="field">Ramales <input type="number" id="rbArms" min="2" max="8" step="1" value="4"></label>
     <label class="field">Geometría <select id="rbShape"><option value="circular">Circular</option><option value="ellipse">Ovalada · elipse</option><option value="stadium">Alargada · dos semicírculos</option></select></label>
 <label class="field" id="rbElongationField" style="display:none">Alargamiento total (m) <input id="rbElongation" type="number" min="0" max="180" step="5" value="40"></label>
@@ -196,35 +258,21 @@ footer{height:31px;border-top:1px solid var(--line);background:#171719;display:f
 <p class="muted" id="rbSectionSummary">Anillo de 2 carriles · 7 m</p>
     <div class="row wrap"><button class="btn grow" id="rbApplyBtn" type="button">Aplicar a rotonda</button><button class="btn danger grow" id="rbDeleteBtn" type="button">Eliminar rotonda</button></div>
     <p class="muted">Coloca la rotonda con un clic; después selecciónala para editarla o arrastrar su centro. Arrastra los puntos rojos para orientar cada acceso. Los ramales conectados adoptan los carriles y dimensiones de la carretera. Entradas y salidas curvas, con isletas separadoras. Es un esquema geométrico en planta, no un proyecto de trazado validado.</p>
-   </details>
-   <p class="muted">Puente y túnel: elige la herramienta y pulsa un tramo del eje. «Normal» elimina esa clasificación. Es una representación en planta; no calcula cotas ni rasantes.</p>
-  </div>
+   </details></div>
+  <div id="inspectorDetails"><details class="section" open><summary class="eyebrow">Elemento seleccionado</summary><h2>Información geométrica</h2><div id="selection">Sin selección. Crea un trazado o selecciona una carretera.</div>
+  <div class="row wrap" style="margin-top:10px"><button class="btn danger grow" id="deleteBtn">Eliminar carretera</button><button class="btn grow" id="fitBtn">Encuadrar</button></div>
+ </details></div>
+ </div>
+ <div class="mapbadge" id="mapBadge">0 carreteras · 0 km</div>
+</section>
+<aside class="side right hidden-mobile" id="rightPane" aria-label="Herramientas de dibujo">
+ <details class="section" open><summary class="eyebrow">Constructor</summary>
+
+  <p class="muted">Las herramientas de dibujo y elementos viarios están fijas en la cabecera. Selecciona un elemento para editar sus parámetros en el visor.</p>
   <div class="row wrap" style="margin-top:9px"><button class="btn primary grow" id="finishBtn" disabled>Terminar</button><button class="btn grow" id="cancelBtn">Cancelar</button><button class="btn grow" id="undoBtn">Deshacer</button></div>
  </details>
- <details class="section" open><summary class="eyebrow">Geometría de proyecto</summary><h2>Parámetros del trazado</h2>
-  <label class="field">Nombre <input id="roadName" value="Carretera 1" maxlength="80"></label>
-  <label class="field">Categoría <select id="roadType"><option value="convencional">Convencional</option><option value="autopista">Autovía</option><option value="urbana">Urbana</option><option value="camino">Camino</option></select></label>
-  <label class="field">Radio objetivo (m) <input id="radius" type="number" min="0" max="5000" step="10" value="160"></label>
-  <label class="field">Sección transversal <select id="roadSection">
-   <option value="road11">Carretera 1+1 · 2 carriles</option>
-   <option value="road21">Carretera 2+1 · 3 carriles</option>
-   <option value="road22">Carretera 2+2 · 4 carriles</option>
-   <option value="street2">Calle · doble sentido</option>
-   <option value="street1">Calle · sentido único</option>
-  </select></label>
-  <label class="field">Anchura por carril (m) <input id="laneWidth" type="number" min="2" max="5" step="0.25" value="3.5"></label>
-  <label class="field" id="shoulderField">Arcén exterior por lado (m) <input id="shoulderWidth" type="number" min="0" max="4" step="0.25" value="1.5"></label>
-  <label class="field" id="medianField" style="display:none">Separación central (m) <input id="medianWidth" type="number" min="0" max="8" step="0.25" value="0"></label>
-  <label class="field" id="sidewalkField" style="display:none">Acera por lado (m) <input id="sidewalkWidth" type="number" min="0" max="8" step="0.25" value="1.5"></label>
-  <p class="muted" id="sectionSummary">2 carriles · calzada 7 m · arcenes 1,5 m por lado · plataforma 10 m.</p>
-  <p class="muted">Secciones iniciales: Norma 3.1-IC, tabla 7.1; carretera 2+1, OC 1/2021, tabla 6.1. Calles: valores urbanos orientativos. Dimensiones editables; no es una validación normativa.</p>
-  <label class="field">Velocidad límite (km/h) <input id="speed" type="number" min="10" max="130" step="10" value="90"></label>
-  <p class="muted">Las curvas se generan automáticamente con arcos circulares tangentes. Si no cabe el radio objetivo entre dos vértices, se reduce y se recalcula la velocidad. Radio 0 = poligonal sin suavizado.</p>
-  <button class="btn" id="applyBtn" style="width:100%">Aplicar al tramo seleccionado</button>
- </details>
- <details class="section" open><summary class="eyebrow">Elemento seleccionado</summary><h2>Información geométrica</h2><div id="selection">Sin selección. Crea un trazado o selecciona una carretera.</div>
-  <div class="row wrap" style="margin-top:10px"><button class="btn danger grow" id="deleteBtn">Eliminar carretera</button><button class="btn grow" id="fitBtn">Encuadrar</button></div>
- </details>
+ 
+ 
  <details class="section" open><summary class="eyebrow">Archivos</summary><div class="row wrap"><button class="btn grow" id="saveBtn">Guardar JSON</button><button class="btn grow" id="openBtn">Abrir archivo</button></div><div class="row wrap" style="margin-top:8px"><button class="btn grow" id="kmlBtn">Importar KML</button><button class="btn grow" id="dwgBtn">Importar DWG</button></div><div class="field"><span>Huso UTM del DWG</span><select id="utmZone"><option value="29">29</option><option value="30">30</option><option value="31" selected>31</option><option value="32">32</option></select></div><div class="field"><span>Hemisferio</span><select id="utmHem"><option value="N" selected>Norte</option><option value="S">Sur</option></select></div><p class="muted">DWG: coordenadas UTM en metros, ETRS89/WGS84, sin origen local. Selecciona el huso antes de importar. KML: WGS84.</p><button class="btn danger" id="clearBtn" style="width:100%;margin-top:8px">Vaciar proyecto</button><p class="muted">Guardado automático en este navegador. Importación y exportación locales; no se envían los trazados a servidores.</p></details>
 </aside>
 </div>
@@ -247,7 +295,7 @@ const map=L.map('map',{center:[40.2,-3.7],zoom:6,zoomControl:false,doubleClickZo
 L.control.zoom({position:'bottomright'}).addTo(map);
 let baseLayer=null,roads=[],roundabouts=[],selected=null,selectedRoundabout=null,selectedSegment=null,mode='select',draft=[],cursor=null,history=[],preview=L.layerGroup().addTo(map);
 const roadsGroup=L.layerGroup().addTo(map),roundaboutGroup=L.layerGroup().addTo(map),markersGroup=L.layerGroup().addTo(map),labelsGroup=L.layerGroup().addTo(map),roundaboutDraftGroup=L.layerGroup().addTo(map);
-let pendingRoundabout=null;
+let pendingRoundabout=null,inspectorClosed=false;
 const layerIds=['layerRoad','layerSpeed','layerNodes','layerRadius','layerAxes'];
 const visible=id=>$(id).checked;
 const finite=n=>Number.isFinite(n);
@@ -352,7 +400,7 @@ function checkpoint(){history.push(JSON.stringify({roads,roundabouts}));if(histo
 function persist(){try{localStorage.setItem(K,JSON.stringify({version:1,roads,roundabouts}));}catch(e){status('No se ha podido guardar automáticamente. Usa Guardar JSON.');}}
 function roadById(id){return roads.find(r=>r.id===id);}
 function newId(){return 'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
-function setSelection(id){selectedRoundabout=null;selected=roadById(id)?id:null;const r=roadById(selected);if(r){const sec=sectionOf(r);$('roadName').value=r.name;$('roadType').value=r.type;$('radius').value=r.radius;$('roadSection').value=sec.section;$('laneWidth').value=sec.laneWidth;$('sidewalkWidth').value=sec.street?sec.sidewalkWidth:1.8;$('shoulderWidth').value=sec.shoulderWidth;$('medianWidth').value=sec.medianWidth;$('speed').value=r.speed;updateSectionUI();}render();}
+function setSelection(id){inspectorClosed=false;selectedRoundabout=null;selected=roadById(id)?id:null;const r=roadById(selected);if(r){const sec=sectionOf(r);$('roadName').value=r.name;$('roadType').value=r.type;$('radius').value=r.radius;$('roadSection').value=sec.section;$('laneWidth').value=sec.laneWidth;$('sidewalkWidth').value=sec.street?sec.sidewalkWidth:1.8;$('shoulderWidth').value=sec.shoulderWidth;$('medianWidth').value=sec.medianWidth;$('speed').value=r.speed;updateSectionUI();}render();}
 function apply(){const r=roadById(selected);if(!r){status('Selecciona antes una carretera.');return;}checkpoint();Object.assign(r,params());persist();render();status('Parámetros actualizados.');}
 
 // Rotondas: anillo en planta, ramales y conexiones magnéticas a los extremos de las carreteras.
@@ -477,7 +525,7 @@ function updateLinkedRoads(rbId){
  }
 }
 function chooseRoundabout(id){
- selectedRoundabout=roundaboutAt(id)?id:null;selected=null;selectedSegment=null;
+ inspectorClosed=false;selectedRoundabout=roundaboutAt(id)?id:null;selected=null;selectedSegment=null;
  const rb=roundaboutAt(selectedRoundabout);
  if(rb){const dim=roundaboutDimensions(rb);$('rbArms').value=rb.arms;$('rbDiameter').value=rb.diameter;$('rbArmLength').value=rb.armLength;$('rbOrientation').value=rb.orientation;$('rbLanes').value=dim.lanes;$('rbLaneWidth').value=dim.laneWidth;$('rbEntryRadius').value=dim.entryRadius;$('rbExitRadius').value=dim.exitRadius;
  $('rbShape').value=roundaboutShape(rb);$('rbElongation').value=rb.elongation??40;$('rbAxisAngle').value=rb.axisAngle??0;
@@ -876,6 +924,18 @@ function paintRoadPart(r,part,isSelected,activeSegment,structure,clickHandler){
   }
  }
 }
+function syncInspector(){
+ const road=roadById(selected),rb=roundaboutAt(selectedRoundabout),drawing=mode==='draw';
+ const kind=mode==='roundabout'?'':drawing?'road':rb?'roundabout':road?'road':'';
+ const visiblePanel=!!kind&&!inspectorClosed;
+ $('mapInspector').hidden=!visiblePanel;
+ if(!visiblePanel)return;
+ $('inspectorRoad').hidden=kind!=='road';
+ $('inspectorRoundabout').hidden=kind!=='roundabout';
+ $('inspectorDetails').hidden=drawing||(!rb&&!road);
+ $('inspectorTitle').textContent=drawing?'NUEVO TRAZADO':kind==='roundabout'?'ROTONDA · PARÁMETROS':'CARRETERA · PARÁMETROS';
+ $('deleteBtn').hidden=Boolean(rb);
+}
 function render(){
  roadsGroup.clearLayers();markersGroup.clearLayers();labelsGroup.clearLayers();
  let total=0;
@@ -904,6 +964,7 @@ function render(){
  $('roadsList').innerHTML=roads.map(r=>'<button class="roaditem'+(r.id===selected?' selected':'')+'" data-id="'+r.id+'"><span class="dot"></span><span>'+safe(r.name)+'</span></button>').join('')||'<span class="muted">Aún no hay carreteras dibujadas.</span>';
  $('roadsList').querySelectorAll('button').forEach(b=>b.onclick=()=>{setMode('select');setSelection(b.dataset.id);});
  drawPreview();
+ syncInspector();
 }
 
 /* El primer clic abre los parámetros antes de insertar la rotonda. */
@@ -1009,10 +1070,10 @@ function drawPreview(){
  const g=makeGeometry({...params(),nodes});g.parts.forEach(p=>L.polyline(p.points,{color:'#FF6A1A',weight:4,dashArray:'8 7',interactive:false}).addTo(preview));
  draft.forEach(p=>L.circleMarker(p,{radius:4,color:'#fff',weight:2,fillColor:'#FF6A1A',fillOpacity:1,interactive:false}).addTo(preview));
 }
-function setMode(next){if(next!=='roundabout'&&pendingRoundabout)closeRoundaboutCreator();if(mode==='draw'&&draft.length&&next!=='draw')finish(false);mode=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('map').classList.toggle('mode-draw',mode==='draw');$('finishBtn').disabled=mode!=='draw'||draft.length<2;
+function setMode(next){if(next==='draw')inspectorClosed=false;if(next!=='roundabout'&&pendingRoundabout)closeRoundaboutCreator();if(mode==='draw'&&draft.length&&next!=='draw')finish(false);mode=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('map').classList.toggle('mode-draw',mode==='draw');$('finishBtn').disabled=mode!=='draw'||draft.length<2;
  const hints={select:['Seleccionar / modificar','Pulsa una carretera para seleccionar. Arrastra sus puntos naranjas para ajustar curvas y radios.'],draw:['Nueva carretera','Pulsa sobre el mapa para poner vértices. Mueve el cursor para previsualizar. Pulsa Terminar o Intro.'],insert:['Insertar vértice','Pulsa sobre un tramo de carretera para insertar un punto de control.'],remove:['Eliminar vértice','Selecciona una carretera y pulsa uno de sus puntos naranjas para eliminarlo.'],roundabout:['Insertar rotonda','Pulsa el lugar de inserción. Ajusta dimensiones y orientación en la ventana emergente y confirma.'],bridge:['Marcar puente','Pulsa sobre un tramo para clasificarlo como puente (cian).'],tunnel:['Marcar túnel','Pulsa sobre un tramo para clasificarlo como túnel (violeta discontinuo).'],normal:['Devolver a superficie','Pulsa sobre un tramo para quitar la clasificación de puente o túnel.']};
  $('hintTitle').textContent=hints[mode][0];$('hintText').textContent=hints[mode][1];status('Modo '+hints[mode][0].toLowerCase());render();}
-function finish(save=true){if(save&&draft.length>=2){checkpoint();const r={id:newId(),...params(),nodes:draft.slice()};attachEndpoints(r);roads.push(r);selectedRoundabout=null;selectedSegment=null;selected=r.id;persist();status('Carretera creada con '+draft.length+' puntos.');}draft=[];cursor=null;preview.clearLayers();mode='select';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode==='select'));$('map').classList.remove('mode-draw');$('finishBtn').disabled=true;render();}
+function finish(save=true){if(save&&draft.length>=2){checkpoint();const r={id:newId(),...params(),nodes:draft.slice()};attachEndpoints(r);roads.push(r);inspectorClosed=false;selectedRoundabout=null;selectedSegment=null;selected=r.id;persist();status('Carretera creada con '+draft.length+' puntos.');}draft=[];cursor=null;preview.clearLayers();mode='select';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode==='select'));$('map').classList.remove('mode-draw');$('finishBtn').disabled=true;render();}
 function insertNode(r,latlng){const lat0=r.nodes.reduce((s,n)=>s+n[0],0)/r.nodes.length,p=xy([latlng.lat,latlng.lng],lat0);let best=Infinity,index=0;for(let i=0;i<r.nodes.length-1;i++){const a=xy(r.nodes[i],lat0),b=xy(r.nodes[i+1],lat0),ab=sub(b,a),q=clamp(dot(sub(p,a),ab)/(dot(ab,ab)||1),0,1),d=dist(p,add(a,mul(ab,q)));if(d<best){best=d;index=i+1;}}checkpoint();repairStructuresAfterInsert(r,index);r.nodes.splice(index,0,[latlng.lat,latlng.lng]);selected=r.id;selectedSegment=null;persist();render();status('Punto insertado en '+r.name+'.');}
 function undo(){if(mode==='draw'&&draft.length){draft.pop();$('finishBtn').disabled=draft.length<2;drawPreview();return;}if(!history.length){status('No hay acciones para deshacer.');return;}const snapshot=JSON.parse(history.pop());roads=Array.isArray(snapshot)?snapshot:snapshot.roads;roundabouts=Array.isArray(snapshot)?[]:(snapshot.roundabouts||[]);if(!roadById(selected))selected=null;if(!roundaboutAt(selectedRoundabout))selectedRoundabout=null;selectedSegment=null;persist();render();status('Última acción deshecha.');}
 function download(name,object){const blob=new Blob([JSON.stringify(object,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
@@ -1214,6 +1275,7 @@ $('finishBtn').onclick=()=>finish();$('cancelBtn').onclick=()=>{if(mode==='draw'
 ['rbArms','rbLanes','rbLaneWidth','rbDiameter','rbOrientation','rbShape','rbElongation','rbAxisAngle','rbSlipEnabled','rbSlipFrom','rbSlipTo','rbSlipRadius'].forEach(id=>$(id).addEventListener('input',updateRoundaboutUI));
 $('rbApplyBtn').onclick=applyRoundabout;
 $('rbDeleteBtn').onclick=()=>{const rb=roundaboutAt(selectedRoundabout);if(!rb)return status('Selecciona una rotonda.');if(!confirm('¿Eliminar esta rotonda?'))return;checkpoint();roundabouts=roundabouts.filter(r=>r.id!==rb.id);for(const r of roads){for(const [key,con] of Object.entries(r.connections||{}))if(con.roundaboutId===rb.id)delete r.connections[key];}selectedRoundabout=null;persist();render();status('Rotonda eliminada.');};
+$('inspectorClose').onclick=()=>{inspectorClosed=true;syncInspector();};
 $('applyBtn').onclick=apply;$('deleteBtn').onclick=()=>{const r=roadById(selected);if(!r)return status('Selecciona antes una carretera.');if(confirm('¿Eliminar '+r.name+'?')){checkpoint();roads=roads.filter(x=>x.id!==r.id);selected=null;persist();render();}};
 $('fitBtn').onclick=()=>{const r=roadById(selected),rb=roundaboutAt(selectedRoundabout);if(r)map.fitBounds(L.latLngBounds(r.nodes).pad(.2));else if(rb)map.fitBounds(L.latLngBounds(roundaboutGeometry(rb).arms.map(a=>a.outer)).pad(.4));else fitAll();};
 $('clearBtn').onclick=()=>{if(!roads.length&&!roundabouts.length)return;if(confirm('¿Vaciar todas las carreteras y rotondas del proyecto?')){checkpoint();roads=[];roundabouts=[];selected=null;selectedRoundabout=null;selectedSegment=null;persist();render();}};
