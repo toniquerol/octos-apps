@@ -430,7 +430,7 @@ if(!window.L){$('status').textContent='No se ha podido cargar Leaflet. Comprueba
 const map=L.map('map',{center:[40.2,-3.7],zoom:6,zoomControl:false,doubleClickZoom:false,preferCanvas:true});
 L.control.zoom({position:'bottomright'}).addTo(map);
 let baseLayer=null,roads=[],roundabouts=[],junctions=[],selected=null,selectedRoundabout=null,selectedJunction=null,pendingJunction=null,selectedSegment=null,mode='select',draft=[],cursor=null,history=[],preview=L.layerGroup().addTo(map);
-const roadsGroup=L.layerGroup().addTo(map),junctionGroup=L.layerGroup().addTo(map),roundaboutGroup=L.layerGroup().addTo(map),markersGroup=L.layerGroup().addTo(map),labelsGroup=L.layerGroup().addTo(map),roundaboutDraftGroup=L.layerGroup().addTo(map),editGuide=L.layerGroup().addTo(map);
+const roadsGroup=L.layerGroup().addTo(map),autoCrossGroup=L.layerGroup().addTo(map),junctionGroup=L.layerGroup().addTo(map),roundaboutGroup=L.layerGroup().addTo(map),markersGroup=L.layerGroup().addTo(map),labelsGroup=L.layerGroup().addTo(map),roundaboutDraftGroup=L.layerGroup().addTo(map),editGuide=L.layerGroup().addTo(map);
 let pendingRoundabout=null,inspectorClosed=false;
 const layerIds=['layerRoad','layerSpeed','layerNodes','layerRadius','layerAxes'];
 const visible=id=>$(id).checked;
@@ -763,11 +763,11 @@ function terrainFeatureCollection(){
   if(!pts||pts.length<2||!w)return;
   features.push({type:'Feature',properties:{kind,w,color:fill},geometry:{type:'LineString',coordinates:toGeo(pts)}});
  };
- const addPoly=(pts,fill)=>{
+ const addPoly=(pts,fill,kind='island')=>{
   if(!pts||pts.length<3)return;
   const points=toGeo(pts),first=points[0],last=points[points.length-1];
   if(first[0]!==last[0]||first[1]!==last[1])points.push(first.slice());
-  features.push({type:'Feature',properties:{kind:'island',color:fill},geometry:{type:'Polygon',coordinates:[points]}});
+  features.push({type:'Feature',properties:{kind,color:fill},geometry:{type:'Polygon',coordinates:[points]}});
  };
  const paint=(pts,width,color,shoulder=0,sidewalk=0)=>{
   if(!visible('layerRoad'))return;
@@ -799,6 +799,14 @@ function terrainFeatureCollection(){
   }
  }
  for(const j of junctions){const g=jxGeometry(j);if(g)paint(g.points,j.width,'#C2CDD0');}
+ if(visible('layerRoad'))for(const event of autoCrossEvents()){
+  const g=autoCrossShapes(event);
+  if(g.stub)paint(g.stub.coords,g.stub.width,g.stub.fill);
+  for(const corner of g.corners){
+   addPoly(corner.polygon,g.fill,'auto-crossing');
+   addLine(corner.arc,.3,'#292929','auto-cross-outline');
+  }
+ }
  for(const rb of roundabouts){
   const shape=roundaboutGeometry(rb),dim=shape.dimensions,roundaboutColor=visible('layerSpeed')?color(90):'#C2CDD0';
   paint(shape.ring,dim.width,roundaboutColor);
@@ -844,6 +852,11 @@ function terrainAddGeometry(gl){
    paint:{'line-color':['get','color'],'line-width':lw,
     ...(name==='dash'?{'line-dasharray':[3,5]}:{})}});
  }
+ gl.addLayer({id:'octos-3d-auto-crossing',type:'fill',source:TERRAIN_ROADS,filter:kind('auto-crossing'),
+  paint:{'fill-color':['get','color'],'fill-opacity':1}});
+ gl.addLayer({id:'octos-3d-auto-cross-outline',type:'line',source:TERRAIN_ROADS,filter:kind('auto-cross-outline'),
+  layout:{'line-join':'round','line-cap':'round'},
+  paint:{'line-color':['get','color'],'line-width':lw}});
  gl.addLayer({id:'octos-3d-island',type:'fill',source:TERRAIN_ROADS,filter:kind('island'),
   paint:{'fill-color':['get','color'],'fill-opacity':.96}});
 }
@@ -1585,12 +1598,12 @@ function render(){
    const icon=L.divIcon({className:'handle-icon',html:'<div class="handle"></div>',iconSize:[14,14],iconAnchor:[7,7]});
    const mark=L.marker(p,{icon,draggable:mode==='select',zIndexOffset:1500}).addTo(markersGroup);
    mark.on('dragstart',()=>{checkpoint();showEditGuide(r,i,mark.getLatLng());});
-   mark.on('drag',()=>showEditGuide(r,i,mark.getLatLng()));
+   mark.on('drag',()=>{const pos=mark.getLatLng();showEditGuide(r,i,pos);previewAutoCrossings(r,i,pos);});
    mark.on('dragend',()=>{editGuide.clearLayers();const latlng=mark.getLatLng(),snap=(i===0||i===r.nodes.length-1)?findArmSnap([latlng.lat,latlng.lng]):null;r.nodes[i]=snap?snap.point.slice():[latlng.lat,latlng.lng];if(i===0||i===r.nodes.length-1){r.connections=r.connections||{};const key=i===0?'start':'end';if(snap)r.connections[key]={roundaboutId:snap.roundaboutId,armIndex:snap.armIndex};else delete r.connections[key];}persist();render();status(snap?'Extremo conectado a rotonda.':'Vértice '+(i+1)+' desplazado.');});
    mark.on('click',e=>{L.DomEvent.stopPropagation(e);if(mode==='remove'&&r.nodes.length>2){checkpoint();repairStructuresAfterRemove(r,i,r.nodes.length);const anchors=jxCapture(r);r.nodes.splice(i,1);jxReanchor(r,anchors);persist();setMode('select');status('Vértice eliminado · modo selección.');}else if(mode==='remove')status('Una carretera necesita al menos 2 puntos.');});
   });
  });
- renderRoundabouts();jxDraw();
+ drawAutoCrossings();renderRoundabouts();jxDraw();
  $('roadCount').textContent=roads.length+' tramos · '+roundabouts.length+' rotondas · '+junctions.length+' enlaces';
  $('mapBadge').textContent=roads.length+' carretera'+(roads.length===1?'':'s')+' · '+roundabouts.length+' rotonda'+(roundabouts.length===1?'':'s')+' · '+format(total/1000)+' km · '+junctions.length+' enlaces';
  const r=roadById(selected);
