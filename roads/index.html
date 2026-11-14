@@ -504,9 +504,10 @@ function drawRoundaboutRoadways(){
   const shape=roundaboutGeometry(rb),d=shape.dimensions,onClick=e=>roundaboutClick(e,rb),ringPx=widthInPixels(d.width);
   // Agrupar accesos y pintar TODOS los contornos antes de rellenar los carriles:
   // evita los bordes negros superpuestos en los enlaces y el anillo.
-  const links=[];
+  const links=[],transitions=[];
   for(const arm of shape.arms){
    const t=armTransition(rb,arm),p=t.profile;
+   transitions.push(t);
    for(const [pts,count] of [[t.entry,p.entry],[t.exit,p.exit]]){
     if(!pts||!count)continue;
     links.push({coords:pts.map(q=>ll(q,t.lat)),count,sidewalk:p.sidewalk,shoulder:p.shoulder,
@@ -549,8 +550,7 @@ function drawRoundaboutRoadways(){
    }
   }
   // Las isletas se sitúan solo en huecos medidos entre bordes de las calzadas.
-  if(visible('layerRoad'))for(const arm of shape.arms){
-   const t=armTransition(rb,arm);
+  if(visible('layerRoad'))for(const t of transitions){
    if(!t.splitter)continue;
    const island=L.polygon(t.splitter.map(q=>ll(q,t.lat)),
     {color:'#F1F1EF',weight:1.4,fillColor:'#666D6C',fillOpacity:1,interactive:true}).addTo(roundaboutGroup);
