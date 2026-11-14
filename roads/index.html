@@ -689,8 +689,8 @@ function terrainFeatureCollection(){
  }
  for(const j of junctions){const g=jxGeometry(j);if(g)paint(g.points,j.width,'#C2CDD0');}
  for(const rb of roundabouts){
-  const shape=roundaboutGeometry(rb),dim=shape.dimensions;
-  paint(shape.ring,dim.width,'#C2CDD0');
+  const shape=roundaboutGeometry(rb),dim=shape.dimensions,roundaboutColor=visible('layerSpeed')?color(90):'#C2CDD0';
+  paint(shape.ring,dim.width,roundaboutColor);
   if(visible('layerRoad')){
    addPoly(shape.island,'#505050');
    if(visible('layerAxes'))for(let k=1;k<dim.lanes;k++){
@@ -705,7 +705,7 @@ function terrainFeatureCollection(){
    for(const [pts,count] of [[transition.entry,profile.entry],[transition.exit,profile.exit]]){
     if(!pts||!count)continue;
     const line=pts.map(q=>ll(q,transition.lat));
-    paint(line,count*profile.laneWidth,'#C2CDD0',profile.shoulder,profile.sidewalk);
+    paint(line,count*profile.laneWidth,roundaboutColor,profile.shoulder,profile.sidewalk);
     if(visible('layerRoad')&&visible('layerAxes'))for(let k=1;k<count;k++)
      addLine(offsetCenterline(line,(k-count/2)*profile.laneWidth),.17,'#F1F1EF','dash');
    }
@@ -713,7 +713,7 @@ function terrainFeatureCollection(){
   }
   const bypass=roundaboutSlipGeometry(rb);
   if(bypass){
-   paint(bypass.path.map(q=>ll(q,bypass.lat)),bypass.laneWidth,'#C2CDD0');
+   paint(bypass.path.map(q=>ll(q,bypass.lat)),bypass.laneWidth,roundaboutColor);
    if(visible('layerRoad')&&bypass.island)addPoly(bypass.island.map(q=>ll(q,bypass.lat)),'#666D6C');
   }
  }
@@ -1152,7 +1152,7 @@ function drawRoundaboutRoadways(){
   return line;
  };
  for(const rb of roundabouts){
-  const shape=roundaboutGeometry(rb),d=shape.dimensions,onClick=e=>roundaboutClick(e,rb),ringPx=widthInPixels(d.width);
+  const shape=roundaboutGeometry(rb),d=shape.dimensions,onClick=e=>roundaboutClick(e,rb),ringPx=widthInPixels(d.width),roundaboutColor=visible('layerSpeed')?color(90):'#C2CDD0';
   // Agrupar accesos y pintar TODOS los contornos antes de rellenar los carriles:
   // evita los bordes negros superpuestos en los enlaces y el anillo.
   const links=[],transitions=[];
@@ -1182,15 +1182,15 @@ function drawRoundaboutRoadways(){
     draw(coords,'#292929',w+5,onClick);
    }
   }
-  for(const link of links)draw(link.coords,'#C2CDD0',visible('layerRoad')?link.roadPx+1:5,onClick);
+  for(const link of links)draw(link.coords,roundaboutColor,visible('layerRoad')?link.roadPx+1:5,onClick);
   // Un único relleno continuo del anillo cubre las juntas de las curvas de enlace.
-  draw(shape.ring,'#C2CDD0',visible('layerRoad')?ringPx+1:5,onClick);
+  draw(shape.ring,roundaboutColor,visible('layerRoad')?ringPx+1:5,onClick);
   // Bypass independiente, en el cuadrante exterior entre entrada y salida.
   const bypass=roundaboutSlipGeometry(rb);
   if(bypass){
    const coords=bypass.path.map(q=>ll(q,bypass.lat)),w=widthInPixels(bypass.laneWidth);
    if(visible('layerRoad'))draw(coords,'#292929',w+5,onClick);
-   draw(coords,'#C2CDD0',visible('layerRoad')?w+1:5,onClick);
+   draw(coords,roundaboutColor,visible('layerRoad')?w+1:5,onClick);
   }
   if(visible('layerRoad')&&visible('layerAxes')){
    if(ringPx>3*d.lanes){
