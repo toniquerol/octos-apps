@@ -410,6 +410,7 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 @media(max-width:760px){#mapWrap>.bridge-longitudinal-panel{left:8px;right:8px;width:auto;min-width:0;bottom:81px;max-height:27%;padding:8px}.bridge-longitudinal-parameters{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#mapWrap>.section-visual-panel{bottom:calc(27% + 87px);max-height:38%}}
 
 /* OcToS Roads · Pantalla de inicio y biblioteca local de proyectos. */
+@media(max-width:760px){.head-actions #homeReturnBtn{display:inline-flex;font-size:10px;padding:5px 8px;min-height:30px}}
 #homeScreen{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;padding:28px 18px;background:#11171d;color:#F1F1EF;isolation:isolate;overflow:auto}
 #homeScreen[hidden]{display:none!important}
 #homeMap{position:absolute;inset:0;z-index:-2;opacity:.78;filter:saturate(.72) brightness(.67);pointer-events:none}
@@ -1453,7 +1454,9 @@ function homePreview(record){
  const lat0=points.reduce((s,p)=>s+p[0],0)/points.length,cos=Math.max(.1,Math.cos(lat0*RAD));
  const pt=p=>[p[1]*cos,p[0]];
  const xs=points.map(p=>pt(p)[0]),ys=points.map(p=>pt(p)[1]);
- const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+ let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+ for(const x of xs){if(x<minX)minX=x;if(x>maxX)maxX=x;}
+ for(const y of ys){if(y<minY)minY=y;if(y>maxY)maxY=y;}
  const spanX=Math.max(maxX-minX,(maxY-minY)*.18,1e-5),spanY=Math.max(maxY-minY,(maxX-minX)*.18,1e-5);
  const scale=Math.min(232/spanX,120/spanY),offX=(260-spanX*scale)/2,offY=(146-spanY*scale)/2;
  const coords=p=>{const [x,y]=pt(p);return [(offX+(x-minX)*scale).toFixed(2),(146-offY-(y-minY)*scale).toFixed(2)];};
@@ -1532,8 +1535,9 @@ async function homeNewProject(name){
  if(terrainMode)terrainStop();
  const now=Date.now(),id='p'+now.toString(36)+Math.random().toString(36).slice(2,7);
  const title=String(name||'Proyecto '+(homeRecords.length+1)).trim().slice(0,80)||'Proyecto';
+ if(pendingRoundabout)closeRoundaboutCreator();
  roads=[];roundabouts=[];junctions=[];selected=null;selectedRoundabout=null;
- selectedJunction=null;selectedSegment=null;pendingJunction=null;draft=[];cursor=[];history=[];
+ selectedJunction=null;selectedSegment=null;pendingJunction=null;draft=[];cursor=null;history=[];
  homeActiveId=id;
  homeRecords.push({id,name:title,createdAt:now,updatedAt:now,roads:[],roundabouts:[],junctions:[]});
  try{localStorage.setItem(K,JSON.stringify({version:1,roads:[],roundabouts:[],junctions:[]}));}catch{}
