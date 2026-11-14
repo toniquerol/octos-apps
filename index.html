@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="es" class="pin-locked">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0E0E10">
+<meta name="description" content="OcToS Apps · catálogo central de aplicaciones y herramientas OcToS.">
+<title>OcToS Apps</title>
+<link rel="icon" href="./team/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#0e0e10;--panel:#1a1b1e;--panel2:#232428;--line:#383a40;--ink:#f1f1ef;--muted:#a0a2a9;--accent:#ff6a1a}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}
+body{font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;font-size:14px}
+h1,h2,h3,.brand-name{font-family:Manrope,system-ui,sans-serif}
+button,input{font:inherit}
+button,a,input{outline-offset:4px}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent)}
+button{cursor:pointer}
+a{text-decoration:none;color:inherit}
+.pin-locked #app{display:none!important}
+#access[hidden]{display:none!important}
+#access{position:fixed;inset:0;z-index:20;background:#0e0e10;display:grid;place-items:center;padding:20px}
+.access-card{width:min(100%,390px);background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:35px}
+.eyebrow{font-family:Manrope,sans-serif;color:var(--accent);letter-spacing:.18em;text-transform:uppercase;font-size:11px;font-weight:800}
+.access-card h1{font-size:31px;letter-spacing:-.055em;line-height:1.15;margin:12px 0}
+.access-card p{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 24px}
+.access-card label{font-size:12px;display:block;margin-bottom:8px}
+.access-card input{width:100%;padding:13px 14px;background:#111113;border:1px solid #55565b;border-radius:8px;color:var(--ink);font-size:19px;letter-spacing:.2em}
+.access-card input:focus{border-color:var(--accent)}
+.primary-button{background:var(--accent);color:#0e0e10;border:1px solid var(--accent);border-radius:8px;padding:13px 16px;font-weight:800;width:100%;margin-top:14px}
+.primary-button:disabled{opacity:.6}
+#access-error{font-size:12px;color:#ff9b75;min-height:20px;margin:12px 0 0}
+.site-header{min-height:76px;border-bottom:1px solid var(--line);background:#141416;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px clamp(16px,4vw,62px)}
+.brand{display:flex;gap:14px;align-items:center;min-width:0}
+.brand-mark{border:1px solid #57585e;background:var(--panel2);border-radius:11px;width:43px;height:43px;display:grid;place-items:center;color:var(--accent);font-family:Manrope,sans-serif;font-size:20px;font-weight:800;flex:none}
+.brand-name{font-size:20px;font-weight:800;letter-spacing:-.045em;white-space:nowrap}
+.brand-name strong{color:var(--accent)}
+.brand-sub{font-size:10px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase}
+.header-actions{display:flex;gap:13px;align-items:center;justify-content:flex-end}
+.header-actions .status{color:var(--muted);font-size:11px;white-space:nowrap}
+.outline{padding:9px 14px;background:transparent;color:var(--ink);border:1px solid #53555a;border-radius:8px;font-size:12px}
+.outline:hover{border-color:var(--accent)}
+main{max-width:1600px;padding:38px 24px 65px;margin:0 auto}
+.intro{max-width:945px;margin:0 auto 27px;display:flex;align-items:end;justify-content:space-between;gap:24px}
+.intro h1{font-size:clamp(27px,3vw,43px);letter-spacing:-.055em;line-height:1.15;margin:8px 0 11px}
+.intro p{font-size:13px;color:var(--muted);line-height:1.6;margin:0}
+.count{font-size:12px;white-space:nowrap;color:var(--muted);padding-bottom:3px}
+.toolbar{max-width:945px;display:flex;justify-content:space-between;align-items:center;gap:20px;margin:0 auto 22px;border-bottom:1px solid var(--line);padding:0 0 18px}
+.toolbar h2{font-size:14px;letter-spacing:.015em;margin:0}
+.search{width:min(100%,275px);background:#161719;border:1px solid var(--line);border-radius:8px;padding:11px 13px;color:var(--ink);font-size:12px}
+.search::placeholder{color:#85878d}
+.catalog{display:grid;grid-template-columns:repeat(3,7cm);justify-content:center;gap:2cm;max-width:100%;margin:0 auto}
+.card{width:7cm;height:7cm;border:1px solid var(--line);border-radius:15px;background:var(--panel);padding:16px;display:flex;flex-direction:column;text-align:center;align-items:center;justify-content:space-between;min-width:0;transition:border-color .15s,background .15s,transform .15s}
+a.card:hover{border-color:#b46237;background:#222327;transform:translateY(-2px)}
+.card-top{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;min-height:21px}
+.card-order{font-size:11px;letter-spacing:.12em;color:var(--accent);font-family:Manrope,sans-serif;font-weight:800}
+.card-type{font-size:10px;color:#a4a5ac;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.card-icon{height:115px;width:135px;display:flex;justify-content:center;align-items:center;margin:5px auto 0}
+.card-icon img{display:block;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+.card-monogram{font-family:Manrope,sans-serif;font-weight:800;font-size:57px;letter-spacing:-.09em;color:var(--accent)}
+.card-name{font-size:17px;line-height:1.2;letter-spacing:-.035em;font-weight:750;margin:0}
+.card-detail{font-size:11px;color:#a7a8ae;line-height:1.3;margin:4px 0 0;min-height:15px}
+.card-link{font-family:Manrope,sans-serif;font-size:11px;font-weight:750;border:1px solid #68686e;border-radius:7px;min-height:32px;min-width:106px;display:inline-grid;place-items:center;padding:7px 15px;margin-top:7px}
+a.card:hover .card-link{background:var(--accent);color:#0e0e10;border-color:var(--accent)}
+.card.placeholder{border-style:dashed;opacity:.62;justify-content:center;gap:15px}
+.card.placeholder .card-monogram{font-size:36px;color:#777980}
+.card.placeholder .card-name{font-size:15px}
+.empty-message{max-width:945px;margin:auto;color:var(--muted);font-size:13px;padding:36px 0}
+footer{padding:24px clamp(16px,4vw,62px);border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;color:#92949b;font-size:11px;line-height:1.5}
+footer a{text-decoration:underline;text-underline-offset:3px}
+@media(max-width:1070px){.catalog{grid-template-columns:repeat(2,minmax(0,7cm));gap:22px}.intro,.toolbar{max-width:552px}}
+@media(max-width:620px){.site-header{min-height:68px;padding:11px 16px}.brand-name{font-size:18px}.brand-sub,.header-actions .status{display:none}main{padding:28px 15px 45px}.catalog{grid-template-columns:1fr;gap:15px;max-width:330px}.card{width:100%;height:7cm}.intro,.toolbar{max-width:330px}.intro{display:block}.count{margin-top:16px}.toolbar{align-items:start;flex-direction:column;gap:12px}.search{width:100%}footer{display:block}}
+@media(prefers-reduced-motion:reduce){.card{transition:none}a.card:hover{transform:none}}
+</style>
+</head>
+<body>
+<section id="access" role="dialog" aria-modal="true" aria-labelledby="access-title">
+ <div class="access-card">
+  <div class="eyebrow">OcToS · Acceso restringido</div>
+  <h1 id="access-title">OcToS Apps</h1>
+  <p>Introduce el PIN de seis dígitos para acceder al catálogo de aplicaciones.</p>
+  <form id="access-form">
+   <label for="access-pin">PIN de acceso</label>
+   <input id="access-pin" type="password" inputmode="numeric" autocomplete="off" pattern="[0-9]{6}" maxlength="6" minlength="6" required autofocus>
+   <button class="primary-button" type="submit" id="access-submit">Acceder</button>
+   <div id="access-error" role="status" aria-live="polite"></div>
+  </form>
+ </div>
+</section>
+<div id="app">
+ <header class="site-header">
+  <div class="brand"><div class="brand-mark" aria-hidden="true">T</div><div><div class="brand-name"><strong>OcToS</strong> Apps</div><div class="brand-sub">Centro de aplicaciones</div></div></div>
+  <div class="header-actions"><span id="sync-status" class="status">Catálogo local</span><button id="lock-button" class="outline" type="button">Bloquear</button></div>
+ </header>
+ <main>
+  <section class="intro"><div><div class="eyebrow">Biblioteca de herramientas</div><h1>Aplicaciones</h1><p>Acceso central a los proyectos OcToS y al sitio WordPress original.</p></div><div id="app-count" class="count">9 aplicaciones + WordPress</div></section>
+  <div class="toolbar"><h2>Catálogo de aplicaciones</h2><input id="filter" class="search" type="search" placeholder="Buscar aplicaciones..." aria-label="Buscar aplicaciones"></div>
+  <section id="catalog" class="catalog" aria-label="Catálogo de aplicaciones"></section>
+  <p id="empty" class="empty-message" hidden>No se han encontrado aplicaciones.</p>
+ </main>
+ <footer><span>© OcToS 3D Studio · Catálogo alojado en GitHub Pages</span><span>PIN local de interfaz. El contenido público requiere un servicio de autenticación para quedar realmente protegido.</span></footer>
+</div>
+<script>
+(function(){
+"use strict";
+const pinSalt="792dc348777ee0684dc1eb5dcc6c706a";
+const pinHash="076ee91cf0a5f5d1f317b67acae6b6a4a7545863baf8dfe0d7763a3f2b573234";
+const pbkdfRounds=250000, inactivityMs=15*60*1000, sessionKey="octos-apps-until";
+const root=document.documentElement,gate=document.getElementById("access"),form=document.getElementById("access-form");
+const pin=document.getElementById("access-pin"),error=document.getElementById("access-error"),submit=document.getElementById("access-submit");
+let lastAction=Date.now(),lastSessionWrite=0,failures=0,cooldownUntil=0;
+function bytes(hex){return Uint8Array.from(hex.match(/.{2}/g).map(x=>parseInt(x,16)))}
+async function verify(value){
+ const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(value),{name:"PBKDF2"},false,["deriveBits"]);
+ const got=new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:bytes(pinSalt),iterations:pbkdfRounds,hash:"SHA-256"},key,256));
+ const expected=bytes(pinHash);let difference=0;
+ for(let i=0;i<expected.length;i++)difference|=got[i]^expected[i];
+ return difference===0;
+}
+function persist(){try{sessionStorage.setItem(sessionKey,String(Date.now()+inactivityMs))}catch(e){}}
+function clear(){try{sessionStorage.removeItem(sessionKey)}catch(e){}}
+function enter(){root.classList.remove("pin-locked");gate.hidden=true;pin.value="";error.textContent="";lastAction=Date.now();lastSessionWrite=lastAction;persist()}
+function lock(){root.classList.add("pin-locked");gate.hidden=false;pin.value="";error.textContent="";clear();pin.focus()}
+form.addEventListener("submit",async function(e){
+ e.preventDefault();
+ if(Date.now()<cooldownUntil){error.textContent="Espera 30 segundos antes de repetir el intento.";return}
+ if(!/^[0-9]{6}$/.test(pin.value)){error.textContent="Introduce seis dígitos.";return}
+ submit.disabled=true;error.textContent="";
+ try{
+  if(await verify(pin.value)){failures=0;enter();return}
+  failures++;pin.value="";pin.focus();
+  if(failures>=5){cooldownUntil=Date.now()+30000;failures=0;error.textContent="Demasiados intentos. Espera 30 segundos."}
+  else error.textContent="PIN incorrecto.";
+ }catch(err){error.textContent="El navegador no permite comprobar el PIN."}
+ finally{submit.disabled=false}
+});
+document.getElementById("lock-button").addEventListener("click",lock);
+for(const eventName of ["keydown","pointerdown","touchstart"]){
+ document.addEventListener(eventName,function(){
+  if(root.classList.contains("pin-locked"))return;
+  lastAction=Date.now();
+  if(lastAction-lastSessionWrite>30000){persist();lastSessionWrite=lastAction}
+ },{passive:true});
+}
+setInterval(function(){if(!root.classList.contains("pin-locked")&&Date.now()-lastAction>inactivityMs)lock()},30000);
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&!root.classList.contains("pin-locked")&&Date.now()-lastAction>inactivityMs)lock()});
+try{if(Number(sessionStorage.getItem(sessionKey)||0)>Date.now())enter();else clear()}catch(e){}
+if(root.classList.contains("pin-locked"))pin.focus();
+
+const repo="toniquerol/octos-apps";
+const metadata=[
+ {slug:"drive",name:"Drive",type:"Movilidad",detail:"Conducción y navegación",icon:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-drive-symbol.png"},
+ {slug:"carto",name:"Carto",type:"Cartografía",detail:"Visores y mapas",icon:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-carto-symbol.png"},
+ {slug:"meteo",name:"Meteo",type:"Meteorología",detail:"Observación del tiempo",icon:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-meteo-logo-2026.png"},
+ {slug:"rain",name:"Rain",type:"Hidrología",detail:"Lluvia y terreno 3D",icon:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-rain-logo-transparente.png"},
+ {slug:"layers",name:"Layers",type:"Cartografía",detail:"Catálogo de capas WMS",icon:"./layers/icon.svg"},
+ {slug:"templates",name:"Templates",type:"Sistema visual",detail:"Plantillas y diseño",icon:"./templates/icon.svg"},
+ {slug:"aero",name:"Aero",type:"Simulación 3D",detail:"Visualizador aerodinámico",icon:"./aero/icon.svg"},
+ {slug:"roads",name:"Roads",type:"Infraestructuras",detail:"Diseño de carreteras",icon:"./roads/icon.svg"},
+ {slug:"team",name:"Team",type:"Organización",detail:"Sala de coordinación",icon:"./team/icon.svg"}
+];
+const ignored=new Set(["rain-v8","shared","tests","node_modules",".github"]);
+const catalog=document.getElementById("catalog"),filter=document.getElementById("filter"),status=document.getElementById("sync-status");
+let items=metadata.slice();
+const titleCase=s=>s.split("-").map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(" ");
+const wordpress={slug:"wordpress",name:"WordPress",type:"Sitio original",detail:"Página web OcToS 3D Studio",icon:null,href:"https://octos3dstudio.wordpress.com/"};
+function element(tag,cls,value){const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e}
+function makeCard(item,idx){
+ const a=document.createElement("a");a.className="card";a.href=item.href||("./"+encodeURIComponent(item.slug)+"/");a.target="_blank";a.rel="noopener noreferrer";
+ a.setAttribute("aria-label","Abrir "+item.name);
+ const top=element("div","card-top");
+ top.append(element("span","card-order",String(idx+1).padStart(2,"0")),element("span","card-type",item.type||"Aplicación"));
+ const icon=element("div","card-icon");
+ if(item.icon){
+  const img=document.createElement("img");img.src=item.icon;img.alt="";img.loading="lazy";
+  img.addEventListener("error",function(){img.remove();icon.append(element("span","card-monogram",item.name.charAt(0).toUpperCase()))},{once:true});
+  icon.append(img);
+ }else icon.append(element("span","card-monogram",item.name.charAt(0).toUpperCase()));
+ const copy=element("div","");
+ copy.append(element("h3","card-name",item.name),element("p","card-detail",item.detail||"Aplicación OcToS"));
+ a.append(top,icon,copy,element("span","card-link","Abrir"));
+ return a;
+}
+function placeholder(){
+ const el=element("div","card placeholder");el.setAttribute("aria-label","Próxima aplicación");
+ el.append(element("span","card-monogram","+"),element("h3","card-name","Próximamente"),element("p","card-detail","Nuevo proyecto OcToS"));return el;
+}
+function render(){
+ const query=filter.value.trim().toLocaleLowerCase("es");
+ const visible=[...items,wordpress].filter(x=>(x.name+" "+x.type+" "+x.detail).toLocaleLowerCase("es").includes(query));
+ const frag=document.createDocumentFragment();
+ visible.forEach((item,i)=>frag.append(makeCard(item,i)));
+ if(!query){const blanks=(3-(visible.length%3))%3;for(let i=0;i<blanks;i++)frag.append(placeholder())}
+ catalog.replaceChildren(frag);
+ document.getElementById("app-count").textContent=items.length+" aplicaciones + WordPress";
+ document.getElementById("empty").hidden=visible.length!==0;
+}
+filter.addEventListener("input",render);
+render();
+(async function sync(){
+ try{
+  const response=await fetch("https://api.github.com/repos/"+repo+"/git/trees/main?recursive=1",{cache:"no-store",headers:{Accept:"application/vnd.github+json"}});
+  if(!response.ok)throw new Error("HTTP "+response.status);
+  const data=await response.json();
+  if(!data||!Array.isArray(data.tree)||data.truncated)throw new Error("Listado no disponible");
+  const names=new Set();const icons=new Set();
+  for(const file of data.tree){
+   if(file.type!=="blob")continue;
+   let match=/^([a-z0-9][a-z0-9-]*)\/index\.html$/.exec(file.path);
+   if(match&&!ignored.has(match[1]))names.add(match[1]);
+   match=/^([a-z0-9][a-z0-9-]*)\/icon\.(svg|png|webp)$/.exec(file.path);
+   if(match)icons.add(match[1]+"/icon."+match[2]);
+  }
+  if(!names.size)throw new Error("Sin aplicaciones");
+  items=metadata.filter(x=>names.has(x.slug));
+  const already=new Set(metadata.map(x=>x.slug));
+  [...names].filter(x=>!already.has(x)).sort().forEach(slug=>{
+   const icon=["svg","png","webp"].map(ext=>slug+"/icon."+ext).find(path=>icons.has(path));
+   items.push({slug,name:titleCase(slug),type:"Nueva aplicación",detail:"Proyecto OcToS",icon:icon?"./"+icon:null});
+  });
+  status.textContent="Sincronizado con GitHub";status.title="Se comprueba el catálogo al abrir la página";
+  render();
+ }catch(err){status.textContent="Catálogo local";status.title="Se usan los enlaces registrados hasta recuperar la sincronización"}
+})();
+})();
+</script>
+</body>
+</html>
