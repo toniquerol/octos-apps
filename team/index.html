@@ -48,6 +48,49 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 .team-access-card button{display:block;width:100%;margin-top:14px;border:1px solid #ff6a1a;border-radius:9px;background:#ff6a1a;color:#0e0e10;font-size:13px;font-weight:700;padding:14px;cursor:pointer}
 .team-access-card button:disabled{opacity:.6;cursor:wait}
 #team-access-error{min-height:21px;color:#ff9675;font-size:12px;margin-top:13px}
+
+/* Navegación y gestión local de permisos */
+.nav-shortcuts{display:flex;gap:8px;align-items:center;margin-right:auto}
+.nav-shortcuts button{border:1px solid var(--line);background:#232428;color:var(--ink);border-radius:8px;min-width:42px;height:38px;display:inline-grid;place-items:center;padding:0 9px;font-size:18px}
+.nav-shortcuts button:disabled{opacity:.35;cursor:default}
+.room-bottom-bar{margin-top:30px;background:#17181b;border:1px solid var(--line);border-radius:13px;padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.room-bottom-bar .bar-label{font-size:11px;letter-spacing:.12em;color:var(--muted);margin-right:auto;text-transform:uppercase}
+.room-bottom-bar button{background:#232428;border:1px solid #64666c;border-radius:8px;color:var(--ink);padding:11px 19px;font-size:12px}
+.room-bottom-bar button:hover{border-color:var(--accent)}
+.perms-head{display:flex;justify-content:space-between;gap:20px;align-items:center;padding:20px 0 24px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.perms-head h1{font-size:29px;letter-spacing:-.04em;margin:8px 0}
+.perms-head p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.perms-banner{border-left:3px solid var(--accent);background:#232428;padding:14px 17px;font-size:12px;line-height:1.7;color:#d0d1d2;margin-bottom:22px}
+.perms-master{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid #564b41;border-radius:11px;background:#211e1b;padding:18px 20px;margin-bottom:20px}
+.perms-master strong{font-size:14px}
+.perms-master span{color:var(--muted);font-size:12px}
+.perms-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.85fr);gap:20px;align-items:start}
+.perms-panel{border:1px solid var(--line);background:var(--panel);border-radius:13px;padding:22px;min-width:0}
+.perms-panel h2{font-size:17px;margin:0 0 16px}
+.perms-panel h3{font-size:13px;margin:23px 0 12px}
+.perms-panel label{display:block;font-size:12px;color:var(--ink);margin:14px 0 7px}
+.perms-panel input[type=text],.perms-panel input[type=password]{display:block;background:#111214;color:var(--ink);width:100%;padding:12px 13px;border-radius:7px;border:1px solid #4a4b51;font-size:13px}
+.perms-panel input:focus{outline:1px solid var(--accent);border-color:var(--accent)}
+.perms-hint{font-size:11px;color:var(--muted);line-height:1.55;margin:9px 0}
+.perms-apps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.perms-apps label{margin:0;display:flex;align-items:center;gap:9px;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:11px;cursor:pointer}
+.perms-apps input{accent-color:var(--accent)}
+.perms-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:23px}
+.perms-actions button,.pin-actions button{border:1px solid #606168;border-radius:7px;color:var(--ink);padding:10px 14px;background:#292a2e;font-size:12px}
+.perms-actions button.primary{background:var(--accent);border-color:var(--accent);color:#0e0e10;font-weight:700}
+.perms-actions button:disabled{opacity:.5;cursor:wait}
+#perms-message{min-height:19px;margin:12px 0 0;color:#ffae80;font-size:12px;line-height:1.5}
+.pin-list{display:flex;flex-direction:column;gap:10px}
+.pin-entry{border:1px solid var(--line);background:#191a1d;border-radius:10px;padding:16px}
+.pin-entry-top{display:flex;gap:14px;align-items:start;justify-content:space-between}
+.pin-entry strong{font-size:13px}
+.pin-entry small{display:block;margin-top:6px;color:var(--muted);font-size:11px;line-height:1.4}
+.pin-entry .pin-state{color:#e6e6e6;font-size:10px;white-space:nowrap}
+.pin-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.pin-actions button{padding:8px 10px;font-size:11px}
+.perms-empty{color:var(--muted);font-size:12px;line-height:1.55}
+@media(max-width:780px){.perms-layout{grid-template-columns:1fr}.perms-head{align-items:start;flex-direction:column}.perms-master{align-items:start;flex-direction:column}}
+@media(max-width:610px){.nav-shortcuts{margin-right:0;gap:5px}.nav-shortcuts button{min-width:33px;height:34px}.perms-panel{padding:17px}header{gap:7px}.perms-apps{grid-template-columns:1fr}nav{gap:4px}nav button{padding:7px}}
 </style></head>
 <body>
 <section id="team-access" role="dialog" aria-modal="true" aria-labelledby="team-access-title">
@@ -63,9 +106,9 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
   </form>
  </div>
 </section>
-<header><div class="brand"><div class="mark" aria-hidden="true"><svg viewBox="0 0 36 36" fill="none"><rect x="2" y="2" width="22" height="31" rx="3" stroke="#777"/><path d="M13 13v17M5 22h17" stroke="#858585"/><path d="M13 7h13" stroke="#ff6a1a" stroke-dasharray="2 2"/><circle cx="30" cy="13" r="3" fill="#ff6a1a"/><circle cx="30" cy="25" r="3" fill="#ff6a1a"/></svg></div><div><div class="word">OcToS <span style="color:var(--accent)">TEAM</span></div><div class="brand-sub">Coordinación interna</div></div></div><nav><button data-page="home" class="active">Inicio</button><button data-page="room">Sala</button><span class="version">V2.1</span></nav></header>
+<header><div class="nav-shortcuts"><button id="nav-home" type="button" title="Ir a la sala" aria-label="Ir a la sala">⌂</button><button id="nav-back" type="button" title="Volver a la página anterior" aria-label="Volver atrás">←</button></div><div class="brand"><div class="mark" aria-hidden="true"><svg viewBox="0 0 36 36" fill="none"><rect x="2" y="2" width="22" height="31" rx="3" stroke="#777"/><path d="M13 13v17M5 22h17" stroke="#858585"/><path d="M13 7h13" stroke="#ff6a1a" stroke-dasharray="2 2"/><circle cx="30" cy="13" r="3" fill="#ff6a1a"/><circle cx="30" cy="25" r="3" fill="#ff6a1a"/></svg></div><div><div class="word">OcToS <span style="color:var(--accent)">TEAM</span></div><div class="brand-sub">Coordinación interna</div></div></div><nav><button data-page="home">Inicio</button><button data-page="room" class="active">Sala</button><span class="version">V2.1</span></nav></header>
 <main>
-<section id="home" class="view active"><div class="hero"><div><div class="eyebrow">Aplicación / 01 · Sistema interno</div><h1>Un equipo.<br>Cuatro unidades.</h1><p>Entorno visual para organizar la estructura de trabajo OcToS. Distribución de puestos, responsabilidades y coordinación central. Indicadores de actividad visual por puesto.</p></div><div class="hero-index">01</div></div>
+<section id="home" class="view"><div class="hero"><div><div class="eyebrow">Aplicación / 01 · Sistema interno</div><h1>Un equipo.<br>Cuatro unidades.</h1><p>Entorno visual para organizar la estructura de trabajo OcToS. Distribución de puestos, responsabilidades y coordinación central. Indicadores de actividad visual por puesto.</p></div><div class="hero-index">01</div></div>
 <div class="stats"><div class="stat"><b>04</b><span>Grupos de trabajo</span></div><div class="stat"><b>08</b><span>Agentes especializados</span></div><div class="stat"><b>01</b><span>Dirección central</span></div><div class="stat"><b>02</b><span>Puestos exteriores</span></div></div>
 <div class="section-title"><h2>Menú principal</h2><small>MÓDULOS DE TEAM · V2.1</small></div>
 <div class="menu-grid">
@@ -74,7 +117,7 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 <button class="tile" data-page="inbox"><div class="tile-top"><span class="tile-index">MÓDULO 03</span><span class="tile-icon">↧</span></div><h3>Entrada / Input</h3><p>Recepción y distribución de encargos. Preparado para su desarrollo posterior.</p><span class="go">VER MÓDULO</span></button>
 <button class="tile" data-page="system"><div class="tile-top"><span class="tile-index">MÓDULO 04</span><span class="tile-icon">⌘</span></div><h3>Configuración</h3><p>Parámetros de puestos y equipos. Reservado, sin funciones activas.</p><span class="go">VER MÓDULO</span></button>
 </div></section>
-<section id="room" class="view"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Planta conceptual · Selecciona un puesto o una unidad en el esquema</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
+<section id="room" class="view active"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Planta conceptual · Selecciona un puesto o una unidad en el esquema</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
 <div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="0 0 1238 765" role="img" aria-label="Plano cenital de OcToS Team: cuatro grupos separados en cruz con ocho mesas enfrentadas, dirección y sala de acceso con dos puestos y puertas">
 <defs>
 <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M26 0H0V26" fill="none" stroke="#FFFFFF" stroke-opacity=".035" stroke-width="1"/></pattern>
@@ -262,10 +305,33 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 </g>
 <text x="48" y="738" class="label plan-caption">8 AGENTES · 4 UNIDADES · 2 ACCESOS</text>
 <text x="1195" y="738" class="label plan-caption" text-anchor="end">OcToS TEAM / V2.1</text>
-</svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo o uno de los dos puestos exteriores para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div class="bottom">Representación conceptual. No hay agentes conectados ni ejecución automática en esta versión.</div></aside></div></section>
+</svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo o uno de los dos puestos exteriores para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div class="bottom">Representación conceptual. No hay agentes conectados ni ejecución automática en esta versión.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
 <section id="structure" class="view"><div class="eyebrow">Módulo 02</div><div class="empty"><h2>Organigrama</h2><p>Jerarquía preparada: dirección, cuatro unidades y ocho agentes. La vista gráfica interactiva se incorporará posteriormente.</p><button class="outline" data-page="room">Ver distribución en sala</button></div></section>
 <section id="inbox" class="view"><div class="eyebrow">Módulo 03</div><div class="empty"><h2>Entrada / Input</h2><p>Módulo reservado a solicitudes y flujos de trabajo. En V1 únicamente se representa su puesto conectado con dirección.</p><button class="outline" data-page="room">Ver puesto Input</button></div></section>
 <section id="system" class="view"><div class="eyebrow">Módulo 04</div><div class="empty"><h2>Configuración</h2><p>Área reservada a la definición de agentes, equipos y permisos en versiones posteriores.</p><button class="outline" data-page="home">Volver al inicio</button></div></section>
+<section id="permissions" class="view" aria-labelledby="perms-title">
+ <div class="perms-head"><div><div class="eyebrow">Administración / Sala de trabajo</div><h1 id="perms-title">Permisos y accesos</h1><p>Gestiona PIN secundarios y las aplicaciones autorizadas para cada perfil.</p></div><button class="outline" data-page="room" type="button">Volver a la sala</button></div>
+ <div class="perms-banner">Configuración experimental almacenada exclusivamente en este navegador. Los PIN secundarios solo funcionan en este dispositivo y navegador; no se sincronizan con otros usuarios. Los enlaces públicos de GitHub Pages no quedan protegidos. La compartición real y la revocación remota requieren autenticación de servidor.</div>
+ <div class="perms-master"><strong>PIN maestro · Administrador</strong><span>Conservado · Acceso completo · No editable desde este panel</span></div>
+ <div class="perms-layout">
+  <div class="perms-panel">
+   <h2 id="perms-form-title">Crear PIN secundario</h2>
+   <form id="perms-form">
+    <label for="perms-alias">Nombre del acceso</label>
+    <input id="perms-alias" type="text" maxlength="50" placeholder="Ej. Colaborador de cartografía" required autocomplete="off">
+    <label for="perms-pin">PIN secundario · 6 cifras</label>
+    <input id="perms-pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6" placeholder="Seis dígitos" autocomplete="new-password">
+    <p class="perms-hint" id="perms-pin-hint">El PIN se conserva como hash. Anótalo antes de guardarlo: después no se podrá recuperar.</p>
+    <h3>Aplicaciones permitidas</h3>
+    <div class="perms-apps" id="perms-apps"></div>
+    <div class="perms-actions"><button id="perms-save" class="primary" type="submit">Guardar acceso</button><button id="perms-cancel" type="button">Limpiar</button></div>
+    <p id="perms-message" role="status" aria-live="polite"></p>
+   </form>
+  </div>
+  <div class="perms-panel"><h2>Accesos configurados</h2><div id="perms-list" class="pin-list"><p class="perms-empty">Todavía no hay PIN secundarios.</p></div></div>
+ </div>
+</section>
+
 </main><footer><span>OcToS 3D STUDIO · TEAM</span><span>V2.1 / MONITOR DE ACTIVIDAD</span></footer>
 <script>
 (function(){
@@ -333,8 +399,36 @@ readTelemetry();
 setInterval(readTelemetry,10000);
 setInterval(refreshBlink,250);
 
-function page(name){document.querySelectorAll('.view').forEach(function(el){el.classList.toggle('active',el.id===name)});document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('active',b.dataset.page===name)});window.scrollTo({top:0,behavior:'instant'})}
-document.querySelectorAll('[data-page]').forEach(function(b){b.addEventListener('click',function(){page(b.dataset.page)})});
+var validPages=new Set(["room","home","structure","inbox","system","permissions"]);
+var teamHistory=[];
+var initial=validPages.has(location.hash.slice(1))?location.hash.slice(1):"room";
+var currentPage=initial;
+history.replaceState({octosTeamPage:initial},"","#"+initial);
+function page(name,record=true){
+ if(!validPages.has(name))return;
+ if(name!==currentPage&&record){
+  teamHistory.push(currentPage);
+  history.pushState({octosTeamPage:name},"","#"+name);
+ }
+ currentPage=name;
+ document.querySelectorAll(".view").forEach(function(el){el.classList.toggle("active",el.id===name)});
+ document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("active",b.dataset.page===name)});
+ var back=document.getElementById("nav-back");
+ back.disabled=(name==="room"&&teamHistory.length===0);
+ window.scrollTo({top:0,behavior:"instant"});
+}
+document.querySelectorAll("[data-page]").forEach(function(b){b.addEventListener("click",function(){page(b.dataset.page)})});
+document.getElementById("nav-home").addEventListener("click",function(){page("room")});
+document.getElementById("nav-back").addEventListener("click",function(){
+ if(teamHistory.length){teamHistory.pop();history.back()}
+ else page("room");
+});
+window.addEventListener("popstate",function(){
+ var p=validPages.has(location.hash.slice(1))?location.hash.slice(1):"room";
+ if(teamHistory[teamHistory.length-1]===p)teamHistory.pop();
+ page(p,false);
+});
+page(initial,false);
 function pick(el){var item=details[el.dataset.pick];if(!item)return;document.querySelectorAll('#floor .selected').forEach(function(n){n.classList.remove('selected')});el.classList.add('selected');document.getElementById('detail-title').textContent=item.name;document.getElementById('detail-tag').textContent=item.type;document.getElementById('detail-desc').textContent=item.desc;document.getElementById('detail-zone').textContent=item.zone;updateSelectedStatus(el.dataset.pick)}
 document.querySelectorAll('#floor [data-pick]').forEach(function(el){el.addEventListener('click',function(e){e.stopPropagation();pick(el)});el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(el)}})});
 function changeZoom(n){zoom=Math.min(1.65,Math.max(.65,n));document.getElementById('floor').style.transform='scale('+zoom+')'}
@@ -386,6 +480,120 @@ for(const ev of ["keydown","pointerdown","touchstart"]){
 setInterval(function(){if(!root.classList.contains("pin-locked")&&Date.now()-lastActivity>TTL)lock()},30000);
 document.addEventListener("visibilitychange",function(){if(!document.hidden&&!root.classList.contains("pin-locked")&&Date.now()-lastActivity>TTL)lock()});
 if(root.classList.contains("pin-locked"))pin.focus();
+})();
+</script>
+
+<script>
+/* Gestor de accesos local. Sin backend, no proporciona autorización real ni sincronización externa. */
+(function(){
+"use strict";
+const STORE="octos-permissions-v1", IDENTITY="octos-permissions", ROUNDS=250000;
+const apps=[
+ ["drive","Drive"],["carto","Carto"],["meteo","Meteo"],["rain","Rain"],["layers","Layers"],
+ ["templates","Templates"],["aero","Aero"],["roads","Roads"],["team","Team"],["wordpress","WordPress"]
+];
+const appBox=document.getElementById("perms-apps"),form=document.getElementById("perms-form"),
+nameBox=document.getElementById("perms-alias"),pinBox=document.getElementById("perms-pin"),
+message=document.getElementById("perms-message"),listBox=document.getElementById("perms-list"),
+saveButton=document.getElementById("perms-save");
+let editing=null,registry=[];
+function read(){try{
+ const r=JSON.parse(localStorage.getItem(STORE)||"[]");
+ return Array.isArray(r)?r.filter(x=>x&&typeof x.id==="string"&&Array.isArray(x.apps)&&typeof x.salt==="string"&&typeof x.hash==="string"):[];
+}catch(e){return []}}
+function store(){localStorage.setItem(STORE,JSON.stringify(registry))}
+function bytesToHex(a){return Array.from(a).map(x=>x.toString(16).padStart(2,"0")).join("")}
+async function hashPin(pin,salt){
+ const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(pin),{name:"PBKDF2"},false,["deriveBits"]);
+ const raw=await crypto.subtle.deriveBits({name:"PBKDF2",salt:salt,iterations:ROUNDS,hash:"SHA-256"},key,256);
+ return bytesToHex(new Uint8Array(raw));
+}
+function checkbox(slug,title){
+ if(appBox.querySelector('[data-app="'+slug+'"]'))return;
+ const lab=document.createElement("label"),check=document.createElement("input");
+ check.type="checkbox";check.dataset.app=slug;check.value=slug;
+ lab.append(check,document.createTextNode(title));appBox.append(lab);
+}
+apps.forEach(x=>checkbox(x[0],x[1]));
+function renderList(){
+ listBox.replaceChildren();
+ if(!registry.length){const p=document.createElement("p");p.className="perms-empty";p.textContent="Todavía no hay PIN secundarios.";listBox.append(p);return}
+ registry.forEach(function(entry){
+  const box=document.createElement("div");box.className="pin-entry";
+  const head=document.createElement("div");head.className="pin-entry-top";
+  const title=document.createElement("div"),label=document.createElement("strong"),info=document.createElement("small"),state=document.createElement("span");
+  label.textContent=entry.name;
+  info.textContent=(entry.apps||[]).map(s=>(apps.find(x=>x[0]===s)||[s,s])[1]).join(" · ")||"Sin aplicaciones";
+  state.className="pin-state";state.textContent=entry.active===false?"Inactivo":"Activo";
+  title.append(label,info);head.append(title,state);
+  const controls=document.createElement("div");controls.className="pin-actions";
+  function action(label,callback){
+   const b=document.createElement("button");b.type="button";b.textContent=label;b.addEventListener("click",callback);controls.append(b);
+  }
+  action("Editar",function(){
+   editing=entry.id;nameBox.value=entry.name;pinBox.value="";
+   appBox.querySelectorAll("input").forEach(el=>el.checked=entry.apps.includes(el.value));
+   document.getElementById("perms-form-title").textContent="Editar PIN secundario";
+   document.getElementById("perms-pin-hint").textContent="Deja el PIN vacío para mantenerlo o escribe otro de seis cifras para cambiarlo.";
+   saveButton.textContent="Guardar cambios";message.textContent="";nameBox.focus();
+  });
+  action(entry.active===false?"Activar":"Desactivar",function(){
+   entry.active=entry.active===false;try{store();message.textContent="Estado actualizado en este navegador.";renderList()}catch(e){message.textContent="No se ha podido guardar."}
+  });
+  action("Eliminar",function(){
+   if(!confirm("¿Eliminar este PIN secundario en este navegador?"))return;
+   registry=registry.filter(x=>x.id!==entry.id);try{store();reset();renderList();message.textContent="Acceso eliminado de este navegador."}catch(e){message.textContent="No se ha podido eliminar."}
+  });
+  box.append(head,controls);listBox.append(box);
+ });
+}
+function reset(){
+ editing=null;form.reset();saveButton.textContent="Guardar acceso";
+ document.getElementById("perms-form-title").textContent="Crear PIN secundario";
+ document.getElementById("perms-pin-hint").textContent="El PIN se conserva como hash. Anótalo antes de guardarlo: después no se podrá recuperar.";
+ message.textContent="";
+}
+document.getElementById("perms-cancel").addEventListener("click",reset);
+form.addEventListener("submit",async function(e){
+ e.preventDefault();
+ const name=nameBox.value.trim(),pin=pinBox.value;
+ const allowed=Array.from(appBox.querySelectorAll("input:checked")).map(x=>x.value);
+ if(!name||name.length>50){message.textContent="Indica un nombre válido.";return}
+ if(!allowed.length){message.textContent="Selecciona al menos una aplicación.";return}
+ if(!editing&&!/^[0-9]{6}$/.test(pin)){message.textContent="El PIN secundario debe tener seis dígitos.";return}
+ if(editing&&pin&&!/^[0-9]{6}$/.test(pin)){message.textContent="El nuevo PIN debe tener seis dígitos.";return}
+ if(!editing&&registry.length>=30){message.textContent="Máximo de 30 accesos locales.";return}
+ saveButton.disabled=true;message.textContent="";
+ try{
+  let record=registry.find(x=>x.id===editing);
+  if(!record){
+   record={id:crypto.randomUUID(),name,apps:allowed,active:true,createdAt:new Date().toISOString()};
+   registry.push(record);
+  }
+  record.name=name;record.apps=allowed;
+  if(pin){
+   const salt=crypto.getRandomValues(new Uint8Array(16));
+   record.salt=bytesToHex(salt);record.hash=await hashPin(pin,salt);
+  }
+  store();reset();renderList();message.textContent="Guardado en este navegador. Todavía no se comparte entre dispositivos.";
+ }catch(err){message.textContent="No se ha podido guardar en este navegador."}
+ finally{saveButton.disabled=false}
+});
+registry=read();renderList();
+(async function syncApps(){
+ try{
+  const res=await fetch("https://api.github.com/repos/toniquerol/octos-apps/git/trees/main?recursive=1",{cache:"no-store"});
+  if(!res.ok)throw Error("Sin sincronización");
+  const data=await res.json();if(!Array.isArray(data.tree)||data.truncated)throw Error("Listado incompleto");
+  const ignored=new Set(["rain-v8","shared","tests"]);
+  data.tree.forEach(f=>{
+   const m=/^([a-z0-9][a-z0-9-]*)\/index\.html$/.exec(f.path||"");
+   if(!m||ignored.has(m[1])||apps.some(x=>x[0]===m[1]))return;
+   apps.push([m[1],m[1][0].toUpperCase()+m[1].slice(1)]);checkbox(m[1],apps[apps.length-1][1]);
+  });
+  renderList();
+ }catch(e){}
+})();
 })();
 </script>
 </body></html>
