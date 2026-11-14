@@ -817,7 +817,7 @@ function terrainPixelWidthExpression(){
   0,['*',['get','w'],scale(0)],19,['*',['get','w'],scale(19)]];
 }
 function terrainFeatureCollection(){
- const features=[],toGeo=pts=>pts.map(p=>[p[1],p[0]]);
+ const features=[],autoEvents=autoCrossEvents(),toGeo=pts=>pts.map(p=>[p[1],p[0]]);
  const addLine=(pts,w,fill,kind='surface')=>{
   if(!pts||pts.length<2||!w)return;
   features.push({type:'Feature',properties:{kind,w,color:fill},geometry:{type:'LineString',coordinates:toGeo(pts)}});
@@ -836,7 +836,7 @@ function terrainFeatureCollection(){
   addLine(pts,width,color,'surface');
  };
  for(const road of roads){
-  const sec=sectionOf(road),geometry=makeGeometry(road);
+  const sec=sectionOf(road),geometry=makeGeometry(autoDisplayRoad(road,autoEvents));
   for(const part of geometry.parts){
    const structure=(road.structures||{})[part.segmentIndex];
    const color3D=structure==='bridge'?'#42d4e4':structure==='tunnel'?'#bc9bff':
@@ -858,13 +858,11 @@ function terrainFeatureCollection(){
   }
  }
  for(const j of junctions){const g=jxGeometry(j);if(g)paint(g.points,j.width,'#C2CDD0');}
- if(visible('layerRoad'))for(const event of autoCrossEvents()){
+ if(visible('layerRoad'))for(const event of autoEvents){
   const g=autoCrossShapes(event);
-  if(g.stub)paint(g.stub.coords,g.stub.width,g.stub.fill);
-  for(const corner of g.corners){
-   addPoly(corner.polygon,g.fill,'auto-crossing');
-   addLine(corner.arc,.3,'#292929','auto-cross-outline');
-  }
+  if(g.throat)addPoly(g.throat.fill,g.fill,'auto-crossing');
+  for(const corner of g.corners)if(corner.border)addPoly(corner.border,corner.borderColor,'auto-cross-border');
+  for(const corner of g.corners)addPoly(corner.fill,g.fill,'auto-crossing');
  }
  for(const rb of roundabouts){
   const shape=roundaboutGeometry(rb),dim=shape.dimensions,roundaboutColor=visible('layerSpeed')?color(90):'#C2CDD0';
@@ -911,11 +909,10 @@ function terrainAddGeometry(gl){
    paint:{'line-color':['get','color'],'line-width':lw,
     ...(name==='dash'?{'line-dasharray':[3,5]}:{})}});
  }
+ gl.addLayer({id:'octos-3d-auto-cross-border',type:'fill',source:TERRAIN_ROADS,filter:kind('auto-cross-border'),
+  paint:{'fill-color':['get','color'],'fill-opacity':1}});
  gl.addLayer({id:'octos-3d-auto-crossing',type:'fill',source:TERRAIN_ROADS,filter:kind('auto-crossing'),
   paint:{'fill-color':['get','color'],'fill-opacity':1}});
- gl.addLayer({id:'octos-3d-auto-cross-outline',type:'line',source:TERRAIN_ROADS,filter:kind('auto-cross-outline'),
-  layout:{'line-join':'round','line-cap':'round'},
-  paint:{'line-color':['get','color'],'line-width':lw}});
  gl.addLayer({id:'octos-3d-island',type:'fill',source:TERRAIN_ROADS,filter:kind('island'),
   paint:{'fill-color':['get','color'],'fill-opacity':.96}});
 }
@@ -1644,10 +1641,11 @@ function syncInspector(){
 }
 function render(){
  editGuide.clearLayers();roadsGroup.clearLayers();markersGroup.clearLayers();labelsGroup.clearLayers();
+ const autoEvents=autoCrossEvents();
  let total=0;
  roads.forEach(r=>{
-  const g=makeGeometry(r);total+=g.total;const isSelected=r.id===selected;
-  g.parts.forEach(part=>{
+  const g=makeGeometry(r),drawG=makeGeometry(autoDisplayRoad(r,autoEvents));total+=g.total;const isSelected=r.id===selected;
+  drawG.parts.forEach(part=>{
    const structure=(r.structures||{})[part.segmentIndex]||'normal',activeSegment=selectedSegment?.roadId===r.id&&selectedSegment.index===part.segmentIndex;
    paintRoadPart(r,part,isSelected,activeSegment,structure,e=>{L.DomEvent.stopPropagation(e);if(mode==='connect'){jxClick(r,e.latlng);return;}if(mode==='draw'||mode==='roundabout')return;if(mode==='insert')insertNode(r,e.latlng);else if(['bridge','tunnel','normal'].includes(mode))setSectionType(r,part.segmentIndex,mode);else selectRoadPart(r,part.segmentIndex);},e=>{L.DomEvent.stopPropagation(e);if(mode==='select'&&selected===r.id)insertNode(r,e.latlng);});
   });
@@ -1662,7 +1660,7 @@ function render(){
    mark.on('click',e=>{L.DomEvent.stopPropagation(e);if(mode==='remove'&&r.nodes.length>2){checkpoint();repairStructuresAfterRemove(r,i,r.nodes.length);const anchors=jxCapture(r);r.nodes.splice(i,1);jxReanchor(r,anchors);persist();setMode('select');status('Vértice eliminado · modo selección.');}else if(mode==='remove')status('Una carretera necesita al menos 2 puntos.');});
   });
  });
- drawAutoCrossings();renderRoundabouts();jxDraw();
+ drawAutoCrossings(null,autoEvents);renderRoundabouts();jxDraw();
  $('roadCount').textContent=roads.length+' tramos · '+roundabouts.length+' rotondas · '+junctions.length+' enlaces';
  $('mapBadge').textContent=roads.length+' carretera'+(roads.length===1?'':'s')+' · '+roundabouts.length+' rotonda'+(roundabouts.length===1?'':'s')+' · '+format(total/1000)+' km · '+junctions.length+' enlaces';
  const r=roadById(selected);
