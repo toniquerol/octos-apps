@@ -2630,7 +2630,7 @@ function startRealArea(){
  if(terrainMode||terrainBusy){status('Para importar carreteras reales, activa primero la vista 2D.');return;}
  setMode('select');closeHeaderMenus();realAreaActive=true;realAreaBounds=null;
  $('realAreaOverlay').hidden=false;$('realAreaPanel').hidden=false;$('realAreaBox').hidden=true;
- $('realAreaConfirm').disabled=true;$('realAreaHelp').textContent='Arrastra sobre el mapa para dibujar el área de importación.';
+ $('realAreaConfirm').disabled=true;$('realAreaHelp').textContent='Arrastra sobre el mapa para delimitar el área. Usa la rueda para ajustar el zoom.';
  map.setZoom(Math.max(5,map.getZoom()-2));
  status('Importación de carreteras reales: selecciona un rectángulo.');
 }
@@ -2739,7 +2739,7 @@ async function importRealArea(){
   const total=roads.reduce((n,r)=>n+r.nodes.length,0);
   if(fresh.length+roads.length>300||points+total>25000)throw Error('El área supera el límite de 300 ejes o 25.000 puntos del editor. Selecciona menos superficie.');
   checkpoint();roads.push(...fresh);selected=fresh[0].id;persist();
-  cancelRealArea();setMode('select');
+  cancelRealArea();setMode('select');setSelection(fresh[0].id);
   map.fitBounds(L.latLngBounds([[box.south,box.west],[box.north,box.east]]).pad(.12));
   status('Carreteras reales: '+fresh.length+' ejes importados y clasificados. Se conservan los atributos originales.');
  }catch(error){
@@ -2761,6 +2761,7 @@ realOverlay.addEventListener('pointerdown',e=>{
 realOverlay.addEventListener('pointermove',e=>{if(realAreaDrag)realBoxPreview(realAreaDrag,realScreenPoint(e));});
 realOverlay.addEventListener('pointerup',realAreaFinish);
 realOverlay.addEventListener('pointercancel',()=>{realAreaDrag=null;});
+realOverlay.addEventListener('wheel',e=>{if(!realAreaActive||realAreaBusy)return;e.preventDefault();map.setZoom(clamp(map.getZoom()+(e.deltaY<0?1:-1),5,20));},{passive:false});
 $('realRoadsPickBtn').onclick=startRealArea;
 $('realAreaConfirm').onclick=importRealArea;
 $('realAreaCancel').onclick=()=>{cancelRealArea();status('Importación cancelada.');};
