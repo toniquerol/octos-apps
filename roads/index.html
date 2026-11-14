@@ -403,28 +403,94 @@ function cubicRoadPoints(a,b,c,d,n=28){
  }
  return output;
 }
+/* Entradas por el lado horario del acceso y salidas por el antihorario.
+   La curva usa radio como escala de suavizado; no es un arco circular normativo. */
+function roundaboutArmClearance(rb,arm){
+ const angles=Array.from({length:rb.arms},(_,i)=>
+  (rb.orientation+i*360/rb.arms+(rb.armOffsets?.[i]??0))*RAD);
+ const gap=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)));
+ const nearest=Math.min(...angles.filter((_,i)=>i!==arm.index).map(a=>gap(a,arm.angle)));
+ return Math.max(.02,nearest);
+}
 function armTransition(rb,arm){
  const dim=roundaboutDimensions(rb),p=roundaboutArmProfile(rb,arm.index),lat=rb.center[0];
- const center=xy(rb.center,lat),dir={x:Math.cos(arm.angle),y:Math.sin(arm.angle)},normal={x:-dir.y,y:dir.x};
- const at=(radius,n=0)=>add(add(center,mul(dir,radius)),mul(normal,n));
- const far=dim.ringRadius+rb.armLength,near=dim.ringRadius+dim.width*.12;
- const entryWidth=p.entry*p.laneWidth,exitWidth=p.exit*p.laneWidth,median=p.entry&&p.exit?p.median:0;
- const entryFar=at(far,p.exit?(entryWidth+median)/2:0),exitFar=at(far,p.entry?-(exitWidth+median)/2:0);
- const split=clamp(p.laneWidth*.6+.8,2.2,4.6);
- const entryNear=at(near,entryWidth/2+split),exitNear=at(near,-exitWidth/2-split);
- const eB=clamp(dim.entryRadius*.72,5,rb.armLength*.8),eC=clamp(dim.entryRadius*.35,3,22);
- const xB=clamp(dim.exitRadius*.72,5,rb.armLength*.8),xC=clamp(dim.exitRadius*.4,4,35);
- const entry=p.entry?cubicRoadPoints(entryFar,sub(entryFar,mul(dir,eB)),sub(entryNear,mul(normal,eC)),entryNear):null;
- const exit=p.exit?cubicRoadPoints(exitNear,add(exitNear,mul(normal,xC)),sub(exitFar,mul(dir,xB)),exitFar):null;
- const gap=Math.min(rb.armLength*.74,35),splitHalf=clamp((entryWidth+exitWidth)*.15+.5,1.15,3);
- const splitter=p.entry&&p.exit?[
-  at(dim.ringRadius+Math.min(5,rb.armLength*.2),0),
-  at(dim.ringRadius+gap*.5,splitHalf),
-  at(dim.ringRadius+gap,splitHalf*.38),
-  at(dim.ringRadius+gap,-splitHalf*.38),
-  at(dim.ringRadius+gap*.5,-splitHalf)
- ]:null;
- return {profile:p,entry,exit,splitter,lat};
+ const center=xy(rb.center,lat),dir={x:Math.cos(arm.angle),y:Math.sin(arm.angle)};
+ const norm={x:-dir.y,y:dir.x},far=dim.ringRadius+rb.armLength;
+ const totalWidth=(p.entry+p.exit)*p.laneWidth+(p.entry&&p.exit?p.median:0);
+ const entryWidth=p.entry*p.laneWidth,exitWidth=p.exit*p.laneWidth;
+ // El extremo coincide con la sección completa de la carretera conectada.
+ const entryOffset=-totalWidth/2+entryWidth/2;
+ const exitOffset=totalWidth/2-exitWidth/2;
+ const at=(radius,offset=0)=>add(add(center,mul(dir,radius)),mul(norm,offset));
+ const mouthRadiusEntry=dim.outerRadius-Math.min(p.laneWidth*p.entry/2,dim.width*.45);
+ const mouthRadiusExit=dim.outerRadius-Math.min(p.laneWidth*p.exit/2,dim.width*.45);
+ // Los ramales vecinos restringen la apertura para no invadir sus enlaces.
+ const clearance=roundaboutArmClearance(rb,arm);
+ const angleMax=clearance*.225;
+ const entryDelta=Math.min(angleMax,Math.max(.10,(entryWidth/2+1.4)/Math.max(8,mouthRadiusEntry)));
+ const exitDelta=Math.min(angleMax,Math.max(.10,(exitWidth/2+1.4)/Math.max(8,mouthRadiusExit)));
+ const mouth=(angle,radius)=>add(center,{x:radius*Math.cos(angle),y:radius*Math.sin(angle)});
+ const tangent=angle=>({x:-Math.sin(angle),y:Math.cos(angle)});
+ const aEntry=arm.angle-entryDelta,aExit=arm.angle+exitDelta;
+ const e0=at(far,entryOffset),x3=at(far,exitOffset);
+ const e3=mouth(aEntry,mouthRadiusEntry),x0=mouth(aExit,mouthRadiusExit);
+ // Siempre se avanza hacia el anillo en la entrada y se sale radialmente en la salida.
+ const radialSpan=Math.max(6,far-dim.outerRadius);
+ const nearControl=clamp(radialSpan*.12,1.5,3.6);
+ const farControl=clamp(radialSpan*.32,3.5,15);
+ const eTangential=clamp(dim.entryRadius*.17,2,6);
+ const xTangential=clamp(dim.exitRadius*.17,2,8);
+ const e1=sub(e0,mul(dir,farControl));
+ const e2=sub(add(e3,mul(dir,nearControl)),mul(tangent(aEntry),eTangential));
+ const x1=add(add(x0,mul(dir,nearControl)),mul(tangent(aExit),xTangential));
+ const x2=sub(x3,mul(dir,farControl));
+ const entry=p.entry?cubicRoadPoints(e0,e1,e2,e3,36):null;
+ const exit=p.exit?cubicRoadPoints(x0,x1,x2,x3,36):null;
+ return {profile:p,entry,exit,lat,center,dir,norm,far,
+  entryWidth,exitWidth,entryDelta,exitDelta,mouthEntry:e3,mouthExit:x0,
+  splitter:roundaboutSplitter(rb,{profile:p,entry,exit,center,dir,norm,far})};
+}
+/* La isleta se construye entre los bordes interiores de las dos calzadas,
+   nunca encima de los carriles; se omite si no existe anchura libre. */
+function roundaboutSplitter(rb,geometry){
+ const {entry,exit,profile:p,center,dir,norm,far}=geometry;
+ if(!entry||!exit)return null;
+ const outer=roundaboutDimensions(rb).outerRadius;
+ const minRadius=outer+1.5,maxRadius=Math.min(far-4,outer+Math.min(rb.armLength*.78,25));
+ if(maxRadius-minRadius<5)return null;
+ function lateralAt(points,radial){
+  // Busca la intersección con el corte radial; las Bézier deben ser monótonas.
+  for(let i=1;i<points.length;i++){
+   const a=dot(sub(points[i-1],center),dir),b=dot(sub(points[i],center),dir);
+   if(radial>=Math.min(a,b)-.0001&&radial<=Math.max(a,b)+.0001&&Math.abs(b-a)>.000001){
+    const t=clamp((radial-a)/(b-a),0,1),v=add(points[i-1],mul(sub(points[i],points[i-1]),t));
+    return dot(sub(v,center),norm);
+   }
+  }
+  return null;
+ }
+ const samples=[];
+ for(let radial=minRadius;radial<=maxRadius+.01;radial+=1.8){
+  const en=lateralAt(entry,radial),ex=lateralAt(exit,radial);
+  if(en===null||ex===null)continue;
+  // Bordes interiores de las calzadas y un resguardo de 0,45 m.
+  const left=en+p.entry*p.laneWidth/2+.45,right=ex-p.exit*p.laneWidth/2-.45;
+  if(right-left<1.4){if(samples.length>0)break;continue;}
+  samples.push({radial,mid:(left+right)/2,half:Math.min(2.2,(right-left)/2-.1)});
+ }
+ if(samples.length<3)return null;
+ const transform=q=>add(add(center,mul(dir,q.radial)),mul(norm,q.mid));
+ const outline=[];
+ // Dos puntas suavizadas y lados delimitados por la anchura disponible.
+ outline.push(transform({...samples[0],half:0}));
+ for(let i=1;i<samples.length-1;i++){
+  const s=samples[i];outline.push(transform({...s,mid:s.mid-s.half}));
+ }
+ outline.push(transform({...samples[samples.length-1],half:0}));
+ for(let i=samples.length-2;i>=1;i--){
+  const s=samples[i];outline.push(transform({...s,mid:s.mid+s.half}));
+ }
+ return outline;
 }
 function drawRoundaboutRoadways(){
  roundaboutGroup.clearLayers();
