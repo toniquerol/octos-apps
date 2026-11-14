@@ -91,6 +91,21 @@ details.section>summary.eyebrow:hover{color:var(--text)}
 footer{height:31px;border-top:1px solid var(--line);background:#171719;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 14px;color:#b5b5bb;font-size:10px}.leaflet-control-attribution{font-size:10px!important}.leaflet-control-zoom a{color:#222!important}
 .handle{width:14px;height:14px;background:var(--accent);border:2px solid white;border-radius:50%;box-shadow:0 0 0 2px #2228}.handle-icon{background:transparent;border:none}.arc-tooltip{background:#1b1b1be8;border:1px solid #FF6A1A;color:#fff;box-shadow:none;font-size:10px}.arc-tooltip::before{border-top-color:#FF6A1A}
 .hidden{display:none!important}
+/* Importación vectorial oficial: selección puntual de ámbito sin tocar los modos del visor. */
+.real-roads-group{margin-top:9px;border-top:1px solid #45464a;padding-top:8px}
+.real-roads-group>summary,.real-road-category>summary{cursor:pointer;color:#F1F1EF;font:600 11px "IBM Plex Sans",sans-serif;padding:6px 2px}
+.real-road-category{padding-left:6px;border-left:2px solid #47494f}
+.real-road-category .roaditem{margin:4px 0}
+#realAreaOverlay{position:absolute;inset:0;z-index:1210;cursor:crosshair;touch-action:none}
+#realAreaOverlay[hidden],#realAreaPanel[hidden]{display:none!important}
+#realAreaBox{position:absolute;border:2px dashed #FF6A1A;background:#FF6A1A24;pointer-events:none}
+#realAreaPanel{position:absolute;z-index:1220;top:12px;left:50%;transform:translateX(-50%);
+ background:#1B1B1FEF;border:1px solid #FF6A1A;border-radius:7px;padding:9px 11px;
+ max-width:calc(100% - 20px);width:330px;box-shadow:0 8px 24px #0009}
+#realAreaPanel strong{font:650 12px "Manrope",sans-serif}
+#realAreaPanel p{margin:5px 0 8px;font-size:11px;line-height:1.35;color:#c8c8ce}
+#realAreaPanel .row{gap:6px}
+
 @media(max-width:1000px){.layout{grid-template-columns:230px minmax(0,1fr) 245px}.side{padding:12px 9px}header{padding:0 9px}.head-right .btn{font-size:11px;padding:6px}.brand b{font-size:16px}}
 @media(max-width:760px){header{height:59px}.layout{height:calc(100dvh - 59px - 31px);display:block}.side{position:absolute;z-index:900;top:59px;bottom:31px;width:min(295px,85vw);box-shadow:0 8px 22px #0008;transition:transform .2s}.left{left:0}.right{right:0}.side.hidden-mobile.left{transform:translateX(-110%)}.side.hidden-mobile.right{transform:translateX(110%)}#mapWrap{height:100%}.mobile-toggle{display:inline-flex}.head-right .compact{display:none}.brand small{font-size:9px}.logo{width:32px;height:32px;font-size:20px}.brand b{font-size:15px}.map-callout{top:10px}}
 /* Herramientas y escala de velocidad permanentes en cabecera. */
@@ -420,6 +435,11 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
   <div class="head-dropdown files-dropdown" id="fileMenu" hidden>
    <div class="dropdown-label">ARCHIVOS · IMPORTAR Y EXPORTAR</div>
     <details class="section" open><summary class="eyebrow">Archivos</summary><div class="row wrap"><button class="btn grow" id="saveBtn">Guardar JSON</button><button class="btn grow" id="openBtn">Abrir archivo</button></div><div class="row wrap" style="margin-top:8px"><button class="btn grow" id="kmlBtn">Importar KML</button><button class="btn grow" id="dwgBtn">Importar DWG</button></div><div class="field"><span>Huso UTM del DWG</span><select id="utmZone"><option value="29">29</option><option value="30">30</option><option value="31" selected>31</option><option value="32">32</option></select></div><div class="field"><span>Hemisferio</span><select id="utmHem"><option value="N" selected>Norte</option><option value="S">Sur</option></select></div><p class="muted">DWG: coordenadas UTM en metros, ETRS89/WGS84, sin origen local. Selecciona el huso antes de importar. KML: WGS84.</p><button class="btn danger" id="clearBtn" style="width:100%;margin-top:8px">Vaciar proyecto</button><p class="muted">Guardado automático en este navegador. Importación y exportación locales; no se envían los trazados a servidores.</p></details>
+   <details class="section" id="realRoadsImportSection"><summary class="eyebrow">Carreteras reales</summary>
+    <p class="muted">Ejes vectoriales de la red de carreteras. Selecciona un rectángulo en el mapa para importar su geometría y atributos originales.</p>
+    <button type="button" class="btn primary" id="realRoadsPickBtn" style="width:100%">Seleccionar área e importar</button>
+    <p class="muted">Fuente: servicio oficial de carreteras · consulta por área. Los anchos, carriles y velocidades del editor se asignan provisionalmente.</p>
+   </details>
    <button type="button" class="btn" id="exportBtn" style="width:100%;margin-top:10px">Exportar GeoJSON</button>
   </div>
  </div>
@@ -444,11 +464,13 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 <aside class="side left hidden-mobile" id="leftPane" aria-label="Fondos y capas">
 
 
-  <details class="section" open><summary class="eyebrow">Trazados</summary><div class="row"><h2 class="grow" style="margin:0 0 8px">Carreteras del proyecto</h2><span class="muted" id="roadCount">0</span></div><div id="roadsList"></div></details>
+  <details class="section" open><summary class="eyebrow">Trazados</summary><div class="row"><h2 class="grow" style="margin:0 0 8px">Carreteras del proyecto</h2><span class="muted" id="roadCount">0</span></div><div id="roadsList"></div><details class="real-roads-group" id="realRoadsGroup" hidden open><summary>Carreteras reales <span class="muted" id="realRoadsCount"></span></summary><div id="realRoadsList"></div></details></details>
 
 </aside>
 <section id="mapWrap" aria-label="Mapa y editor">
  <div id="map"></div>
+ <div id="realAreaOverlay" hidden aria-label="Seleccionar área de carreteras"><div id="realAreaBox" hidden></div></div>
+ <div id="realAreaPanel" hidden role="dialog" aria-label="Importar carreteras reales"><strong>CARRETERAS REALES · ÁREA</strong><p id="realAreaHelp">Arrastra sobre el mapa para delimitar el área a importar.</p><div class="row wrap"><button type="button" class="btn primary grow" id="realAreaConfirm" disabled>Importar ejes</button><button type="button" class="btn grow" id="realAreaCancel">Cancelar</button></div></div>
  <div id="junctionDock" class="junction-dock" hidden><strong>ENLACES · PARÁMETROS</strong><label>Tipo<select id="jxType"><option value="cruce">Cruce a nivel</option><option value="entrada">Incorporación · aceleración</option><option value="salida">Salida · desaceleración</option></select></label><label>Carril auxiliar (m)<input type="number" min="20" max="800" step="10" id="jxLength" value="150"></label><label>Transición (m)<input type="number" min="10" max="300" step="5" id="jxTaper" value="65"></label><label>Radio orientativo (m)<input type="number" min="10" max="500" step="5" id="jxRadius" value="60"></label><label>Anchura carril (m)<input type="number" min="2.5" max="5" step=".25" id="jxWidth" value="3.5"></label><small id="jxInfo">Pulsa primero una carretera secundaria y después la principal. Los enlaces siguen los ejes cuando se modifican.</small><div class="row wrap"><button type="button" class="btn primary grow" id="jxApply">Aplicar</button><button type="button" class="btn danger grow" id="jxDelete">Eliminar</button></div><small>Esquema preliminar en planta. Radio visual orientativo; sin validación normativa.</small></div>
  <div id="terrain3DView" class="terrain-3d-view" hidden aria-label="Vista de relieve real en 3D"></div>
  <div id="mapNavDock" class="map-nav-dock" role="group" aria-label="Controles de navegación del mapa">
@@ -2424,8 +2446,23 @@ function render(){
  const rb=roundaboutAt(selectedRoundabout),segmentIndices=selectedRoadSegments(r);
  $('selection').innerHTML=rb?'<b>Rotonda</b><br>'+rb.arms+' ramales · '+(roundaboutShape(rb)==='stadium'?'Alargada':roundaboutShape(rb)==='ellipse'?'Ovalada':'Circular')+' · Ø menor '+format(rb.diameter)+' m'+(roundaboutShape(rb)!=='circular'?' · alargamiento '+format(rb.elongation||0)+' m':'')+' · '+roundaboutDimensions(rb).lanes+' carriles anulares de '+format(roundaboutDimensions(rb).laneWidth)+' m'+(rb.slipEnabled?' · carril directo':'')+'<br>Orientación '+format(rb.orientation)+'° · ramales '+format(rb.armLength)+' m'+''+Array.from({length:rb.arms},(_,i)=>{const road=roundaboutArmRoad(rb,i);if(!road)return '';const p=roundaboutArmProfile(rb,i);return '<br>Ramal '+(i+1)+': '+safe(road.road.name)+' · '+p.entry+' entrada / '+p.exit+' salida · '+format(p.laneWidth)+' m/carril';}).join('')
  :r?'<b>'+safe(r.name)+'</b><br>'+r.nodes.length+' puntos · '+format(makeGeometry(r).total/1000)+' km<br>Radio mínimo: '+(makeGeometry(r).minRadius===null?'Sin curvas':format(makeGeometry(r).minRadius)+' m')+'<br>'+sectionOf(r).name+' · '+sectionOf(r).lanes+' carriles · carril '+format(sectionOf(r).laneWidth)+' m'+(sectionOf(r).street?' · aceras '+format(sectionOf(r).sidewalkWidth)+' m/lado':' · arcenes '+format(sectionOf(r).shoulderWidth)+' m/lado')+(sectionOf(r).medianWidth?' · separador '+format(sectionOf(r).medianWidth)+' m':'')+' · plataforma '+format(sectionOf(r).totalWidth)+' m · límite '+r.speed+' km/h'+(segmentIndices.length?'<br><b>'+segmentIndices.length+' tramo'+(segmentIndices.length===1?'':'s')+' marcado'+(segmentIndices.length===1?'':'s')+': '+segmentIndices.map(i=>i+1).join(', ')+'</b><br>Puente · Túnel · Normal: aplicar a la selección.':''):'Sin selección. Crea un trazado o selecciona una rotonda.';
- $('roadsList').innerHTML=roads.map(r=>'<button class="roaditem'+(r.id===selected?' selected':'')+'" data-id="'+r.id+'"><span class="dot" style="background:'+categoryColor(r.type)+'" title="'+safe(r.type)+'"></span><span>'+safe(r.name)+'</span></button>').join('')||'<span class="muted">Aún no hay carreteras dibujadas.</span>';
- $('roadsList').querySelectorAll('button').forEach(b=>b.onclick=()=>{setMode('select');setSelection(b.dataset.id);});
+
+ const manualRoads=roads.filter(r=>r.importGroup!=='carreteras-reales');
+ const realRoads=roads.filter(r=>r.importGroup==='carreteras-reales');
+ const roadButton=r=>'<button class="roaditem'+(r.id===selected?' selected':'')+'" data-id="'+r.id+'"><span class="dot" style="background:'+categoryColor(r.type)+'" title="'+safe(r.type)+'"></span><span>'+safe(r.name)+'</span></button>';
+ if(r&&r.official){const a=r.official.attributes||{};$('selection').innerHTML+='<div style="margin-top:6px;border-top:1px solid #4a4a4a;padding-top:5px"><b>Datos oficiales</b> · '+safe(r.official.provider||'Carreteras')+'<br>Tipo: '+safe(a.Tipo_de_via||'Sin clasificar')+' · PK: '+safe(a.PK_inicio??'—')+'–'+safe(a.PK_fin??'—')+'<br>Identificador: '+safe(a.id??'—')+'<br><small>Velocidad y sección editables: valores iniciales orientativos, no datos medidos.</small></div>';}
+ $('roadsList').innerHTML=manualRoads.map(roadButton).join('')||(realRoads.length?'':'<span class="muted">Aún no hay carreteras dibujadas.</span>');
+ const group=$('realRoadsGroup');
+ group.hidden=!realRoads.length;
+ $('realRoadsCount').textContent='('+realRoads.length+')';
+ const categories=[['autopista','Autopista / autovía'],['convencional','Carretera convencional'],['urbana','Vía urbana'],['camino','Camino']];
+ const previouslyOpen=new Set(Array.from($('realRoadsList').querySelectorAll('details[open]')).map(d=>d.dataset.category));
+ $('realRoadsList').innerHTML=categories.map(([key,label])=>{
+  const items=realRoads.filter(r=>r.type===key);
+  if(!items.length)return '';
+  return '<details class="real-road-category" data-category="'+key+'" '+(previouslyOpen.size?previouslyOpen.has(key)?'open':'':'open')+'><summary>'+safe(label)+' · '+items.length+'</summary>'+items.map(roadButton).join('')+'</details>';
+ }).join('');
+ document.querySelectorAll('#roadsList button[data-id],#realRoadsList button[data-id]').forEach(b=>b.onclick=()=>{setMode('select');setSelection(b.dataset.id);});
  drawPreview();
  syncInspector();
  if(terrainMode)terrainUpdateGeoJSON();
@@ -2561,9 +2598,9 @@ function finish(save=true){if(save&&draft.length>=2){checkpoint();const r={id:ne
 function insertNode(r,latlng){const lat0=r.nodes.reduce((s,n)=>s+n[0],0)/r.nodes.length,p=xy([latlng.lat,latlng.lng],lat0);let best=Infinity,index=0;for(let i=0;i<r.nodes.length-1;i++){const a=xy(r.nodes[i],lat0),b=xy(r.nodes[i+1],lat0),ab=sub(b,a),q=clamp(dot(sub(p,a),ab)/(dot(ab,ab)||1),0,1),d=dist(p,add(a,mul(ab,q)));if(d<best){best=d;index=i+1;}}checkpoint();repairStructuresAfterInsert(r,index);const anchors=jxCapture(r);r.nodes.splice(index,0,[latlng.lat,latlng.lng]);jxReanchor(r,anchors);selected=r.id;selectedSegment=null;persist();setMode('select');status('Punto insertado en '+r.name+' · modo selección.');}
 function undo(){if(mode==='draw'&&draft.length){draft.pop();$('finishBtn').disabled=draft.length<2;drawPreview();return;}if(!history.length){status('No hay acciones para deshacer.');return;}const snapshot=JSON.parse(history.pop());roads=Array.isArray(snapshot)?snapshot:snapshot.roads;roundabouts=Array.isArray(snapshot)?[]:(snapshot.roundabouts||[]);junctions=Array.isArray(snapshot)?[]:(snapshot.junctions||[]);selectedJunction=null;pendingJunction=null;if(!roadById(selected))selected=null;if(!roundaboutAt(selectedRoundabout))selectedRoundabout=null;selectedSegment=null;persist();render();status('Última acción deshecha.');}
 function download(name,object){const blob=new Blob([JSON.stringify(object,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function exportGeo(){return {type:'FeatureCollection',name:'OcToS Roads V1',features:roads.map(r=>{const segments=makeGeometry(r).parts;let pts=[];segments.forEach(s=>s.points.forEach(p=>{const last=pts[pts.length-1];if(!last||Math.abs(last[0]-p[0])>1e-9||Math.abs(last[1]-p[1])>1e-9)pts.push(p);}));return {type:'Feature',properties:{id:r.id,name:r.name,roadType:r.type,radius:r.radius,width:r.width,speed:r.speed,section:sectionOf(r).section,laneWidth:sectionOf(r).laneWidth,sidewalkWidth:sectionOf(r).sidewalkWidth,shoulderWidth:sectionOf(r).shoulderWidth,medianWidth:sectionOf(r).medianWidth,structures:r.structures||{},bridgeDetails:r.bridgeDetails||{},connections:r.connections||{},controlPoints:r.nodes.map(n=>[n[1],n[0]]),speedProfile:segments.map(s=>({speed:s.speed,radius:s.radius,length:s.length}))},geometry:{type:'LineString',coordinates:pts.map(p=>[p[1],p[0]])}};}).concat(roundabouts.map(rb=>({type:'Feature',properties:{featureType:'roundabout',id:rb.id,arms:rb.arms,diameter:rb.diameter,armLength:rb.armLength,armOffsets:rb.armOffsets,orientation:rb.orientation,width:rb.width,shape:roundaboutShape(rb),elongation:rb.elongation||0,axisAngle:rb.axisAngle||0,slipEnabled:!!rb.slipEnabled,slipFrom:rb.slipFrom,slipTo:rb.slipTo,slipRadius:rb.slipRadius,lanes:roundaboutDimensions(rb).lanes,laneWidth:roundaboutDimensions(rb).laneWidth,entryRadius:roundaboutDimensions(rb).entryRadius,exitRadius:roundaboutDimensions(rb).exitRadius},geometry:{type:'Point',coordinates:[rb.center[1],rb.center[0]]}}))).concat(junctions.map(j=>{const g=jxGeometry(j);return {type:'Feature',properties:{featureType:'junction',connection:j},geometry:{type:'LineString',coordinates:(g?.points||[]).map(pos=>[pos[1],pos[0]])}};}))};}
-function openProject(obj){let next=[],rounds=[],links=[];if(obj&&Array.isArray(obj.roads)){next=obj.roads;rounds=Array.isArray(obj.roundabouts)?obj.roundabouts:[];links=Array.isArray(obj.junctions)?obj.junctions:[];}else if(obj&&obj.type==='FeatureCollection'&&Array.isArray(obj.features)){links=obj.features.filter(f=>f.properties?.featureType==='junction').map(f=>f.properties?.connection).filter(Boolean);next=obj.features.filter(f=>f.geometry?.type==='LineString'&&f.properties?.featureType!=='junction').map(f=>{const p=f.properties||{};let coords=Array.isArray(p.controlPoints)?p.controlPoints:f.geometry.coordinates;return {id:p.id,name:p.name||'Carretera importada',type:p.roadType||'convencional',radius:p.radius,width:p.width,speed:p.speed,section:p.section,laneWidth:p.laneWidth,sidewalkWidth:p.sidewalkWidth,shoulderWidth:p.shoulderWidth,medianWidth:p.medianWidth,structures:p.structures||{},bridgeDetails:p.bridgeDetails||{},connections:p.connections||{},nodes:coords.map(n=>[n[1],n[0]])};});rounds=obj.features.filter(f=>f.geometry?.type==='Point'&&f.properties?.featureType==='roundabout').map(f=>({...f.properties,id:typeof f.properties.id==='string'?f.properties.id:newId(),center:[f.geometry.coordinates[1],f.geometry.coordinates[0]]}));}else throw Error('Formato no compatible.');if(next.length>300)throw Error('Límite de 300 carreteras por archivo.');
- const cleaned=next.map(r=>({id:newId(),name:String(r.name||'Carretera').slice(0,80),type:['convencional','autopista','urbana','camino'].includes(r.type)?r.type:'convencional',radius:clamp(Number(r.radius)||0,0,5000),width:clamp(Number(r.width)||7,2,50),section:sectionOf(r).section,laneWidth:sectionOf(r).laneWidth,sidewalkWidth:sectionOf(r).sidewalkWidth,shoulderWidth:sectionOf(r).shoulderWidth,medianWidth:sectionOf(r).medianWidth,speed:clamp(Number(r.speed)||90,10,130),structures:Object.fromEntries(Object.entries(r.structures||{}).filter(([k,v])=>Number.isInteger(Number(k))&&Number(k)>=0&&Number(k)<r.nodes.length-1&&['bridge','tunnel'].includes(v))),bridgeDetails:Object.fromEntries(Object.entries(r.bridgeDetails||{}).filter(([k,v])=>Number.isInteger(Number(k))&&Number(k)>=0&&Number(k)<r.nodes.length-1&&(r.structures||{})[k]==='bridge'&&v&&typeof v==='object'&&!Array.isArray(v)).map(([k,v])=>[k,bridgeNormalize(v)])),connections:Object.fromEntries(Object.entries(r.connections||{}).filter(([key,v])=>['start','end'].includes(key)&&v&&typeof v.roundaboutId==='string'&&Number.isInteger(v.armIndex)&&v.armIndex>=0&&v.armIndex<8)),nodes:r.nodes}));if(!cleaned.every(r=>validNodes(r.nodes)))throw Error('El archivo contiene coordenadas o trazados no válidos.');
+function exportGeo(){return {type:'FeatureCollection',name:'OcToS Roads V1',features:roads.map(r=>{const segments=makeGeometry(r).parts;let pts=[];segments.forEach(s=>s.points.forEach(p=>{const last=pts[pts.length-1];if(!last||Math.abs(last[0]-p[0])>1e-9||Math.abs(last[1]-p[1])>1e-9)pts.push(p);}));return {type:'Feature',properties:{id:r.id,name:r.name,roadType:r.type,radius:r.radius,width:r.width,speed:r.speed,section:sectionOf(r).section,laneWidth:sectionOf(r).laneWidth,sidewalkWidth:sectionOf(r).sidewalkWidth,shoulderWidth:sectionOf(r).shoulderWidth,medianWidth:sectionOf(r).medianWidth,structures:r.structures||{},bridgeDetails:r.bridgeDetails||{},connections:r.connections||{},controlPoints:r.nodes.map(n=>[n[1],n[0]]),speedProfile:segments.map(s=>({speed:s.speed,radius:s.radius,length:s.length})),importGroup:r.importGroup||null,official:r.official||null},geometry:{type:'LineString',coordinates:pts.map(p=>[p[1],p[0]])}};}).concat(roundabouts.map(rb=>({type:'Feature',properties:{featureType:'roundabout',id:rb.id,arms:rb.arms,diameter:rb.diameter,armLength:rb.armLength,armOffsets:rb.armOffsets,orientation:rb.orientation,width:rb.width,shape:roundaboutShape(rb),elongation:rb.elongation||0,axisAngle:rb.axisAngle||0,slipEnabled:!!rb.slipEnabled,slipFrom:rb.slipFrom,slipTo:rb.slipTo,slipRadius:rb.slipRadius,lanes:roundaboutDimensions(rb).lanes,laneWidth:roundaboutDimensions(rb).laneWidth,entryRadius:roundaboutDimensions(rb).entryRadius,exitRadius:roundaboutDimensions(rb).exitRadius},geometry:{type:'Point',coordinates:[rb.center[1],rb.center[0]]}}))).concat(junctions.map(j=>{const g=jxGeometry(j);return {type:'Feature',properties:{featureType:'junction',connection:j},geometry:{type:'LineString',coordinates:(g?.points||[]).map(pos=>[pos[1],pos[0]])}};}))};}
+function openProject(obj){let next=[],rounds=[],links=[];if(obj&&Array.isArray(obj.roads)){next=obj.roads;rounds=Array.isArray(obj.roundabouts)?obj.roundabouts:[];links=Array.isArray(obj.junctions)?obj.junctions:[];}else if(obj&&obj.type==='FeatureCollection'&&Array.isArray(obj.features)){links=obj.features.filter(f=>f.properties?.featureType==='junction').map(f=>f.properties?.connection).filter(Boolean);next=obj.features.filter(f=>f.geometry?.type==='LineString'&&f.properties?.featureType!=='junction').map(f=>{const p=f.properties||{};let coords=Array.isArray(p.controlPoints)?p.controlPoints:f.geometry.coordinates;return {id:p.id,name:p.name||'Carretera importada',type:p.roadType||'convencional',radius:p.radius,width:p.width,speed:p.speed,section:p.section,laneWidth:p.laneWidth,sidewalkWidth:p.sidewalkWidth,shoulderWidth:p.shoulderWidth,medianWidth:p.medianWidth,structures:p.structures||{},bridgeDetails:p.bridgeDetails||{},connections:p.connections||{},importGroup:p.importGroup||null,official:p.official||null,nodes:coords.map(n=>[n[1],n[0]])};});rounds=obj.features.filter(f=>f.geometry?.type==='Point'&&f.properties?.featureType==='roundabout').map(f=>({...f.properties,id:typeof f.properties.id==='string'?f.properties.id:newId(),center:[f.geometry.coordinates[1],f.geometry.coordinates[0]]}));}else throw Error('Formato no compatible.');if(next.length>300)throw Error('Límite de 300 carreteras por archivo.');
+ const cleaned=next.map(r=>({id:newId(),name:String(r.name||'Carretera').slice(0,80),type:['convencional','autopista','urbana','camino'].includes(r.type)?r.type:'convencional',radius:clamp(Number(r.radius)||0,0,5000),width:clamp(Number(r.width)||7,2,50),section:sectionOf(r).section,laneWidth:sectionOf(r).laneWidth,sidewalkWidth:sectionOf(r).sidewalkWidth,shoulderWidth:sectionOf(r).shoulderWidth,medianWidth:sectionOf(r).medianWidth,speed:clamp(Number(r.speed)||90,10,130),structures:Object.fromEntries(Object.entries(r.structures||{}).filter(([k,v])=>Number.isInteger(Number(k))&&Number(k)>=0&&Number(k)<r.nodes.length-1&&['bridge','tunnel'].includes(v))),bridgeDetails:Object.fromEntries(Object.entries(r.bridgeDetails||{}).filter(([k,v])=>Number.isInteger(Number(k))&&Number(k)>=0&&Number(k)<r.nodes.length-1&&(r.structures||{})[k]==='bridge'&&v&&typeof v==='object'&&!Array.isArray(v)).map(([k,v])=>[k,bridgeNormalize(v)])),connections:Object.fromEntries(Object.entries(r.connections||{}).filter(([key,v])=>['start','end'].includes(key)&&v&&typeof v.roundaboutId==='string'&&Number.isInteger(v.armIndex)&&v.armIndex>=0&&v.armIndex<8)),importGroup:r.importGroup==='carreteras-reales'?'carreteras-reales':null,official:r.official&&typeof r.official==='object'?r.official:null,nodes:r.nodes}));if(!cleaned.every(r=>validNodes(r.nodes)))throw Error('El archivo contiene coordenadas o trazados no válidos.');
  const oldIds=new Map(next.map((r,i)=>[r.id,cleaned[i].id]));links=links.filter(jxValid).map(j=>({...j,fromId:oldIds.get(j.fromId),toId:oldIds.get(j.toId)})).filter(j=>j.fromId&&j.toId&&j.fromId!==j.toId);
  rounds=rounds.map(({armLengths,...rb})=>rb);if(rounds.length>300||!rounds.every(validRoundabout))throw Error('Rotondas del proyecto no válidas.');if(new Set(rounds.map(r=>r.id)).size!==rounds.length)throw Error('Identificadores de rotondas duplicados.');checkpoint();roads=cleaned;roundabouts=rounds;junctions=links;selectedJunction=null;for(const road of roads){for(const [key,v] of Object.entries(road.connections)){const rb=roundaboutAt(v.roundaboutId);if(rb&&v.armIndex<rb.arms)road.nodes[key==='start'?0:road.nodes.length-1]=roundaboutGeometry(rb).arms[v.armIndex].outer.slice();else delete road.connections[key];}}selected=null;selectedRoundabout=null;selectedSegment=null;persist();render();fitAll();status('Archivo cargado: '+roads.length+' carreteras, '+roundabouts.length+' rotondas y '+junctions.length+' enlaces.');}
 
@@ -2578,6 +2615,156 @@ function addImportedRoutes(items,source){
  map.fitBounds(L.latLngBounds(fresh.flatMap(r=>r.nodes)).pad(.15));
  status(source+': importados '+fresh.length+' ejes. Se conservan los trazados anteriores.');
 }
+
+/* Ejes oficiales: consultar únicamente el rectángulo seleccionado; conservar atributos de origen.
+   Es un servicio ArcGIS de líneas, independiente del JSON local del usuario. */
+const REAL_ROADS_API='https://mapas.fomento.gob.es/arcgis3/rest/services/Hermes/0_CARRETERAS_3B/MapServer/19/query';
+let realAreaBounds=null,realAreaActive=false,realAreaBusy=false,realAreaAbort=null,realAreaDrag=null;
+function cancelRealArea(){
+ if(realAreaAbort)realAreaAbort.abort();
+ realAreaAbort=null;realAreaBusy=false;realAreaActive=false;realAreaBounds=null;realAreaDrag=null;
+ $('realAreaOverlay').hidden=true;$('realAreaPanel').hidden=true;$('realAreaBox').hidden=true;
+ $('realAreaConfirm').disabled=true;
+}
+function startRealArea(){
+ if(terrainMode||terrainBusy){status('Para importar carreteras reales, activa primero la vista 2D.');return;}
+ setMode('select');closeHeaderMenus();realAreaActive=true;realAreaBounds=null;
+ $('realAreaOverlay').hidden=false;$('realAreaPanel').hidden=false;$('realAreaBox').hidden=true;
+ $('realAreaConfirm').disabled=true;$('realAreaHelp').textContent='Arrastra sobre el mapa para dibujar el área de importación.';
+ map.setZoom(Math.max(5,map.getZoom()-2));
+ status('Importación de carreteras reales: selecciona un rectángulo.');
+}
+function realScreenPoint(event){
+ const r=$('realAreaOverlay').getBoundingClientRect();
+ return {x:clamp(event.clientX-r.left,0,r.width),y:clamp(event.clientY-r.top,0,r.height)};
+}
+function realBoxPreview(a,b){
+ const el=$('realAreaBox'),x=Math.min(a.x,b.x),y=Math.min(a.y,b.y);
+ Object.assign(el.style,{left:x+'px',top:y+'px',width:Math.abs(a.x-b.x)+'px',height:Math.abs(a.y-b.y)+'px'});
+ el.hidden=false;
+}
+function realAreaFinish(event){
+ if(!realAreaDrag||!realAreaActive)return;
+ const end=realScreenPoint(event),start=realAreaDrag;realAreaDrag=null;
+ if(Math.abs(end.x-start.x)<12||Math.abs(end.y-start.y)<12){$('realAreaBox').hidden=true;return;}
+ const a=map.containerPointToLatLng([start.x,start.y]),b=map.containerPointToLatLng([end.x,end.y]);
+ realAreaBounds={west:Math.min(a.lng,b.lng),east:Math.max(a.lng,b.lng),south:Math.min(a.lat,b.lat),north:Math.max(a.lat,b.lat)};
+ $('realAreaConfirm').disabled=false;
+ $('realAreaHelp').textContent='Área definida · confirma para consultar e importar los vectores oficiales.';
+}
+function realClipSegment(a,b,box){
+ const x=a[0],y=a[1],dx=b[0]-x,dy=b[1]-y;
+ let lo=0,hi=1;
+ const p=[-dx,dx,-dy,dy],q=[x-box.west,box.east-x,y-box.south,box.north-y];
+ for(let i=0;i<4;i++){
+  if(Math.abs(p[i])<1e-13){if(q[i]<0)return null;continue;}
+  const t=q[i]/p[i];
+  if(p[i]<0)lo=Math.max(lo,t);else hi=Math.min(hi,t);
+  if(lo>hi)return null;
+ }
+ return [[x+lo*dx,y+lo*dy],[x+hi*dx,y+hi*dy]];
+}
+function realClipLine(points,box){
+ const paths=[];let run=[];
+ const near=(a,b)=>Math.abs(a[0]-b[0])<1e-9&&Math.abs(a[1]-b[1])<1e-9;
+ const flush=()=>{if(run.length>1)paths.push(run);run=[];};
+ for(let i=1;i<points.length;i++){
+  const a=points[i-1],b=points[i];
+  if(!Array.isArray(a)||!Array.isArray(b)||!a.every(Number.isFinite)||!b.every(Number.isFinite))continue;
+  const cut=realClipSegment(a,b,box);
+  if(!cut){flush();continue;}
+  if(!run.length)run.push(cut[0]);
+  else if(!near(run[run.length-1],cut[0])){flush();run.push(cut[0]);}
+  if(!near(run[run.length-1],cut[1]))run.push(cut[1]);
+  if(!near(cut[1],b))flush();
+ }
+ flush();return paths;
+}
+function realCategory(props){
+ const kind=String(props.Tipo_de_via||'').toLowerCase();
+ if(/autopista|autovía|autovia/.test(kind))return 'autopista';
+ if(/urbana|calle/.test(kind))return 'urbana';
+ if(/camino|pista/.test(kind))return 'camino';
+ return 'convencional';
+}
+async function realRequest(params,signal){
+ const url=REAL_ROADS_API+'?'+new URLSearchParams(params);
+ const response=await fetch(url,{signal,cache:'no-store'});
+ if(!response.ok)throw Error('Servicio oficial HTTP '+response.status);
+ const data=await response.json();
+ if(data.error)throw Error(data.error.message||'Error del servicio de carreteras');
+ return data;
+}
+async function importRealArea(){
+ if(!realAreaBounds||realAreaBusy)return;
+ const box=realAreaBounds,limit=Math.min(80,300-roads.length);
+ if(limit<1){status('Límite del proyecto: 300 carreteras.');return;}
+ realAreaBusy=true;realAreaAbort=new AbortController();
+ const signal=realAreaAbort.signal;
+ $('realAreaConfirm').disabled=true;$('realAreaCancel').disabled=false;
+ $('realAreaHelp').textContent='Consultando tramos vectoriales de la zona seleccionada…';
+ const common={where:'1=1',geometry:[box.west,box.south,box.east,box.north].join(','),
+  geometryType:'esriGeometryEnvelope',inSR:'4326',spatialRel:'esriSpatialRelIntersects'};
+ try{
+  const counted=await realRequest({...common,returnCountOnly:'true',f:'json'},signal);
+  const count=Number(counted.count);
+  if(!Number.isFinite(count))throw Error('El servicio no ha devuelto un recuento válido.');
+  if(count===0)throw Error('No se han encontrado carreteras en esta área.');
+  if(count>limit)throw Error('El área contiene '+count+' tramos. Reduce el rectángulo (máximo '+limit+' por importación).');
+  const data=await realRequest({...common,outFields:'*',returnGeometry:'true',outSR:'4326',f:'geojson',resultRecordCount:String(limit)},signal);
+  if(!Array.isArray(data.features))throw Error('El servicio no devolvió GeoJSON compatible.');
+  if(data.features.length<count)throw Error('Respuesta incompleta. Reduce el área para evitar omitir ejes.');
+  const existing=new Set(roads.map(r=>r.official?.key).filter(Boolean));
+  const fresh=[];
+  for(const feature of data.features){
+   const props=feature.properties||{},geometry=feature.geometry||{};
+   const sections=geometry.type==='LineString'?[geometry.coordinates]:geometry.type==='MultiLineString'?geometry.coordinates:[];
+   const id=String(props.id??feature.id??'desconocido');
+   sections.forEach((line,sectionIndex)=>{
+    realClipLine(line,box).forEach((clipped,partIndex)=>{
+     const key='hermes19:'+id+':'+sectionIndex+':'+partIndex;
+     if(existing.has(key))return;
+     const nodes=clipped.map(p=>[p[1],p[0]]);
+     if(!validNodes(nodes))throw Error('Un eje supera 4.000 vértices o contiene coordenadas no válidas. Reduce el área.');
+     const type=realCategory(props),name=String(props.Carretera||'Carretera oficial');
+     fresh.push({id:newId(),name:name.slice(0,80),type,radius:0,width:7,speed:90,
+      section:'road11',laneWidth:3.5,shoulderWidth:1.5,medianWidth:0,sidewalkWidth:0,
+      nodes,importGroup:'carreteras-reales',official:{key,provider:'Ministerio de Transportes · HERMES',attributes:props}});
+     existing.add(key);
+    });
+   });
+  }
+  if(!fresh.length)throw Error('Los ejes ya estaban importados o quedan fuera del área.');
+  const points=fresh.reduce((n,r)=>n+r.nodes.length,0);
+  const total=roads.reduce((n,r)=>n+r.nodes.length,0);
+  if(fresh.length+roads.length>300||points+total>25000)throw Error('El área supera el límite de 300 ejes o 25.000 puntos del editor. Selecciona menos superficie.');
+  checkpoint();roads.push(...fresh);selected=fresh[0].id;persist();
+  cancelRealArea();setMode('select');
+  map.fitBounds(L.latLngBounds([[box.south,box.west],[box.north,box.east]]).pad(.12));
+  status('Carreteras reales: '+fresh.length+' ejes importados y clasificados. Se conservan los atributos originales.');
+ }catch(error){
+  if(error.name!=='AbortError'){
+   $('realAreaHelp').textContent=error.message;
+   status('Importación de carreteras reales: '+error.message);
+  }
+ }finally{
+  realAreaBusy=false;realAreaAbort=null;
+  $('realAreaConfirm').disabled=!realAreaActive||!realAreaBounds;
+ }
+}
+const realOverlay=$('realAreaOverlay');
+realOverlay.addEventListener('pointerdown',e=>{
+ if(!realAreaActive||e.button!==0||realAreaBusy)return;
+ e.preventDefault();realAreaDrag=realScreenPoint(e);realOverlay.setPointerCapture(e.pointerId);
+ $('realAreaConfirm').disabled=true;realAreaBounds=null;realBoxPreview(realAreaDrag,realAreaDrag);
+});
+realOverlay.addEventListener('pointermove',e=>{if(realAreaDrag)realBoxPreview(realAreaDrag,realScreenPoint(e));});
+realOverlay.addEventListener('pointerup',realAreaFinish);
+realOverlay.addEventListener('pointercancel',()=>{realAreaDrag=null;});
+$('realRoadsPickBtn').onclick=startRealArea;
+$('realAreaConfirm').onclick=importRealArea;
+$('realAreaCancel').onclick=()=>{cancelRealArea();status('Importación cancelada.');};
+
 function parseKml(xml){
  const doc=new DOMParser().parseFromString(xml,'application/xml');
  if(doc.getElementsByTagName('parsererror').length)throw Error('KML no válido.');
@@ -2991,7 +3178,7 @@ applySectionDefaults($('roadSection').value);updateSectionUI();updateRoundaboutU
 map.on('click',e=>{if(mode==='roundabout'){showRoundaboutCreator(e.latlng);return;}if(mode==='draw'){const snap=findArmSnap([e.latlng.lat,e.latlng.lng]);draft.push(snap?snap.point.slice():[e.latlng.lat,e.latlng.lng]);$('finishBtn').disabled=draft.length<2;cursor=null;drawPreview();status('Puntos de control: '+draft.length+'.');return;}if(selected||selectedRoundabout||selectedJunction||pendingJunction||selectedSegment){selected=null;selectedRoundabout=null;selectedJunction=null;pendingJunction=null;selectedSegment=null;render();status('Selección borrada.');}});
 map.on('mousemove',e=>{if(mode==='draw'&&draft.length){cursor=[e.latlng.lat,e.latlng.lng];drawPreview();}});
 map.on('zoomend',render);
-document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.ctrlKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo();return;}if(e.key==='Escape'){if(mode==='draw')finish(false);else setMode('select');}if(e.key==='Enter'&&mode==='draw')finish();if(e.key==='Backspace'&&mode==='draw'){e.preventDefault();undo();}if(e.key.toLowerCase()==='v')setMode('select');if(e.key.toLowerCase()==='d')setMode('draw');if(e.key.toLowerCase()==='i')setMode('insert');if(e.key.toLowerCase()==='x')setMode('remove');});
+document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.ctrlKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo();return;}if(e.key==='Escape'){if(realAreaActive){cancelRealArea();status('Importación cancelada.');return;}if(mode==='draw')finish(false);else setMode('select');}if(e.key==='Enter'&&mode==='draw')finish();if(e.key==='Backspace'&&mode==='draw'){e.preventDefault();undo();}if(e.key.toLowerCase()==='v')setMode('select');if(e.key.toLowerCase()==='d')setMode('draw');if(e.key.toLowerCase()==='i')setMode('insert');if(e.key.toLowerCase()==='x')setMode('remove');});
 try{const d=JSON.parse(localStorage.getItem(K)||'null');if(d&&Array.isArray(d.roads)&&d.roads.every(r=>validNodes(r.nodes))){roads=d.roads;roundabouts=Array.isArray(d.roundabouts)&&d.roundabouts.every(validRoundabout)?d.roundabouts.map(({armLengths,...rb})=>rb):[];junctions=Array.isArray(d.junctions)?d.junctions.filter(jxValid).filter(j=>roads.some(r=>r.id===j.fromId)&&roads.some(r=>r.id===j.toId)):[];}}catch(e){}
 setBase('dark');render();setMode('select');if(!restoreHomeView()&&(roads.length||roundabouts.length))fitAll();
 })();
