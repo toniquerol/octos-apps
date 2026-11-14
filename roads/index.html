@@ -1317,7 +1317,7 @@ function offsetCenterline(latlngs,offset){
   return ll(add(p,mul({x:-dir.y,y:dir.x},offset)),lat0);
  });
 }
-function paintRoadPart(r,part,isSelected,activeSegment,structure,clickHandler){
+function paintRoadPart(r,part,isSelected,activeSegment,structure,clickHandler,doubleClickHandler){
  const sec=sectionOf(r),roadPx=widthInPixels(sec.roadWidth);
  const walkPx=sec.street&&sec.sidewalkWidth>0?widthInPixels(sec.sidewalkWidth):0;
  const shoulderPx=sec.shoulderWidth>0?widthInPixels(sec.shoulderWidth):0;
@@ -1337,6 +1337,7 @@ function paintRoadPart(r,part,isSelected,activeSegment,structure,clickHandler){
  const pavement=structure==='bridge'?'#42d4e4':structure==='tunnel'?'#bc9bff':visible('layerSpeed')?color(part.speed):'#C2CDD0';
  const fill=stroke(part.points,pavement,visible('layerRoad')?roadPx+1:5,{interactive:true,opacity:structure==='tunnel'?.84:.96,dashArray:structure==='tunnel'?'10 7':null});
  fill.on('click',clickHandler);
+ if(doubleClickHandler)fill.on('dblclick',doubleClickHandler);
  if(visible('layerRoad')&&visible('layerAxes')&&roadPx>sec.lanes*2.7){
   // Límites de calzada frente a arcenes, incluyendo la anchura del arcén fuera de las líneas.
   if(shoulderPx>0)for(const side of [-1,1])
@@ -1465,7 +1466,7 @@ function render(){
   const g=makeGeometry(r);total+=g.total;const isSelected=r.id===selected;
   g.parts.forEach(part=>{
    const structure=(r.structures||{})[part.segmentIndex]||'normal',activeSegment=selectedSegment?.roadId===r.id&&selectedSegment.index===part.segmentIndex;
-   paintRoadPart(r,part,isSelected,activeSegment,structure,e=>{L.DomEvent.stopPropagation(e);if(mode==='connect'){jxClick(r,e.latlng);return;}if(mode==='draw'||mode==='roundabout')return;if(mode==='insert')insertNode(r,e.latlng);else if(['bridge','tunnel','normal'].includes(mode))setSectionType(r,part.segmentIndex,mode);else selectRoadPart(r,part.segmentIndex);});
+   paintRoadPart(r,part,isSelected,activeSegment,structure,e=>{L.DomEvent.stopPropagation(e);if(mode==='connect'){jxClick(r,e.latlng);return;}if(mode==='draw'||mode==='roundabout')return;if(mode==='insert')insertNode(r,e.latlng);else if(['bridge','tunnel','normal'].includes(mode))setSectionType(r,part.segmentIndex,mode);else selectRoadPart(r,part.segmentIndex);},e=>{L.DomEvent.stopPropagation(e);if(mode==='select'&&selected===r.id)insertNode(r,e.latlng);});
   });
   if(visible('layerRadius'))g.arcs.forEach(a=>{L.tooltip({permanent:true,direction:'center',className:'arc-tooltip',interactive:false,opacity:.94}).setLatLng(a.middle).setContent('R '+Math.round(a.radius)+' m · '+a.speed+' km/h').addTo(labelsGroup);});
   if(r.id===selected&&mode!=='draw'&&visible('layerNodes'))r.nodes.forEach((p,i)=>{
