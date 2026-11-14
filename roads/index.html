@@ -211,6 +211,24 @@ header{position:relative;z-index:1400}
  #mapQuickActions[hidden]+.map-inspector{top:8px;max-height:calc(100% - 16px)}
 }
 
+
+/* Lista compacta, ordenable y sin títulos duplicados en el desplegable de capas. */
+.layers-dropdown .viz-summary{justify-content:flex-start;gap:6px;text-align:left}
+.layers-dropdown .viz-summary::before{margin-right:1px}
+.layers-dropdown .viz-count{margin-left:auto}
+.layers-dropdown .viz-group:first-child{margin-top:0}
+.layers-dropdown .geo-entry{padding:7px 2px}
+.layers-dropdown .geo-entry-head{display:flex;align-items:flex-start;gap:5px}
+.layers-dropdown .geo-entry-main{font-size:10.45px;flex:1;min-width:0}
+.layers-dropdown .geo-entry-main small{font-size:9.5px}
+.layers-dropdown .geo-opacity{font-size:9.5px;margin-top:5px}
+.layers-dropdown .geo-note{font-size:10px;line-height:1.35;margin:9px 3px 3px;padding-top:9px;border-top:1px solid #444448}
+.geo-drag-handle{flex:none;display:grid;place-items:center;width:23px;height:29px;border:1px solid transparent;background:transparent;border-radius:5px;color:#b6b6bd;padding:0;margin:0;cursor:grab;touch-action:none;user-select:none}
+.geo-drag-handle:hover,.geo-drag-handle:focus-visible{background:#38383d;border-color:#5f5f63;color:#FF6A1A}
+.geo-drag-handle:active{cursor:grabbing}
+.geo-drag-handle svg{width:15px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.geo-entry.geo-dragging{opacity:.7;outline:1px dashed #FF6A1A;outline-offset:-1px}
+
 </style>
 </head>
 <body>
@@ -240,18 +258,15 @@ header{position:relative;z-index:1400}
  </div>
  <div class="menu-anchor" id="layerMenuAnchor"><button class="btn" type="button" id="layersBtn" aria-expanded="false" aria-controls="layerMenu">Capas</button>
   <div class="head-dropdown layers-dropdown" id="layerMenu" hidden>
-   <div class="dropdown-label">CAPAS CARTOGRÁFICAS Y DIBUJO</div>
-     <details class="section" open><summary class="eyebrow">Visualización</summary>
    <details class="viz-group" open><summary class="viz-summary">Fondos cartográficos</summary><div class="viz-body">
+    <label class="radio"><input type="radio" name="base" value="dark" checked><span>Mapa oscuro<small>OcToS Drive · vectorial NFS DARK</small></span></label>
     <label class="radio"><input type="radio" name="base" value="osm"><span>OpenStreetMap<small>Mapa general</small></span></label>
     <label class="radio"><input type="radio" name="base" value="ign"><span>IGN Base<small>Cartografía oficial · España</small></span></label>
     <label class="radio"><input type="radio" name="base" value="gray"><span>IGN Base gris<small>Fondo técnico</small></span></label>
-    <label class="radio"><input type="radio" name="base" value="pnoa" checked><span>PNOA ortofoto<small>Fotografía aérea · España</small></span></label>
+    <label class="radio"><input type="radio" name="base" value="pnoa"><span>PNOA ortofoto<small>Fotografía aérea · España</small></span></label>
     <label class="radio"><input type="radio" name="base" value="relief"><span>IGN Relieve<small>Relieve de terreno</small></span></label>
-    <label class="radio"><input type="radio" name="base" value="dark"><span>Mapa oscuro<small>OcToS Drive · vectorial NFS DARK</small></span></label>
    </div></details>
-   <details class="viz-group" open><summary class="viz-summary">Geoinformación <span class="viz-count" id="geoCount">—</span></summary><div class="viz-body"><p id="geoInfo" class="muted" role="status">Cargando capas aprobadas de Layers…</p><div id="geoList"></div></div></details>
-  </details>
+   <details class="viz-group" open><summary class="viz-summary">Geoinformación <span class="viz-count" id="geoCount">—</span></summary><div class="viz-body"><div id="geoList"></div><p id="geoInfo" class="muted geo-note" role="status">Cargando capas aprobadas de Layers…</p></div></details>
      <details class="section" open><summary class="eyebrow">Proyecto</summary><h2>Capas disponibles</h2>
     <label class="check"><input type="checkbox" id="layerRoad" checked><span>Calzadas<small>Anchura y contorno proyectado</small></span></label>
     <label class="check"><input type="checkbox" id="layerSpeed" checked><span>Colores por velocidad<small>Segmentación rectas y curvas</small></span></label>
@@ -541,6 +556,7 @@ function setBase(id){
    status('No se pudo cargar Mapa oscuro: '+err.message);
    const radio=document.querySelector('input[name=base][value="'+previousId+'"]');
    if(radio)radio.checked=true;
+   if(!baseLayer){setBase('pnoa');status('Mapa oscuro no disponible; se muestra PNOA.');}
   });
   return;
  }
@@ -1345,6 +1361,57 @@ function geoKind(item){return String(item.kind||'').toUpperCase();}
 function supportedGeo(item){return geoKind(item)==='WMS'?!!String(item.layer||item.wmsEnabled?.join(',')||'').trim():['XYZ','TMS'].includes(geoKind(item))&&String(item.url||'').includes('{z}');}
 function geoSaved(){try{return JSON.parse(localStorage.getItem(GEO_KEY)||'{}')||{};}catch{return {};}}
 function geoPrefsWrite(obj){try{localStorage.setItem(GEO_KEY,JSON.stringify(obj));}catch{}}
+const GEO_ORDER_KEY='octos-roads-geo-order-v1';
+function geoStoredOrder(){try{const v=JSON.parse(localStorage.getItem(GEO_ORDER_KEY)||'[]');return Array.isArray(v)?v.filter(x=>typeof x==='string'):[];}catch{return [];}}
+function geoApplyOrder(items){
+ const positions=new Map(geoStoredOrder().map((id,i)=>[id,i]));
+ return items.slice().sort((a,b)=>(positions.get(a.id)??Infinity)-(positions.get(b.id)??Infinity));
+}
+function geoStackLayers(){
+ const size=geoCatalog.length;
+ for(let i=0;i<size;i++){
+  const layer=geoOverlays.get(geoCatalog[i].id);
+  if(layer&&typeof layer.setZIndex==='function')layer.setZIndex(1000+size-i);
+ }
+}
+function geoCommitOrder(){
+ const ids=[...$('geoList').querySelectorAll('.geo-entry[data-geo-id]')].map(x=>x.dataset.geoId);
+ const found=new Map(geoCatalog.map(x=>[x.id,x]));
+ geoCatalog=ids.map(id=>found.get(id)).filter(Boolean);
+ try{localStorage.setItem(GEO_ORDER_KEY,JSON.stringify(ids));}catch{}
+ geoStackLayers();
+}
+function geoDragHandle(handle,box){
+ handle.onpointerdown=event=>{
+  if(event.button!==0)return;
+  event.preventDefault();event.stopPropagation();
+  const parent=$('geoList'),initial=[...parent.children].indexOf(box);
+  handle.setPointerCapture(event.pointerId);
+  box.classList.add('geo-dragging');
+  let moved=false;
+  const move=e=>{
+   const container=$('layerMenu'),bounds=container.getBoundingClientRect();
+   if(e.clientY<bounds.top+45)container.scrollTop-=13;
+   if(e.clientY>bounds.bottom-45)container.scrollTop+=13;
+   const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('.geo-entry');
+   if(!target||target===box||target.parentElement!==parent)return;
+   const r=target.getBoundingClientRect();
+   if(e.clientY<r.top+r.height/2)target.before(box);else target.after(box);
+   moved=true;
+  };
+  const finish=()=>{
+   handle.removeEventListener('pointermove',move);
+   handle.removeEventListener('pointerup',finish);
+   handle.removeEventListener('pointercancel',finish);
+   box.classList.remove('geo-dragging');
+   if(moved&&initial!==[...parent.children].indexOf(box))geoCommitOrder();
+  };
+  handle.addEventListener('pointermove',move);
+  handle.addEventListener('pointerup',finish);
+  handle.addEventListener('pointercancel',finish);
+ };
+}
+
 function geoItemLayer(item,opacity){
  const url=new URL(item.url,location.href);
  if(url.protocol!=='https:')throw Error('El servicio necesita URL HTTPS.');
@@ -1361,26 +1428,32 @@ function geoCheckboxChanged(id,enabled){
   try{
    const opacity=Number.isFinite(Number(opts[id].opacity))?Math.max(0,Math.min(1,Number(opts[id].opacity))):Math.max(0,Math.min(1,Number(item.opacity??.75)));
    const layer=geoItemLayer(item,opacity);layer.on('tileerror',()=>{const msg=$('geoInfo');msg.textContent='Una capa no devuelve teselas. Comprueba el servicio o la proyección en Layers.';});
-   layer.addTo(map);geoOverlays.set(id,layer);
+   layer.addTo(map);geoOverlays.set(id,layer);geoStackLayers();
   }catch(err){opts[id].enabled=false;geoPrefsWrite(opts);const check=$('geoList').querySelector('input[data-geo-id="'+CSS.escape(id)+'"]');if(check)check.checked=false;$('geoInfo').textContent='No se pudo activar '+item.name+': '+err.message;}
  }else{const old=geoOverlays.get(id);if(old)map.removeLayer(old);geoOverlays.delete(id);}
 }
 function renderGeo(items,warning=''){
  const old=new Set(items.map(x=>x.id));
  for(const [id,layer] of geoOverlays){if(!old.has(id)){map.removeLayer(layer);geoOverlays.delete(id);}}
- geoCatalog=items;
+ geoCatalog=geoApplyOrder(items);
  const enabled=geoSaved();const parent=$('geoList');parent.replaceChildren();
  $('geoCount').textContent=items.length+' aprobadas';
  if(!items.length){$('geoInfo').textContent=warning||'No hay capas de geoinformación aprobadas. El catálogo público solo tiene un fondo aprobado (OpenFreeMap Liberty).';return;}
  $('geoInfo').textContent=warning||'Capas aprobadas en Layers. Las capas se superponen al mapa sin modificar los trazados.';
- for(const item of items){
-  const box=document.createElement('div');box.className='geo-entry';
+ for(const item of geoCatalog){
+  const box=document.createElement('div');box.className='geo-entry';box.dataset.geoId=item.id;
+  const head=document.createElement('div');head.className='geo-entry-head';
+  const grip=document.createElement('button');grip.type='button';grip.className='geo-drag-handle';
+  grip.setAttribute('aria-label','Arrastrar para cambiar el orden de '+(item.name||item.id));
+  grip.title='Arrastrar capa arriba o abajo';
+  grip.innerHTML='<svg viewBox="0 0 18 24" aria-hidden="true"><path d="M6 4h.01M12 4h.01M6 9h.01M12 9h.01M6 14h.01M12 14h.01M6 19h.01M12 19h.01"/></svg>';
+  geoDragHandle(grip,box);
   const label=document.createElement('label');label.className='geo-entry-main';
   const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.dataset.geoId=item.id;
   const works=supportedGeo(item);checkbox.disabled=!works;checkbox.checked=works&&Boolean(enabled[item.id]?.enabled);
   const body=document.createElement('span');body.textContent=item.name||item.id;
   const meta=document.createElement('small');meta.textContent=(item.group||'Sin categoría')+' · '+geoKind(item)+(works?'':' · formato no disponible como capa superpuesta');
-  body.append(meta);label.append(checkbox,body);box.append(label);
+  body.append(meta);label.append(checkbox,body);head.append(grip,label);box.append(head);
   if(works){
    const control=document.createElement('label');control.className='geo-opacity';
    const slider=document.createElement('input');slider.type='range';slider.min='0';slider.max='100';slider.step='5';
@@ -1398,6 +1471,7 @@ function renderGeo(items,warning=''){
   }else box.classList.add('geo-disabled');
   parent.append(box);
  }
+ geoStackLayers();
 }
 async function syncLayersGeo(){
  const token=++geoRevision;let remote=[],warning='';
@@ -1503,7 +1577,7 @@ map.on('mousemove',e=>{if(mode==='draw'&&draft.length){cursor=[e.latlng.lat,e.la
 map.on('zoomend',render);
 document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.ctrlKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo();return;}if(e.key==='Escape'){if(mode==='draw')finish(false);else setMode('select');}if(e.key==='Enter'&&mode==='draw')finish();if(e.key==='Backspace'&&mode==='draw'){e.preventDefault();undo();}if(e.key.toLowerCase()==='v')setMode('select');if(e.key.toLowerCase()==='d')setMode('draw');if(e.key.toLowerCase()==='i')setMode('insert');if(e.key.toLowerCase()==='x')setMode('remove');});
 try{const d=JSON.parse(localStorage.getItem(K)||'null');if(d&&Array.isArray(d.roads)&&d.roads.every(r=>validNodes(r.nodes))){roads=d.roads;roundabouts=Array.isArray(d.roundabouts)&&d.roundabouts.every(validRoundabout)?d.roundabouts.map(({armLengths,...rb})=>rb):[];}}catch(e){}
-setBase('pnoa');render();setMode('select');if(!restoreHomeView()&&(roads.length||roundabouts.length))fitAll();
+setBase('dark');render();setMode('select');if(!restoreHomeView()&&(roads.length||roundabouts.length))fitAll();
 })();
 </script>
 </body></html>
