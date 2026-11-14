@@ -779,12 +779,12 @@ function terrainStop(restore=true){
 async function terrainStart(){
  if(terrainBusy||terrainMode)return;
  if(draft.length){status('Termina o cancela el trazado actual antes de activar 3D.');return;}
+ if(mode!=='select')setMode('select');
  terrainBusy=true;$('terrainModeBtn').disabled=true;
  status('Comprobando servicio público DEM…');
  try{
   await terrainCheckDEM();
   await loadDarkBridge();
-  if(mode!=='select')setMode('select');
   const point=map.getCenter();
   // Nunca mantener dos contextos MapLibre activos a la vez.
   if(baseLayer&&bases[currentBase]?.vector){
@@ -1499,7 +1499,7 @@ function drawPreview(){
  const g=makeGeometry({...params(),nodes});g.parts.forEach(p=>L.polyline(p.points,{color:'#FF6A1A',weight:4,dashArray:'8 7',interactive:false}).addTo(preview));
  draft.forEach(p=>L.circleMarker(p,{radius:4,color:'#fff',weight:2,fillColor:'#FF6A1A',fillOpacity:1,interactive:false}).addTo(preview));
 }
-function setMode(next){if(terrainMode){status('El modo 3D es solo de visualización. Vuelve a 2D para editar.');return;}if(next==='draw')inspectorClosed=false;if(next!=='roundabout'&&pendingRoundabout)closeRoundaboutCreator();if(mode==='draw'&&draft.length&&next!=='draw')finish(false);mode=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('map').classList.toggle('mode-draw',mode==='draw');$('finishBtn').disabled=mode!=='draw'||draft.length<2;
+function setMode(next){if(terrainMode||terrainBusy){status('La vista 3D es solo de visualización. Vuelve a 2D para editar.');return;}if(next==='draw')inspectorClosed=false;if(next!=='roundabout'&&pendingRoundabout)closeRoundaboutCreator();if(mode==='draw'&&draft.length&&next!=='draw')finish(false);mode=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('map').classList.toggle('mode-draw',mode==='draw');$('finishBtn').disabled=mode!=='draw'||draft.length<2;
  const hints={select:['Seleccionar / modificar','Pulsa una carretera para seleccionar. Arrastra sus puntos naranjas para ajustar curvas y radios.'],draw:['Nueva carretera','Pulsa sobre el mapa para poner vértices. Mueve el cursor para previsualizar. Pulsa Terminar o Intro.'],insert:['Insertar vértice','Pulsa sobre un tramo de carretera para insertar un punto de control.'],remove:['Eliminar vértice','Selecciona una carretera y pulsa uno de sus puntos naranjas para eliminarlo.'],roundabout:['Insertar rotonda','Pulsa el lugar de inserción. Ajusta dimensiones y orientación en la ventana emergente y confirma.'],bridge:['Marcar puente','Pulsa sobre un tramo para clasificarlo como puente (cian).'],tunnel:['Marcar túnel','Pulsa sobre un tramo para clasificarlo como túnel (violeta discontinuo).'],normal:['Devolver a superficie','Pulsa sobre un tramo para quitar la clasificación de puente o túnel.']};
  $('hintTitle').textContent=hints[mode][0];$('hintText').textContent=hints[mode][1];status('Modo '+hints[mode][0].toLowerCase());render();}
 function finish(save=true){if(save&&draft.length>=2){checkpoint();const r={id:newId(),...params(),nodes:draft.slice()};attachEndpoints(r);roads.push(r);inspectorClosed=false;selectedRoundabout=null;selectedSegment=null;selected=r.id;persist();status('Carretera creada con '+draft.length+' puntos.');}draft=[];cursor=null;preview.clearLayers();mode='select';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode==='select'));$('map').classList.remove('mode-draw');$('finishBtn').disabled=true;render();}
