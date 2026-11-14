@@ -296,17 +296,19 @@ function renderRoundabouts(){
  roundaboutGroup.clearLayers();
  for(const rb of roundabouts){
   const shape=roundaboutGeometry(rb),selectedRb=selectedRoundabout===rb.id;
-  const w=pixelWidth(rb.width),outline={color:selectedRb?'#ffce9f':'#2b2b30',weight:w+5,opacity:.95,lineCap:'butt',interactive:true};
-  const center=L.circle(rb.center,{radius:shape.islandRadius,color:'#edf2e7',weight:1,fillColor:'#58765e',fillOpacity:.7});
+  const w=pixelWidth(rb.width),outline={color:'#292929',weight:w+5,opacity:.86,lineCap:'butt',lineJoin:'round',interactive:true};
+  const pavement={color:'#C2CDD0',weight:w+1,opacity:.96,lineCap:'butt',lineJoin:'round',interactive:true};
+  const center=L.circle(rb.center,{radius:shape.islandRadius,color:'#292929',weight:1,fillColor:'#505050',fillOpacity:.9});
   center.on('click',e=>roundaboutClick(e,rb));center.addTo(roundaboutGroup);
   const rim=L.polyline(shape.ring,outline).addTo(roundaboutGroup);
   rim.on('click',e=>roundaboutClick(e,rb));
-  const face=L.polyline(shape.ring,{color:'#e0bb49',weight:w+1,opacity:1}).addTo(roundaboutGroup);
+  const face=L.polyline(shape.ring,pavement).addTo(roundaboutGroup);
   face.on('click',e=>roundaboutClick(e,rb));
   shape.arms.forEach(a=>{
    const border=L.polyline([a.inner,a.outer],outline).addTo(roundaboutGroup);border.on('click',e=>roundaboutClick(e,rb));
-   const line=L.polyline([a.inner,a.outer],{color:'#e0bb49',weight:w+1,lineCap:'butt'}).addTo(roundaboutGroup);
+   const line=L.polyline([a.inner,a.outer],pavement).addTo(roundaboutGroup);
    line.on('click',e=>roundaboutClick(e,rb));
+   const axis=visible('layerAxes')?L.polyline([a.inner,a.outer],{color:'#ffffff',weight:1.2,dashArray:'5 7',interactive:false,opacity:.75,lineCap:'butt'}).addTo(roundaboutGroup):null;
    if(selectedRb){
     const icon=L.divIcon({className:'handle-icon',html:'<div class="rb-arm-handle"></div>',iconSize:[14,14],iconAnchor:[7,7]});
     const tip=L.marker(a.outer,{icon,draggable:mode==='select',zIndexOffset:1750,title:'Girar el ángulo del ramal '+(a.index+1)+' (longitud fija)'}).addTo(markersGroup);
@@ -320,6 +322,7 @@ function renderRoundabouts(){
       rb.armOffsets[a.index]=projected.offset;
       border.setLatLngs([projected.inner,projected.point]);
       line.setLatLngs([projected.inner,projected.point]);
+      axis?.setLatLngs([projected.inner,projected.point]);
      });
      tip.on('dragend',()=>{
       const projected=angularArmPosition(rb,a.index,tip.getLatLng());
@@ -331,6 +334,7 @@ function renderRoundabouts(){
     }
    }
   });
+  if(visible('layerAxes'))L.polyline(shape.ring,{color:'#ffffff',weight:1.2,dashArray:'5 7',interactive:false,opacity:.75,lineCap:'butt',lineJoin:'round'}).addTo(roundaboutGroup);
   if(selectedRb&&mode==='select'){
    const icon=L.divIcon({className:'handle-icon',html:'<div class="handle"></div>',iconSize:[14,14],iconAnchor:[7,7]});
    const handle=L.marker(rb.center,{icon,draggable:true,zIndexOffset:1700}).addTo(markersGroup);
