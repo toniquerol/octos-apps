@@ -565,7 +565,9 @@ function autoCrossEvents(input=roads){
    if(arms.length<3||arms.length>4||nearRotonda(p)||out.some(e=>e.a===a.r.id&&e.b===b.r.id&&dist(p,e.p)<12))return;
    // Una vía de calzadas separadas no forma un cruce en X a nivel.
    if(arms.length===4&&[a.r,b.r].some(r=>sectionOf(r).medianWidth>0||r.type==='autopista'))return;
-   out.push({a:a.r.id,b:b.r.id,p,arms,stub,lat0});
+   const candidate={a:a.r.id,b:b.r.id,p,arms,stub,lat0};
+   if(arms.length===3&&!autoTConnection(candidate))return;
+   out.push(candidate);
   };
   let count=0;
   for(let u=0;u<a.segments.length&&count<16;u++)for(let v=0;v<b.segments.length&&count<16;v++){
@@ -625,6 +627,8 @@ function autoTConnection(event){
   width:sectionOf(branchRoad).roadWidth};
 }
 function autoDisplayRoad(road,events){
+ // Sin calzadas visibles se mantienen completos los ejes centrales de edición.
+ if(!visible('layerRoad'))return road;
  const connections=events.map(autoTConnection).filter(t=>t?.branch.id===road.id);
  if(!connections.length)return road;
  const nodes=road.nodes.map(p=>p.slice());
