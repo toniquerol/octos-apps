@@ -1004,6 +1004,12 @@ function terrainFeatureCollection(){
     addLine(outer,.25,'#8296A5','technical-border');
     addLine(geo.island,.25,'#8296A5','technical-border');
    }
+   const bypass=roundaboutSlipGeometry(rb);
+   if(bypass){
+    const coords=bypass.path.map(q=>ll(q,bypass.lat));
+    addLine(coords,.45,'#A3E3E9','technical-axis');
+    if(design)for(const side of [-1,1])addLine(offsetCenterline(coords,side*bypass.laneWidth/2),.25,'#8296A5','technical-border');
+   }
    mark(rb.center);
    for(const arm of geo.arms){
     const t=armTransition(rb,arm),p=t.profile;
@@ -1011,8 +1017,10 @@ function terrainFeatureCollection(){
      if(!path||!n)continue;
      const coords=path.map(q=>ll(q,t.lat));
      addLine(coords,.45,'#A3E3E9','technical-axis');
-     if(design)for(const side of [-1,1])
-      addLine(offsetCenterline(coords,side*n*p.laneWidth/2),.25,'#8296A5','technical-border');
+     if(design)for(const side of [-1,1]){
+      addLine(offsetCenterline(coords,side*n*p.laneWidth/2),.25,'#BFCBD2','technical-border');
+      if(p.shoulder+p.sidewalk>0)addLine(offsetCenterline(coords,side*(n*p.laneWidth/2+p.shoulder+p.sidewalk)),.22,'#8296A5','technical-border');
+     }
     }
     mark(arm.outer);
    }
@@ -1619,10 +1627,18 @@ function drawRoundaboutRoadways(){
     for(const [path,count] of [[t.entry,p.entry],[t.exit,p.exit]]){
      if(!path||!count)continue;
      const coords=path.map(q=>ll(q,t.lat));
-     if(design)for(const side of [-1,1])
-      axis(offsetCenterline(coords,side*count*p.laneWidth/2),'#8296A5',1.1);
+     if(design)for(const side of [-1,1]){
+      axis(offsetCenterline(coords,side*count*p.laneWidth/2),'#BFCBD2',1.1);
+      if(p.shoulder+p.sidewalk>0)axis(offsetCenterline(coords,side*(count*p.laneWidth/2+p.shoulder+p.sidewalk)),'#748996',.95);
+     }
      axis(coords,'#A3E3E9',design?1.7:2.3,!design);
     }
+   }
+   const bypass=roundaboutSlipGeometry(rb);
+   if(bypass){
+    const coords=bypass.path.map(q=>ll(q,bypass.lat));
+    if(design)for(const side of [-1,1])axis(offsetCenterline(coords,side*bypass.laneWidth/2),'#8296A5',1.1);
+    axis(coords,'#A3E3E9',design?1.7:2.3,!design);
    }
    L.circleMarker(rb.center,{radius:3,color:'#FF6A1A',weight:1,fillColor:'#0E0E10',fillOpacity:1,interactive:false}).addTo(roundaboutGroup);
   }
