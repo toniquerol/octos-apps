@@ -198,10 +198,14 @@ header{position:relative;z-index:1400}
 #mapQuickActions[hidden]+.map-inspector{top:14px;max-height:calc(100% - 28px)}
 @media(max-width:1000px) and (min-width:761px){.layout{grid-template-columns:230px minmax(0,1fr)}}
 @media(max-width:760px){
- .layout{display:block;height:calc(100dvh - 159px - 31px)}
- .head-actions{gap:3px}
- .head-actions>.btn,.head-actions .menu-anchor>.btn{font-size:9px;padding:4px 5px;min-height:28px}
- .head-dropdown{top:calc(100% + 14px);max-height:calc(100dvh - 188px)}
+ header{height:191px;grid-template-rows:44px 40px 51px 51px}
+ .layout{display:block;height:calc(100dvh - 191px - 31px)}
+ .side{top:191px}
+ .head-actions{display:flex;grid-column:1/-1;grid-row:2;justify-self:center;gap:5px}
+ .head-actions>.btn,.head-actions .menu-anchor>.btn{font-size:10px;padding:5px 8px;min-height:30px}
+ .head-left .head-tools{grid-column:1/-1;grid-row:3;justify-self:center}
+ .head-elements{grid-column:1/-1;grid-row:4;justify-self:center}
+ .head-dropdown{top:calc(100% + 9px);max-height:calc(100dvh - 202px)}
  .map-callout.map-quick-actions{top:8px;left:8px;width:min(305px,calc(100% - 16px))}
  .map-inspector{top:139px;left:8px;width:min(305px,calc(100% - 16px));max-height:calc(100% - 149px)}
  #mapQuickActions[hidden]+.map-inspector{top:8px;max-height:calc(100% - 16px)}
