@@ -370,6 +370,7 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 /* Puentes · sección transversal y alzado técnico contextuales, SVG sin dependencias. */
 #sectionPanel .bridge-transverse-drawing[hidden],#sectionPanel .bridge-field-grid[hidden],
 #mapWrap>.bridge-longitudinal-panel[hidden]{display:none!important}
+#sectionPanelDiagram[hidden]{display:none!important}
 .bridge-transverse-drawing svg,.bridge-longitudinal-drawing svg{display:block;width:100%;height:auto}
 .bridge-transverse-drawing{min-height:95px}
 .bridge-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px;margin-top:10px;padding-top:10px;border-top:1px solid #414247}
@@ -1470,18 +1471,20 @@ function applyBridgeChange(event){
 
 /* Esquema de sección transversal: utiliza los mismos parámetros que el inspector. */
 function syncSectionPanel(){
- const road=roadById(selected),panel=$('sectionPanel');
+ const road=roadById(selected),panel=$('sectionPanel'),bridge=bridgeSelectedContext();
+ syncBridgePanels(bridge);
  panel.hidden=!road||!!selectedRoundabout||mode==='draw'||terrainMode;
  if(panel.hidden)return;
  const sec=sectionOf(road),conf=sectionTypes[sec.section];
+ panel.querySelector('.section-visual-head strong').textContent=bridge?'SECCIÓN TRANSVERSAL · PUENTE':'SECCIÓN TRANSVERSAL';
  $('sectionPanelRoadName').textContent=road.name;
  panel.style.borderLeftColor=categoryColor(road.type);
  $('sectionPanelType').value=sec.section;
  for(const [id,value] of [['sectionPanelLane',sec.laneWidth],['sectionPanelShoulder',sec.shoulderWidth],
   ['sectionPanelSidewalk',sec.sidewalkWidth],['sectionPanelMedian',sec.medianWidth]])
   $(id).value=value;
- $('sectionPanelShoulderField').hidden=false;
- $('sectionPanelSidewalkField').hidden=false;
+ $('sectionPanelShoulderField').hidden=!!bridge;
+ $('sectionPanelSidewalkField').hidden=!!bridge;
  $('sectionPanelMedianField').hidden=!conf.splitAfter;
  const parts=[],segment=(part,width,sign,focus,label)=>{
   if(width<=0)return;
@@ -1500,8 +1503,8 @@ function syncSectionPanel(){
  if(sec.shoulderWidth>0)segment('shoulder',sec.shoulderWidth,'','sectionPanelShoulder','Arcén');
  if(sec.sidewalkWidth>0)segment('sidewalk',sec.sidewalkWidth,'','sectionPanelSidewalk','Acera');
  $('sectionPanelDiagram').innerHTML=parts.join('');
- $('sectionPanelDescription').textContent=conf.lanes+' carril'+(conf.lanes===1?'':'es')+' × '+format(sec.laneWidth)+' m';
- $('sectionPanelTotal').textContent=format(sec.totalWidth)+' m plataforma';
+ $('sectionPanelDescription').textContent=conf.lanes+' carril'+(conf.lanes===1?'':'es')+' × '+format(sec.laneWidth)+' m'+(bridge?' · '+(bridge.params.type==='arch'?'arco':'pilares'):'');
+ $('sectionPanelTotal').textContent=format(bridge?bridgeTotalWidth(road,bridge.params):sec.totalWidth)+' m '+(bridge?'tablero':'plataforma');
 }
 function applySectionPanel(){
  const road=roadById(selected);
@@ -2942,6 +2945,16 @@ $('sectionPanelType').addEventListener('change',()=>{
  applySectionPanel();
 });
 ['sectionPanelLane','sectionPanelShoulder','sectionPanelSidewalk','sectionPanelMedian'].forEach(id=>$(id).addEventListener('change',applySectionPanel));
+const bridgeInputs=['bridgeBarrierWidth','bridgeSidewalkWidth','bridgeShoulderWidth','bridgeDeckThickness',
+ 'bridgeClearance','bridgeSpanCount','bridgePierWidth','bridgeAbutmentInset',
+ 'bridgeArchRise','bridgeArchThickness','bridgeHangerCount'];
+$('bridgeType').addEventListener('change',event=>{bridgeEditSession=null;applyBridgeChange(event);});
+for(const id of bridgeInputs){
+ const input=$(id);
+ input.addEventListener('input',applyBridgeChange);
+ input.addEventListener('change',()=>{bridgeEditSession=null;});
+ input.addEventListener('focusout',()=>{bridgeEditSession=null;});
+}
 $('sectionPanelDiagram').addEventListener('click',e=>{
  const part=e.target.closest('[data-focus]');
  if(!part)return;
