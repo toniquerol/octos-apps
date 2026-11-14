@@ -1469,6 +1469,7 @@ function render(){
    paintRoadPart(r,part,isSelected,activeSegment,structure,e=>{L.DomEvent.stopPropagation(e);if(mode==='connect'){jxClick(r,e.latlng);return;}if(mode==='draw'||mode==='roundabout')return;if(mode==='insert')insertNode(r,e.latlng);else if(['bridge','tunnel','normal'].includes(mode))setSectionType(r,part.segmentIndex,mode);else selectRoadPart(r,part.segmentIndex);},e=>{L.DomEvent.stopPropagation(e);if(mode==='select'&&selected===r.id)insertNode(r,e.latlng);});
   });
   if(visible('layerRadius'))g.arcs.forEach(a=>{L.tooltip({permanent:true,direction:'center',className:'arc-tooltip',interactive:false,opacity:.94}).setLatLng(a.middle).setContent('R '+Math.round(a.radius)+' m · '+a.speed+' km/h').addTo(labelsGroup);});
+  if(r.id===selected&&mode!=='draw')showEditGuide(r,null,null,g);
   if(r.id===selected&&mode!=='draw'&&visible('layerNodes'))r.nodes.forEach((p,i)=>{
    const icon=L.divIcon({className:'handle-icon',html:'<div class="handle"></div>',iconSize:[14,14],iconAnchor:[7,7]});
    const mark=L.marker(p,{icon,draggable:mode==='select',zIndexOffset:1500}).addTo(markersGroup);
@@ -1588,27 +1589,25 @@ function showRoundaboutCreator(latlng){
  });
  redraw();
 }
-/* Guía provisional de geometría: no altera el proyecto hasta soltar el vértice. */
-function showEditGuide(road,index,latlng){
+/* Guía de geometría visible mientras la carretera esté seleccionada.
+   El arrastre usa una copia de los vértices y no guarda hasta soltar. */
+function showEditGuide(road,index=null,latlng=null,originalGeometry=null){
  editGuide.clearLayers();
- if(mode!=='select'||selected!==road.id)return;
- const nodes=road.nodes.slice();nodes[index]=[latlng.lat,latlng.lng];
+ if(selected!==road.id||mode==='draw'||terrainMode)return;
+ const nodes=index===null?road.nodes:road.nodes.map(p=>p.slice());
+ if(index!==null&&latlng)nodes[index]=[latlng.lat,latlng.lng];
  if(!validNodes(nodes))return;
- const geometry=makeGeometry({...road,nodes});
- const start=Math.max(0,index-2),end=Math.min(nodes.length-2,index+1);
- const parts=geometry.parts.filter(part=>part.segmentIndex>=start&&part.segmentIndex<=end);
- for(const part of parts)L.polyline(part.points,{color:'#FF6A1A',weight:3,dashArray:'5 7',opacity:.95,interactive:false,lineJoin:'round'}).addTo(editGuide);
- const nearby=nodes.slice(Math.max(0,index-1),Math.min(nodes.length,index+2));
- if(nearby.length>1)L.polyline(nearby,{color:'#FF6A1A',weight:1.4,dashArray:'2 8',opacity:.75,interactive:false}).addTo(editGuide);
- L.circleMarker(nodes[index],{radius:5,color:'#F1F1EF',weight:2,fillColor:'#FF6A1A',fillOpacity:1,interactive:false}).addTo(editGuide);
- const curves=parts.filter(part=>part.radius>0).slice(0,3);
- const readings=curves.length?curves:[parts.find(part=>part.segmentIndex===Math.max(0,index-1))||parts[0]].filter(Boolean);
- for(const part of readings){
-  const middle=part.points[Math.floor(part.points.length/2)];
-  const label=part.radius>0?'R '+Math.round(part.radius)+' m · '+part.speed+' km/h':part.speed+' km/h';
-  L.tooltip({permanent:true,direction:'top',offset:[0,-9],className:'arc-tooltip',interactive:false,opacity:.96})
-   .setLatLng(middle).setContent(label).addTo(editGuide);
- }
+ const geometry=index===null&&originalGeometry?originalGeometry:makeGeometry({...road,nodes});
+ if(!geometry.parts.length)return;
+ const axis=geometry.parts.flatMap(part=>part.points);
+ L.polyline(axis,{color:'#FF6A1A',weight:2.8,dashArray:'6 7',opacity:.95,interactive:false,lineJoin:'round'}).addTo(editGuide);
+ L.polyline(nodes,{color:'#FF6A1A',weight:1.4,dashArray:'2 8',opacity:.72,interactive:false}).addTo(editGuide);
+ if(index!==null)L.circleMarker(nodes[index],{radius:5,color:'#F1F1EF',weight:2,fillColor:'#FF6A1A',fillOpacity:1,interactive:false}).addTo(editGuide);
+ const label=(position,text)=>L.tooltip({permanent:true,direction:'top',offset:[0,-9],className:'arc-tooltip',interactive:false,opacity:.96})
+  .setLatLng(position).setContent(text).addTo(editGuide);
+ for(const arc of geometry.arcs)label(arc.middle,'R '+Math.round(arc.radius)+' m · '+arc.speed+' km/h');
+ const straight=geometry.parts.filter(part=>part.radius===0).sort((a,b)=>b.length-a.length)[0];
+ if(straight)label(straight.points[Math.floor(straight.points.length/2)],straight.speed+' km/h');
 }
 function drawPreview(){
  preview.clearLayers();if(mode!=='draw'||!draft.length)return;
