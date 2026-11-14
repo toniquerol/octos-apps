@@ -427,7 +427,7 @@ const bases={
  dark:{url:'https://tiles.openfreemap.org/styles/liberty',attr:'© OpenFreeMap · OpenMapTiles · OpenStreetMap',vector:true}
 };
 if(!window.L){$('status').textContent='No se ha podido cargar Leaflet. Comprueba la conexión.';return;}
-const map=L.map('map',{center:[40.2,-3.7],zoom:6,zoomControl:false,doubleClickZoom:false,preferCanvas:true});
+const map=L.map('map',{center:[40.2,-3.7],zoom:6,maxZoom:20,zoomControl:false,doubleClickZoom:false,preferCanvas:true});
 L.control.zoom({position:'bottomright'}).addTo(map);
 let baseLayer=null,roads=[],roundabouts=[],junctions=[],selected=null,selectedRoundabout=null,selectedJunction=null,pendingJunction=null,selectedSegment=null,mode='select',draft=[],cursor=null,history=[],preview=L.layerGroup().addTo(map);
 const roadsGroup=L.layerGroup().addTo(map),autoCrossGroup=L.layerGroup().addTo(map),junctionGroup=L.layerGroup().addTo(map),roundaboutGroup=L.layerGroup().addTo(map),markersGroup=L.layerGroup().addTo(map),labelsGroup=L.layerGroup().addTo(map),roundaboutDraftGroup=L.layerGroup().addTo(map),editGuide=L.layerGroup().addTo(map);
@@ -739,7 +739,7 @@ function setBase(id){
   return;
  }
  if(baseLayer)map.removeLayer(baseLayer);
- baseLayer=L.tileLayer(b.url,{maxZoom:19,attribution:b.attr,tms:b.tms,crossOrigin:true});
+ baseLayer=L.tileLayer(b.url,{maxZoom:20,maxNativeZoom:19,attribution:b.attr,tms:b.tms,crossOrigin:true});
  baseLayer.on('tileerror',()=>{if(!$('status').textContent.includes('Teselas'))status('Teselas del fondo no disponibles. Selecciona otro mapa base.');});
  baseLayer.addTo(map);currentBase=id;
 }
@@ -892,7 +892,7 @@ function terrainStop(restore=true){
  if(terrainMap){
   const gl=terrainMap,center=gl.getCenter(),zoom=gl.getZoom();
   terrainMap=null;gl.remove();
-  if(restore)map.setView([center.lat,center.lng],Math.max(2,Math.min(19,zoom)),{animate:false});
+  if(restore)map.setView([center.lat,center.lng],Math.max(2,Math.min(20,zoom)),{animate:false});
  }
  terrainSwitchUI(false);
  map.invalidateSize();
@@ -921,7 +921,7 @@ async function terrainStart(){
   $('terrain3DView').hidden=false;
   const gl=new maplibregl.Map({container:'terrain3DView',style:bases.dark.url,
    center:[point.lng,point.lat],zoom:map.getZoom(),pitch:60,bearing:0,
-   maxPitch:80,maxZoom:19,antialias:false,attributionControl:true});
+   maxPitch:80,maxZoom:20,antialias:false,attributionControl:true});
   terrainMap=gl;
   gl.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
   await new Promise((resolve,reject)=>{
@@ -1957,9 +1957,9 @@ function geoItemLayer(item,opacity){
  if(url.protocol!=='https:')throw Error('El servicio necesita URL HTTPS.');
  if(geoKind(item)==='WMS'){
   const layers=Array.isArray(item.wmsEnabled)?item.wmsEnabled.join(','):item.layer;
-  return L.tileLayer.wms(url.href,{layers,format:'image/png',transparent:true,version:'1.1.1',opacity,pane:'octos-roads-geoinfo',attribution:item.provider||''});
+  return L.tileLayer.wms(url.href,{layers,format:'image/png',transparent:true,version:'1.1.1',maxZoom:20,opacity,pane:'octos-roads-geoinfo',attribution:item.provider||''});
  }
- return L.tileLayer(url.href,{maxZoom:19,opacity,pane:'octos-roads-geoinfo',tms:geoKind(item)==='TMS'&&!url.href.includes('{-y}'),attribution:item.provider||''});
+ return L.tileLayer(url.href,{maxZoom:20,maxNativeZoom:19,opacity,pane:'octos-roads-geoinfo',tms:geoKind(item)==='TMS'&&!url.href.includes('{-y}'),attribution:item.provider||''});
 }
 function geoCheckboxChanged(id,enabled){
  const item=geoCatalog.find(x=>x.id===id);if(!item)return;
@@ -2057,7 +2057,7 @@ function saveHomeView(){
 function restoreHomeView(){
  try{
   const data=JSON.parse(localStorage.getItem(VIEW_KEY)||'null');
-  if(!data||!Number.isFinite(data.lat)||!Number.isFinite(data.lng)||Math.abs(data.lat)>85||Math.abs(data.lng)>180||!Number.isFinite(data.zoom)||data.zoom<1||data.zoom>19)return false;
+  if(!data||!Number.isFinite(data.lat)||!Number.isFinite(data.lng)||Math.abs(data.lat)>85||Math.abs(data.lng)>180||!Number.isFinite(data.zoom)||data.zoom<1||data.zoom>20)return false;
   if(bases[data.base]){const input=document.querySelector('input[name="base"][value="'+data.base+'"]');if(input)input.checked=true;setBase(data.base);}
   map.setView([data.lat,data.lng],data.zoom);
   return true;
