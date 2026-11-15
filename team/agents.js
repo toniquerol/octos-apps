@@ -20,6 +20,122 @@
  const storeKey="octos-team-agent-endpoint-v1";
  const three=["chief","agent-3","agent-4"];
  let busy=false;
+
+ // Dictado opcional del navegador: solo escribe; nunca envía la petición.
+ const speechStyles=document.createElement("style");
+ speechStyles.textContent=`
+ .agents-dictation{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 0}
+ .agents-dictation button{min-height:44px;border:1px solid var(--line,#383a40);border-radius:8px;padding:10px 15px;background:var(--panel2,#2a2b2f);color:var(--ink,#f1f1ef);font:inherit}
+ .agents-dictation button[aria-pressed="true"]{border-color:var(--accent,#ff6a1a)}
+ .agents-dictation button:focus-visible{outline:2px solid var(--accent,#ff6a1a);outline-offset:3px}
+ .agents-dictation button:disabled{opacity:.6;cursor:not-allowed}
+ .agents-dictation p{flex:1 1 220px;margin:0;color:var(--ink,#f1f1ef);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+ .agents-dictation small{flex-basis:100%;color:var(--ink,#f1f1ef);font-size:11px;line-height:1.5}
+ `;
+ document.head.append(speechStyles);
+ const speechBox=document.createElement("div");
+ speechBox.className="agents-dictation";
+ const dictate=document.createElement("button");
+ dictate.id="agents-dictate";dictate.type="button";
+ dictate.textContent="Dictar consulta";
+ dictate.setAttribute("aria-pressed","false");
+ dictate.setAttribute("aria-controls","agents-task");
+ dictate.setAttribute("aria-describedby","agents-dictation-status agents-dictation-help");
+ const speechStatus=document.createElement("p");
+ speechStatus.id="agents-dictation-status";
+ speechStatus.setAttribute("role","status");
+ speechStatus.setAttribute("aria-live","polite");
+ speechStatus.textContent="El dictado se añade al final. Revisa el texto antes de enviarlo.";
+ const speechHelp=document.createElement("small");
+ speechHelp.id="agents-dictation-help";
+ speechHelp.textContent="Español · Requiere permiso de micrófono. El navegador puede enviar el audio a su servicio de voz. No usa tu API de OpenAI.";
+ speechBox.append(dictate,speechStatus,speechHelp);
+ task.insertAdjacentElement("afterend",speechBox);
+ const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ let speechSession=null;
+ function speechControls(){
+  const active=!!speechSession;
+  task.readOnly=active;
+  dictate.disabled=busy||!SpeechRecognition;
+  dictate.setAttribute("aria-pressed",String(active));
+  dictate.textContent=active?"Detener dictado":"Dictar consulta";
+  [send,demo,demoSimple,health,setupButton].forEach(el=>el.disabled=busy||active);
+ }
+ function finishSpeech(session,message){
+  if(speechSession!==session)return;
+  clearTimeout(session.timer);
+  speechSession=null;speechControls();
+  speechStatus.textContent=message||"Dictado terminado. Revisa el texto y pulsa Enviar con API cuando quieras.";
+ }
+ function cancelSpeech(message){
+  const session=speechSession;if(!session)return;
+  finishSpeech(session,message);
+  try{session.recognition.abort()}catch(_){}
+ }
+ function stopSpeech(){
+  const session=speechSession;if(!session)return;
+  dictate.disabled=true;dictate.textContent="Terminando dictado…";
+  speechStatus.textContent="Terminando la transcripción…";
+  try{session.recognition.stop()}catch(_){cancelSpeech("Dictado detenido. El texto confirmado se conserva.");return}
+  clearTimeout(session.timer);
+  session.timer=setTimeout(()=>cancelSpeech("Dictado detenido. Revisa el texto confirmado antes de enviarlo."),5000);
+ }
+ dictate.addEventListener("click",()=>{
+  if(busy)return;
+  if(speechSession){stopSpeech();return}
+  if(!SpeechRecognition)return;
+  const limit=task.maxLength>0?task.maxLength:2500;
+  if(task.value.length>=limit){speechStatus.textContent="Has alcanzado los 2500 caracteres. Acorta el texto antes de dictar.";return}
+  let recognition;
+  try{recognition=new SpeechRecognition()}catch(_){speechStatus.textContent="No se pudo iniciar el dictado. Puedes escribir la consulta.";return}
+  const session={recognition,base:task.value,timer:null};
+  speechSession=session;speechControls();
+  speechStatus.textContent="Iniciando micrófono… Si se solicita, permite el acceso para dictar.";
+  recognition.lang="es-ES";recognition.continuous=true;recognition.interimResults=true;
+  recognition.onstart=()=>{
+   if(speechSession!==session)return;
+   speechStatus.textContent="Escuchando… Habla en español y pulsa Detener dictado al terminar.";
+  };
+  recognition.onresult=event=>{
+   if(speechSession!==session)return;
+   const finals=[],interim=[];
+   for(let i=0;i<event.results.length;i++){
+    const text=event.results[i][0].transcript.trim();
+    (event.results[i].isFinal?finals:interim).push(text);
+   }
+   const transcript=finals.filter(Boolean).join(" ");
+   const separator=session.base&&!/\s$/.test(session.base)?" ":"";
+   const merged=transcript?session.base+separator+transcript:session.base;
+   task.value=merged.slice(0,limit);
+   task.dispatchEvent(new Event("input",{bubbles:true}));
+   if(merged.length>=limit){
+    cancelSpeech("Se alcanzó el límite de 2500 caracteres. Revisa el final del texto antes de enviarlo.");return;
+   }
+   speechStatus.textContent=interim.length?"Escuchando: "+interim.join(" "):"Escuchando… Texto añadido. Pulsa Detener dictado al terminar.";
+  };
+  recognition.onerror=event=>{
+   if(speechSession!==session)return;
+   const messages={
+    "not-allowed":"Permiso de micrófono denegado. Permítelo en los ajustes del sitio o escribe la consulta.",
+    "service-not-allowed":"El navegador no permite el servicio de dictado. Puedes escribir la consulta.",
+    "audio-capture":"No se detecta un micrófono disponible. Comprueba que esté conectado.",
+    "network":"No se pudo conectar con el servicio de voz. Comprueba tu conexión y vuelve a intentarlo.",
+    "no-speech":"No se ha detectado voz. Pulsa Dictar consulta para volver a intentarlo.",
+    "aborted":"Dictado detenido. El texto confirmado se conserva."
+   };
+   cancelSpeech(messages[event.error]||"El dictado no pudo continuar. El texto confirmado se conserva.");
+  };
+  recognition.onend=()=>finishSpeech(session);
+  session.timer=setTimeout(stopSpeech,90000);
+  try{recognition.start()}catch(_){cancelSpeech("No se pudo iniciar el dictado. Vuelve a intentarlo o escribe la consulta.")}
+ });
+ document.addEventListener("visibilitychange",()=>{if(document.hidden)cancelSpeech("Dictado detenido al salir de la pestaña. El texto confirmado se conserva.")});
+ window.addEventListener("pagehide",()=>cancelSpeech("Dictado detenido."));
+ window.addEventListener("hashchange",()=>cancelSpeech("Dictado detenido al cambiar de pantalla."));
+ task.addEventListener("keydown",event=>{if(event.key==="Escape"&&speechSession){event.preventDefault();stopSpeech()}});
+ if(!SpeechRecognition)speechStatus.textContent="Este navegador no admite dictado. Puedes escribir o usar el dictado de tu dispositivo.";
+ speechControls();
+
  try{endpoint.value=localStorage.getItem(storeKey)||""}catch(_){}
  endpoint.addEventListener("change",()=>{try{localStorage.setItem(storeKey,endpoint.value.trim())}catch(_){}});
  function state(id,status){
@@ -29,7 +145,7 @@
  }
  function line(message){trace.textContent+=(trace.textContent?"\n":"")+message;trace.scrollTop=trace.scrollHeight}
  function setBusy(v){
-  busy=v;send.disabled=v;demo.disabled=v;demoSimple.disabled=v;health.disabled=v;setupButton.disabled=v;
+  busy=v;speechControls();
   notice.textContent=v?"Petición en ejecución; no cierres la pestaña.":notice.textContent;
  }
  function baseUrl(){
@@ -66,7 +182,7 @@
   }
  }
  async function run(){
-  if(busy)return;
+  if(busy||speechSession)return;
   let base,auth;
   try{base=baseUrl();auth=serviceToken()}catch(e){notice.textContent=e.message;return}
   const question=task.value.trim();
@@ -106,7 +222,7 @@
   }finally{setBusy(false)}
  }
  async function check(){
-  if(busy)return;
+  if(busy||speechSession)return;
   let base,auth;
   try{base=baseUrl();auth=serviceToken()}catch(e){notice.textContent=e.message;return}
   setBusy(true);notice.textContent="Comprobando conexión...";
@@ -121,7 +237,7 @@
   finally{setBusy(false)}
  }
  async function registerKey(){
-  if(busy)return;
+  if(busy||speechSession)return;
   let base;
   try{base=baseUrl()}catch(error){notice.textContent=error.message;return}
   const adminSecret=setupToken.value.trim();
@@ -156,7 +272,7 @@
  setupButton.addEventListener("click",()=>{void registerKey()});
  function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
  async function simulate(mode){
-  if(busy)return;
+  if(busy||speechSession)return;
   setBusy(true);begin("SIMULACIÓN LOCAL · "+(mode==="simple"?"Consulta breve":"Proyecto departamental")+" · 0 tokens API");
   try{
    line("01 · Controlador recibe la petición y registra su objetivo.");await sleep(350);
