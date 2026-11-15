@@ -1,0 +1,30 @@
+/* GLB navigator · isolated from the 2D editor */
+.octos-nav3d[hidden],.octos-nav3d [hidden]{display:none!important}
+#mapWrap>.octos-nav3d{position:absolute;z-index:1370;right:10px;top:9px;color:#F1F1EF;font:11px "IBM Plex Sans",system-ui,sans-serif;pointer-events:none}
+.octos-nav3d-head{display:flex;align-items:flex-start;justify-content:flex-end;gap:6px}
+.octos-nav3d-head button{pointer-events:auto;cursor:pointer;border:1px solid #56575c;background:#202125f5;color:#F1F1EF;border-radius:7px}
+.octos-nav3d-toggle{height:33px;min-width:49px;padding:0 7px;font-size:11px;font-weight:700}
+.octos-nav3d-toggle span{color:#FF6A1A;font-size:13px}
+.octos-nav3d-toggle[aria-expanded=true],.octos-nav3d-head button:hover{border-color:#FF6A1A}
+.octos-nav3d-preview{position:relative;display:block;width:var(--octos-nav3d-size,92px);height:var(--octos-nav3d-size,92px);padding:0;touch-action:none;overflow:hidden}
+.octos-nav3d-preview canvas{display:block;width:100%;height:100%;pointer-events:none}
+.octos-nav3d-north{position:absolute;top:3px;left:6px;color:#FF6A1A;font-size:10px;font-weight:800;pointer-events:none}
+.octos-nav3d-panel{pointer-events:auto;position:absolute;top:42px;right:0;box-sizing:border-box;width:min(312px,calc(100vw - 25px));max-height:min(75vh,550px);overflow:auto;padding:13px;border:1px solid #56575c;border-radius:9px;background:#202124fb;box-shadow:0 8px 30px #000b}
+.octos-nav3d-title{font-weight:750;font-size:11px;letter-spacing:.055em;color:#FF9D65;margin-bottom:10px}
+.octos-nav3d-file{display:block;padding:9px;border:1px solid #FF6A1A;border-radius:5px;background:#35291f;font-weight:650;cursor:pointer;text-align:center}
+.octos-nav3d-file input{display:none}
+.octos-nav3d-name{margin:9px 0 12px;font-size:10px;color:#c7c8cb;overflow-wrap:anywhere}
+.octos-nav3d-sliders{display:grid;gap:11px}
+.octos-nav3d-slider{display:grid;grid-template-columns:1fr auto;gap:4px;color:#f1f1ef;font-size:10px}
+.octos-nav3d-slider output{color:#FF9D65;font-variant-numeric:tabular-nums}
+.octos-nav3d-slider input{grid-column:1/-1;width:100%;margin:0;accent-color:#FF6A1A}
+.octos-nav3d-actions{display:flex;gap:7px;margin-top:14px}
+.octos-nav3d-actions button{flex:1;min-width:0;padding:8px 5px;border-radius:5px;background:#2A2B2F;color:#F1F1EF;border:1px solid #54555b;cursor:pointer;font:10px "IBM Plex Sans",system-ui,sans-serif}
+.octos-nav3d-actions button:hover{border-color:#FF6A1A}
+.octos-nav3d-status{margin:11px 0 0;font-size:10px;line-height:1.4;color:#b9babd}
+.octos-nav3d-status.error{color:#ffad91}
+#mapWrap.octos-nav3d-custom #terrain3DView .maplibregl-ctrl-top-right .maplibregl-ctrl-group{display:none}
+@media(max-width:760px){
+ #mapWrap>.octos-nav3d{top:7px;right:7px}
+ .octos-nav3d-panel{max-height:calc(100dvh - 230px)}
+}
