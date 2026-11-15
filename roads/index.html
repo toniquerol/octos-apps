@@ -296,7 +296,9 @@ header{position:relative;z-index:1400}
 
 
 /* Terreno real: vista MapLibre solo-lectura; el editor Leaflet queda intacto. */
-.terrain-3d-view{position:absolute;inset:0;z-index:420;background:#10151c}
+.terrain-3d-view{position:absolute;inset:0;width:100%;height:100%;z-index:420;background:#10151c}
+/* Mantener el editor 2D visible hasta que el primer fotograma 3D esté listo. */
+.terrain-3d-view:not(.terrain-ready){visibility:hidden}
 .terrain-3d-view[hidden]{display:none!important}
 .terrain-mode-btn{position:absolute;bottom:195px;right:13px;z-index:1160;min-width:34px;height:33px;border:1px solid #626269;border-radius:5px;color:#F1F1EF;background:#202125ee;font:700 12px "IBM Plex Sans",system-ui,sans-serif;cursor:pointer}
 .terrain-mode-btn:hover,.terrain-mode-btn[aria-pressed=true]{border-color:#FF6A1A;color:#FF9D65}
@@ -1113,14 +1115,14 @@ map.on('zoomend moveend',()=>{if(currentBase==='dark'&&baseLayer?.getMaplibreMap
    Atribución: Mapzen; en Europa, Copernicus EU-DEM, demás fuentes según Tilezen. */
 const TERRAIN_TILES='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 let terrainMode=false,terrainBusy=false,terrainMap=null,terrainEntryBase=null;
-const TERRAIN_SOURCE='octos-aws-dem',TERRAIN_ROADS='octos-roads-3d';
+const TERRAIN_SOURCE='octos-roads-dem-mapterhorn',TERRAIN_BACKUP='octos-roads-dem-aws',TERRAIN_ROADS='octos-roads-3d';
 const HILLSHADE_SOURCE='octos-relieve-dem',HILLSHADE_LAYER='octos-relieve-sombra';
 /* Iluminación cartográfica del MDT: 135º desde el norte = sureste.
    Es sombreado de pendientes, no sombras proyectadas de edificios u objetos. */
 function syncReliefHillshade(gl){
  if(!gl||!gl.getStyle()?.layers)return;
  // En 3D se reutiliza el DEM del terreno, sin duplicar teselas.
- const source=gl.getSource(TERRAIN_SOURCE)?TERRAIN_SOURCE:HILLSHADE_SOURCE;
+ const source=terrainMap===gl&&gl.getSource(TERRAIN_SOURCE)?(gl.getTerrain()?.source||TERRAIN_SOURCE):HILLSHADE_SOURCE;
  if(!gl.getSource(source)){
   gl.addSource(source,{type:'raster-dem',tiles:[TERRAIN_TILES],tileSize:256,
    encoding:'terrarium',minzoom:0,maxzoom:14,
@@ -1342,6 +1344,7 @@ function terrainSwitchUI(active){
  $('mapWrap').classList.toggle('terrain-active',active);
  document.body.classList.toggle('terrain-readonly',active);
  $('terrain3DView').hidden=!active;
+ $('terrain3DView').classList.toggle('terrain-ready',active);
 }
 function terrainStop(restore=true){
  if(terrainMap){
@@ -1352,6 +1355,7 @@ function terrainStop(restore=true){
   if(restore)map.setView([center.lat,center.lng],Math.max(2,Math.min(20,zoom)),{animate:false});
  }
  terrainSwitchUI(false);
+ $('terrain3DView').classList.remove('terrain-ready');
  map.invalidateSize();
  // Al entrar se libera el contexto MapLibre del fondo 2D para limitar GPU.
  if(!baseLayer&&terrainEntryBase){
@@ -1365,41 +1369,62 @@ async function terrainStart(){
  if(draft.length){status('Termina o cancela el trazado actual antes de activar 3D.');return;}
  if(mode!=='select')setMode('select');
  terrainBusy=true;$('terrainModeBtn').disabled=true;
- status('Comprobando servicio público DEM…');
+ status('Preparando el mapa 3D de OcToS Drive…');
  try{
-  await terrainCheckDEM();
   await loadDarkBridge();
   const point=map.getCenter();
-  // Nunca mantener dos contextos MapLibre activos a la vez.
+  // Liberar el WebGL del fondo vectorial 2D antes de abrir un mapa 3D independiente.
   if(baseLayer&&bases[currentBase]?.vector){
    terrainEntryBase=currentBase;
    ++baseChange;map.removeLayer(baseLayer);baseLayer=null;
   }
-  $('terrain3DView').hidden=false;
-  const gl=new maplibregl.Map({container:'terrain3DView',style:bases.dark.url,
+  const view=$('terrain3DView');
+  view.classList.remove('terrain-ready');
+  view.hidden=false;
+  const gl=new maplibregl.Map({container:view,style:bases.dark.url,
    center:[point.lng,point.lat],zoom:map.getZoom(),pitch:60,bearing:0,
    maxPitch:80,maxZoom:20,antialias:false,attributionControl:true});
   terrainMap=gl;
   gl.addControl(new maplibregl.NavigationControl({showZoom:false,showCompass:true,visualizePitch:true}),'top-right');
-  window.dispatchEvent(new CustomEvent('octos:terrain-map',{detail:{map:gl}}));
-  await new Promise((resolve,reject)=>{
-   const timeout=setTimeout(()=>reject(Error('Tiempo agotado al cargar el mapa 3D')),13000);
-   gl.once('load',()=>{clearTimeout(timeout);resolve();});
-   gl.once('error',event=>{if(!gl.isStyleLoaded()){clearTimeout(timeout);reject(event.error||Error('Error de estilo 3D'));}});
+  const awaitEvent=(name,timeoutMs)=>new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>finish(Error('Tiempo agotado al cargar el mapa 3D')),timeoutMs);
+   function finish(err){clearTimeout(timer);gl.off(name,onReady);gl.off('error',onError);err?reject(err):resolve();}
+   function onReady(){finish();}
+   function onError(event){if(name==='load'&&!gl.isStyleLoaded())finish(event.error||Error('Error de estilo 3D'));}
+   gl.on(name,onReady);gl.on('error',onError);
+   if(name==='idle'&&gl.loaded()&&gl.areTilesLoaded())finish();
   });
+  await awaitEvent('load',15000);
   styleDarkDrive(gl);
-  gl.addSource(TERRAIN_SOURCE,{type:'raster-dem',tiles:[TERRAIN_TILES],
-   tileSize:256,encoding:'terrarium',minzoom:0,maxzoom:14,
-   attribution:'Relieve © Mapzen Terrain Tiles / AWS Open Data · Europa: Copernicus EU-DEM'});
-  gl.setTerrain({source:TERRAIN_SOURCE,exaggeration:1});
+  // DEM coincidente con Drive: Mapterhorn principal y Mapzen AWS alternativo.
+  gl.addSource(TERRAIN_SOURCE,{type:'raster-dem',url:'https://tiles.mapterhorn.com/tilejson.json',
+   tileSize:512,encoding:'terrarium',attribution:'© Mapterhorn · fuentes altimétricas abiertas'});
+  gl.addSource(TERRAIN_BACKUP,{type:'raster-dem',tiles:[TERRAIN_TILES],
+   tileSize:256,maxzoom:15,encoding:'terrarium',attribution:'© Mapzen / AWS Open Data'});
+  gl.setTerrain({source:TERRAIN_SOURCE,exaggeration:1.25});
   syncReliefHillshade(gl);
   terrainAddGeometry(gl);
+  let demFallback=false;
   gl.on('error',event=>{
-   const msg=event.error?.message||'';
-   if(event.sourceId===TERRAIN_SOURCE||msg.includes('elevation-tiles-prod'))
-    status('No se pudo cargar alguna tesela DEM. Vuelve a 2D si el relieve no aparece.');
+   const message=String(event.error?.message||'');
+   if(!demFallback&&(event.sourceId===TERRAIN_SOURCE||/mapterhorn\.com/i.test(message))){
+    demFallback=true;
+    try{
+     gl.setTerrain({source:TERRAIN_BACKUP,exaggeration:1.25});
+     if(gl.getLayer(HILLSHADE_LAYER))gl.removeLayer(HILLSHADE_LAYER);
+     syncReliefHillshade(gl);
+     status('Mapterhorn inaccesible; utilizando relieve AWS como OcToS Drive.');
+    }catch(err){status('No se pudo activar el DEM alternativo: '+err.message);}
+   }else if(event.sourceId===TERRAIN_BACKUP||/elevation-tiles-prod/i.test(message)){
+    status('Error de alguna tesela DEM AWS; el mapa vectorial sigue disponible.');
+   }
   });
+  // Esperar a la representación 3D, sin retirar anticipadamente el visor 2D.
+  gl.resize();
+  await awaitEvent('idle',18000);
   terrainSwitchUI(true);
+  gl.resize();gl.triggerRepaint();
+  window.dispatchEvent(new CustomEvent('octos:terrain-map',{detail:{map:gl}}));
   status('Vista 3D · relieve real, carreteras ajustadas al terreno · edición disponible en 2D.');
  }catch(error){
   terrainStop(false);
