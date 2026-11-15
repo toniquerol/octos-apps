@@ -25,8 +25,8 @@
  const speechStyles=document.createElement("style");
  speechStyles.textContent=`
  .agents-dictation{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 0}
- .agents-dictation button{min-height:44px;border:1px solid var(--line,#383a40);border-radius:8px;padding:10px 15px;background:var(--panel2,#2a2b2f);color:var(--ink,#f1f1ef);font:inherit}
- .agents-dictation button[aria-pressed="true"]{border-color:var(--accent,#ff6a1a)}
+ .agents-dictation button{width:44px;height:44px;min-height:44px;flex:0 0 44px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line,#383a40);border-radius:8px;padding:0;background:var(--panel2,#2a2b2f);color:var(--ink,#f1f1ef);font:inherit}
+ .agents-dictation button[aria-pressed="true"]{border-color:var(--accent,#ff6a1a);color:var(--accent,#ff6a1a)}
  .agents-dictation button:focus-visible{outline:2px solid var(--accent,#ff6a1a);outline-offset:3px}
  .agents-dictation button:disabled{opacity:.6;cursor:not-allowed}
  .agents-dictation p{flex:1 1 220px;margin:0;color:var(--ink,#f1f1ef);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
@@ -37,7 +37,12 @@
  speechBox.className="agents-dictation";
  const dictate=document.createElement("button");
  dictate.id="agents-dictate";dictate.type="button";
- dictate.textContent="Dictar consulta";
+ dictate.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg>';
+ function labelDictation(label){
+  dictate.setAttribute("aria-label",label);
+  dictate.title=label;
+ }
+ labelDictation("Dictar consulta");
  dictate.setAttribute("aria-pressed","false");
  dictate.setAttribute("aria-controls","agents-task");
  dictate.setAttribute("aria-describedby","agents-dictation-status agents-dictation-help");
@@ -58,7 +63,7 @@
   task.readOnly=active;
   dictate.disabled=busy||!SpeechRecognition;
   dictate.setAttribute("aria-pressed",String(active));
-  dictate.textContent=active?"Detener dictado":"Dictar consulta";
+  labelDictation(active?"Detener dictado":"Dictar consulta");
   [send,demo,demoSimple,health,setupButton].forEach(el=>el.disabled=busy||active);
  }
  function finishSpeech(session,message){
@@ -74,7 +79,7 @@
  }
  function stopSpeech(){
   const session=speechSession;if(!session)return;
-  dictate.disabled=true;dictate.textContent="Terminando dictado…";
+  dictate.disabled=true;labelDictation("Terminando dictado…");
   speechStatus.textContent="Terminando la transcripción…";
   try{session.recognition.stop()}catch(_){cancelSpeech("Dictado detenido. El texto confirmado se conserva.");return}
   clearTimeout(session.timer);
