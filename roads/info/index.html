@@ -44,7 +44,7 @@ h1{font-size:clamp(43px,5.2vw,80px);line-height:1.06;letter-spacing:-.075em;font
 .preview-window{position:relative;border:1px solid #52545b;border-radius:12px;overflow:hidden;background:#16171a;box-shadow:0 26px 65px #0009}
 .preview-title{height:40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #34363b;background:#202126;padding:0 16px;color:#c5c5c9;font-size:11px}
 .preview-dot{display:inline-block;width:8px;height:8px;border-radius:100%;background:var(--accent);margin-right:9px}
-.preview-window iframe{border:0;display:block;width:100%;height:340px;background:#1a1d23;pointer-events:none}
+.preview-window .static-demo{height:340px}
 .preview-caption{padding:11px 16px;color:#aaadb3;font-size:11px;border-top:1px solid #35363b}
 .stats{border-block:1px solid var(--line);background:#151518}
 .stats .shell{display:grid;grid-template-columns:repeat(4,1fr)}
@@ -70,7 +70,7 @@ h2{font-size:clamp(30px,3.15vw,46px);line-height:1.14;letter-spacing:-.055em;fon
 .viewer-head .live{display:flex;gap:8px;align-items:center;color:#bfc1c7}
 .viewer-head .live:before{content:"";width:7px;height:7px;background:#ff6a1a;border-radius:50%}
 .viewer-frame{height:min(61vw,660px);min-height:340px}
-.viewer-frame iframe{width:100%;height:100%;display:block;border:0;background:#1a2029;pointer-events:none}
+.viewer-frame .static-demo{height:100%;width:100%}
 .viewer-footer{padding:15px 18px;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;font-size:11px;color:#b7b9c0;background:#202126}
 .viewer-footer strong{font-weight:700;color:var(--text)}
 .workflow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:36px}
@@ -83,10 +83,27 @@ h2{font-size:clamp(30px,3.15vw,46px);line-height:1.14;letter-spacing:-.055em;fon
 small.legal{display:block;color:#95979f;font-size:11px;max-width:980px;line-height:1.65;margin-top:27px}
 footer{border-top:1px solid #393a3f;padding:26px 0;color:#9ea0a8;font-size:11px}
 footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
-@media(max-width:1000px){.hero-grid{gap:30px}nav{gap:12px}.preview-window iframe{height:270px}}
-@media(max-width:760px){.shell{width:min(100% - 32px,620px)}nav a:not(.btn){display:none}.hero{padding:52px 0}.hero-grid{grid-template-columns:1fr}.hero-lead{max-width:none}.preview-window iframe{height:250px}.stats .shell{grid-template-columns:repeat(2,1fr)}.stat{padding:17px 14px;border-bottom:1px solid #34363b}.stat:nth-child(2){border-right:0}.grid{grid-template-columns:1fr 1fr}section.content{padding:65px 0}.gallery{padding:65px 0}.section-head{display:block}.tabs{justify-content:start;margin-top:22px}.workflow{grid-template-columns:repeat(2,1fr)}.highlight{grid-template-columns:1fr;padding:28px 23px}.viewer-frame{height:360px}.hero-note{font-size:11px}}
+@media(max-width:1000px){.hero-grid{gap:30px}nav{gap:12px}.preview-window .static-demo{height:270px}}
+@media(max-width:760px){.shell{width:min(100% - 32px,620px)}nav a:not(.btn){display:none}.hero{padding:52px 0}.hero-grid{grid-template-columns:1fr}.hero-lead{max-width:none}.preview-window .static-demo{height:250px}.stats .shell{grid-template-columns:repeat(2,1fr)}.stat{padding:17px 14px;border-bottom:1px solid #34363b}.stat:nth-child(2){border-right:0}.grid{grid-template-columns:1fr 1fr}section.content{padding:65px 0}.gallery{padding:65px 0}.section-head{display:block}.tabs{justify-content:start;margin-top:22px}.workflow{grid-template-columns:repeat(2,1fr)}.highlight{grid-template-columns:1fr;padding:28px 23px}.viewer-frame{height:360px}.hero-note{font-size:11px}}
 @media(max-width:530px){h1{font-size:42px}.grid{grid-template-columns:1fr}.viewer-frame{height:290px;min-height:290px}.viewer-head{font-size:10px;padding:10px}.viewer-footer{font-size:10px}.btn{padding:10px 14px}.workflow{gap:8px}.brand-kicker{font-size:9px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
+
+/* Demostración estática: no se solicita el editor ni sus recursos. */
+.static-demo{width:100%;display:grid;grid-template-columns:27% minmax(0,1fr);background:#121920;overflow:hidden}
+.static-sidebar{background:#202227;border-right:1px solid #4b4d53;padding:18px 14px;display:flex;flex-direction:column;gap:11px;overflow:hidden}
+.static-sidebar strong{color:#f1f1ef;white-space:nowrap;font:800 13px Manrope,sans-serif;letter-spacing:.02em;margin-bottom:15px}
+.static-sidebar strong span{color:#ff6a1a}
+.static-sidebar small{font:700 9px Manrope,sans-serif;letter-spacing:.1em;color:#afb2ba;margin-top:10px}
+.static-sidebar i{display:block;background:#4c5059;border-radius:3px;width:78%;height:7px;flex:none}
+.static-sidebar i:nth-of-type(2n){width:53%}
+.static-map{min-width:0;min-height:0;position:relative;display:grid;place-items:center}
+.static-map svg{width:100%;height:100%;display:block}
+.static-label{position:absolute;top:12px;right:12px;max-width:80%;background:#111820e0;border:1px solid #55606b;border-radius:5px;padding:8px 10px;color:#bfc5ce;font:700 9px Manrope,sans-serif;letter-spacing:.08em;text-align:right}
+.static-demo[data-view="speed"] .road-points{display:none}
+.static-demo[data-view="speed"] .road-center{stroke:#55b7cc;stroke-width:6;stroke-dasharray:none}
+.static-demo[data-view="axes"] .road-center{stroke:#ff6a1a;stroke-width:4;stroke-dasharray:8 7}
+.static-demo[data-view="design"] .road-center{stroke:#ffd9a8;stroke-width:2.5;stroke-dasharray:13 11}
+@media(max-width:530px){.static-sidebar{padding:13px 9px}.static-sidebar strong{font-size:10px}.static-sidebar small{font-size:7px}.static-label{font-size:7px;padding:5px}}
 </style>
 </head>
 <body>
@@ -98,7 +115,7 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
   </a>
   <nav aria-label="Navegación">
    <a href="#funciones">Funciones</a><a href="#interfaz">Interfaz real</a>
-   <a href="#metodo">Flujo de trabajo</a><a class="btn primary small" href="../" target="_blank" rel="noopener">Abrir aplicación</a>
+   <a href="#metodo">Flujo de trabajo</a><a class="btn primary small" href="https://octos3dstudio.wordpress.com/contacto/" target="_blank" rel="noopener noreferrer">Solicitar acceso</a>
   </nav>
  </div>
 </header>
@@ -110,15 +127,26 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
     <h1>De una línea en el mapa a una carretera.</h1>
     <p class="hero-lead">OcToS Roads combina edición directa de ejes viarios, geometría paramétrica, secciones transversales y visualización cartográfica en un único entorno web.</p>
     <div class="hero-actions">
-     <a class="btn primary" href="../" target="_blank" rel="noopener">Abrir OcToS Roads <span aria-hidden="true">↗</span></a>
+     <a class="btn primary" href="https://octos3dstudio.wordpress.com/contacto/" target="_blank" rel="noopener noreferrer">Solicitar acceso <span aria-hidden="true">↗</span></a>
      <a class="btn" href="#interfaz">Ver interfaz real</a>
     </div>
     <p class="hero-note">El eje sigue siendo editable. Al modificarlo se recalculan las curvas y la representación de la calzada. El editor conserva herramientas específicas para rotondas, enlaces, puentes y túneles.</p>
    </div>
    <div class="preview-window">
-    <div class="preview-title"><span><span class="preview-dot"></span>OCToS ROADS / VISOR REAL</span><span>DISEÑO TÉCNICO</span></div>
-    <iframe title="Vista demostrativa de OcToS Roads en modo diseño" loading="eager" src="../?showcase=design" tabindex="-1" aria-label="Aplicación real, muestra sintética de trazados"></iframe>
-    <div class="preview-caption">Interfaz original · escena de demostración sintética · sin datos privados</div>
+    <div class="preview-title"><span><span class="preview-dot"></span>OcToS ROADS / VISTA ILUSTRATIVA</span><span>DISEÑO TÉCNICO</span></div>
+    <div class="static-demo" data-view="design" role="img" aria-label="Ilustración estática del diseño de carreteras, sin enlace a la aplicación">
+<div class="static-sidebar"><strong>OcToS <span>ROADS</span></strong><small>CAPAS Y GEOMETRÍA</small><i></i><i></i><i></i><small>PARÁMETROS</small><i></i><i></i><i></i></div>
+<div class="static-map"><svg viewBox="0 0 800 480" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+<defs><pattern id="static-grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#607386" stroke-width=".7" opacity=".22"/></pattern></defs>
+<rect width="800" height="480" fill="#151f2a"/><rect width="800" height="480" fill="url(#static-grid)"/>
+<path d="M-50 390Q155 315 300 265T850 75" fill="none" stroke="#313841" stroke-width="62" stroke-linecap="round"/>
+<path d="M-50 390Q155 315 300 265T850 75" fill="none" stroke="#85898e" stroke-width="31" stroke-linecap="round"/>
+<path d="M-50 390Q155 315 300 265T850 75" fill="none" stroke="#ffd9a8" stroke-width="2.5" stroke-dasharray="13 11" class="road-center"/>
+<path d="M150 -30Q180 135 300 265T630 500" fill="none" stroke="#6a737c" stroke-width="25" opacity=".65"/>
+<path d="M150 -30Q180 135 300 265T630 500" fill="none" stroke="#ff6a1a" stroke-width="3" stroke-dasharray="10 8"/>
+<g class="road-points" fill="#ff6a1a" stroke="#111820" stroke-width="4"><circle cx="63" cy="348" r="8"/><circle cx="208" cy="300" r="8"/><circle cx="300" cy="265" r="8"/><circle cx="510" cy="184" r="8"/><circle cx="730" cy="104" r="8"/></g></svg>
+<div class="static-label">VISTA ILUSTRATIVA · NO INTERACTIVA</div></div></div>
+    <div class="preview-caption">Ilustración estática · sin acceso a la aplicación</div>
    </div>
   </div>
  </div>
@@ -152,7 +180,7 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
  <section class="gallery" id="interfaz">
   <div class="shell">
    <div class="section-head">
-    <div><div class="eyebrow">Vista de producto</div><h2>La aplicación, no un render.</h2><p>La ventana inferior muestra OcToS Roads auténtico con un trazado sintético de demostración. Cambia entre los modos de representación.</p></div>
+    <div><div class="eyebrow">Vista de producto</div><h2>Diseño del producto sin acceso al editor.</h2><p>La ventana inferior presenta una ilustración no interactiva de los modos de representación.</p></div>
     <div class="tabs" role="tablist" aria-label="Elegir vista de la aplicación">
       <button type="button" role="tab" data-view="speed" aria-selected="true">Velocidades</button>
       <button type="button" role="tab" data-view="axes" aria-selected="false">Ejes</button>
@@ -160,11 +188,22 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
     </div>
    </div>
    <div class="viewer">
-     <div class="viewer-head"><span id="viewer-title">OCToS ROADS · VISTA DE VELOCIDADES</span><span class="live">Aplicación original</span></div>
-     <div class="viewer-frame"><iframe id="viewer" title="Demostración real de OcToS Roads" loading="lazy" src="../?showcase=speed" tabindex="-1"></iframe></div>
-     <div class="viewer-footer"><span id="viewer-description"><strong>Velocidades.</strong> Calzadas segmentadas visualmente por velocidad geométrica.</span><span>Demostración sin guardar cambios</span></div>
+     <div class="viewer-head"><span id="viewer-title">OCToS ROADS · VISTA DE VELOCIDADES</span><span class="live">Vista ilustrativa</span></div>
+     <div class="viewer-frame"><div id="viewer" class="static-demo" data-view="speed" role="img" aria-label="Ilustración estática del diseño de carreteras, sin enlace a la aplicación">
+<div class="static-sidebar"><strong>OcToS <span>ROADS</span></strong><small>CAPAS Y GEOMETRÍA</small><i></i><i></i><i></i><small>PARÁMETROS</small><i></i><i></i><i></i></div>
+<div class="static-map"><svg viewBox="0 0 800 480" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+<defs><pattern id="static-grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#607386" stroke-width=".7" opacity=".22"/></pattern></defs>
+<rect width="800" height="480" fill="#151f2a"/><rect width="800" height="480" fill="url(#static-grid)"/>
+<path d="M-50 390Q155 315 300 265T850 75" fill="none" stroke="#313841" stroke-width="62" stroke-linecap="round"/>
+<path d="M-50 390Q155 315 300 265T850 75" fill="none" stroke="#85898e" stroke-width="31" stroke-linecap="round"/>
+<path d="M-50 390Q155 315 300 265T850 75" fill="none" stroke="#ffd9a8" stroke-width="2.5" stroke-dasharray="13 11" class="road-center"/>
+<path d="M150 -30Q180 135 300 265T630 500" fill="none" stroke="#6a737c" stroke-width="25" opacity=".65"/>
+<path d="M150 -30Q180 135 300 265T630 500" fill="none" stroke="#ff6a1a" stroke-width="3" stroke-dasharray="10 8"/>
+<g class="road-points" fill="#ff6a1a" stroke="#111820" stroke-width="4"><circle cx="63" cy="348" r="8"/><circle cx="208" cy="300" r="8"/><circle cx="300" cy="265" r="8"/><circle cx="510" cy="184" r="8"/><circle cx="730" cy="104" r="8"/></g></svg>
+<div class="static-label">VISTA ILUSTRATIVA · NO INTERACTIVA</div></div></div></div>
+     <div class="viewer-footer"><span id="viewer-description"><strong>Velocidades.</strong> Calzadas segmentadas visualmente por velocidad geométrica.</span><span>Vista estática · sin acceso a la aplicación</span></div>
    </div>
-   <small class="legal">Las pantallas utilizan la propia interfaz de OcToS Roads y ejes sintéticos para mostrar sus herramientas. Su contenido no corresponde a un proyecto real ni constituye un diseño de ingeniería certificado. Las comprobaciones VCHI son una referencia parcial; el perfil de la normativa española 3.1-IC no está implementado completamente.</small>
+   <small class="legal">Las ilustraciones representan funciones de OcToS Roads sin cargar la aplicación. No corresponden a un proyecto real ni constituyen un diseño de ingeniería certificado. Las comprobaciones VCHI son una referencia parcial; el perfil de la normativa española 3.1-IC no está implementado completamente.</small>
   </div>
  </section>
  <section class="content" id="metodo">
@@ -182,7 +221,7 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
   <div class="shell">
    <div class="highlight">
     <div><div class="eyebrow">OcToS 3D Studio</div><h2>Diseño de carreteras en un entorno visual.</h2><p>Una herramienta para explorar geometrías, probar configuraciones y preparar trazados digitales editables.</p></div>
-    <a class="btn primary" href="../" target="_blank" rel="noopener">Abrir editor completo <span aria-hidden="true">↗</span></a>
+    <a class="btn primary" href="https://octos3dstudio.wordpress.com/contacto/" target="_blank" rel="noopener noreferrer">Solicitar acceso <span aria-hidden="true">↗</span></a>
    </div>
   </div>
  </section>
@@ -199,7 +238,7 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
  for (const button of document.querySelectorAll('[data-view]'))button.addEventListener('click',()=>{
    const view=button.dataset.view;if(!labels[view])return;
    document.querySelectorAll('[data-view]').forEach(node=>node.setAttribute('aria-selected',String(node===button)));
-   frame.src='../?showcase='+encodeURIComponent(view);
+   frame.dataset.view=view;
    document.getElementById('viewer-title').textContent=labels[view][0];
    document.getElementById('viewer-description').innerHTML=labels[view][1];
  });
