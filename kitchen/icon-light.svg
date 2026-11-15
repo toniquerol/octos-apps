@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Kitchen</title><desc id="desc">Mueble de cocina modular en perspectiva geométrica</desc>
+<path d="m30 61 56-29 47 24-57 29z" fill="none" stroke="#F1F1EF" stroke-width="9" stroke-linejoin="round"/>
+<path d="M30 61v56l46 24V85m57-29v57l-57 28" fill="none" stroke="#F1F1EF" stroke-width="9" stroke-linejoin="round"/>
+<path d="m52 73 1 55m-21-36 44 23m28-44v55" fill="none" stroke="#F1F1EF" stroke-width="6" stroke-linecap="round"/>
+<path d="m84 93 39-21v35l-39 21z" fill="none" stroke="#FF6A1A" stroke-width="8" stroke-linejoin="round"/>
+<path d="m99 102 10-6" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round"/>
+</svg>

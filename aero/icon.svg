@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="OcToS Aero: flujo alrededor de un vehículo"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 54h42c28 0 31-20 59-20h59M20 78h24c32 0 35-27 65-27h71M20 149h160" stroke="#ff6a1a" stroke-width="6"/><path d="M34 127v-18l23-7 27-28h39l26 26 22 8v19z" fill="#464d55" stroke="#b9c1ca" stroke-width="5"/><path d="M80 99l14-16h23l18 16z" fill="#151b22" stroke="#b9c1ca" stroke-width="3"/><circle cx="65" cy="126" r="13" fill="#151b22" stroke="#b9c1ca" stroke-width="5"/><circle cx="145" cy="126" r="13" fill="#151b22" stroke="#b9c1ca" stroke-width="5"/><path d="M158 49h22l-8-8m8 8-8 8M160 149h20l-8-8m8 8-8 8" stroke="#ff6a1a" stroke-width="5"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Aero</title><desc id="desc">Vehículo en grafito con líneas de flujo naranjas</desc>
+<path d="M20 50h31c24 0 29-20 53-20h36m-120 35h19c22 0 30-19 49-19h52" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round"/>
+<path d="M27 111v-13l23-8 27-28h37l23 28 16 7v14" fill="none" stroke="#2A2B2F" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M76 88 89 72h22l13 16Z" fill="none" stroke="#2A2B2F" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="53" cy="113" r="13" fill="none" stroke="#2A2B2F" stroke-width="9"/>
+<circle cx="127" cy="113" r="13" fill="none" stroke="#2A2B2F" stroke-width="9"/>
+<path d="M20 140h120m-12-8 12 8-12 8" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

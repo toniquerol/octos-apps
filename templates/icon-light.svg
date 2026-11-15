@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Templates</title><desc id="desc">Composición de interfaz con componentes y controles</desc>
+<rect x="22" y="25" width="116" height="112" rx="12" fill="none" stroke="#F1F1EF" stroke-width="9"/>
+<path d="M26 55h108" fill="none" stroke="#FF6A1A" stroke-width="10"/>
+<path d="M65 61v72" fill="none" stroke="#F1F1EF" stroke-width="7"/>
+<path d="M37 76h17m-17 15h17m-17 15h17" fill="none" stroke="#F1F1EF" stroke-width="7" stroke-linecap="round"/>
+<rect x="79" y="73" width="43" height="22" rx="5" fill="none" stroke="#F1F1EF" stroke-width="6"/>
+<path d="M80 114h41" fill="none" stroke="#F1F1EF" stroke-width="7" stroke-linecap="round"/>
+<circle cx="102" cy="114" r="8" fill="#FF6A1A"/>
+</svg>

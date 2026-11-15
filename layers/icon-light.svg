@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Layers</title><desc id="desc">Tres planos superpuestos con capa central activa</desc>
+<path d="m80 26 60 33-60 33-60-33Z" fill="none" stroke="#F1F1EF" stroke-width="9" stroke-linejoin="round"/>
+<path d="M52 58c12-9 24-9 39 0m-28 12c11-5 21-5 31 1" fill="none" stroke="#F1F1EF" stroke-width="5" stroke-linecap="round"/>
+<path d="m20 79 60 33 60-33" fill="none" stroke="#FF6A1A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="m20 103 60 33 60-33" fill="none" stroke="#F1F1EF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

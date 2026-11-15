@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Drive</title><desc id="desc">Mapa plegado con ruta y flecha de navegación</desc>
+<path d="M22 46 59 30 99 46 138 30v83l-39 17-40-16-37 16Z" fill="none" stroke="#F1F1EF" stroke-width="9" stroke-linejoin="round"/>
+<path d="M59 30v84m40-68v84" fill="none" stroke="#F1F1EF" stroke-width="6" stroke-linecap="round" opacity=".85"/>
+<path d="M38 102c18-20 31-24 45-18 14 6 18 5 29-17" fill="none" stroke="#FF6A1A" stroke-width="9" stroke-linecap="round"/>
+<circle cx="38" cy="102" r="6" fill="#FF6A1A"/>
+<path d="m104 69 12-22 3 27-8-4-7 10z" fill="#FF6A1A" stroke="#FF6A1A" stroke-width="3" stroke-linejoin="round"/>
+</svg>

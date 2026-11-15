@@ -27,3 +27,9 @@ Antes de modificar código, identifica exactamente qué comportamiento, componen
 - No aumentes deliberadamente el razonamiento, el número de pasos ni las llamadas a herramientas por tareas triviales. **La calidad y la corrección prevalecen si una verificación adicional es necesaria.**
 
 El objetivo es **resolver exactamente lo pedido con la menor lectura, el menor diff y las comprobaciones suficientes**, sin sacrificar la fiabilidad.
+
+## Sistema permanente de iconos de aplicaciones
+- Al crear o modificar símbolos de aplicaciones, leer `shared/icons/README.md` y `shared/icons/catalog.json`. El SVG canónico vive en `<aplicación>/icon.svg` y la variante de contraste en `<aplicación>/icon-light.svg`; actualizar también los PNG derivados y el catálogo.
+- Usar grafito #2A2B2F, naranja #FF6A1A, transparencia real y geometría vectorial; no placas, textos, sombras ni raster incrustado. Cada símbolo representa una función comprobada y debe distinguirse por su silueta.
+- Verificar 24/32/48/64/128 px sobre fondos claro y oscuro, rutas de catálogo, cabecera, accesos y favicon. No sustituir iconos funcionales de botones ni el monograma «T» autorizado.
+- Conservar los cuatro originales de referencia del usuario sin redibujarlos cuando se aporten; su incorporación al repositorio debe mantenerse independiente de los iconos derivados.

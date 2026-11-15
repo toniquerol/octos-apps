@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Team</title><desc id="desc">Cuatro puestos de trabajo y coordinación central</desc>
+<rect x="20" y="27" width="120" height="109" rx="10" fill="none" stroke="#F1F1EF" stroke-width="9"/>
+<path d="M80 48v72M36 81h88" fill="none" stroke="#F1F1EF" stroke-width="7" stroke-linecap="round"/>
+<rect x="38" y="54" width="27" height="13" rx="4" fill="none" stroke="#F1F1EF" stroke-width="6"/>
+<rect x="95" y="54" width="27" height="13" rx="4" fill="none" stroke="#F1F1EF" stroke-width="6"/>
+<rect x="38" y="100" width="27" height="13" rx="4" fill="none" stroke="#F1F1EF" stroke-width="6"/>
+<rect x="95" y="100" width="27" height="13" rx="4" fill="none" stroke="#F1F1EF" stroke-width="6"/>
+<circle cx="80" cy="27" r="11" fill="#FF6A1A"/>
+</svg>

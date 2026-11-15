@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "updated": "2026-11-15",
+  "palette": {
+    "graphite": "#2A2B2F",
+    "orange": "#FF6A1A",
+    "light": "#F1F1EF"
+  },
+  "specification": "shared/icons/README.md",
+  "entries": [
+    {
+      "id": "apps",
+      "name": "OcToS Centro de aplicaciones",
+      "description": "Acceso y organización de herramientas",
+      "concept": "Cuadrícula de módulos",
+      "svg": "apps-icon.svg",
+      "lightSvg": "apps-icon-light.svg",
+      "png128": "apps-icon-128.png",
+      "favicon32": "apps-favicon-32.png"
+    },
+    {
+      "id": "drive",
+      "name": "OcToS Drive",
+      "description": "Consulta de red viaria, mapas y orientación",
+      "concept": "Mapa y dirección",
+      "svg": "drive/icon.svg",
+      "lightSvg": "drive/icon-light.svg",
+      "png128": "drive/icon-128.png",
+      "favicon32": "drive/favicon-32.png"
+    },
+    {
+      "id": "carto",
+      "name": "OcToS Carto",
+      "description": "Consulta de mapas y servicios cartográficos",
+      "concept": "Mapa topográfico y marcador",
+      "svg": "carto/icon.svg",
+      "lightSvg": "carto/icon-light.svg",
+      "png128": "carto/icon-128.png",
+      "favicon32": "carto/favicon-32.png"
+    },
+    {
+      "id": "meteo",
+      "name": "OcToS Meteo",
+      "description": "Consulta de observaciones meteorológicas e hidrológicas",
+      "concept": "Sol, nube y observación",
+      "svg": "meteo/icon.svg",
+      "lightSvg": "meteo/icon-light.svg",
+      "png128": "meteo/icon-128.png",
+      "favicon32": "meteo/favicon-32.png"
+    },
+    {
+      "id": "rain",
+      "name": "OcToS Rain",
+      "description": "Análisis del terreno, cuencas y escorrentía",
+      "concept": "Relieve, lluvia y escorrentía",
+      "svg": "rain/icon.svg",
+      "lightSvg": "rain/icon-light.svg",
+      "png128": "rain/icon-128.png",
+      "favicon32": "rain/favicon-32.png"
+    },
+    {
+      "id": "layers",
+      "name": "OcToS Layers",
+      "description": "Gestión de capas y servicios cartográficos",
+      "concept": "Planos cartográficos apilados",
+      "svg": "layers/icon.svg",
+      "lightSvg": "layers/icon-light.svg",
+      "png128": "layers/icon-128.png",
+      "favicon32": "layers/favicon-32.png"
+    },
+    {
+      "id": "templates",
+      "name": "OcToS Templates",
+      "description": "Edición del sistema visual compartido",
+      "concept": "Estructura de interfaz y controles",
+      "svg": "templates/icon.svg",
+      "lightSvg": "templates/icon-light.svg",
+      "png128": "templates/icon-128.png",
+      "favicon32": "templates/favicon-32.png"
+    },
+    {
+      "id": "aero",
+      "name": "OcToS Aero",
+      "description": "Visualización 3D de vehículos y flujo ilustrativo, no CFD",
+      "concept": "Vehículo con líneas de flujo",
+      "svg": "aero/icon.svg",
+      "lightSvg": "aero/icon-light.svg",
+      "png128": "aero/icon-128.png",
+      "favicon32": "aero/favicon-32.png"
+    },
+    {
+      "id": "roads",
+      "name": "OcToS Roads",
+      "description": "Diseño y geometría de trazados viarios",
+      "concept": "Calzada curva y eje",
+      "svg": "roads/icon.svg",
+      "lightSvg": "roads/icon-light.svg",
+      "png128": "roads/icon-128.png",
+      "favicon32": "roads/favicon-32.png"
+    },
+    {
+      "id": "team",
+      "name": "OcToS Team",
+      "description": "Organización de tareas y sala de coordinación",
+      "concept": "Sala con puestos y coordinación",
+      "svg": "team/icon.svg",
+      "lightSvg": "team/icon-light.svg",
+      "png128": "team/icon-128.png",
+      "favicon32": "team/favicon-32.png"
+    },
+    {
+      "id": "kitchen",
+      "name": "OcToS Kitchen",
+      "description": "Diseño modular de cocinas en 2D y 3D",
+      "concept": "Mueble de cocina modular",
+      "svg": "kitchen/icon.svg",
+      "lightSvg": "kitchen/icon-light.svg",
+      "png128": "kitchen/icon-128.png",
+      "favicon32": "kitchen/favicon-32.png"
+    }
+  ]
+}

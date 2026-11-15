@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Aero</title><desc id="desc">Vehículo en grafito con líneas de flujo naranjas</desc>
+<path d="M20 50h31c24 0 29-20 53-20h36m-120 35h19c22 0 30-19 49-19h52" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round"/>
+<path d="M27 111v-13l23-8 27-28h37l23 28 16 7v14" fill="none" stroke="#F1F1EF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M76 88 89 72h22l13 16Z" fill="none" stroke="#F1F1EF" stroke-width="6" stroke-linejoin="round"/>
+<circle cx="53" cy="113" r="13" fill="none" stroke="#F1F1EF" stroke-width="9"/>
+<circle cx="127" cy="113" r="13" fill="none" stroke="#F1F1EF" stroke-width="9"/>
+<path d="M20 140h120m-12-8 12 8-12 8" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

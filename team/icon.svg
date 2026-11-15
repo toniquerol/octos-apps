@@ -1,1 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="48" fill="#0E0E10"/><g fill="none" stroke="#72747A" stroke-width="6"><rect x="27" y="35" width="162" height="186" rx="13"/><path d="M108 83v119M45 145h126"/><rect x="202" y="35" width="28" height="186" rx="7"/></g><g fill="#F1F1EF"><rect x="49" y="99" width="39" height="18" rx="4"/><rect x="130" y="99" width="39" height="18" rx="4"/><rect x="49" y="169" width="39" height="18" rx="4"/><rect x="130" y="169" width="39" height="18" rx="4"/></g><g fill="#FF6A1A"><rect x="90" y="46" width="37" height="17" rx="4"/><circle cx="216" cy="95" r="8"/><circle cx="216" cy="165" r="8"/></g><path d="M141 55H206" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="6 7"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Team</title><desc id="desc">Cuatro puestos de trabajo y coordinación central</desc>
+<rect x="20" y="27" width="120" height="109" rx="10" fill="none" stroke="#2A2B2F" stroke-width="9"/>
+<path d="M80 48v72M36 81h88" fill="none" stroke="#2A2B2F" stroke-width="7" stroke-linecap="round"/>
+<rect x="38" y="54" width="27" height="13" rx="4" fill="none" stroke="#2A2B2F" stroke-width="6"/>
+<rect x="95" y="54" width="27" height="13" rx="4" fill="none" stroke="#2A2B2F" stroke-width="6"/>
+<rect x="38" y="100" width="27" height="13" rx="4" fill="none" stroke="#2A2B2F" stroke-width="6"/>
+<rect x="95" y="100" width="27" height="13" rx="4" fill="none" stroke="#2A2B2F" stroke-width="6"/>
+<circle cx="80" cy="27" r="11" fill="#FF6A1A"/>
+</svg>
