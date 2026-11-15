@@ -204,6 +204,22 @@ svg .chief-station .agent-indicator.blink{animation:team-finished-blink .9s step
 .api-telemetry-foot{color:#888a90;font-size:10px;line-height:1.6;margin:16px 0 0}
 @media(max-width:1180px){.api-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:700px){.api-telemetry{padding:15px}.api-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.api-telemetry-columns{grid-template-columns:1fr}}
+
+/* Conexión segura contraíble, encima del botón Volver a sala. */
+.agents-header-actions{display:flex;flex-direction:column;align-items:flex-end;gap:9px;position:relative;flex:0 0 auto}
+.agents-connection{position:relative}
+.agents-connection>summary{list-style:none;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:center;gap:10px;min-height:38px;border:1px solid #565860;border-radius:8px;background:#232428;color:var(--ink);font-size:12px;padding:10px 13px}
+.agents-connection>summary::-webkit-details-marker{display:none}
+.agents-connection>summary::after{content:"⌄";font-size:16px;color:var(--accent);line-height:.6;transition:transform .15s ease}
+.agents-connection[open]>summary::after{transform:rotate(180deg)}
+.agents-connection[open]>summary{border-color:var(--accent);color:#ffb485}
+.agents-connection>summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.agents-connection-content{position:absolute;right:0;top:calc(100% + 9px);z-index:12;width:min(410px,calc(100vw - 30px));max-height:min(74vh,680px);overflow-y:auto;overscroll-behavior:contain;background:var(--panel);border:1px solid #5b5d62;box-shadow:0 20px 45px #000b;border-radius:12px;padding:20px}
+.agents-connection-content label{display:block;color:#dedfe1;font-size:12px;margin:12px 0 7px}
+.agents-connection-content input{width:100%;min-width:0;border:1px solid #555760;border-radius:8px;background:#101114;color:var(--ink);font:13px "IBM Plex Sans",sans-serif;padding:12px}
+.agents-connection-content input:focus{border-color:var(--accent);outline:1px solid var(--accent)}
+.agents-connection-content .agent-help{font-size:11px;color:var(--muted);line-height:1.6}
+@media(max-width:760px){.agents-header-actions{width:100%;align-items:flex-end}}
 </style><script src="../shared/nav.js" defer></script></head>
 <body>
 <section id="team-access" role="dialog" aria-modal="true" aria-labelledby="team-access-title">
@@ -279,18 +295,7 @@ svg .chief-station .agent-indicator.blink{animation:team-finished-blink .9s step
 <p style="font-size:11px;color:var(--muted);margin-top:15px">Escalado: agente → responsable de grupo → Dirección → propietario. D1: identidad transversal; D6: coordinación y control de recursos. Solo Dirección, A03 y A04 forman el piloto API actual; los demás puestos no ejecutan automáticamente.</p>
 </section>
 <section id="inbox" class="view">
-<div class="agents-top"><div><div class="eyebrow">Módulo 03 / Entrada de peticiones</div><h1>Solicitudes a los agentes</h1><p>Prueba de comunicación entre Dirección, Cartografía e Integración.</p></div><button class="outline" data-page="room">Volver a sala</button></div>
-<form id="agents-form" class="agents-form">
-<div class="agents-panel">
-<h2>Petición</h2>
-<label for="agents-task">Consulta técnica</label>
-<textarea id="agents-task" rows="6" maxlength="2500" minlength="8" required>Analiza cómo integrar un servicio WMS del IGN en OcToS Layers: obtención de capacidades, compatibilidad de CRS, posibles problemas de CORS y procedimiento de validación.</textarea>
-<p class="agent-help">Flujo previsto: Controlador → Jarvis (microtarea) o reunión de responsables (proyecto) → departamentos → Dirección → propietario si persiste una decisión. La API actual sigue limitada a Dirección, A03 y A04. Esta prueba no modifica repositorios.</p>
-<div class="agents-actions"><button id="agents-demo" type="button">Simular proyecto</button><button id="agents-demo-simple" type="button">Simular consulta breve</button><button id="agents-send" type="submit" class="primary">Enviar con API</button></div>
-<p id="agents-notice" role="status" aria-live="polite">Sin servidor configurado: disponible la simulación local sin coste API.</p>
-</div>
-<div class="agents-panel">
-<h2>Conexión segura</h2>
+<div class="agents-top"><div><div class="eyebrow">Módulo 03 / Entrada de peticiones</div><h1>Solicitudes a los agentes</h1><p>Prueba de comunicación entre Dirección, Cartografía e Integración.</p></div><div class="agents-header-actions"><details class="agents-connection" id="agents-connection"><summary aria-label="Mostrar u ocultar conexión segura">Conexión segura</summary><div class="agents-connection-content">
 <label for="agents-endpoint">URL HTTPS del servicio de agentes</label>
 <input id="agents-endpoint" type="url" inputmode="url" placeholder="https://mi-servicio.workers.dev" autocomplete="url">
 <label for="agents-token">Contraseña privada del servicio</label>
@@ -308,7 +313,18 @@ svg .chief-station .agent-indicator.blink{animation:team-finished-blink .9s step
  <div class="agents-actions"><button id="agents-setup" type="button" class="primary">Guardar clave cifrada en Worker</button></div>
  <p class="agent-help">El PIN de OcToS Team no sustituye la contraseña del Worker. No uses este campo si la URL no corresponde a tu propio servicio Cloudflare. La clave no se incluye en los registros y se borra del formulario al confirmar.</p>
  </details>
-<h2 style="margin-top:25px">Registro de ejecución</h2><pre id="agents-trace">Sin actividad.</pre>
+</div></details><button type="button" class="outline" data-page="room">Volver a sala</button></div></div>
+<form id="agents-form" class="agents-form">
+<div class="agents-panel">
+<h2>Petición</h2>
+<label for="agents-task">Consulta técnica</label>
+<textarea id="agents-task" rows="6" maxlength="2500" minlength="8" required>Analiza cómo integrar un servicio WMS del IGN en OcToS Layers: obtención de capacidades, compatibilidad de CRS, posibles problemas de CORS y procedimiento de validación.</textarea>
+<p class="agent-help">Flujo previsto: Controlador → Jarvis (microtarea) o reunión de responsables (proyecto) → departamentos → Dirección → propietario si persiste una decisión. La API actual sigue limitada a Dirección, A03 y A04. Esta prueba no modifica repositorios.</p>
+<div class="agents-actions"><button id="agents-demo" type="button">Simular proyecto</button><button id="agents-demo-simple" type="button">Simular consulta breve</button><button id="agents-send" type="submit" class="primary">Enviar con API</button></div>
+<p id="agents-notice" role="status" aria-live="polite">Sin servidor configurado: disponible la simulación local sin coste API.</p>
+</div>
+<div class="agents-panel agents-execution-panel">
+<h2>Registro de ejecución</h2><pre id="agents-trace">Sin actividad.</pre>
 <h2>Resultado consolidado</h2><div id="agents-result">Todavía no se ha enviado ninguna petición.</div>
 </div>
 </form>
