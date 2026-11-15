@@ -12,6 +12,10 @@
  const send=document.getElementById("agents-send");
  const demo=document.getElementById("agents-demo");
  const health=document.getElementById("agents-health");
+ const setupButton=document.getElementById("agents-setup");
+ const setupToken=document.getElementById("agents-setup-token");
+ const openaiKey=document.getElementById("agents-openai-key");
+ const firstUse=document.getElementById("agents-first-use");
  const storeKey="octos-team-agent-endpoint-v1";
  const three=["chief","agent-3","agent-4"];
  let busy=false;
@@ -24,12 +28,13 @@
  }
  function line(message){trace.textContent+=(trace.textContent?"\n":"")+message;trace.scrollTop=trace.scrollHeight}
  function setBusy(v){
-  busy=v;send.disabled=v;demo.disabled=v;health.disabled=v;
+  busy=v;send.disabled=v;demo.disabled=v;health.disabled=v;setupButton.disabled=v;
   notice.textContent=v?"Petición en ejecución; no cierres la pestaña.":notice.textContent;
  }
  function baseUrl(){
   let url;try{url=new URL(endpoint.value.trim())}catch{throw Error("Introduce la URL HTTPS del servidor de agentes.")}
   if(url.protocol!=="https:")throw Error("El servidor de agentes debe utilizar HTTPS.");
+  if(url.username||url.password)throw Error("La URL no debe incluir contraseñas.");
   if(url.search||url.hash)throw Error("Introduce la URL del servidor sin parámetros.");
   return url.origin+url.pathname.replace(/\/+(run|health)\/?$/,"").replace(/\/+$/,"");
  }
@@ -107,11 +112,47 @@
   try{
    const response=await fetch(base+"/health",{headers:{"Authorization":"Bearer "+auth},cache:"no-store"});
    const data=await response.json();
-   if(!response.ok||!data.ready)throw Error(data.error||"HTTP "+response.status);
-   notice.textContent="Servicio conectado. Modelo: "+data.model+". Agentes: dirección, A03, A04.";
+   if(!response.ok)throw Error(data.error||"HTTP "+response.status);
+   notice.textContent=data.ready
+     ?"Worker conectado y clave API configurada. Modelo: "+data.model+". Agentes: Dirección, A03 y A04."
+     :"Worker conectado, pero falta registrar la clave OpenAI. Abre «Primera conexión».";
   }catch(e){notice.textContent="Servicio no conectado: "+e.message}
   finally{setBusy(false)}
  }
+ async function registerKey(){
+  if(busy)return;
+  let base;
+  try{base=baseUrl()}catch(error){notice.textContent=error.message;return}
+  const adminSecret=setupToken.value.trim();
+  const key=openaiKey.value.trim();
+  if(adminSecret.length<20){notice.textContent="Introduce TEAM_SETUP_TOKEN, generado previamente como secreto de Cloudflare.";return}
+  if(!key.startsWith("sk-")||key.length<25||key.length>600){
+   notice.textContent="Introduce una clave válida de OpenAI; solo se envía al Worker mediante HTTPS.";return
+  }
+  setBusy(true);
+  notice.textContent="Enviando clave al Worker por HTTPS...";
+  try{
+   const response=await fetch(base+"/setup",{
+    method:"POST",cache:"no-store",referrerPolicy:"no-referrer",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+adminSecret},
+    body:JSON.stringify({openai_api_key:key})
+   });
+   let data={};try{data=await response.json()}catch(_){}
+   if(!response.ok||!data.configured)throw Error(data.error||"HTTP "+response.status);
+   notice.textContent="Clave cifrada y almacenada en Cloudflare. La clave no se conserva en la página.";
+   line("CONFIGURACIÓN · Clave API registrada en el Worker sin mostrar su contenido.");
+   firstUse.open=false;
+  }catch(error){
+   notice.textContent="No se pudo configurar la clave: "+error.message;
+  }finally{
+   openaiKey.value="";setupToken.value="";
+   setBusy(false);
+  }
+ }
+ [setupToken,openaiKey].forEach(el=>el.addEventListener("keydown",event=>{
+  if(event.key==="Enter")event.preventDefault();
+ }));
+ setupButton.addEventListener("click",()=>{void registerKey()});
  function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
  async function simulate(){
   if(busy)return;
