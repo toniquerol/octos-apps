@@ -40,7 +40,11 @@ meeting:{name:"Mesa de reuniones",role:"Planificación · Reunión inicial de pr
 coffee:{name:"Zona común",role:"Servicio auxiliar",mission:"Espacio compartido de pausa, sin responsabilidades ni ejecución de agentes.",tasks:"Sin tareas asignadas.",instructions:"No consume tokens ni activa agentes."}
 };
 const normalize=str=>String(str==null?"":str).trim();
-const records=JSON.parse(localStorage.getItem("octos-team-offices-v1")||"{}");
+let records={};
+try{
+ const parsed=JSON.parse(localStorage.getItem("octos-team-offices-v1")||"{}");
+ if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed))records=parsed;
+}catch(error){}
 function office(id){return {...offices[id],...(records[id]||{})}}
 function install(){
  const panel=document.getElementById("team-config-container");
