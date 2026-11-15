@@ -220,6 +220,46 @@ svg .chief-station .agent-indicator.blink{animation:team-finished-blink .9s step
 .agents-connection-content input:focus{border-color:var(--accent);outline:1px solid var(--accent)}
 .agents-connection-content .agent-help{font-size:11px;color:var(--muted);line-height:1.6}
 @media(max-width:760px){.agents-header-actions{width:100%;align-items:flex-end}}
+
+/* Sala a pantalla disponible: visor SVG fluido, barra flotante y reserva derecha. */
+main:has(#room.active){max-width:none;padding:0}
+#room{position:relative;min-height:calc(100dvh - 72px)}
+#room>.room-top{position:absolute;z-index:5;top:23px;right:calc(clamp(300px,24vw,360px) + 36px);max-width:calc(100% - clamp(300px,24vw,360px) - 64px);margin:0;pointer-events:none}
+#room>.room-top .actions{justify-content:flex-end;gap:7px;pointer-events:auto}
+#room>.room-top .actions button{padding:9px 12px;background:#1b1c20ed;box-shadow:0 2px 12px #0008;white-space:nowrap}
+#room>.room-top .actions button:hover{background:#292a2e}
+#room>.room-top .actions button:disabled{opacity:.43}
+#room>.room-layout{grid-template-columns:minmax(0,1fr) clamp(300px,24vw,360px);gap:12px;padding:12px;min-height:calc(100dvh - 72px);align-items:stretch}
+#room .room-map-column{min-width:0;min-height:0}
+#room .map-wrap{width:100%;height:calc(100dvh - 96px);min-height:400px;display:grid;place-items:center;border-radius:12px}
+#room .map-wrap svg{width:100%;height:100%;max-height:100%;display:block;transform:none;transition:none}
+#room .room-layout>.inspector{grid-column:2;grid-row:1;min-height:0;max-height:calc(100dvh - 96px);overflow-y:auto;align-self:stretch;padding:20px}
+#room .inspector h2{margin-top:16px}
+#room .inspector .divider{margin:17px 0}
+#room .inspector .legend{padding:16px 0;gap:9px 16px}
+#room .inspector .telemetry-check{padding:11px 0 0;border-left:0;border-top:1px solid var(--line);white-space:normal}
+#room .inspector .layout-hint{margin:17px 0 0}
+#room .inspector .bottom{margin-top:0;padding-top:16px}
+#room>.api-telemetry,#room>.room-bottom-bar{margin-left:12px;margin-right:12px}
+@media(max-width:1100px){
+ #room>.room-top{position:relative;top:auto;right:auto;max-width:none;margin:0;padding:9px 12px 0}
+ #room>.room-top .actions{justify-content:flex-end}
+ #room>.room-layout{min-height:calc(100dvh - 135px)}
+ #room .map-wrap{height:calc(100dvh - 157px);min-height:400px}
+ #room .room-layout>.inspector{max-height:calc(100dvh - 157px)}
+}
+@media(max-width:760px){
+ #room>.room-layout{grid-template-columns:minmax(0,1fr);gap:12px}
+ #room .map-wrap{height:clamp(330px,60dvh,720px);min-height:330px}
+ #room .room-layout>.inspector{grid-column:1;grid-row:auto;max-height:none;min-height:210px}
+}
+@media(max-width:610px){
+ #room{min-height:calc(100dvh - 64px)}
+ #room>.room-top{padding:8px 12px 0}
+ #room>.room-top .actions{gap:6px}
+ #room>.room-top .actions button{padding:8px 9px;font-size:11px}
+ #room>.room-layout{padding:9px}
+}
 </style><script src="../shared/nav.js" defer></script></head>
 <body>
 <section id="team-access" role="dialog" aria-modal="true" aria-labelledby="team-access-title">
@@ -246,8 +286,38 @@ svg .chief-station .agent-indicator.blink{animation:team-finished-blink .9s step
 <button class="tile" data-page="inbox"><div class="tile-top"><span class="tile-index">MÓDULO 03</span><span class="tile-icon">↧</span></div><h3>Entrada / Input</h3><p>Recepción y distribución de encargos. Preparado para su desarrollo posterior.</p><span class="go">VER MÓDULO</span></button>
 <button class="tile" data-page="system"><div class="tile-top"><span class="tile-index">MÓDULO 04</span><span class="tile-icon">⌘</span></div><h3>Configuración</h3><p>Parámetros de puestos y equipos. Reservado, sin funciones activas.</p><span class="go">VER MÓDULO</span></button>
 </div></section>
-<section id="room" class="view active"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Plano de referencia · Selecciona una mesa, un grupo o un armario</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="mini" data-page="inbox" type="button" style="border-color:var(--accent);color:#ffb485">Nueva petición / Input</button><button class="mini" id="layout-edit" type="button" aria-pressed="false">Editar plano</button><button class="mini" id="layout-save" type="button" disabled>Guardar distribución</button><button class="mini" id="layout-reset" type="button">Restablecer</button><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
-<div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="0 0 1536 1024" role="img" aria-label="Visor editable de la sala OcToS Team"><rect width="1536" height="1024" fill="#101114"/></svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div><p id="layout-hint" class="layout-hint" role="status">Plano vectorial interactivo. Selecciona un puesto o armario para consultar su ficha.</p></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div id="team-config-container" class="team-config" hidden></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><section class="api-telemetry" id="api-telemetry" aria-labelledby="api-telemetry-title">
+<section id="room" class="view active">
+ <div class="room-top" aria-label="Herramientas del visor">
+  <div class="actions">
+   <button class="mini" data-page="inbox" type="button" style="border-color:var(--accent);color:#ffb485">Nueva petición / Input</button>
+   <button class="mini" id="layout-edit" type="button" aria-pressed="false">Editar plano</button>
+   <button class="mini" id="layout-save" type="button" disabled>Guardar distribución</button>
+   <button class="mini" id="layout-reset" type="button">Restablecer</button>
+   <button class="outline" data-page="home" type="button">Volver</button>
+  </div>
+ </div>
+ <div class="room-layout">
+  <div class="room-map-column">
+   <div class="map-wrap">
+    <svg id="floor" viewBox="0 0 1536 1024" role="img" aria-label="Visor editable de la sala OcToS Team">
+     <rect width="1536" height="1024" fill="#101114"/>
+    </svg>
+   </div>
+  </div>
+  <aside class="inspector" aria-live="polite" aria-label="Accesorios de la sala">
+   <div class="inspector-head">FICHA DE ELEMENTO</div>
+   <h2 id="detail-title">Plano general</h2>
+   <div class="tag" id="detail-tag">Distribución</div>
+   <p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p>
+   <div class="divider"></div>
+   <div id="team-config-container" class="team-config" hidden></div>
+   <p id="layout-hint" class="layout-hint" role="status">Plano vectorial interactivo. Selecciona un puesto o armario para consultar su ficha.</p>
+   <div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div>
+   <div class="telemetry-check" id="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</div>
+   <div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div>
+  </aside>
+ </div>
+<section class="api-telemetry" id="api-telemetry" aria-labelledby="api-telemetry-title">
  <div class="api-telemetry-head"><div>
   <div class="eyebrow">Gestor · Control de recursos</div>
   <h2 id="api-telemetry-title">Telemetría de consumo y actividad API</h2>
@@ -370,7 +440,7 @@ Object.assign(details,{
  "group-4":{type:"Unidad 04",name:"I+D+i",desc:"A07 responsable, A08 especialista; D1 y D5."}
 });
 details.building={type:"Arquitectura",name:"Edificio adaptable",zone:"Sala OcToS · Planta 01",desc:"Plano vectorial. Permite redimensionar la planta y distribuir mobiliario mediante el modo de edición."};
-var zoom=1;
+
 
 /* Telemetría ligera mediante status.json. La aplicación solo observa estados
    que otro proceso publique; no lee actividad de ChatGPT automáticamente. */
@@ -474,8 +544,7 @@ window.octosTeamSyncIndicators=function(){for(const id of ["chief","agent-1","ag
 window.octosTeamSetRuntimeState=function(id,state){if(!installedAgents.has(id)||!Object.prototype.hasOwnProperty.call(labels,state))return;localRuntimeStates[id]=state;setAgentState(id,{state});refreshBlink()};
 document.getElementById("floor").addEventListener("click",function(e){var el=e.target.closest("[data-pick]");if(el){e.stopPropagation();pick(el)}});
 document.getElementById("floor").addEventListener("keydown",function(e){var el=e.target.closest("[data-pick]");if(el&&(e.key==="Enter"||e.key===" ")){e.preventDefault();pick(el)}});
-function changeZoom(n){zoom=Math.min(1.65,Math.max(.65,n));document.getElementById('floor').style.transform='scale('+zoom+')'}
-document.getElementById('plus').onclick=function(){changeZoom(zoom+.15)};document.getElementById('minus').onclick=function(){changeZoom(zoom-.15)};document.getElementById('reset').onclick=function(){changeZoom(1)};
+
 })();
 </script>
 <script>
