@@ -333,6 +333,18 @@ header.team-header .octos-global-brand{z-index:1!important}
  header.team-header .team-header-input{min-width:48px;padding:8px}
  #room .team-board-side-groups{grid-template-columns:1fr}
 }
+/* Controles del editor geométrico */
+#floor.layout-editing .floor-zone{cursor:grab;touch-action:none}
+#floor.layout-editing .layout-wall{cursor:ew-resize;touch-action:none}
+#floor .layout-rotate-handle{cursor:crosshair;touch-action:none}
+#floor .layout-size-handle{cursor:nwse-resize;touch-action:none}
+#floor .layout-controls{pointer-events:none}
+#floor .layout-controls [data-edit-rotate],#floor .layout-controls [data-edit-resize]{pointer-events:all}
+.team-geometry{border-top:1px solid #54565d;margin-top:19px;padding-top:18px}
+.team-geometry fieldset{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px}
+.team-geometry label{min-width:0}
+.team-geometry input{width:100%;min-width:0}
+.team-geometry .team-config-actions button[data-turn]{border-color:#ff6a1a55;color:#ffb485}
 </style><script src="../shared/nav.js?v=20261115-roads-editor" defer></script></head>
 <body>
 <section id="team-access" role="dialog" aria-modal="true" aria-labelledby="team-access-title">
@@ -533,6 +545,7 @@ Object.assign(details,{
  "group-4":{type:"Unidad 04",name:"I+D+i",desc:"A07 responsable, A08 especialista; D1 y D5."}
 });
 details.building={type:"Arquitectura",name:"Edificio adaptable",zone:"Sala OcToS · Planta 01",desc:"Plano vectorial. Permite redimensionar la planta y distribuir mobiliario mediante el modo de edición."};
+details["wall-partition"]={type:"Tabique interior",name:"Pared divisoria",zone:"Sala de trabajo",desc:"Tabique editable con apertura de puerta. En modo edición se puede desplazar y modificar su espesor y hueco."};
 
 
 /* Telemetría ligera mediante status.json. La aplicación solo observa estados
@@ -991,7 +1004,12 @@ const zoneDefs=[
  {id:"group-4",x:499,y:494,w:474,h:220,title:"GRUPO 04",sub:"I+D+i"}
 ];
 function defaultLayout(){
- return {building:{x:77,y:70,w:1380,h:880},objects:JSON.parse(JSON.stringify(presets))};
+ return {
+  building:{x:77,y:70,w:1380,h:880},
+  objects:Object.fromEntries(Object.entries(presets).map(([id,p])=>[id,{...p,angle:0}])),
+  zones:Object.fromEntries(zoneDefs.map(z=>[z.id,{x:z.x,y:z.y,w:z.w,h:z.h,angle:0}])),
+  walls:{partition:{x:997,doorY:472,doorWidth:71,thickness:9}}
+ };
 }
 const original=defaultLayout();
 let draft=defaultLayout(),editing=false,dirty=false,selectedId=null,drag=null,suppressClick=false;
@@ -1006,8 +1024,28 @@ try{
   draft.building.h=clamp(validNumber(b.h,880),MIN_H,MAX_H);
   for(const id of Object.keys(presets)){
    const p=obj.objects[id]||{},def=presets[id];
-   draft.objects[id]={...def,x:clamp(validNumber(p.x,def.x),24,BASE_W-def.w-24),y:clamp(validNumber(p.y,def.y),24,BASE_H-def.h-24)};
+   const w=clamp(validNumber(p.w,def.w),id==="meeting"?110:id.startsWith("cabinet-")?65:95,600);
+   const h=clamp(validNumber(p.h,def.h),id==="meeting"?55:50,260);
+   draft.objects[id]={...def,w,h,angle:clamp(validNumber(p.angle,0),-360,360),
+     x:clamp(validNumber(p.x,def.x),12,BASE_W-w-12),
+     y:clamp(validNumber(p.y,def.y),12,BASE_H-h-12)};
   }
+  for(const z of zoneDefs){
+   const item=obj.zones?.[z.id]||{};
+   const w=clamp(validNumber(item.w,z.w),170,780),h=clamp(validNumber(item.h,z.h),120,550);
+   draft.zones[z.id]={
+    x:clamp(validNumber(item.x,z.x),12,BASE_W-w-12),
+    y:clamp(validNumber(item.y,z.y),12,BASE_H-h-12),
+    w,h,angle:clamp(validNumber(item.angle,0),-360,360)
+   };
+  }
+  const wall=obj.walls?.partition||{};
+  draft.walls.partition={
+   x:clamp(validNumber(wall.x,997),925,1090),
+   doorY:clamp(validNumber(wall.doorY,472),270,710),
+   doorWidth:clamp(validNumber(wall.doorWidth,71),40,115),
+   thickness:clamp(validNumber(wall.thickness,9),4,18)
+  };
  }
 }catch(error){}
 function node(tag,props,parent,text){
@@ -1065,11 +1103,15 @@ function drawArchitecture(root){
  txt(building,1030,331,"APOYO OPERATIVO",11,"#aeb0b5",{"class":"floor-text"});
  rect(building,1005,590,335,247,"#202126","#383a3e",9,{"stroke-width":1.3});
  txt(building,1030,613,"RECEPCIÓN / ACCESO",11,"#b4b5bb",{"class":"floor-text"});
- // Pared de separación con puerta de paso
- line(building,997,219,997,472,"#595b60",9,{"class":"floor-wall"});
- line(building,997,543,997,835,"#595b60",9,{"class":"floor-wall"});
- node("path",{d:"M997 472 A71 71 0 0 1 1068 543",fill:"none",stroke:"#787a80","stroke-width":2,"stroke-dasharray":"5 4","pointer-events":"none"},building);
- line(building,997,472,1052,527,"#a5a6aa",3,{"class":"floor-wall"});
+ // Tabique interior editable: desplazar X, grosor y hueco de paso.
+ const wall=draft.walls.partition,wx=wall.x,wy=wall.doorY,ww=wall.doorWidth;
+ const partition=node("g",{"class":"layout-wall","data-pick":"wall-partition","data-wall":"partition",tabindex:0,role:"button","aria-label":"Tabique interior editable"},building);
+ line(partition,wx,219,wx,wy,"#595b60",wall.thickness,{"class":"floor-wall"});
+ line(partition,wx,wy+ww,wx,835,"#595b60",wall.thickness,{"class":"floor-wall"});
+ node("path",{d:"M"+wx+" "+wy+" A"+ww+" "+ww+" 0 0 1 "+(wx+ww)+" "+(wy+ww),fill:"none",stroke:"#787a80","stroke-width":2,"stroke-dasharray":"5 4","pointer-events":"none"},partition);
+ line(partition,wx,wy,wx+ww*.78,wy+ww*.78,"#a5a6aa",3,{"class":"floor-wall"});
+ line(partition,wx,219,wx,wy,"transparent",26,{"pointer-events":"stroke"});
+ line(partition,wx,wy+ww,wx,835,"transparent",26,{"pointer-events":"stroke"});
  // Ventanas exteriores
  for(let i=0;i<5;i++)line(building,160+i*166,4,253+i*166,4,"#7c8d99",8,{"class":"floor-wall"});
  for(let i=0;i<3;i++)line(building,1375,300+i*110,1375,366+i*110,"#7c8d99",7,{"class":"floor-wall"});
@@ -1081,11 +1123,11 @@ function drawArchitecture(root){
  txt(building,73,860,"OcToS · PLANTA INTERACTIVA",11,"#7f8289",{"class":"floor-text"});
  // Áreas grupales con separación visual, sin tabiques cruzados
  for(const z of zoneDefs){
-  const g=node("g",{"class":"floor-zone pod hotspot","data-pick":z.id,tabindex:0,role:"button","aria-label":z.title+" "+z.sub},building);
+  const value=draft.zones[z.id];
+  const g=node("g",{"class":"floor-zone pod hotspot","data-pick":z.id,"data-move":z.id,tabindex:0,role:"button","aria-label":z.title+" "+z.sub,
+   transform:elementTransform(value,z)},building);
   rect(g,z.x,z.y,z.w,z.h,"#24262a","#393b40",12,{"class":"zone-fill","stroke-width":1.5});
   rect(g,z.x+7,z.y+7,z.w-14,z.h-14,"none","#303238",8,{"stroke-width":1,"stroke-dasharray":"5 6"});
-  txt(g,z.x+20,z.y+25,z.title,13,"#eaebed",{"class":"floor-text","font-weight":700});
-  txt(g,z.x+20,z.y+43,z.sub,10,"#a9abb0",{"class":"floor-text"});
  }
  // Servicios y zona compartida
  txt(building,90,741,"ZONA COMÚN",11,"#a9acb2",{"class":"floor-text"});
@@ -1168,16 +1210,67 @@ function drawSupport(group,id,p){
   }
  }
 }
+function elementTransform(p,baseline){
+ const x=p.x+p.w/2,y=p.y+p.h/2;
+ return "translate("+x+" "+y+") rotate("+(p.angle||0)+") scale("+(p.w/baseline.w)+" "+(p.h/baseline.h)+") translate("+(-baseline.x-baseline.w/2)+" "+(-baseline.y-baseline.h/2)+")";
+}
+function drawHorizontalLabels(building){
+ // Textos fuera de los grupos transformados: ni giran ni se deforman al escalar.
+ for(const z of zoneDefs){
+  const p=draft.zones[z.id],cx=p.x+p.w/2;
+  txt(building,cx,p.y+26,z.title,13,"#eaebed",{"class":"floor-text","font-weight":700,"text-anchor":"middle","pointer-events":"none"});
+  txt(building,cx,p.y+42,z.sub,10,"#a9abb0",{"class":"floor-text","text-anchor":"middle","pointer-events":"none"});
+ }
+ const labels={chief:"DIRECCIÓN",jarvis:"JARVIS",gestor:"GESTOR",input:"INPUT",worker:"CONTROL",
+  meeting:"MESA DE REUNIONES",coffee:"CAFETERÍA"};
+ for(const [id,p] of Object.entries(draft.objects)){
+  const cx=p.x+p.w/2,cy=p.y+p.h/2;
+  if(id.startsWith("agent-")){
+   txt(building,cx,cy+3,agentNames[Number(id.split("-")[1])-1]||"Agente",11,"#f1f1ef",
+    {"class":"furniture-text","font-weight":600,"text-anchor":"middle","pointer-events":"none"});
+   txt(building,cx,cy+18,id.replace("agent-","A"),10,"#ff9b62",
+    {"class":"furniture-text","font-weight":700,"text-anchor":"middle","pointer-events":"none"});
+  }else{
+   txt(building,cx,cy+4,id.startsWith("cabinet-")?"D"+id.split("-")[1]:labels[id]||id,
+    id==="meeting"?12:11,"#f1f1ef",
+    {"class":"furniture-text","font-weight":700,"text-anchor":"middle","pointer-events":"none"});
+  }
+ }
+}
+function selectedRecord(){
+ if(draft.objects[selectedId])return draft.objects[selectedId];
+ if(draft.zones[selectedId])return draft.zones[selectedId];
+ return null;
+}
+function drawHandles(building){
+ if(!editing||window.octosTeamIsMaster!==true)return;
+ const p=selectedRecord();if(!p)return;
+ const cx=p.x+p.w/2,cy=p.y+p.h/2;
+ const g=node("g",{transform:"rotate("+(p.angle||0)+" "+cx+" "+cy+")","class":"layout-controls"},building);
+ rect(g,p.x,p.y,p.w,p.h,"none","#ff6a1a",6,{"stroke-width":2,"stroke-dasharray":"9 5","pointer-events":"none"});
+ line(g,cx,p.y,cx,p.y-31,"#ff6a1a",2,{"pointer-events":"none"});
+ node("circle",{cx,cy:p.y-31,r:11,fill:"#ff6a1a",stroke:"#f1f1ef","stroke-width":2,
+  "data-edit-rotate":selectedId,"class":"layout-rotate-handle",role:"button",tabindex:0,"aria-label":"Girar elemento"},g);
+ rect(g,p.x+p.w-10,p.y+p.h-10,21,21,"#ff6a1a","#f1f1ef",4,{"stroke-width":1.5,
+  "data-edit-resize":selectedId,"class":"layout-size-handle",role:"button",tabindex:0,"aria-label":"Redimensionar elemento"});
+}
 function draw(){
  const oldSelected=svg.querySelector(".selected")?.getAttribute("data-pick");
  if(oldSelected)selectedId=oldSelected;
  svg.replaceChildren();addDefs();
  const building=drawArchitecture();
  for(const [id,p] of Object.entries(draft.objects)){
-  if(id.startsWith("agent-"))drawDesk(building,id,p,agentNames[Number(id.split("-")[1])-1]||"Agente");
-  else if(id.startsWith("cabinet-"))drawCabinet(building,id,p);
-  else drawSupport(building,id,p);
+  // Renderizar el mobiliario desde su geometría base y aplicar escala/rotación al conjunto.
+  const def=presets[id];
+  if(id.startsWith("agent-"))drawDesk(building,id,def,agentNames[Number(id.split("-")[1])-1]||"Agente");
+  else if(id.startsWith("cabinet-"))drawCabinet(building,id,def);
+  else drawSupport(building,id,def);
+  const g=building.lastElementChild;
+  g.setAttribute("transform",elementTransform(p,def));
+  for(const label of g.querySelectorAll("text"))label.setAttribute("visibility","hidden");
  }
+ drawHorizontalLabels(building);
+ drawHandles(building);
  if(selectedId==="building"){
   svg.querySelector('[data-pick="building"]')?.setAttribute("class","selected");
  }
@@ -1185,10 +1278,20 @@ function draw(){
  if(window.octosTeamSyncIndicators)window.octosTeamSyncIndicators();
 }
 function canMove(id,x,y){
- const p=draft.objects[id];if(!p)return false;
- if(x<22||y<22||x+p.w>BASE_W-20||y+p.h>BASE_H-20)return false;
- // Evitar que dos muebles ocupen el mismo espacio; mantener separación de 12 unidades.
- return !Object.entries(draft.objects).some(([key,q])=>key!==id&&x<q.x+q.w+12&&x+p.w+12>q.x&&y<q.y+q.h+12&&y+p.h+12>q.y);
+ const p=draft.objects[id]||draft.zones[id];if(!p)return false;
+ const theta=(p.angle||0)*Math.PI/180;
+ const hw=(Math.abs(Math.cos(theta))*p.w+Math.abs(Math.sin(theta))*p.h)/2;
+ const hh=(Math.abs(Math.sin(theta))*p.w+Math.abs(Math.cos(theta))*p.h)/2;
+ return x+p.w/2>=hw+10&&y+p.h/2>=hh+10&&x+p.w/2<=BASE_W-hw-10&&y+p.h/2<=BASE_H-hh-10;
+}
+function buildingCoords(evt){
+ const pt=coords(evt),b=draft.building;
+ return {x:(pt.x-b.x)/(b.w/BASE_W),y:(pt.y-b.y)/(b.h/BASE_H)};
+}
+function refreshPanelSelection(){
+ const id=selectedId;
+ const el=id&&svg.querySelector('[data-pick="'+id+'"]');
+ if(el&&window.octosTeamPick)window.octosTeamPick(el);
 }
 svg.addEventListener("click",function(e){
  if(suppressClick){e.preventDefault();e.stopImmediatePropagation();suppressClick=false;return}
@@ -1196,41 +1299,70 @@ svg.addEventListener("click",function(e){
 },true);
 svg.addEventListener("pointerdown",function(e){
  if(!editing||window.octosTeamIsMaster!==true||e.button!==0)return;
- const resize=e.target.closest("[data-resize]");
- const object=e.target.closest("[data-move]");
- if(!resize&&!object)return;
- const pt=coords(e),b=draft.building;
- const id=object?.getAttribute("data-move");
- const p=id&&draft.objects[id];
- drag={kind:resize?"resize":"object",id,point:pt,oldW:b.w,oldH:b.h,startX:p?.x,startY:p?.y,moved:false};
+ const buildingHandle=e.target.closest('[data-resize="building"]');
+ const rotate=e.target.closest("[data-edit-rotate]");
+ const resize=e.target.closest("[data-edit-resize]");
+ const wall=e.target.closest("[data-wall]");
+ const item=e.target.closest("[data-move]");
+ if(!buildingHandle&&!rotate&&!resize&&!wall&&!item)return;
+ const id=(rotate?.getAttribute("data-edit-rotate")||resize?.getAttribute("data-edit-resize")||item?.getAttribute("data-move")||(wall?"wall-partition":null));
+ const p=id&&(draft.objects[id]||draft.zones[id]);
+ const pt=buildingCoords(e);
+ drag={kind:buildingHandle?"building":rotate?"rotate":resize?"size":wall?"wall":"move",id,point:pt,
+  screen:coords(e),start:p?{...p}:null,baseBuilding:{...draft.building},
+  baseWall:{...draft.walls.partition},moved:false};
  if(id)selectedId=id;
  svg.setPointerCapture(e.pointerId);
  e.preventDefault();
 });
 svg.addEventListener("pointermove",function(e){
  if(!drag)return;
- const pt=coords(e),dx=pt.x-drag.point.x,dy=pt.y-drag.point.y;
- if(Math.abs(dx)+Math.abs(dy)<4&&!drag.moved)return;
- drag.moved=true;
- if(drag.kind==="resize"){
-  draft.building.w=clamp(snap(drag.oldW+dx),MIN_W,MAX_W);
-  draft.building.h=clamp(snap(drag.oldH+dy),MIN_H,MAX_H);
+ const pt=buildingCoords(e),dx=pt.x-drag.point.x,dy=pt.y-drag.point.y;
+ const screen=coords(e);
+ if(Math.abs(screen.x-drag.screen.x)+Math.abs(screen.y-drag.screen.y)<3&&!drag.moved)return;
+ const kind=drag.kind;drag.moved=true;
+ if(kind==="building"){
+  draft.building.w=clamp(snap(drag.baseBuilding.w+screen.x-drag.screen.x),MIN_W,MAX_W);
+  draft.building.h=clamp(snap(drag.baseBuilding.h+screen.y-drag.screen.y),MIN_H,MAX_H);
+ }else if(kind==="wall"){
+  draft.walls.partition.x=clamp(snap(drag.baseWall.x+dx),925,1090);
  }else{
-  const b=draft.building;
-  const x=snap(drag.startX+dx/(b.w/BASE_W));
-  const y=snap(drag.startY+dy/(b.h/BASE_H));
-  if(canMove(drag.id,x,y)){draft.objects[drag.id].x=x;draft.objects[drag.id].y=y}
+  const p=draft.objects[drag.id]||draft.zones[drag.id];
+  const origin=drag.start;if(!p||!origin)return;
+  if(kind==="move"){
+   const x=snap(origin.x+dx),y=snap(origin.y+dy);
+   if(canMove(drag.id,x,y)){p.x=x;p.y=y}
+  }else if(kind==="rotate"){
+   const cx=origin.x+origin.w/2,cy=origin.y+origin.h/2;
+   const raw=Math.atan2(pt.y-cy,pt.x-cx)*180/Math.PI+90;
+   const angle=(raw+540)%360-180;
+   p.angle=e.shiftKey?Math.round(angle/15)*15:Math.round(angle);
+  }else if(kind==="size"){
+   const rad=(origin.angle||0)*Math.PI/180;
+   const lx=dx*Math.cos(rad)+dy*Math.sin(rad),ly=-dx*Math.sin(rad)+dy*Math.cos(rad);
+   const zone=!!draft.zones[drag.id],meeting=drag.id==="meeting",cabinet=drag.id?.startsWith("cabinet-");
+   const minW=zone?170:meeting?110:cabinet?65:95;
+   const minH=zone?120:meeting?55:50;
+   const maxW=zone?780:600,maxH=zone?550:260;
+   const cx=origin.x+origin.w/2,cy=origin.y+origin.h/2;
+   const w=clamp(Math.round((origin.w+2*lx)/4)*4,minW,maxW);
+   const h=clamp(Math.round((origin.h+2*ly)/4)*4,minH,maxH);
+   const x=cx-w/2,y=cy-h/2;
+   const candidate={...p,x,y,w,h};
+   const halfX=(Math.abs(Math.cos(rad))*w+Math.abs(Math.sin(rad))*h)/2;
+   const halfY=(Math.abs(Math.sin(rad))*w+Math.abs(Math.cos(rad))*h)/2;
+   if(cx>=halfX+10&&cx<=BASE_W-halfX-10&&cy>=halfY+10&&cy<=BASE_H-halfY-10)
+    Object.assign(p,candidate);
+  }
  }
  markDirty();draw();
 });
 function endDrag(){
  if(!drag)return;
- const id=drag.id,wasMoved=drag.moved;
+ const id=drag.id,moved=drag.moved;
  drag=null;
- if(id&&!wasMoved){
-  const node=svg.querySelector('[data-pick="'+id+'"]');
-  if(node&&window.octosTeamPick)window.octosTeamPick(node);
- }else if(wasMoved){suppressClick=true;setTimeout(()=>{suppressClick=false},150)}
+ if(id){refreshPanelSelection()}
+ if(moved){suppressClick=true;setTimeout(()=>{suppressClick=false},150)}
 }
 svg.addEventListener("pointerup",endDrag);
 svg.addEventListener("pointercancel",endDrag);
@@ -1238,8 +1370,8 @@ editButton.addEventListener("click",function(){
  if(window.octosTeamIsMaster!==true){hint.textContent="La edición del plano requiere el PIN maestro.";return}
  editing=!editing;editButton.setAttribute("aria-pressed",String(editing));
  editButton.textContent=editing?"Finalizar edición":"Editar plano";
- if(!dirty)hint.textContent=editing?"Arrastra mesas y armarios; ajusta el edificio desde la esquina inferior derecha. Los muebles no pueden solaparse.":"Selecciona un elemento para abrir su ficha. Activa «Editar plano» para moverlo.";
- draw();
+ if(!dirty)hint.textContent=editing?"Arrastra elementos y áreas; utiliza los controles naranja para girar y ajustar tamaños. Selecciona el tabique para modificarlo.":"Selecciona un elemento para abrir su ficha. Activa «Editar plano» para moverlo.";
+ draw();refreshPanelSelection();
 });
 saveButton.addEventListener("click",function(){
  if(window.octosTeamIsMaster!==true)return;
@@ -1252,27 +1384,100 @@ saveButton.addEventListener("click",function(){
 resetButton.addEventListener("click",function(){
  if(window.octosTeamIsMaster!==true){hint.textContent="Solo el PIN maestro puede restablecer la sala.";return}
  if(!confirm("¿Restablecer el edificio y el mobiliario a la distribución inicial?"))return;
- draft=defaultLayout();markDirty();draw();
+ draft=defaultLayout();markDirty();draw();refreshPanelSelection();
 });
 const previousConfig=window.octosTeamShowConfig;
-window.octosTeamShowConfig=function(id,item){
- if(id!=="building"){if(previousConfig)previousConfig(id,item);return}
+function field(label,name,val,min,max,step="1"){
+ return '<label>'+label+'<input type="number" name="'+name+'" value="'+val+'" min="'+min+'" max="'+max+'" step="'+step+'" required></label>';
+}
+function addGeometryEditor(id){
+ if(!editing||window.octosTeamIsMaster!==true)return;
+ const p=draft.objects[id]||draft.zones[id],wall=id==="wall-partition";
+ if(!p&&!wall)return;
  panel.hidden=false;
- panel.innerHTML='<h3>Edificio adaptable</h3><p class="team-local-note">Dimensiones gráficas del visor (no son metros reales). También puedes arrastrar la esquina inferior derecha en modo edición.</p><form id="building-form"><fieldset><label>Ancho del edificio<input name="width" type="number" min="'+MIN_W+'" max="'+MAX_W+'" step="8" required></label><label>Fondo del edificio<input name="depth" type="number" min="'+MIN_H+'" max="'+MAX_H+'" step="8" required></label></fieldset><div class="team-config-actions"><button type="submit">Aplicar dimensiones</button></div><div class="team-config-message" role="status"></div></form>';
- const form=panel.querySelector("form");
- form.elements.width.value=draft.building.w;
- form.elements.depth.value=draft.building.h;
+ const container=document.createElement("section");
+ container.className="team-geometry";
+ const w=draft.walls.partition;
+ if(wall){
+  container.innerHTML='<h3>Editar tabique interior</h3><p class="team-local-note">Arrástralo en el plano o ajusta sus medidas. Unidades gráficas.</p>'+
+   '<form id="team-geometry-form"><fieldset>'+
+   field("Posición horizontal","x",w.x,925,1090)+
+   field("Inicio del hueco de puerta","doorY",w.doorY,270,710)+
+   field("Ancho del hueco","doorWidth",w.doorWidth,40,115)+
+   field("Grosor del tabique","thickness",w.thickness,4,18)+
+   '</fieldset><div class="team-config-actions"><button type="submit">Aplicar geometría</button></div>'+
+   '<div class="team-config-message" role="status"></div></form>';
+ }else{
+  container.innerHTML='<h3>Geometría editable</h3><p class="team-local-note">Mueve, escala y gira este elemento. Etiquetas siempre horizontales.</p>'+
+   '<form id="team-geometry-form"><fieldset>'+
+   field("Posición X","x",p.x,0,1380)+field("Posición Y","y",p.y,0,880)+
+   field("Ancho","w",p.w,draft.zones[id]?170:id==="meeting"?110:id.startsWith("cabinet-")?65:95,draft.zones[id]?780:600)+
+   field("Fondo","h",p.h,draft.zones[id]?120:id==="meeting"?55:50,draft.zones[id]?550:260)+
+   field("Giro (grados)","angle",p.angle||0,-360,360)+
+   '</fieldset><div class="team-config-actions"><button type="button" data-turn="-90">−90°</button>'+
+   '<button type="button" data-turn="90">+90°</button><button type="submit">Aplicar geometría</button></div>'+
+   '<div class="team-config-message" role="status"></div></form>';
+ }
+ panel.append(container);
+ const form=container.querySelector("form"),msg=container.querySelector(".team-config-message");
+ form.querySelectorAll("[data-turn]").forEach(b=>b.addEventListener("click",()=>{
+  const value=Number(form.elements.namedItem("angle").value)||0;
+  form.elements.namedItem("angle").value=String(((value+Number(b.dataset.turn)+540)%360)-180);
+  form.requestSubmit();
+ }));
+ form.addEventListener("submit",event=>{
+  event.preventDefault();
+  if(window.octosTeamIsMaster!==true)return;
+  const input=name=>Number(form.elements.namedItem(name).value);
+  if(wall){
+   const next={x:input("x"),doorY:input("doorY"),doorWidth:input("doorWidth"),thickness:input("thickness")};
+   if(!Object.values(next).every(Number.isFinite)||next.x<925||next.x>1090||next.doorY<270||next.doorY>710||
+      next.doorY+next.doorWidth>835||next.doorWidth<40||next.doorWidth>115||next.thickness<4||next.thickness>18){
+    msg.textContent="Medidas fuera de rango.";return;
+   }
+   Object.assign(draft.walls.partition,next);
+  }else{
+   const next={x:input("x"),y:input("y"),w:input("w"),h:input("h"),angle:input("angle")};
+   if(!Object.values(next).every(Number.isFinite)||next.w<Number(form.elements.namedItem("w").min)||
+      next.h<Number(form.elements.namedItem("h").min)||next.w>Number(form.elements.namedItem("w").max)||
+      next.h>Number(form.elements.namedItem("h").max)||Math.abs(next.angle)>360){
+    msg.textContent="Medidas fuera de rango.";return;
+   }
+   const rad=next.angle*Math.PI/180,cx=next.x+next.w/2,cy=next.y+next.h/2;
+   const halfX=(Math.abs(Math.cos(rad))*next.w+Math.abs(Math.sin(rad))*next.h)/2;
+   const halfY=(Math.abs(Math.sin(rad))*next.w+Math.abs(Math.cos(rad))*next.h)/2;
+   if(cx<halfX+10||cy<halfY+10||cx>BASE_W-halfX-10||cy>BASE_H-halfY-10){
+    msg.textContent="El elemento excede los límites del edificio.";return;
+   }
+   Object.assign(p,next);
+  }
+  markDirty();draw();msg.textContent="Geometría aplicada. Pulsa Guardar distribución.";
+ });
+}
+window.octosTeamShowConfig=function(id,item){
+ if(id!=="building"){
+  if(previousConfig)previousConfig(id,item);
+  if(!draft.objects[id]&&!draft.zones[id]&&id!=="wall-partition")return;
+  if(id==="wall-partition"&&!panel.querySelector("h3")){
+   panel.hidden=false;panel.replaceChildren();
+  }
+  addGeometryEditor(id);return;
+ }
+ panel.hidden=false;
+ panel.innerHTML='<h3>Edificio adaptable</h3><p class="team-local-note">Ajusta el tamaño exterior del edificio. Unidades gráficas, no metros reales.</p><form id="building-form"><fieldset><label>Ancho del edificio<input name="width" type="number" min="'+MIN_W+'" max="'+MAX_W+'" step="8" required></label><label>Fondo del edificio<input name="depth" type="number" min="'+MIN_H+'" max="'+MAX_H+'" step="8" required></label></fieldset><div class="team-config-actions"><button type="submit">Aplicar dimensiones</button></div><div class="team-config-message" role="status"></div></form>';
+ const form=panel.querySelector("form");form.elements.width.value=draft.building.w;form.elements.depth.value=draft.building.h;
  if(window.octosTeamIsMaster!==true){form.querySelector("fieldset").disabled=true;form.querySelector("button").hidden=true}
  form.addEventListener("submit",function(e){
-  e.preventDefault();
-  if(window.octosTeamIsMaster!==true)return;
+  e.preventDefault();if(window.octosTeamIsMaster!==true)return;
   const w=Number(form.elements.width.value),h=Number(form.elements.depth.value);
   if(!Number.isFinite(w)||!Number.isFinite(h)||w<MIN_W||w>MAX_W||h<MIN_H||h>MAX_H){form.querySelector(".team-config-message").textContent="Dimensiones fuera de rango.";return}
-  draft.building.w=w;draft.building.h=h;
-  markDirty();draw();form.querySelector(".team-config-message").textContent="Dimensiones aplicadas. Guarda la distribución.";
+  draft.building.w=w;draft.building.h=h;markDirty();draw();
+  form.querySelector(".team-config-message").textContent="Dimensiones aplicadas. Guarda la distribución.";
  });
 };
-window.octosTeamFloorState=function(){return {editing,dirty,objectCount:Object.keys(draft.objects).length,building:{...draft.building}}};
+window.octosTeamFloorState=function(){return {editing,dirty,objectCount:Object.keys(draft.objects).length,
+ zoneCount:Object.keys(draft.zones).length,building:{...draft.building},
+ walls:JSON.parse(JSON.stringify(draft.walls))}};
 draw();
 })();
 </script>
