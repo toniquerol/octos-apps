@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0E0E10">
-<meta name="description" content="OcToS Roads: editor cartográfico de ejes, curvas, secciones, intersecciones y geometría vial paramétrica. Conoce las herramientas y consulta ilustraciones estáticas del editor.">
-<title>OcToS Roads · Diseño vial paramétrico</title>
+<meta name="description" content="OcToS Roads: geometría vial paramétrica, alineamiento horizontal, secciones transversales, intersecciones y cartografía de referencia. Capturas reales del editor y solicitud de acceso.">
+<title>OcToS Roads · Ingeniería civil aplicada y diseño geométrico vial</title>
 <link rel="icon" type="image/svg+xml" href="../icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -37,7 +37,9 @@ nav a:not(.btn){color:#bdc0c6}nav a:not(.btn):hover{color:var(--text)}
 .eyebrow{font:700 11px Manrope,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
 .hero{padding:80px 0 68px;position:relative;overflow:hidden;background:radial-gradient(circle at 80% 10%,#3d241b70,transparent 44%),linear-gradient(180deg,#151518 0%,#0E0E10 82%)}
 .hero-grid{display:grid;grid-template-columns:1.04fr .96fr;gap:58px;align-items:center}
-h1{font-size:clamp(43px,5.2vw,80px);line-height:1.06;letter-spacing:-.075em;font-weight:800;margin:21px 0 28px;max-width:760px}
+.hero .eyebrow{font-size:clamp(13px,1.2vw,16px);line-height:1.45;letter-spacing:.12em;font-weight:800}
+h1{font-size:clamp(43px,5.2vw,80px);line-height:1.06;letter-spacing:-.075em;font-weight:800;margin:18px 0 15px;max-width:760px}
+.hero-domain{font:700 clamp(20px,2.4vw,29px)/1.22 Manrope,system-ui,sans-serif;letter-spacing:-.035em;color:var(--text);margin:0 0 19px}
 .hero-lead{font-size:clamp(16px,1.55vw,19px);line-height:1.66;color:#c4c5ca;max-width:565px}
 .hero-actions{display:flex;gap:11px;flex-wrap:wrap;margin:30px 0}
 .hero-note{border-left:2px solid var(--accent);padding-left:13px;font-size:12px;max-width:510px;line-height:1.65;color:#aeb0b7}
@@ -139,13 +141,14 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
   <div class="shell hero-grid">
    <div>
     <div class="eyebrow">Diseño geométrico y cartografía</div>
-    <h1>De una línea en el mapa a una carretera.</h1>
-    <p class="hero-lead">OcToS Roads combina edición directa de ejes viarios, geometría paramétrica, secciones transversales y visualización cartográfica en un único entorno web.</p>
+    <h1>Del eje en planta a la carretera proyectada.</h1>
+    <p class="hero-domain">Ingeniería civil aplicada</p>
+    <p class="hero-lead">Trazado geométrico, alineamiento horizontal, secciones transversales y cartografía de referencia en un único entorno de diseño.</p>
     <div class="hero-actions">
      <a class="btn primary" href="https://octos3dstudio.wordpress.com/contacto/" target="_blank" rel="noopener noreferrer">Solicitar acceso <span aria-hidden="true">↗</span></a>
      <a class="btn" href="#interfaz">Ver capturas reales</a>
     </div>
-    <p class="hero-note">Para solicitar acceso, indica «OcToS Roads» y el motivo de tu consulta en el formulario de contacto. El eje sigue siendo editable. Al modificarlo se recalculan las curvas y la representación de la calzada. El editor conserva herramientas específicas para rotondas, enlaces, puentes y túneles.</p>
+    <p class="hero-note">Acceso bajo solicitud. Indica «OcToS Roads» y el ámbito de uso previsto en el formulario de contacto.</p>
    </div>
    <div class="preview-window">
     <div class="preview-title"><span><span class="preview-dot"></span>OcToS ROADS / CAPTURA REAL</span><span>DISEÑO TÉCNICO</span></div>
@@ -156,31 +159,31 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
  </div>
  <div class="stats" aria-label="Áreas del editor">
   <div class="shell">
-   <div class="stat"><strong>2D / 3D</strong><span>Cartografía y terreno</span></div>
-   <div class="stat"><strong>Ejes</strong><span>Trazado editable</span></div>
-   <div class="stat"><strong>T · X</strong><span>Intersecciones detectadas</span></div>
-   <div class="stat"><strong>VCHI</strong><span>Referencia técnica configurable</span></div>
+   <div class="stat"><strong>2D / 3D</strong><span>Planta y relieve</span></div>
+   <div class="stat"><strong>Ejes</strong><span>Control geométrico</span></div>
+   <div class="stat"><strong>T · X</strong><span>Intersecciones entre ejes</span></div>
+   <div class="stat"><strong>VCHI</strong><span>Parámetros de referencia</span></div>
   </div>
  </div>
  <section class="content" id="funciones">
   <div class="shell">
    <div class="section-head">
-    <div><div class="eyebrow">Herramientas principales</div><h2>Geometría que se construye contigo.</h2></div>
-    <p>Desde un trazado inicial hasta su representación por carriles y elementos singulares. Los ajustes se realizan en el mismo entorno cartográfico.</p>
+    <div><div class="eyebrow">Herramientas principales</div><h2>Herramientas de diseño geométrico vial.</h2></div>
+    <p>Del eje de proyecto a la plataforma viaria, las intersecciones y las obras de paso, sobre cartografía georreferenciada.</p>
    </div>
    <div class="grid">
-    <article class="feature"><figure class="feature-preview "><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-axes.png?w=650" loading="lazy" decoding="async" alt="Ejes viarios y puntos de control del proyecto real."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">01 · EJE VIARIO</div><h3>Dibuja y modifica directamente</h3><p>Añade puntos, desplaza vértices y edita tramos sobre el mapa. La geometría derivada sigue los puntos de control.</p></article>
-    <article class="feature"><figure class="feature-preview "><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-design.png?w=650" loading="lazy" decoding="async" alt="Radios y alineamientos de carreteras con valores geométricos sobre ortofotografía."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">02 · ALINEAMIENTO</div><h3>Radios, arcos y clotoides</h3><p>Resuelve curvas circulares tangentes y transiciones cuando existe espacio suficiente, con radio y velocidad de diseño configurables.</p></article>
-    <article class="feature"><figure class="feature-preview focus-right"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-sections.png?w=650" loading="lazy" decoding="async" alt="Ventana real de sección transversal con anchuras de carriles y arcenes."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">03 · SECCIÓN VIARIA</div><h3>Carriles, arcenes y mediana</h3><p>Configura la anchura de carril, secciones 1, 1+1, 2+1 y 2+2, medianas, arcenes y aceras.</p></article>
-    <article class="feature"><figure class="feature-preview "><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-axes.png?w=650" loading="lazy" decoding="async" alt="Puntos de unión y ejes viales en el entorno real de Roads."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">04 · NODOS Y ENLACES</div><h3>Encuentros en T y X</h3><p>Detecta encuentros entre ejes y representa acuerdos geométricos, además de contar con herramientas de enlace.</p></article>
-    <article class="feature"><figure class="feature-preview "><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-bridge.png?w=650" loading="lazy" decoding="async" alt="Captura real de un puente de arco con su sección longitudinal y transversal."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">05 · ELEMENTOS</div><h3>Rotondas, puentes y túneles</h3><p>Inserta rotondas con parámetros propios y clasifica tramos como puentes o túneles, con secciones de referencia.</p></article>
-    <article class="feature"><figure class="feature-preview focus-left"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-sections.png?w=650" loading="lazy" decoding="async" alt="Panel real con parámetros del trazado, velocidad, peralte y sección vial."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">06 · CONTROL TÉCNICO</div><h3>Parámetros y advertencias</h3><p>Consulta radios, transiciones, sobreanchos y avisos calculados según el perfil de referencia disponible.</p></article>
-    <article class="feature"><figure class="feature-preview feature-preview-dual"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-geo-information.png?w=430" loading="lazy" decoding="async" alt="Panel real de geoinformación con servicios y ajustes de opacidad"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-project-layers.png?w=430" loading="lazy" decoding="async" alt="Panel real de capas del proyecto, calzadas, velocidad y puntos de control"><figcaption>CAPTURAS REALES</figcaption></figure><div class="count">07 · CARTOGRAFÍA</div><h3>Fondos y capas geográficas</h3><p>Superpone cartografía de referencia, organiza capas geográficas y controla su visibilidad y opacidad.</p></article>
-    <article class="feature"><figure class="feature-preview feature-preview-concept" aria-label="Esquema de formatos compatibles, no captura real"><span class="diagram-heading">FORMATOS DE INTERCAMBIO</span><div class="file-chips"><span>KML</span><span>GeoJSON</span><span>DWG</span><span>JSON</span></div><span class="diagram-caption">IMPORTAR ↔ EXPORTAR</span><figcaption>ESQUEMA DE FUNCIONES</figcaption></figure><div class="count">08 · INTERCAMBIO</div><h3>Importación y exportación</h3><p>Admite flujos con KML, DWG, GeoJSON y JSON de proyecto, además de importación de ejes viarios reales por área.</p></article>
-    <article class="feature"><figure class="feature-preview feature-preview-concept" aria-label="Esquema de la biblioteca de proyectos, no captura real"><span class="diagram-heading">BIBLIOTECA DE PROYECTOS</span><div class="project-row"><span>▤</span><strong>Proyecto de carreteras<small>Guardado local</small></strong><em>JSON</em></div><div class="project-row second"><span>▤</span><strong>Nuevo proyecto<small>Crear y recuperar</small></strong></div><figcaption>ESQUEMA DE FUNCIONES</figcaption></figure><div class="count">09 · PROYECTOS</div><h3>Guarda tu trabajo</h3><p>Biblioteca de proyectos y guardado local en el navegador con opciones de exportación para conservar una copia independiente.</p></article>
+    <article class="feature"><figure class="feature-preview "><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-axes.png?w=650" loading="lazy" decoding="async" alt="Ejes viarios y puntos de control del proyecto real."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">01 · EJE VIARIO</div><h3>Edición del eje en planta</h3><p>Define trazados, inserta vértices y ajusta puntos de control. La calzada se adapta al eje.</p></article>
+    <article class="feature"><figure class="feature-preview "><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-design.png?w=650" loading="lazy" decoding="async" alt="Radios y alineamientos de carreteras con valores geométricos sobre ortofotografía."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">02 · ALINEAMIENTO</div><h3>Alineamiento horizontal</h3><p>Arcos tangentes, radios de proyecto y clotoides de transición cuando la geometría lo permite.</p></article>
+    <article class="feature"><figure class="feature-preview focus-right"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-sections.png?w=650" loading="lazy" decoding="async" alt="Ventana real de sección transversal con anchuras de carriles y arcenes."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">03 · SECCIÓN VIARIA</div><h3>Secciones transversales</h3><p>Dimensiona carriles, arcenes, medianas y aceras. Configura secciones de 1, 1+1, 2+1 o 2+2 carriles.</p></article>
+    <article class="feature"><figure class="feature-preview "><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-axes.png?w=650" loading="lazy" decoding="async" alt="Puntos de unión y ejes viales en el entorno real de Roads."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">04 · NODOS Y ENLACES</div><h3>Intersecciones y enlaces</h3><p>Detecta encuentros en T y X y define conexiones geométricas entre ejes viarios.</p></article>
+    <article class="feature"><figure class="feature-preview "><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-bridge.png?w=650" loading="lazy" decoding="async" alt="Captura real de un puente de arco con su sección longitudinal y transversal."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">05 · ELEMENTOS</div><h3>Rotondas y obras de paso</h3><p>Parametriza glorietas y tramos de puente o túnel, con vistas de sección y alzado de referencia.</p></article>
+    <article class="feature"><figure class="feature-preview focus-left"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-sections.png?w=650" loading="lazy" decoding="async" alt="Panel real con parámetros del trazado, velocidad, peralte y sección vial."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">06 · CONTROL TÉCNICO</div><h3>Parámetros geométricos</h3><p>Consulta radios, velocidades de diseño, peraltes y advertencias del perfil técnico seleccionado.</p></article>
+    <article class="feature"><figure class="feature-preview feature-preview-dual"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-geo-information.png?w=430" loading="lazy" decoding="async" alt="Panel real de geoinformación con servicios y ajustes de opacidad"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-project-layers.png?w=430" loading="lazy" decoding="async" alt="Panel real de capas del proyecto, calzadas, velocidad y puntos de control"><figcaption>CAPTURAS REALES</figcaption></figure><div class="count">07 · CARTOGRAFÍA</div><h3>Cartografía y geoinformación</h3><p>Combina ortofotografía, servicios WMS y capas del proyecto con control de visibilidad y opacidad.</p></article>
+    <article class="feature"><figure class="feature-preview feature-preview-concept" aria-label="Esquema de formatos compatibles, no captura real"><span class="diagram-heading">FORMATOS DE INTERCAMBIO</span><div class="file-chips"><span>KML</span><span>GeoJSON</span><span>DWG</span><span>JSON</span></div><span class="diagram-caption">IMPORTAR ↔ EXPORTAR</span><figcaption>ESQUEMA DE FUNCIONES</figcaption></figure><div class="count">08 · INTERCAMBIO</div><h3>Intercambio CAD / GIS</h3><p>Importa geometría DWG y KML. Intercambia ejes y proyectos en GeoJSON, KML y JSON.</p></article>
+    <article class="feature"><figure class="feature-preview feature-preview-concept" aria-label="Esquema de la biblioteca de proyectos, no captura real"><span class="diagram-heading">BIBLIOTECA DE PROYECTOS</span><div class="project-row"><span>▤</span><strong>Proyecto de carreteras<small>Guardado local</small></strong><em>JSON</em></div><div class="project-row second"><span>▤</span><strong>Nuevo proyecto<small>Crear y recuperar</small></strong></div><figcaption>ESQUEMA DE FUNCIONES</figcaption></figure><div class="count">09 · PROYECTOS</div><h3>Gestión de proyectos</h3><p>Organiza proyectos guardados localmente y exporta copias para archivo e intercambio técnico.</p></article>
    </div>
    <div class="tools-sample">
-    <div><span class="eyebrow">Interfaz real</span><h3>Herramientas de dibujo y visualización</h3><p>Seleccionar, crear, insertar, eliminar, enlazar y representar la carretera en distintos modos.</p></div>
+    <div><span class="eyebrow">Interfaz real</span><h3>Edición y análisis del trazado</h3><p>Vértices, ejes, enlaces, rotondas y modos de representación geométrica.</p></div>
     <img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-toolbar.png" loading="lazy" decoding="async" width="849" height="78" alt="Captura auténtica de los botones de OcToS Roads para dibujar, modificar, enlazar y cambiar los modos de visualización">
    </div>
   </div>
@@ -188,7 +191,7 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
  <section class="gallery" id="interfaz">
   <div class="shell">
    <div class="section-head">
-    <div><div class="eyebrow">Capturas reales del proyecto</div><h2>Un trazado, cuatro formas de verlo.</h2><p>Las mismas carreteras en los modos Velocidades, Ejes, Diseño y Gris. Imágenes auténticas del proyecto en 2D, sin cargar la aplicación.</p></div>
+    <div><div class="eyebrow">Capturas reales del proyecto</div><h2>Cuatro vistas del mismo trazado.</h2><p>Comparativa 2D de ejes, plataforma viaria, radios y velocidad geométrica sobre ortofotografía.</p></div>
     <div class="tabs" role="tablist" aria-label="Vistas reales de OcToS Roads">
      <button type="button" role="tab" aria-selected="true" aria-controls="viewer" data-view="speed">Velocidades</button>
      <button type="button" role="tab" aria-selected="false" aria-controls="viewer" data-view="axes">Ejes</button>
@@ -199,40 +202,40 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
    <div class="viewer">
     <div class="viewer-head"><span id="viewer-title" aria-live="polite">OcToS ROADS · COLORES POR VELOCIDAD</span><span class="live">Captura real · vista estática</span></div>
     <div class="viewer-frame"><img id="viewer" src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-velocidades.png?w=1450" width="1414" height="1032" alt="Captura real de carreteras coloreadas por velocidad, con rotonda y accesos sobre ortofotografía" loading="lazy" decoding="async"></div>
-    <div class="viewer-footer"><span id="viewer-description"><strong>Velocidades.</strong> Calzadas coloreadas según velocidad geométrica.</span><span>Capturas del proyecto · sin enlace al editor</span></div>
+    <div class="viewer-footer"><span id="viewer-description"><strong>Velocidades.</strong> Clasificación cromática de tramos por velocidad geométrica estimada.</span><span>Capturas del proyecto · sin enlace al editor</span></div>
    </div>
    <small class="legal">Capturas auténticas del proyecto OcToS Roads facilitadas por su autor. Se muestran únicamente como imágenes, sin ejecutar el editor. Las comprobaciones VCHI son una referencia parcial; el perfil de la normativa española 3.1-IC no está implementado completamente.</small>
   </div>
  </section>
  <section class="content" id="metodo">
   <div class="shell">
-   <div class="eyebrow">Del mapa al trazado</div><h2>Una secuencia de trabajo directa.</h2>
+   <div class="eyebrow">Metodología</div><h2>Proceso de definición geométrica.</h2>
    <div class="workflow">
-    <div class="step"><span>01</span><h3>Ubica</h3><p>Elige el fondo cartográfico y sitúa el área del proyecto.</p></div>
-    <div class="step"><span>02</span><h3>Traza</h3><p>Dibuja el eje mediante puntos de control o incorpora líneas existentes.</p></div>
-    <div class="step"><span>03</span><h3>Parametriza</h3><p>Define la sección, velocidad, radio de curva y parámetros técnicos.</p></div>
-    <div class="step"><span>04</span><h3>Revisa</h3><p>Inspecciona la geometría, edita conexiones y exporta el resultado.</p></div>
+    <div class="step"><span>01</span><h3>Localiza</h3><p>Delimita el ámbito sobre cartografía de referencia.</p></div>
+    <div class="step"><span>02</span><h3>Traza</h3><p>Define ejes en planta y puntos de control.</p></div>
+    <div class="step"><span>03</span><h3>Dimensiona</h3><p>Asigna secciones, radios y velocidad de diseño.</p></div>
+    <div class="step"><span>04</span><h3>Revisa</h3><p>Comprueba avisos, ajusta conexiones y exporta.</p></div>
    </div>
   </div>
  </section>
  <section class="content" style="padding-top:0">
   <div class="shell">
    <div class="highlight">
-    <div><div class="eyebrow">OcToS 3D Studio</div><h2>Diseño de carreteras en un entorno visual.</h2><p>Una herramienta para explorar geometrías, probar configuraciones y preparar trazados digitales editables.</p></div>
+    <div><div class="eyebrow">OcToS 3D Studio</div><h2>Diseño vial paramétrico sobre cartografía real.</h2><p>Modela ejes, secciones y conexiones en un entorno técnico de trabajo.</p></div>
     <a class="btn primary" href="https://octos3dstudio.wordpress.com/contacto/" target="_blank" rel="noopener noreferrer">Solicitar acceso <span aria-hidden="true">↗</span></a>
    </div>
   </div>
  </section>
 </main>
-<footer><div class="shell"><span>© 2026 OcToS 3D Studio · OcToS Roads</span><span>Información de producto · Referencias técnicas sujetas a validación</span></div></footer>
+<footer><div class="shell"><span>© 2026 OcToS 3D Studio · OcToS Roads</span><span>Información técnica · Comprobaciones de referencia no certificadas</span></div></footer>
 <script>
 (() => {
  "use strict";
  const views={
-  speed:{src:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-velocidades.png?w=1450",title:"OcToS ROADS · COLORES POR VELOCIDAD",description:"<strong>Velocidades.</strong> Calzadas coloreadas según velocidad geométrica.",alt:"Vista real del modo Velocidades sobre ortofotografía."},
-  axes:{src:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-axes.png?w=1450",title:"OcToS ROADS · EJES Y PUNTOS DE CONTROL",description:"<strong>Ejes.</strong> Líneas de trazado, conexiones y puntos de control.",alt:"Vista real de ejes y puntos de control sobre ortofotografía."},
-  design:{src:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-design.png?w=1450",title:"OcToS ROADS · DISEÑO TÉCNICO",description:"<strong>Diseño técnico.</strong> Radios, ejes, peraltes y límites de las secciones.",alt:"Vista real del modo Diseño con geometría, curvas y etiquetas técnicas."},
-  gray:{src:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-gray.png?w=1450",title:"OcToS ROADS · CALZADAS EN GRIS",description:"<strong>Gris.</strong> Plataforma viaria y carriles sin clasificación cromática.",alt:"Vista real de calzadas grises y rotonda sobre ortofotografía."}
+  speed:{src:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-velocidades.png?w=1450",title:"OcToS ROADS · COLORES POR VELOCIDAD",description:"<strong>Velocidades.</strong> Clasificación cromática de tramos por velocidad geométrica estimada.",alt:"Vista real del modo Velocidades sobre ortofotografía."},
+  axes:{src:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-axes.png?w=1450",title:"OcToS ROADS · EJES Y PUNTOS DE CONTROL",description:"<strong>Ejes.</strong> Alineamientos en planta, nodos y puntos de control.",alt:"Vista real de ejes y puntos de control sobre ortofotografía."},
+  design:{src:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-design.png?w=1450",title:"OcToS ROADS · DISEÑO TÉCNICO",description:"<strong>Diseño técnico.</strong> Radios de curva, peraltes y contornos de plataforma.",alt:"Vista real del modo Diseño con geometría, curvas y etiquetas técnicas."},
+  gray:{src:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-gray.png?w=1450",title:"OcToS ROADS · CALZADAS EN GRIS",description:"<strong>Gris.</strong> Plataforma y carriles en representación neutra.",alt:"Vista real de calzadas grises y rotonda sobre ortofotografía."}
  };
  const frame=document.getElementById("viewer");
  const tabs=[...document.querySelectorAll("[data-view]")];
