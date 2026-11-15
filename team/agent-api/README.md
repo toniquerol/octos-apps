@@ -71,6 +71,17 @@ La URL del Worker se conserva en ese navegador; las contraseñas y la clave Open
 - `POST /setup` — autorización con `TEAM_SETUP_TOKEN`, cuerpo `{"openai_api_key":"sk-..."}`; cifra y almacena **una sola vez**. No devuelve secretos.
 - `GET /health` — autorización con `TEAM_ACCESS_TOKEN`; devuelve `ready` y `configured`.
 - `POST /run` — autorización con `TEAM_ACCESS_TOKEN`; envía `{"task":"..."}` y devuelve NDJSON `state`, `report`, `done` o `error`.
+- `GET /telemetry?days=1|7|30` — autorización con `TEAM_ACCESS_TOKEN`; devuelve consumos reales de tokens por llamadas de este Worker, tareas completadas y fallidas, resumen por agente e histórico de costes **estimados**.
+
+## Telemetría en la sala
+
+El panel **Sala → Telemetría de consumo y actividad API** muestra llamadas OpenAI, tareas realizadas, tokens de entrada, salida y caché, importes estimados en USD, desglose por Dirección/A03/A04 y llamadas recientes. Elige 24 horas, 7 días o 30 días y usa **Actualizar datos**.
+
+Los datos comienzan a registrarse **solo después de desplegar esta versión del Worker**, no son retrospectivos. Los registros se conservan hasta 90 días en el binding KV existente `TEAM_SECRETS`, mediante metadatos de claves con prefijo propio; **no se guardan peticiones, respuestas, credenciales ni claves**. Cloudflare KV puede tardar en reflejar escrituras entre centros de datos. Una consulta sin tarifa conocida se refleja como coste parcial, no como coste cero. Los costes son **estimaciones**, basadas en tarifas de entrada, entrada caché y salida publicadas por OpenAI el 15/11/2026. No incluyen otros servicios, modalidades, impuestos ni ajustes de facturación y no equivalen al gasto facturado por la organización.
+
+Para activar la telemetría en el Worker ya desplegado, publica los archivos actualizados `worker.js` y `telemetry.js` en Cloudflare mediante tu flujo habitual o `npx wrangler deploy` desde `team/agent-api`. No necesitas otro KV si ya existe el binding `TEAM_SECRETS`. La interfaz se publica en GitHub Pages al actualizar `team/index.html` y `team/telemetry.js`.
+
+La interfaz muestra el resumen al acceder con **PIN maestro** e introducir la **URL HTTPS del Worker** y **TEAM_ACCESS_TOKEN** en «Nueva petición / Input». Se reutilizan los campos existentes y las contraseñas no se guardan. El PIN maestro limita la visualización en la interfaz, pero **la seguridad del endpoint la proporciona el token del Worker**, no el PIN del cliente. Cualquier persona con `TEAM_ACCESS_TOKEN` también puede consultar `/telemetry`: debe tratarse como credencial privada.
 
 ## Límites del piloto
 
