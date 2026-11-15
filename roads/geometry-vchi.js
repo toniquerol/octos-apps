@@ -93,7 +93,7 @@ function build(road,toXY,toLL,section){
   emit(circular,R,sign,i-1,'arc',extra,circularWidening);
   if(L){const p=geom.exit.map(world);emit(p,R,sign,i-1,'clothoid-exit',extra,p.map((_,k)=>extra*(1-k/(p.length-1))));}
   last=world((L?geom.exit:geom.arc).at(-1));
-  arcs.push({center:toLL(PI,lat0),middle:toLL(circular[Math.floor(circular.length/2)],lat0),radius:R,speed:parts.at(-1).speed,transition:L,kind:L?'clothoid+arc':'circular'});
+  arcs.push({center:toLL(PI,lat0),middle:toLL(circular[Math.floor(circular.length/2)],lat0),radius:R,speed:parts.at(-1).speed,transition:L,overwidth:extra,kind:L?'clothoid+arc':'circular'});
   curves.push({segmentIndex:i-1,radius:R,desiredRadius:targetR,transition:L,requiredTransition:requiredSpiral(speed,R),
    spiralRequired:isSpiralRequired(speed,R),turnAngle:phi*180/Math.PI,tangent:geom.T,overwidth:extra,kind:L?'clothoid+arc':'circular'});
  }
