@@ -224,6 +224,7 @@ svg .chief-station .agent-indicator.blink{animation:team-finished-blink .9s step
 <div class="agents-actions"><button id="agents-health" type="button">Comprobar conexión</button></div>
 <details class="agents-initial-setup" id="agents-first-use">
  <summary>Primera conexión · Registrar clave OpenAI</summary>
+ <p class="agent-help"><a href="https://github.com/toniquerol/octos-apps/blob/main/team/agent-api/README.md" target="_blank" rel="noopener noreferrer" style="color:#ffb485">Instrucciones para desplegar el Worker en Cloudflare</a></p>
  <p class="agent-help">Primero se despliega el Worker en tu cuenta de Cloudflare. Una vez vinculado, puedes pegar la clave aquí: viajará por HTTPS y se almacenará cifrada en el servidor, nunca en GitHub ni en el navegador.</p>
  <label for="agents-setup-token">Contraseña de configuración del Worker</label>
  <input id="agents-setup-token" type="password" placeholder="TEAM_SETUP_TOKEN definido en Cloudflare" autocomplete="off" spellcheck="false">
