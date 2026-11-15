@@ -32,7 +32,6 @@ const AeroPaths = (() => {
       const laneZ=(u-.5)*W*(roof?1.02:.82);
       const laneY=.08+u*H*.86;
       const offsets=new Array(steps).fill(null);
-      const base=roof?H+clearance:under?.035:sign*(W*.5+clearance);
       for(let s=0;s<steps;s++){
         const x=lo+(hi-lo)*s/(steps-1);
         let hit;
