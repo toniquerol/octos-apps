@@ -74,8 +74,8 @@
  function showDetail(item,preview){
   if(!item){rootElement.innerHTML=siteHeader("detail")+`<main class="wrap"><section class="hub-hero"><h1>Aplicación no encontrada</h1><a class="btn" href="${root.href}">Volver a Información</a></section></main>`+footer;return}
   document.title="OcToS "+item.name+" · Información";
-  const external=item.id==="wordpress",cta=external?item.external:contact;
-  const ctaText=external?"Visitar sitio web":"Solicitar acceso";
+  const external=item.id==="wordpress",launch=item.launch?new URL(item.launch,root).href:null,cta=launch|| (external?item.external:contact);
+  const ctaText=launch?"Abrir aplicación":external?"Visitar sitio web":"Solicitar acceso";
   const steps=(item.steps||[]).map((p,j)=>`<article class="step"><strong>${String(j+1).padStart(2,"0")}</strong><p>${esc(p)}</p></article>`).join("");
   const features=(item.features||[]).map((f,j)=>`<article class="feature-card"><span class="feature-index">${String(j+1).padStart(2,"0")} / ${esc(item.category.toUpperCase())}</span><h3>${esc(f.title)}</h3><p>${esc(f.text)}</p></article>`).join("");
   rootElement.innerHTML=siteHeader("detail")+`
@@ -101,7 +101,7 @@
    <div class="steps">${steps}</div>
   </div></section>
   <section class="section"><div class="wrap"><div class="cta-panel">
-   <div><span class="eyebrow">OcToS 3D Studio</span><h2>${esc(item.name)} · ${esc(item.category)}</h2><p>${external?"Información y recursos corporativos.":"Acceso a la aplicación sujeto a autorización."}</p></div>
+   <div><span class="eyebrow">OcToS 3D Studio</span><h2>${esc(item.name)} · ${esc(item.category)}</h2><p>${external?"Información y recursos corporativos.":launch?"Versión de lanzamiento disponible para prueba pública.":"Acceso a la aplicación sujeto a autorización."}</p></div>
    <a class="btn primary" href="${esc(cta)}" target="_blank" rel="noopener noreferrer">${ctaText}</a>
   </div></div></section></main>`+footer;
  }
