@@ -619,8 +619,14 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
   <label class="field" id="sidewalkField" style="display:none">Acera por lado (m) <input id="sidewalkWidth" type="number" min="0" max="8" step="0.25" value="1.5"></label>
   <p class="muted" id="sectionSummary">2 carriles · calzada 7 m · arcenes 1,5 m por lado · plataforma 10 m.</p>
   <p class="muted">La categoría identifica el eje. La sección define los carriles, la mediana, los arcenes y las aceras independientemente. Dimensiones orientativas; no es una validación normativa.</p>
-  <label class="field">Velocidad límite (km/h) <input id="speed" type="number" min="10" max="130" step="10" value="90"></label>
-  <p class="muted">Las curvas se generan automáticamente con arcos circulares tangentes. Si no cabe el radio objetivo entre dos vértices, se reduce y se recalcula la velocidad. Radio 0 = poligonal sin suavizado.</p>
+  <label class="field">Velocidad de diseño (km/h) <input id="speed" type="number" min="10" max="130" step="10" value="90"></label>
+  <label class="field">Perfil técnico <select id="normProfile"><option value="vchi">VCHI 2005 · referencia</option><option value="es31ic">España 3.1-IC · sin reglas cargadas</option><option value="off">Sin evaluación</option></select></label>
+  <label class="field">Peralte de referencia (%) <input id="superelevation" type="number" min="0" max="8" step="1" value="4"></label>
+  <label class="field">Transiciones de clotoide <select id="transitionMode"><option value="auto">Automáticas si son viables</option><option value="on">Intentar en todas las curvas</option><option value="off">Solo arcos circulares</option></select></label>
+  <label class="field">Vehículo de referencia <select id="designVehicle"><option value="VL">VL · ligero</option><option value="VP">VP · pesado</option><option value="VA">VA · articulado</option></select></label>
+  <label class="field">Distancia entre ejes (m) <input id="wheelbase" type="number" min="2" max="20" step="0.1" value="6"></label>
+  <p class="muted">Reglas de VCHI 2005 para radios, espirales y sobreanchos. 3.1-IC es un perfil separado aún no parametrizado. Las dimensiones y advertencias son referencias de diseño, no certificación técnica.</p>
+  <p class="muted">El eje se resuelve con arcos tangentes y, cuando hay espacio suficiente, clotoides. Si una condición no se cumple se advierte; radio 0 conserva la poligonal.</p>
   <button class="btn" id="applyBtn" style="width:100%">Aplicar al tramo seleccionado</button>
  </details></div>
   <div id="inspectorRoundabout"><details class="roundabout-options" open><summary>Parámetros de rotonda</summary>
@@ -662,6 +668,7 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 <footer><span id="status" role="status">Preparado · modo selección</span><span>OcToS 3D Studio © 2026 · Roads V1.0</span></footer>
 <input id="fileInput" type="file" accept=".json,.geojson,application/json" hidden><input id="kmlFile" type="file" accept=".kml,application/vnd.google-earth.kml+xml,text/xml" hidden><input id="dwgFile" type="file" accept=".dwg,application/acad" hidden>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="./geometry-vchi.js"></script>
 <script>
 (function(){
 'use strict';
@@ -776,10 +783,15 @@ function params(){
  return {name:$('roadName').value.trim()||'Carretera '+(roads.length+1),
  type:$('roadType').value,radius:clamp(Number($('radius').value)||0,0,5000),
  section,laneWidth,sidewalkWidth,shoulderWidth,medianWidth,width:config.lanes*laneWidth,
- speed:clamp(Number($('speed').value)||90,10,130)};
+ speed:clamp(Number($('speed').value)||90,10,130),
+ normProfile:$('normProfile').value,
+ superelevation:clamp(Number($('superelevation').value)/100,0,.08),
+ transitionMode:$('transitionMode').value,
+ designVehicle:$('designVehicle').value,
+ wheelbase:clamp(Number($('wheelbase').value)||6,2,20)};
 }
 function validNodes(nodes){return Array.isArray(nodes)&&nodes.length>=2&&nodes.length<=4000&&nodes.every(p=>Array.isArray(p)&&p.length===2&&p.every(finite)&&Math.abs(p[0])<=85&&Math.abs(p[1])<=180);}
-function makeGeometry(road){
+function makeGeometryLegacy(road){
  const nodes=road.nodes,lat0=nodes.reduce((s,n)=>s+n[0],0)/nodes.length;
  const pts=nodes.map(p=>xy(p,lat0)), parts=[],arcs=[];
  let last=pts[0];const cap=road.speed;
@@ -805,6 +817,14 @@ function makeGeometry(road){
  }
  emit([last,pts[pts.length-1]],0,0,pts.length-2);
  return {parts,arcs,total:parts.reduce((s,p)=>s+p.length,0),minRadius:arcs.length?Math.min(...arcs.map(a=>a.radius)):null};
+}
+
+/* Calculadora paramétrica en metros, con retorno al trazado anterior ante errores. */
+function makeGeometry(road){
+ const api=window.OcToSRoadGeometry;
+ if(!api||!Array.isArray(road.nodes)||road.nodes.length<2)return makeGeometryLegacy(road);
+ try{return api.build(road,xy,ll,sectionOf(road));}
+ catch(error){console.warn('OcToS Roads: motor VCHI no disponible para este eje',error);return makeGeometryLegacy(road);}
 }
 
 /* Intersecciones automáticas en T y cruz. Geometría derivada; nunca edita nodos. */
@@ -836,6 +856,7 @@ function autoCrossEvents(input=roads){
  const nearRotonda=p=>roundabouts.some(rb=>dist(p,xy(rb.center,lat0))<rb.diameter/2+12);
  for(let i=0;i<axes.length;i++)for(let j=i+1;j<axes.length;j++){
   const a=axes[i],b=axes[j],A=a.bounds,B=b.bounds,pad=AUTO_CROSS_SNAP+2;
+  if(Number(a.r.level||0)!==Number(b.r.level||0))continue;
   if(A.minX>B.maxX+pad||B.minX>A.maxX+pad||A.minY>B.maxY+pad||B.minY>A.maxY+pad)continue;
   const register=(p,arms,stub=null)=>{
    if(arms.length<3||arms.length>4||nearRotonda(p)||out.some(e=>e.a===a.r.id&&e.b===b.r.id&&dist(p,e.p)<12))return;
@@ -924,7 +945,8 @@ function autoCrossShapes(event){
   const diff=sub(offsetB,offsetA),sa=cross(diff,b.v)/den,sb=cross(diff,a.v)/den;
   const corner=add(event.p,add(offsetA,mul(a.v,sa)));
   const cot=1/Math.tan(theta/2),available=Math.min(a.len-sa,b.len-sb)-1.5;
-  const radius=Math.min(clamp(Math.min(a.w,b.w)*1.6,3.5,11),Math.max(0,available/cot));
+  const guideRadius=window.OcToSRoadGeometry?.turningRadius(a.r,b.r)||clamp(Math.min(a.w,b.w)*1.6,3.5,11);
+  const radius=Math.min(guideRadius,Math.max(0,available/cot));
   if(radius<2)continue;
   const p1=add(corner,mul(a.v,radius*cot)),p2=add(corner,mul(b.v,radius*cot));
   const center=add(p1,mul(normalA,radius));
@@ -1773,7 +1795,7 @@ async function homeDeleteInvalidImport(id){
 
 function roadById(id){return roads.find(r=>r.id===id);}
 function newId(){return 'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
-function setSelection(id){inspectorClosed=false;selectedJunction=null;selectedRoundabout=null;selected=roadById(id)?id:null;if(selectedSegment?.roadId!==selected)selectedSegment=null;const r=roadById(selected);if(r){const sec=sectionOf(r);$('roadName').value=r.name;$('roadType').value=r.type;$('radius').value=r.radius;$('roadSection').value=sec.section;$('laneWidth').value=sec.laneWidth;$('sidewalkWidth').value=sec.sidewalkWidth;$('shoulderWidth').value=sec.shoulderWidth;$('medianWidth').value=sec.medianWidth;$('speed').value=r.speed;updateSectionUI();}render();}
+function setSelection(id){inspectorClosed=false;selectedJunction=null;selectedRoundabout=null;selected=roadById(id)?id:null;if(selectedSegment?.roadId!==selected)selectedSegment=null;const r=roadById(selected);if(r){const sec=sectionOf(r);$('roadName').value=r.name;$('roadType').value=r.type;$('radius').value=r.radius;$('roadSection').value=sec.section;$('laneWidth').value=sec.laneWidth;$('sidewalkWidth').value=sec.sidewalkWidth;$('shoulderWidth').value=sec.shoulderWidth;$('medianWidth').value=sec.medianWidth;$('speed').value=r.speed;$('normProfile').value=r.normProfile||'vchi';$('superelevation').value=Math.round(100*Number(r.superelevation??.04));$('transitionMode').value=r.transitionMode||'auto';$('designVehicle').value=r.designVehicle||'VL';$('wheelbase').value=r.wheelbase??6;updateSectionUI();}render();}
 
 
 /* Puentes: vistas SVG independientes del pavimento y parámetros por segmento.
@@ -2900,6 +2922,13 @@ function render(){
  $('selection').innerHTML=rb?'<b>Rotonda</b><br>'+rb.arms+' ramales · '+(roundaboutShape(rb)==='stadium'?'Alargada':roundaboutShape(rb)==='ellipse'?'Ovalada':'Circular')+' · Ø menor '+format(rb.diameter)+' m'+(roundaboutShape(rb)!=='circular'?' · alargamiento '+format(rb.elongation||0)+' m':'')+' · '+roundaboutDimensions(rb).lanes+' carriles anulares de '+format(roundaboutDimensions(rb).laneWidth)+' m'+(rb.slipEnabled?' · carril directo':'')+'<br>Orientación '+format(rb.orientation)+'° · ramales '+format(rb.armLength)+' m'+''+Array.from({length:rb.arms},(_,i)=>{const road=roundaboutArmRoad(rb,i);if(!road)return '';const p=roundaboutArmProfile(rb,i);return '<br>Ramal '+(i+1)+': '+safe(road.road.name)+' · '+p.entry+' entrada / '+p.exit+' salida · '+format(p.laneWidth)+' m/carril';}).join('')
  :r?'<b>'+safe(r.name)+'</b><br>'+r.nodes.length+' puntos · '+format(makeGeometry(r).total/1000)+' km<br>Radio mínimo: '+(makeGeometry(r).minRadius===null?'Sin curvas':format(makeGeometry(r).minRadius)+' m')+'<br>'+sectionOf(r).name+' · '+sectionOf(r).lanes+' carriles · carril '+format(sectionOf(r).laneWidth)+' m'+(sectionOf(r).street?' · aceras '+format(sectionOf(r).sidewalkWidth)+' m/lado':' · arcenes '+format(sectionOf(r).shoulderWidth)+' m/lado')+(sectionOf(r).medianWidth?' · separador '+format(sectionOf(r).medianWidth)+' m':'')+' · plataforma '+format(sectionOf(r).totalWidth)+' m · límite '+r.speed+' km/h'+(segmentIndices.length?'<br><b>'+segmentIndices.length+' tramo'+(segmentIndices.length===1?'':'s')+' marcado'+(segmentIndices.length===1?'':'s')+': '+segmentIndices.map(i=>i+1).join(', ')+'</b><br>Puente · Túnel · Normal: aplicar a la selección.':''):'Sin selección. Crea un trazado o selecciona una rotonda.';
 
+ if(r&&window.OcToSRoadGeometry){
+  const technical=window.OcToSRoadGeometry.inspect(r,makeGeometry(r),sectionOf(r));
+  const label=technical.profile==='vchi'?'VCHI 2005':technical.profile==='es31ic'?'3.1-IC (no evaluable)':'Sin perfil';
+  const state=technical.checks.filter(c=>c.state==='adjust').length;
+  const detail=technical.checks.map(c=>'<div style="margin-top:5px"><b>'+safe(c.state==='adjust'?'REVISAR':c.state==='unknown'?'NO EVALUABLE':'REFERENCIA')+'</b> · '+safe(c.label)+'<br><small>'+safe(c.detail)+' · '+safe(c.ref)+'</small></div>').join('');
+  $('selection').insertAdjacentHTML('beforeend','<details style="margin-top:8px;border-top:1px solid #56565b;padding-top:7px" '+(state?'open':'')+'><summary>'+safe(label)+' · '+state+' advertencia'+(state===1?'':'s')+'</summary><div style="padding:6px 0">'+detail+'</div><small>Validación parcial de diseño; no certifica cumplimiento normativo.</small></details>');
+ }
  const manualRoads=roads.filter(r=>r.importGroup!=='carreteras-reales');
  const realRoads=roads.filter(r=>r.importGroup==='carreteras-reales');
  const roadButton=r=>'<button class="roaditem'+(r.id===selected?' selected':'')+'" data-id="'+r.id+'"><span class="dot" style="background:'+categoryColor(r.type)+'" title="'+safe(r.type)+'"></span><span>'+safe(r.name)+'</span></button>';
@@ -3051,9 +3080,19 @@ function finish(save=true){if(save&&draft.length>=2){checkpoint();const r={id:ne
 function insertNode(r,latlng){const lat0=r.nodes.reduce((s,n)=>s+n[0],0)/r.nodes.length,p=xy([latlng.lat,latlng.lng],lat0);let best=Infinity,index=0;for(let i=0;i<r.nodes.length-1;i++){const a=xy(r.nodes[i],lat0),b=xy(r.nodes[i+1],lat0),ab=sub(b,a),q=clamp(dot(sub(p,a),ab)/(dot(ab,ab)||1),0,1),d=dist(p,add(a,mul(ab,q)));if(d<best){best=d;index=i+1;}}checkpoint();repairStructuresAfterInsert(r,index);const anchors=jxCapture(r);r.nodes.splice(index,0,[latlng.lat,latlng.lng]);jxReanchor(r,anchors);selected=r.id;selectedSegment=null;persist();setMode('select');status('Punto insertado en '+r.name+' · modo selección.');}
 function undo(){if(mode==='draw'&&draft.length){draft.pop();$('finishBtn').disabled=draft.length<2;drawPreview();return;}if(!history.length){status('No hay acciones para deshacer.');return;}const snapshot=JSON.parse(history.pop());roads=Array.isArray(snapshot)?snapshot:snapshot.roads;roundabouts=Array.isArray(snapshot)?[]:(snapshot.roundabouts||[]);junctions=Array.isArray(snapshot)?[]:(snapshot.junctions||[]);selectedJunction=null;pendingJunction=null;if(!roadById(selected))selected=null;if(!roundaboutAt(selectedRoundabout))selectedRoundabout=null;selectedSegment=null;persist();render();status('Última acción deshecha.');}
 function download(name,object){const blob=new Blob([JSON.stringify(object,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function exportGeo(){return {type:'FeatureCollection',name:'OcToS Roads V1',features:roads.map(r=>{const segments=makeGeometry(r).parts;let pts=[];segments.forEach(s=>s.points.forEach(p=>{const last=pts[pts.length-1];if(!last||Math.abs(last[0]-p[0])>1e-9||Math.abs(last[1]-p[1])>1e-9)pts.push(p);}));return {type:'Feature',properties:{id:r.id,name:r.name,roadType:r.type,radius:r.radius,width:r.width,speed:r.speed,section:sectionOf(r).section,laneWidth:sectionOf(r).laneWidth,sidewalkWidth:sectionOf(r).sidewalkWidth,shoulderWidth:sectionOf(r).shoulderWidth,medianWidth:sectionOf(r).medianWidth,structures:r.structures||{},bridgeDetails:r.bridgeDetails||{},connections:r.connections||{},controlPoints:r.nodes.map(n=>[n[1],n[0]]),speedProfile:segments.map(s=>({speed:s.speed,radius:s.radius,length:s.length})),importGroup:r.importGroup||null,official:r.official||null},geometry:{type:'LineString',coordinates:pts.map(p=>[p[1],p[0]])}};}).concat(roundabouts.map(rb=>({type:'Feature',properties:{featureType:'roundabout',id:rb.id,arms:rb.arms,diameter:rb.diameter,armLength:rb.armLength,armOffsets:rb.armOffsets,orientation:rb.orientation,width:rb.width,shape:roundaboutShape(rb),elongation:rb.elongation||0,axisAngle:rb.axisAngle||0,slipEnabled:!!rb.slipEnabled,slipFrom:rb.slipFrom,slipTo:rb.slipTo,slipRadius:rb.slipRadius,lanes:roundaboutDimensions(rb).lanes,laneWidth:roundaboutDimensions(rb).laneWidth,entryRadius:roundaboutDimensions(rb).entryRadius,exitRadius:roundaboutDimensions(rb).exitRadius},geometry:{type:'Point',coordinates:[rb.center[1],rb.center[0]]}}))).concat(junctions.map(j=>{const g=jxGeometry(j);return {type:'Feature',properties:{featureType:'junction',connection:j},geometry:{type:'LineString',coordinates:(g?.points||[]).map(pos=>[pos[1],pos[0]])}};}))};}
-function openProject(obj){let next=[],rounds=[],links=[];if(obj&&Array.isArray(obj.roads)){next=obj.roads;rounds=Array.isArray(obj.roundabouts)?obj.roundabouts:[];links=Array.isArray(obj.junctions)?obj.junctions:[];}else if(obj&&obj.type==='FeatureCollection'&&Array.isArray(obj.features)){links=obj.features.filter(f=>f.properties?.featureType==='junction').map(f=>f.properties?.connection).filter(Boolean);next=obj.features.filter(f=>f.geometry?.type==='LineString'&&f.properties?.featureType!=='junction').map(f=>{const p=f.properties||{};let coords=Array.isArray(p.controlPoints)?p.controlPoints:f.geometry.coordinates;return {id:p.id,name:p.name||'Carretera importada',type:p.roadType||'convencional',radius:p.radius,width:p.width,speed:p.speed,section:p.section,laneWidth:p.laneWidth,sidewalkWidth:p.sidewalkWidth,shoulderWidth:p.shoulderWidth,medianWidth:p.medianWidth,structures:p.structures||{},bridgeDetails:p.bridgeDetails||{},connections:p.connections||{},importGroup:p.importGroup||null,official:p.official||null,nodes:coords.map(n=>[n[1],n[0]])};});rounds=obj.features.filter(f=>f.geometry?.type==='Point'&&f.properties?.featureType==='roundabout').map(f=>({...f.properties,id:typeof f.properties.id==='string'?f.properties.id:newId(),center:[f.geometry.coordinates[1],f.geometry.coordinates[0]]}));}else throw Error('Formato no compatible.');if(next.length>300)throw Error('Límite de 300 carreteras por archivo.');
- const cleaned=next.map(r=>({id:newId(),name:String(r.name||'Carretera').slice(0,80),type:['convencional','autopista','urbana','camino'].includes(r.type)?r.type:'convencional',radius:clamp(Number(r.radius)||0,0,5000),width:clamp(Number(r.width)||7,2,50),section:sectionOf(r).section,laneWidth:sectionOf(r).laneWidth,sidewalkWidth:sectionOf(r).sidewalkWidth,shoulderWidth:sectionOf(r).shoulderWidth,medianWidth:sectionOf(r).medianWidth,speed:clamp(Number(r.speed)||90,10,130),structures:Object.fromEntries(Object.entries(r.structures||{}).filter(([k,v])=>Number.isInteger(Number(k))&&Number(k)>=0&&Number(k)<r.nodes.length-1&&['bridge','tunnel'].includes(v))),bridgeDetails:Object.fromEntries(Object.entries(r.bridgeDetails||{}).filter(([k,v])=>Number.isInteger(Number(k))&&Number(k)>=0&&Number(k)<r.nodes.length-1&&(r.structures||{})[k]==='bridge'&&v&&typeof v==='object'&&!Array.isArray(v)).map(([k,v])=>[k,bridgeNormalize(v)])),connections:Object.fromEntries(Object.entries(r.connections||{}).filter(([key,v])=>['start','end'].includes(key)&&v&&typeof v.roundaboutId==='string'&&Number.isInteger(v.armIndex)&&v.armIndex>=0&&v.armIndex<8)),importGroup:r.importGroup==='carreteras-reales'?'carreteras-reales':null,official:r.official&&typeof r.official==='object'?r.official:null,nodes:r.nodes}));if(!cleaned.every(r=>validNodes(r.nodes)))throw Error('El archivo contiene coordenadas o trazados no válidos.');
+function exportGeo(){return {type:'FeatureCollection',name:'OcToS Roads V1',features:roads.map(r=>{const segments=makeGeometry(r).parts;let pts=[];segments.forEach(s=>s.points.forEach(p=>{const last=pts[pts.length-1];if(!last||Math.abs(last[0]-p[0])>1e-9||Math.abs(last[1]-p[1])>1e-9)pts.push(p);}));return {type:'Feature',properties:{id:r.id,name:r.name,roadType:r.type,radius:r.radius,width:r.width,speed:r.speed,section:sectionOf(r).section,laneWidth:sectionOf(r).laneWidth,sidewalkWidth:sectionOf(r).sidewalkWidth,shoulderWidth:sectionOf(r).shoulderWidth,medianWidth:sectionOf(r).medianWidth,structures:r.structures||{},bridgeDetails:r.bridgeDetails||{},connections:r.connections||{},controlPoints:r.nodes.map(n=>[n[1],n[0]]),normProfile:r.normProfile||'vchi',superelevation:r.superelevation??.04,transitionMode:r.transitionMode||'auto',
+ designVehicle:r.designVehicle||'VL',wheelbase:r.wheelbase??6,level:r.level||0,
+ speedProfile:segments.map(s=>({speed:s.speed,radius:s.radius,length:s.length,kind:s.kind||'straight',widening:s.widening||0})),importGroup:r.importGroup||null,official:r.official||null},geometry:{type:'LineString',coordinates:pts.map(p=>[p[1],p[0]])}};}).concat(roundabouts.map(rb=>({type:'Feature',properties:{featureType:'roundabout',id:rb.id,arms:rb.arms,diameter:rb.diameter,armLength:rb.armLength,armOffsets:rb.armOffsets,orientation:rb.orientation,width:rb.width,shape:roundaboutShape(rb),elongation:rb.elongation||0,axisAngle:rb.axisAngle||0,slipEnabled:!!rb.slipEnabled,slipFrom:rb.slipFrom,slipTo:rb.slipTo,slipRadius:rb.slipRadius,lanes:roundaboutDimensions(rb).lanes,laneWidth:roundaboutDimensions(rb).laneWidth,entryRadius:roundaboutDimensions(rb).entryRadius,exitRadius:roundaboutDimensions(rb).exitRadius},geometry:{type:'Point',coordinates:[rb.center[1],rb.center[0]]}}))).concat(junctions.map(j=>{const g=jxGeometry(j);return {type:'Feature',properties:{featureType:'junction',connection:j},geometry:{type:'LineString',coordinates:(g?.points||[]).map(pos=>[pos[1],pos[0]])}};}))};}
+function openProject(obj){let next=[],rounds=[],links=[];if(obj&&Array.isArray(obj.roads)){next=obj.roads;rounds=Array.isArray(obj.roundabouts)?obj.roundabouts:[];links=Array.isArray(obj.junctions)?obj.junctions:[];}else if(obj&&obj.type==='FeatureCollection'&&Array.isArray(obj.features)){links=obj.features.filter(f=>f.properties?.featureType==='junction').map(f=>f.properties?.connection).filter(Boolean);next=obj.features.filter(f=>f.geometry?.type==='LineString'&&f.properties?.featureType!=='junction').map(f=>{const p=f.properties||{};let coords=Array.isArray(p.controlPoints)?p.controlPoints:f.geometry.coordinates;return {id:p.id,name:p.name||'Carretera importada',type:p.roadType||'convencional',radius:p.radius,width:p.width,speed:p.speed,section:p.section,laneWidth:p.laneWidth,sidewalkWidth:p.sidewalkWidth,shoulderWidth:p.shoulderWidth,medianWidth:p.medianWidth,structures:p.structures||{},bridgeDetails:p.bridgeDetails||{},connections:p.connections||{},importGroup:p.importGroup||null,official:p.official||null,normProfile:p.normProfile,superelevation:p.superelevation,
+ transitionMode:p.transitionMode,designVehicle:p.designVehicle,wheelbase:p.wheelbase,level:p.level,
+ nodes:coords.map(n=>[n[1],n[0]])};});rounds=obj.features.filter(f=>f.geometry?.type==='Point'&&f.properties?.featureType==='roundabout').map(f=>({...f.properties,id:typeof f.properties.id==='string'?f.properties.id:newId(),center:[f.geometry.coordinates[1],f.geometry.coordinates[0]]}));}else throw Error('Formato no compatible.');if(next.length>300)throw Error('Límite de 300 carreteras por archivo.');
+ const cleaned=next.map(r=>({id:newId(),name:String(r.name||'Carretera').slice(0,80),type:['convencional','autopista','urbana','camino'].includes(r.type)?r.type:'convencional',radius:clamp(Number(r.radius)||0,0,5000),width:clamp(Number(r.width)||7,2,50),section:sectionOf(r).section,laneWidth:sectionOf(r).laneWidth,sidewalkWidth:sectionOf(r).sidewalkWidth,shoulderWidth:sectionOf(r).shoulderWidth,medianWidth:sectionOf(r).medianWidth,speed:clamp(Number(r.speed)||90,10,130),structures:Object.fromEntries(Object.entries(r.structures||{}).filter(([k,v])=>Number.isInteger(Number(k))&&Number(k)>=0&&Number(k)<r.nodes.length-1&&['bridge','tunnel'].includes(v))),bridgeDetails:Object.fromEntries(Object.entries(r.bridgeDetails||{}).filter(([k,v])=>Number.isInteger(Number(k))&&Number(k)>=0&&Number(k)<r.nodes.length-1&&(r.structures||{})[k]==='bridge'&&v&&typeof v==='object'&&!Array.isArray(v)).map(([k,v])=>[k,bridgeNormalize(v)])),connections:Object.fromEntries(Object.entries(r.connections||{}).filter(([key,v])=>['start','end'].includes(key)&&v&&typeof v.roundaboutId==='string'&&Number.isInteger(v.armIndex)&&v.armIndex>=0&&v.armIndex<8)),importGroup:r.importGroup==='carreteras-reales'?'carreteras-reales':null,official:r.official&&typeof r.official==='object'?r.official:null,
+ normProfile:['vchi','es31ic','off'].includes(r.normProfile)?r.normProfile:'vchi',
+ superelevation:clamp(Number(r.superelevation??.04),0,.08),
+ transitionMode:['auto','on','off'].includes(r.transitionMode)?r.transitionMode:'auto',
+ designVehicle:['VL','VP','VA'].includes(r.designVehicle)?r.designVehicle:'VL',
+ wheelbase:clamp(Number(r.wheelbase)||6,2,20),
+ level:clamp(Math.round(Number(r.level)||0),-20,20),nodes:r.nodes}));if(!cleaned.every(r=>validNodes(r.nodes)))throw Error('El archivo contiene coordenadas o trazados no válidos.');
  const oldIds=new Map(next.map((r,i)=>[r.id,cleaned[i].id]));links=links.filter(jxValid).map(j=>({...j,fromId:oldIds.get(j.fromId),toId:oldIds.get(j.toId)})).filter(j=>j.fromId&&j.toId&&j.fromId!==j.toId);
  rounds=rounds.map(({armLengths,...rb})=>rb);if(rounds.length>300||!rounds.every(validRoundabout))throw Error('Rotondas del proyecto no válidas.');if(new Set(rounds.map(r=>r.id)).size!==rounds.length)throw Error('Identificadores de rotondas duplicados.');checkpoint();roads=cleaned;roundabouts=rounds;junctions=links;selectedJunction=null;for(const road of roads){for(const [key,v] of Object.entries(road.connections)){const rb=roundaboutAt(v.roundaboutId);if(rb&&v.armIndex<rb.arms)road.nodes[key==='start'?0:road.nodes.length-1]=roundaboutGeometry(rb).arms[v.armIndex].outer.slice();else delete road.connections[key];}}selected=null;selectedRoundabout=null;selectedSegment=null;persist();render();fitAll();status('Archivo cargado: '+roads.length+' carreteras, '+roundabouts.length+' rotondas y '+junctions.length+' enlaces.');}
 
@@ -3629,7 +3668,7 @@ $('roadType').onchange=()=>{
  const road=roadById(selected);
  if(road&&road.type!==$('roadType').value){checkpoint();road.type=$('roadType').value;persist();render();status('Categoría del eje actualizada.');}
 };
-['radius','speed','laneWidth','shoulderWidth','medianWidth','sidewalkWidth'].forEach(id=>$(id).addEventListener('input',()=>{updateSectionUI();drawPreview();}));
+['radius','speed','laneWidth','shoulderWidth','medianWidth','sidewalkWidth','superelevation','wheelbase'].forEach(id=>$(id).addEventListener('input',()=>{updateSectionUI();drawPreview();}));
 $('sectionPanelType').addEventListener('change',()=>{
  const conf=sectionTypes[$('sectionPanelType').value];
  $('sectionPanelLane').value=conf.lane;
@@ -3656,7 +3695,8 @@ $('sectionPanelDiagram').addEventListener('click',e=>{
  if(input&&!input.closest('[hidden]')){input.focus();input.select();}
 });
 $('roadSection').addEventListener('change',()=>{const type=$('roadSection').value;applySectionDefaults(type);updateSectionUI();drawPreview();});
-applySectionDefaults($('roadSection').value);updateSectionUI();updateRoundaboutUI();
+['normProfile','transitionMode','designVehicle'].forEach(id=>$(id).addEventListener('change',()=>{drawPreview();}));
+ applySectionDefaults($('roadSection').value);updateSectionUI();updateRoundaboutUI();
 map.on('click',e=>{if(mode==='roundabout'){showRoundaboutCreator(e.latlng);return;}if(mode==='draw'){const snap=findArmSnap([e.latlng.lat,e.latlng.lng]);draft.push(snap?snap.point.slice():[e.latlng.lat,e.latlng.lng]);$('finishBtn').disabled=draft.length<2;cursor=null;drawPreview();status('Puntos de control: '+draft.length+'.');return;}if(selected||selectedRoundabout||selectedJunction||pendingJunction||selectedSegment){selected=null;selectedRoundabout=null;selectedJunction=null;pendingJunction=null;selectedSegment=null;render();status('Selección borrada.');}});
 map.on('mousemove',e=>{if(mode==='draw'&&draft.length){cursor=[e.latlng.lat,e.latlng.lng];drawPreview();}});
 map.on('zoomend',render);
