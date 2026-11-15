@@ -91,6 +91,22 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 .perms-empty{color:var(--muted);font-size:12px;line-height:1.55}
 @media(max-width:780px){.perms-layout{grid-template-columns:1fr}.perms-head{align-items:start;flex-direction:column}.perms-master{align-items:start;flex-direction:column}}
 @media(max-width:610px){.nav-shortcuts{margin-right:0;gap:5px}.nav-shortcuts button{min-width:33px;height:34px}.perms-panel{padding:17px}header{gap:7px}.perms-apps{grid-template-columns:1fr}nav{gap:4px}nav button{padding:7px}}
+
+/* Fichas editables y armarios OcToS Team: sin cambios de geometría */
+.team-config{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+.team-config h3{font-size:14px;margin:0 0 8px}
+.team-config .team-local-note{font-size:11px;line-height:1.5;color:#a4a6ac;margin:0 0 12px}
+.team-config label{display:block;font-size:11px;color:#c8c9cd;margin:13px 0 5px}
+.team-config input,.team-config textarea,.team-config select{width:100%;background:#111214;color:var(--ink);border:1px solid #494b51;border-radius:7px;font:12px "IBM Plex Sans",sans-serif;padding:9px 10px;resize:vertical}
+.team-config textarea{min-height:64px}
+.team-config fieldset{margin:0;padding:0;border:0;min-width:0}
+.team-config input:focus,.team-config textarea:focus,.team-config select:focus{border-color:var(--accent);outline:1px solid var(--accent)}
+.team-config .team-config-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.team-config button{border:1px solid #666970;border-radius:7px;background:#292a2e;color:var(--ink);padding:10px 12px;font-size:11px}
+.team-config button[type=submit]{background:var(--accent);border-color:var(--accent);color:#0e0e10;font-weight:700}
+.team-config button[hidden]{display:none}
+.team-config .team-config-message{font-size:11px;color:#ffb485;min-height:18px;margin-top:9px}
+.team-config .team-cabinet-members{font-size:11px;color:#b6b8bf;line-height:1.6;margin-top:10px}
 </style></head>
 <body>
 <section id="team-access" role="dialog" aria-modal="true" aria-labelledby="team-access-title">
@@ -147,7 +163,7 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 <g class="pod hotspot" data-pick="worker" tabindex="0" role="button" aria-label="Trabajador 0, control de accesos"><rect x="1163" y="407" width="110" height="82" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
 <g class="pod hotspot" data-pick="meeting" tabindex="0" role="button" aria-label="Mesa de reuniones"><rect x="520" y="662" width="186" height="96" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
 <g class="pod hotspot" data-pick="coffee" tabindex="0" role="button" aria-label="Coffee / Bar"><rect x="762" y="765" width="220" height="59" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-</svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
+</svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div id="team-config-container" class="team-config" hidden></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
 <section id="structure" class="view"><div class="eyebrow">Módulo 02</div><div class="empty"><h2>Organigrama</h2><p>Jerarquía preparada: dirección, cuatro unidades y ocho agentes. La vista gráfica interactiva se incorporará posteriormente.</p><button class="outline" data-page="room">Ver distribución en sala</button></div></section>
 <section id="inbox" class="view"><div class="eyebrow">Módulo 03</div><div class="empty"><h2>Entrada / Input</h2><p>Módulo reservado a solicitudes y flujos de trabajo. En V1 únicamente se representa su puesto conectado con dirección.</p><button class="outline" data-page="room">Ver puesto Input</button></div></section>
 <section id="system" class="view"><div class="eyebrow">Módulo 04</div><div class="empty"><h2>Configuración</h2><p>Área reservada a la definición de agentes, equipos y permisos en versiones posteriores.</p><button class="outline" data-page="home">Volver al inicio</button></div></section>
@@ -217,7 +233,7 @@ function updateSelectedStatus(id){
   if(id.indexOf("agent-")!==0)return;
   var item=details[id];if(!item)return;
   var status=labels[currentStates[id]||"unknown"];
-  document.getElementById("detail-desc").textContent=item.desc+" Estado: "+status+".";
+  document.getElementById("detail-desc").textContent=(window.octosTeamDescribe?window.octosTeamDescribe(id,item):item.desc)+" Estado: "+status+".";
 }
 async function readTelemetry(){
   var output=document.getElementById("telemetry-check");
@@ -273,7 +289,7 @@ window.addEventListener("popstate",function(){
 });
 window.octosTeamNavigate=page;
 page(initial,false);
-function pick(el){var item=details[el.dataset.pick];if(!item)return;document.querySelectorAll('#floor .selected').forEach(function(n){n.classList.remove('selected')});el.classList.add('selected');document.getElementById('detail-title').textContent=item.name;document.getElementById('detail-tag').textContent=item.type;document.getElementById('detail-desc').textContent=item.desc;document.getElementById('detail-zone').textContent=item.zone;updateSelectedStatus(el.dataset.pick)}
+function pick(el){var item=details[el.dataset.pick];if(!item)return;document.querySelectorAll('#floor .selected').forEach(function(n){n.classList.remove('selected')});el.classList.add('selected');document.getElementById('detail-title').textContent=item.name;document.getElementById('detail-tag').textContent=item.type;document.getElementById('detail-desc').textContent=item.desc;document.getElementById('detail-zone').textContent=item.zone;updateSelectedStatus(el.dataset.pick);if(window.octosTeamShowConfig)window.octosTeamShowConfig(el.dataset.pick,item)}
 document.querySelectorAll('#floor [data-pick]').forEach(function(el){el.addEventListener('click',function(e){e.stopPropagation();pick(el)});el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(el)}})});
 function changeZoom(n){zoom=Math.min(1.65,Math.max(.65,n));document.getElementById('floor').style.transform='scale('+zoom+')'}
 document.getElementById('plus').onclick=function(){changeZoom(zoom+.15)};document.getElementById('minus').onclick=function(){changeZoom(zoom-.15)};document.getElementById('reset').onclick=function(){changeZoom(1)};
@@ -474,6 +490,113 @@ registry=read();renderList();
   renderList();
  }catch(e){}
 })();
+})();
+</script>
+
+<script>
+/* Configuración visual de agentes y armarios. Datos locales: no son credenciales ni activan la API. */
+(function(){
+"use strict";
+const STORE="octos-team-config-v1";
+const panel=document.getElementById("team-config-container");
+const names=["Identidad","Interfaces","Cartografía","Integración","Desarrollo Ruby","Herramientas 3D","Investigación","Prototipos"];
+const roles=[
+"Identidad corporativa y manual de marca","Diseño UI/UX y componentes",
+"Fuentes cartográficas, WMS y sistemas de referencia","Integración y validación cartográfica",
+"Desarrollo de extensiones Ruby para SketchUp","Visualización, herramientas y modelos 3D",
+"Investigación y evaluación técnica","Prototipado y pruebas de concepto"
+];
+let state={agents:{},cabinets:{}};
+try{
+ const parsed=JSON.parse(localStorage.getItem(STORE)||"null");
+ if(parsed&&typeof parsed==="object"&&parsed.agents&&parsed.cabinets)state=parsed;
+}catch(error){}
+function clean(value,max){return String(value==null?"":value).trim().slice(0,max)}
+function agentDefault(id){
+ const n=Number(id.split("-")[1]);
+ return {name:names[n-1],role:roles[n-1],mission:"",tasks:"",instructions:"",cabinet:"cabinet-"+Math.ceil(n/2)};
+}
+function cabinetDefault(id){
+ return {name:"Armario D"+id.split("-")[1],directives:"",tasks:""};
+}
+function agent(id){return Object.assign(agentDefault(id),state.agents[id]||{})}
+function cabinet(id){return Object.assign(cabinetDefault(id),state.cabinets[id]||{})}
+window.octosTeamDescribe=function(id,item){
+ if(!/^agent-[1-8]$/.test(id))return item.desc;
+ const a=agent(id);
+ return "Especialidad: "+a.role+"."+(a.mission?" Misión: "+a.mission+".":"")+" Armario: "+a.cabinet.replace("cabinet-","D")+".";
+};
+function appendForm(kind,id){
+ const isAgent=kind==="agent",data=isAgent?agent(id):cabinet(id);
+ panel.innerHTML=isAgent?
+ '<h3>Ficha del agente · Armario personal</h3><p class="team-local-note">Define sus tareas e instrucciones. No se ejecutan automáticamente.</p><form id="team-config-form"><fieldset><label>Nombre del agente<input name="name" maxlength="70" required></label><label>Especialidad / función<input name="role" maxlength="180" required></label><label>Misión<textarea name="mission" maxlength="1500" rows="3"></textarea></label><label>Tareas asignadas<textarea name="tasks" maxlength="4000" rows="5"></textarea></label><label>Instrucciones permanentes<textarea name="instructions" maxlength="4000" rows="5"></textarea></label><label>Armario de directrices<select name="cabinet"></select></label></fieldset><div class="team-config-actions"><button type="submit">Actualizar configuración</button><button id="team-open-cabinet" type="button">Abrir armario</button></div><div class="team-config-message" role="status"></div></form>':
+ '<h3>Armario de directrices</h3><p class="team-local-note">Repositorio de indicaciones compartidas. No guardes claves API ni contraseñas.</p><form id="team-config-form"><fieldset><label>Nombre del armario<input name="name" maxlength="70" required></label><label>Directrices compartidas<textarea name="directives" maxlength="4000" rows="6"></textarea></label><label>Tareas generales<textarea name="tasks" maxlength="4000" rows="5"></textarea></label></fieldset><p id="team-cabinet-members" class="team-cabinet-members"></p><div class="team-config-actions"><button type="submit">Actualizar configuración</button></div><div class="team-config-message" role="status"></div></form>';
+ const form=document.getElementById("team-config-form");
+ Object.keys(data).forEach(key=>{if(form.elements.namedItem(key))form.elements.namedItem(key).value=data[key]});
+ if(isAgent){
+  const sel=form.elements.namedItem("cabinet");
+  for(let n=1;n<=6;n++){
+   const option=document.createElement("option");option.value="cabinet-"+n;option.textContent="D"+n+" · "+cabinet("cabinet-"+n).name;sel.append(option);
+  }
+  sel.value=/^cabinet-[1-6]$/.test(data.cabinet)?data.cabinet:"cabinet-1";
+  document.getElementById("team-open-cabinet").addEventListener("click",function(){
+   const node=document.querySelector('#floor [data-pick="'+sel.value+'"]');
+   if(node)node.dispatchEvent(new MouseEvent("click",{bubbles:true}));
+  });
+ }else{
+  const members=Array.from({length:8},(_,i)=>"agent-"+(i+1)).filter(a=>agent(a).cabinet===id);
+  document.getElementById("team-cabinet-members").textContent="Agentes vinculados: "+(members.length?members.map(a=>"A"+a.split("-")[1]+" · "+agent(a).name).join(", "):"ninguno");
+ }
+ const master=window.octosTeamIsMaster===true;
+ if(!master){
+  form.querySelector("fieldset").disabled=true;
+  form.querySelector('button[type="submit"]').hidden=true;
+  form.querySelector(".team-config-message").textContent="Lectura solamente. Edición reservada al PIN maestro.";
+ }
+ form.addEventListener("submit",function(event){
+  event.preventDefault();
+  if(window.octosTeamIsMaster!==true)return;
+  const v=form.elements;
+  const next=isAgent?{
+   name:clean(v.namedItem("name").value,70),role:clean(v.namedItem("role").value,180),
+   mission:clean(v.namedItem("mission").value,1500),tasks:clean(v.namedItem("tasks").value,4000),
+   instructions:clean(v.namedItem("instructions").value,4000),
+   cabinet:/^cabinet-[1-6]$/.test(v.namedItem("cabinet").value)?v.namedItem("cabinet").value:"cabinet-1"
+  }:{
+   name:clean(v.namedItem("name").value,70),
+   directives:clean(v.namedItem("directives").value,4000),
+   tasks:clean(v.namedItem("tasks").value,4000)
+  };
+  if(!next.name||(isAgent&&!next.role)){form.querySelector(".team-config-message").textContent="Completa los campos obligatorios.";return}
+  const previous=state[isAgent?"agents":"cabinets"][id];
+  state[isAgent?"agents":"cabinets"][id]=next;
+  try{localStorage.setItem(STORE,JSON.stringify(state))}
+  catch(error){
+   if(previous===undefined)delete state[isAgent?"agents":"cabinets"][id];
+   else state[isAgent?"agents":"cabinets"][id]=previous;
+   form.querySelector(".team-config-message").textContent="No ha sido posible guardar los cambios.";return;
+  }
+  document.getElementById("detail-title").textContent=next.name;
+  if(isAgent){
+   const status=document.querySelector('#floor [data-pick="'+id+'"]')?.dataset.status||"unknown";
+   const statusLabel={idle:"Disponible",waiting:"En espera",running:"Trabajando",completed:"Finalizado",unknown:"Sin datos"}[status]||"Sin datos";
+   document.getElementById("detail-desc").textContent=window.octosTeamDescribe(id,{desc:""})+" Estado: "+statusLabel+".";
+  }else{
+   document.getElementById("detail-desc").textContent=next.directives||"Armario disponible para directrices y tareas.";
+  }
+  form.querySelector(".team-config-message").textContent="Configuración actualizada y guardada en este navegador.";
+ });
+}
+window.octosTeamShowConfig=function(id,item){
+ const isAgent=/^agent-[1-8]$/.test(id),isCabinet=/^cabinet-[1-6]$/.test(id);
+ panel.hidden=!(isAgent||isCabinet);
+ if(panel.hidden){panel.replaceChildren();return}
+ const data=isAgent?agent(id):cabinet(id);
+ document.getElementById("detail-title").textContent=data.name;
+ if(isAgent){document.getElementById("detail-desc").textContent=window.octosTeamDescribe(id,item)+" Estado: "+({idle:"Disponible",waiting:"En espera",running:"Trabajando",completed:"Finalizado",unknown:"Sin datos"}[document.querySelector('#floor [data-pick="'+id+'"]')?.dataset.status]||"Sin datos")+"."}
+ else document.getElementById("detail-desc").textContent=data.directives||"Armario disponible para directrices y tareas.";
+ appendForm(isAgent?"agent":"cabinet",id);
+};
 })();
 </script>
 </body></html>
