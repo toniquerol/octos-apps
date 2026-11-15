@@ -56,7 +56,7 @@ window.OcToSInfoManager=function(args){
    save();
    const app=current(),url=new URL(infoLink(app));
    if(!app.independent)url.searchParams.set("preview","1");
-   window.open(url.href,"_blank","noopener,noreferrer");
+   window.location.assign(url.href); // conserva la sesión maestra y el borrador en esta pestaña
    if(app.independent)notify("La landing técnica de Roads es independiente y no se actualiza con el borrador.");
   }catch(err){notify(err.message)}
  });
