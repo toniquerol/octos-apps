@@ -181,7 +181,7 @@ function renderList(){
  for(const t of tasks){
   const card=create("article","team-board-card");
   card.append(create("strong","",t.title||t.message.slice(0,85)));
-  if(t.title)card.append(create("p","",t.message));
+  card.append(create("p","",t.message));
   const assigned=current().agents.find(([id])=>id===t.agent);
   card.append(create("div","team-board-meta",(assigned?assigned[1]:"Sin asignar")+" · "+new Date(t.createdAt||Date.now()).toLocaleDateString("es-ES")));
   const actions=create("div","team-board-card-actions"),label=create("label");
