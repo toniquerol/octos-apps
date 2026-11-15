@@ -13,7 +13,11 @@ window.OcToSInfoManager=function(args){
   for(const app of work.items){
    const button=document.createElement("button");
    button.type="button";button.textContent=app.name;button.dataset.id=app.id;
-   button.addEventListener("click",()=>{id=app.id;renderForm()});
+   button.addEventListener("click",()=>{
+    if(id===app.id)return;
+    try{save()}catch(error){notify("Revisa la ficha actual antes de cambiar: "+error.message);return}
+    id=app.id;renderForm();
+   });
    list.appendChild(button);
   }
   renderForm();
