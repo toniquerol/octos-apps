@@ -11,6 +11,7 @@
  const notice=document.getElementById("agents-notice");
  const send=document.getElementById("agents-send");
  const demo=document.getElementById("agents-demo");
+ const demoSimple=document.getElementById("agents-demo-simple");
  const health=document.getElementById("agents-health");
  const setupButton=document.getElementById("agents-setup");
  const setupToken=document.getElementById("agents-setup-token");
@@ -28,7 +29,7 @@
  }
  function line(message){trace.textContent+=(trace.textContent?"\n":"")+message;trace.scrollTop=trace.scrollHeight}
  function setBusy(v){
-  busy=v;send.disabled=v;demo.disabled=v;health.disabled=v;setupButton.disabled=v;
+  busy=v;send.disabled=v;demo.disabled=v;demoSimple.disabled=v;health.disabled=v;setupButton.disabled=v;
   notice.textContent=v?"Petición en ejecución; no cierres la pestaña.":notice.textContent;
  }
  function baseUrl(){
@@ -70,7 +71,7 @@
   try{base=baseUrl();auth=serviceToken()}catch(e){notice.textContent=e.message;return}
   const question=task.value.trim();
   if(question.length<8||question.length>2500){notice.textContent="La petición debe tener entre 8 y 2500 caracteres.";return}
-  setBusy(true);begin("API REAL · Coordinación de tres agentes");
+  setBusy(true);begin("API REAL · Piloto Dirección + A03 + A04; Controlador y Jarvis aún no conectados");
   try{
    const response=await fetch(base+"/run",{method:"POST",
     headers:{"Content-Type":"application/json","Authorization":"Bearer "+auth},
@@ -154,22 +155,34 @@
  }));
  setupButton.addEventListener("click",()=>{void registerKey()});
  function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
- async function simulate(){
+ async function simulate(mode){
   if(busy)return;
-  setBusy(true);begin("SIMULACIÓN LOCAL · Sin API ni gasto de tokens");
+  setBusy(true);begin("SIMULACIÓN LOCAL · "+(mode==="simple"?"Consulta breve":"Proyecto departamental")+" · 0 tokens API");
   try{
-   state("chief","waiting");line("Dirección recibe solicitud (simulada).");await sleep(350);
-   state("agent-3","running");state("agent-4","running");
-   line("A03 y A04 reciben tareas (simuladas).");await sleep(550);
-   state("agent-3","completed");line("A03 entrega informe de prueba (sin IA).");await sleep(260);
-   state("agent-4","completed");line("A04 entrega informe de prueba (sin IA).");await sleep(300);
-   state("chief","running");line("Dirección consolida resultados (simulado).");await sleep(450);
-   state("chief","completed");
-   result.textContent="La comunicación visual se ha comprobado. No se ha consultado la API de OpenAI ni se han generado respuestas técnicas.";
-   notice.textContent="Recorrido local completado. Coste API: 0 tokens.";
+   line("01 · Controlador recibe la petición y registra su objetivo.");await sleep(350);
+   line("02 · Controlador clasifica: "+(mode==="simple"?"tarea breve para Jarvis.":"proyecto con intervención de equipo."));await sleep(450);
+   if(mode==="simple"){
+    line("03 · Jarvis realiza una revisión breve (simulada, sin modelo IA).");await sleep(450);
+    line("04 · Jarvis devuelve el resultado a Controlador.");await sleep(320);
+    line("05 · Controlador prepara la salida para el propietario.");
+    result.textContent="Ruta corta comprobada: Controlador → Jarvis → Controlador → propietario. Sin IA, sin cambios de archivos y sin llamadas API.";
+   }else{
+    line("03 · Gestor evalúa tiempo, recursos, memoria y presupuesto de tokens.");await sleep(360);
+    line("04 · Mesa de reuniones: responsable A03 representa a Cartografía e Integración. En otros proyectos se convoca a los responsables afectados (A01, A05 o A07).");await sleep(450);
+    state("chief","waiting");line("05 · Dirección recibe el plan; A03 distribuye investigación e integración.");await sleep(370);
+    state("agent-3","running");state("agent-4","running");
+    line("06 · A03 y A04 trabajan en sus tareas (estados visuales simulados).");await sleep(500);
+    state("agent-4","completed");state("agent-3","completed");
+    line("07 · Los agentes entregan resultados a A03, responsable del grupo.");await sleep(360);
+    state("chief","running");line("08 · Dirección valida la conclusión del responsable y resolvería dudas pendientes.");await sleep(400);
+    state("chief","completed");line("09 · Gestor registra el cierre y Controlador prepara salida. Si Dirección no resuelve una duda, se eleva al propietario.");
+    result.textContent="Ruta de equipo comprobada: Controlador → Gestor y reunión → A03 (responsable) → A03/A04 → Dirección → Controlador → propietario. Sin trabajo técnico real ni llamadas API.";
+   }
+   notice.textContent="Simulación completada. Consumo de API: 0 tokens.";
   }finally{setBusy(false)}
  }
  form.addEventListener("submit",e=>{e.preventDefault();void run()});
- demo.addEventListener("click",()=>{void simulate()});
+ demo.addEventListener("click",()=>{void simulate("team")});
+ demoSimple.addEventListener("click",()=>{void simulate("simple")});
  health.addEventListener("click",()=>{void check()});
 })();
