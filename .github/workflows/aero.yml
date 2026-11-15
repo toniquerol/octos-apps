@@ -1,0 +1,43 @@
+name: Aero quality and standalone packaging
+on:
+  push:
+    branches:
+      - main
+      - aero/**
+    paths:
+      - 'aero/**'
+      - '.github/workflows/aero.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  aero:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build standalone Aero
+        run: node aero/scripts/build.cjs
+      - name: UI and GLB smoke tests
+        run: node aero/tests/check.cjs
+      - name: GPU buffer and memory tests
+        run: node aero/tests/flow.test.cjs
+      - name: Geometry, segment and precision tests
+        run: node aero/tests/geometry.test.cjs
+      - name: Verify clean standalone bundle
+        run: |
+          test -s aero/index.html
+          grep -q 'const AeroGeometry' aero/index.html
+          grep -q 'const AeroPaths' aero/index.html
+      - name: Commit generated standalone bundle
+        if: github.event_name == 'push'
+        run: |
+          git add aero/index.html
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'build(aero): update verified standalone HTML'
+            git push
+          fi
