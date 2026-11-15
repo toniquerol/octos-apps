@@ -12,7 +12,7 @@ main{max-width:1600px;margin:auto;padding:28px clamp(16px,3vw,44px) 56px}
 .section-title{display:flex;justify-content:space-between;align-items:center;margin:40px 0 17px}.section-title h2{font-size:16px;margin:0;font-weight:650}.section-title small{color:var(--muted);font-size:11px}
 .menu-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.tile{border:1px solid var(--line);border-radius:15px;min-height:224px;background:var(--panel);padding:23px;display:flex;flex-direction:column;text-align:left;transition:background .15s,border-color .15s;color:var(--ink)}.tile:hover{background:#222326;border-color:#777a80}.tile.primary{border-color:#8b5739}.tile .tile-top{display:flex;justify-content:space-between;align-items:start;width:100%}.tile-index{font-size:11px;color:var(--accent);letter-spacing:.16em}.tile .tile-icon{width:46px;height:46px;border:1px solid #45474c;border-radius:12px;display:grid;place-items:center;font-size:21px;color:var(--accent)}.tile h3{font-size:17px;margin:35px 0 9px}.tile p{color:#a1a3a9;font-size:12px;line-height:1.65;margin:0;max-width:260px}.tile .go{margin-top:auto;padding-top:22px;color:#e8e8e8;font-size:11px;letter-spacing:.1em}.tile .go:after{content:" →";color:var(--accent)}
 .room-top{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}.room-top h1{font-size:24px;letter-spacing:-.03em;margin:5px 0 0}.room-top p{font-size:12px;color:var(--muted);margin:4px 0 0}.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.mini{padding:9px 12px}
-.room-layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:17px;align-items:stretch}.map-wrap{background:#121315;border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0;display:grid;place-items:center;min-height:460px}.map-wrap svg{width:100%;height:auto;display:block;transform-origin:center;transition:transform .12s ease}
+.room-layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:17px;align-items:stretch}.map-wrap{background:#121315;border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0;display:grid;place-items:center;min-height:460px}.map-wrap svg{width:100%;height:auto;display:block;transform-origin:center;transition:transform .12s ease}.map-wrap svg .plan-image{pointer-events:none}.map-wrap svg .hotspot:focus-visible>rect:first-child{stroke:#ff6a1a;stroke-width:3}
 .label{font-family:"IBM Plex Sans",system-ui,sans-serif;fill:#e1e2e2}.plan-caption{font-size:12px;letter-spacing:1.3px;fill:#7d8085}.room-title{font-size:14px;font-weight:700;letter-spacing:.65px}.pod-title{font-size:12px;font-weight:700;letter-spacing:.4px}.pod-sub{font-size:11px;fill:#94969c}.desk-number{font-size:13px;font-weight:700;fill:#efefeb}.link-label{font-size:9px;fill:#ff8b4b;letter-spacing:1px}
 svg [data-pick]{cursor:pointer}svg .pod:hover>rect:first-child,svg .pod.selected>rect:first-child{stroke:var(--accent);stroke-width:2.5}svg .station:hover>rect:first-child,svg .station.selected>rect:first-child{stroke:var(--accent);stroke-width:2.5}
 .inspector{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;min-height:450px}.inspector-head{font-size:11px;letter-spacing:.18em;color:var(--accent)}.inspector h2{font-size:22px;margin:28px 0 8px;line-height:1.2}.inspector .tag{width:max-content;font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:1px solid #64666c;border-radius:5px;padding:7px 9px;color:#b7b8be}.inspector p{font-size:13px;line-height:1.7;color:#acadb3}.divider{height:1px;background:var(--line);margin:24px 0}.inspector .meta{font-size:11px;color:var(--muted)}.inspector .meta strong{display:block;color:var(--ink);font-size:13px;margin-top:8px;font-weight:500}.inspector .bottom{font-size:11px;color:#86888f;margin-top:auto;padding-top:28px}.legend{display:flex;gap:20px;flex-wrap:wrap;color:#9c9ea4;font-size:11px;padding:16px 3px}.dot{width:8px;height:8px;display:inline-block;border-radius:50%;background:#ff6a1a;margin-right:7px}.dot.muted{background:#666970}.view{display:none}.view.active{display:block}.empty{border:1px solid var(--line);border-radius:14px;padding:45px;background:var(--panel)}.empty h2{font-size:24px}.empty p{font-size:13px;color:var(--muted)}
@@ -117,195 +117,38 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 <button class="tile" data-page="inbox"><div class="tile-top"><span class="tile-index">MÓDULO 03</span><span class="tile-icon">↧</span></div><h3>Entrada / Input</h3><p>Recepción y distribución de encargos. Preparado para su desarrollo posterior.</p><span class="go">VER MÓDULO</span></button>
 <button class="tile" data-page="system"><div class="tile-top"><span class="tile-index">MÓDULO 04</span><span class="tile-icon">⌘</span></div><h3>Configuración</h3><p>Parámetros de puestos y equipos. Reservado, sin funciones activas.</p><span class="go">VER MÓDULO</span></button>
 </div></section>
-<section id="room" class="view active"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Planta conceptual · Selecciona un puesto o una unidad en el esquema</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
-<div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="0 0 1238 765" role="img" aria-label="Plano cenital de OcToS Team: cuatro grupos separados en cruz con ocho mesas enfrentadas, dirección y sala de acceso con dos puestos y puertas">
-<defs>
-<pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M26 0H0V26" fill="none" stroke="#FFFFFF" stroke-opacity=".035" stroke-width="1"/></pattern>
-<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="9" stdDeviation="10" flood-color="#000" flood-opacity=".3"/></filter>
-</defs>
-<rect width="1238" height="765" rx="14" fill="#111214"/>
-<rect width="1238" height="765" fill="url(#grid)"/>
-<text x="40" y="42" class="label plan-caption">PLANTA 01 / DISTRIBUCIÓN OPERATIVA</text>
-<text x="1198" y="42" class="label plan-caption" text-anchor="end">VISTA CENITAL · ESQUEMA</text>
-<!-- Planta de edificio: dos recintos con paso común y acceso exterior -->
-<rect x="38" y="79" width="892" height="620" rx="6" fill="#1C1D20" filter="url(#shadow)"/>
-<rect x="931" y="79" width="264" height="620" rx="5" fill="#202124"/>
-<path d="M930 80H39V697H930M930 80H1195V559M1195 636V697H930" fill="none" stroke="#86888C" stroke-width="6" stroke-linejoin="round"/>
-<path d="M930 80V219M930 283V697" fill="none" stroke="#86888C" stroke-width="6"/>
-<rect x="56" y="93" width="267" height="30" rx="3" fill="#292A2D"/>
-<text x="69" y="114" class="label room-title">SALA DE TRABAJO · 4 GRUPOS</text>
-<rect x="946" y="93" width="224" height="30" rx="3" fill="#2B2C30"/>
-<text x="959" y="114" class="label room-title">RECEPCIÓN Y ACCESO</text>
-<!-- Dirección: la silla está en el borde superior y mira hacia los grupos -->
-<g class="pod" data-pick="chief" tabindex="0" role="button" aria-label="Puesto de dirección orientado al equipo">
-<rect x="362" y="129" width="331" height="120" rx="8" fill="#292823" stroke="#FF6A1A" stroke-opacity=".72" stroke-width="1.5"/>
-<text x="379" y="151" class="label pod-title">DIRECCIÓN · COORDINACIÓN</text>
-<circle cx="527" cy="177" r="15" fill="#FF6A1A" fill-opacity=".65" stroke="#FF6A1A" stroke-width="1.5"/>
-<rect x="442" y="198" width="170" height="36" rx="7" fill="#44423D" stroke="#A69785" stroke-width="1.5"/>
-<rect x="502" y="202" width="50" height="18" rx="3" fill="#18191B" stroke="#888"/>
-<path d="M511 223h34" stroke="#c3bdb3" stroke-width="2.5"/>
-</g>
-<!-- Cuatro ámbitos de trabajo, sin barreras entre las mesas enfrentadas -->
-<g class="pod" data-pick="group-1" tabindex="0" role="button" aria-label="01 · IMAGEN CORPORATIVA">
-<rect x="79" y="268" width="387" height="181" rx="7" fill="#242529" stroke="#45474C" stroke-width="1.5"/>
-<rect x="95" y="280" width="4" height="26" rx="2" fill="#FF6A1A"/>
-<text x="109" y="297" class="label pod-title">01 · IMAGEN CORPORATIVA</text>
-<text x="109" y="314" class="label pod-sub">Identidad e interfaces</text>
-</g>
-<g class="pod" data-pick="group-2" tabindex="0" role="button" aria-label="02 · REFERENCIA / WMS">
-<rect x="495" y="268" width="387" height="181" rx="7" fill="#242529" stroke="#45474C" stroke-width="1.5"/>
-<rect x="511" y="280" width="4" height="26" rx="2" fill="#FF6A1A"/>
-<text x="525" y="297" class="label pod-title">02 · REFERENCIA / WMS</text>
-<text x="525" y="314" class="label pod-sub">Cartografía e integración</text>
-</g>
-<g class="pod" data-pick="group-3" tabindex="0" role="button" aria-label="03 · SKETCHUP / RUBY">
-<rect x="79" y="479" width="387" height="181" rx="7" fill="#242529" stroke="#45474C" stroke-width="1.5"/>
-<rect x="95" y="491" width="4" height="26" rx="2" fill="#FF6A1A"/>
-<text x="109" y="508" class="label pod-title">03 · SKETCHUP / RUBY</text>
-<text x="109" y="525" class="label pod-sub">Herramientas y extensión</text>
-</g>
-<g class="pod" data-pick="group-4" tabindex="0" role="button" aria-label="04 · I+D+i">
-<rect x="495" y="479" width="387" height="181" rx="7" fill="#242529" stroke="#45474C" stroke-width="1.5"/>
-<rect x="511" y="491" width="4" height="26" rx="2" fill="#FF6A1A"/>
-<text x="525" y="508" class="label pod-title">04 · I+D+i</text>
-<text x="525" y="525" class="label pod-sub">Investigación y prototipos</text>
-</g>
-<!-- Biombos en cruz con paso central. Los paneles bajos permiten verse y hablar -->
-<g fill="none" stroke="#9DA0A6" stroke-width="6" stroke-linecap="round">
-<path d="M480 286V423M480 516V645" opacity=".8"/>
-<path d="M112 465H429M525 465H857" opacity=".8"/>
-</g>
-<g fill="none" stroke="#FF6A1A" stroke-width="1.4" stroke-dasharray="7 7" opacity=".48">
-<path d="M480 291V419M480 520V640M115 465H426M527 465H854"/>
-</g>
-<rect x="455" y="439" width="51" height="52" rx="7" fill="#303136" stroke="#55585E" stroke-dasharray="4 5" opacity=".9"/>
-<text x="480" y="461" class="label" font-size="9" text-anchor="middle">PASO</text>
-<text x="480" y="475" class="label" font-size="8" text-anchor="middle">CENTRAL</text>
-<g class="station" data-pick="agent-1" data-status="unknown" tabindex="0" role="button" aria-label="Agente 1, Identidad">
-<rect x="158" y="405" width="112" height="43" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
-<rect x="194" y="413" width="40" height="14" rx="2" fill="#17181B" stroke="#7E8085" stroke-width="1.5"/>
-<path d="M200 435h28" stroke="#9A9BA1" stroke-width="3" stroke-linecap="round" opacity=".7"/>
-<circle class="agent-indicator" cx="257" cy="416" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A01: sin datos</title></circle>
-<rect x="204" y="397" width="20" height="8" rx="4" fill="#777980"/>
-<circle cx="214" cy="380" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
-<circle cx="214" cy="380" r="7" fill="#666970" opacity=".9"/>
-<text x="214" y="356" class="label desk-number" text-anchor="middle">A01</text>
-</g>
-<g class="station" data-pick="agent-2" data-status="unknown" tabindex="0" role="button" aria-label="Agente 2, Interfaces">
-<rect x="309" y="405" width="112" height="43" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
-<rect x="345" y="413" width="40" height="14" rx="2" fill="#17181B" stroke="#7E8085" stroke-width="1.5"/>
-<path d="M351 435h28" stroke="#9A9BA1" stroke-width="3" stroke-linecap="round" opacity=".7"/>
-<circle class="agent-indicator" cx="408" cy="416" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A02: sin datos</title></circle>
-<rect x="355" y="397" width="20" height="8" rx="4" fill="#777980"/>
-<circle cx="365" cy="380" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
-<circle cx="365" cy="380" r="7" fill="#666970" opacity=".9"/>
-<text x="365" y="356" class="label desk-number" text-anchor="middle">A02</text>
-</g>
-<g class="station" data-pick="agent-3" data-status="unknown" tabindex="0" role="button" aria-label="Agente 3, Cartografía">
-<rect x="532" y="405" width="112" height="43" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
-<rect x="568" y="413" width="40" height="14" rx="2" fill="#17181B" stroke="#7E8085" stroke-width="1.5"/>
-<path d="M574 435h28" stroke="#9A9BA1" stroke-width="3" stroke-linecap="round" opacity=".7"/>
-<circle class="agent-indicator" cx="631" cy="416" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A03: sin datos</title></circle>
-<rect x="578" y="397" width="20" height="8" rx="4" fill="#777980"/>
-<circle cx="588" cy="380" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
-<circle cx="588" cy="380" r="7" fill="#666970" opacity=".9"/>
-<text x="588" y="356" class="label desk-number" text-anchor="middle">A03</text>
-</g>
-<g class="station" data-pick="agent-4" data-status="unknown" tabindex="0" role="button" aria-label="Agente 4, Integración">
-<rect x="691" y="405" width="112" height="43" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
-<rect x="727" y="413" width="40" height="14" rx="2" fill="#17181B" stroke="#7E8085" stroke-width="1.5"/>
-<path d="M733 435h28" stroke="#9A9BA1" stroke-width="3" stroke-linecap="round" opacity=".7"/>
-<circle class="agent-indicator" cx="790" cy="416" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A04: sin datos</title></circle>
-<rect x="737" y="397" width="20" height="8" rx="4" fill="#777980"/>
-<circle cx="747" cy="380" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
-<circle cx="747" cy="380" r="7" fill="#666970" opacity=".9"/>
-<text x="747" y="356" class="label desk-number" text-anchor="middle">A04</text>
-</g>
-<g class="station" data-pick="agent-5" data-status="unknown" tabindex="0" role="button" aria-label="Agente 5, Desarrollo Ruby">
-<rect x="158" y="481" width="112" height="43" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
-<rect x="194" y="501" width="40" height="14" rx="2" fill="#17181B" stroke="#7E8085" stroke-width="1.5"/>
-<path d="M200 490h28" stroke="#9A9BA1" stroke-width="3" stroke-linecap="round" opacity=".7"/>
-<circle class="agent-indicator" cx="257" cy="492" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A05: sin datos</title></circle>
-<rect x="204" y="524" width="20" height="8" rx="4" fill="#777980"/>
-<circle cx="214" cy="553" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
-<circle cx="214" cy="553" r="7" fill="#666970" opacity=".9"/>
-<text x="214" y="577" class="label desk-number" text-anchor="middle">A05</text>
-</g>
-<g class="station" data-pick="agent-6" data-status="unknown" tabindex="0" role="button" aria-label="Agente 6, Herramientas 3D">
-<rect x="309" y="481" width="112" height="43" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
-<rect x="345" y="501" width="40" height="14" rx="2" fill="#17181B" stroke="#7E8085" stroke-width="1.5"/>
-<path d="M351 490h28" stroke="#9A9BA1" stroke-width="3" stroke-linecap="round" opacity=".7"/>
-<circle class="agent-indicator" cx="408" cy="492" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A06: sin datos</title></circle>
-<rect x="355" y="524" width="20" height="8" rx="4" fill="#777980"/>
-<circle cx="365" cy="553" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
-<circle cx="365" cy="553" r="7" fill="#666970" opacity=".9"/>
-<text x="365" y="577" class="label desk-number" text-anchor="middle">A06</text>
-</g>
-<g class="station" data-pick="agent-7" data-status="unknown" tabindex="0" role="button" aria-label="Agente 7, Investigación">
-<rect x="532" y="481" width="112" height="43" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
-<rect x="568" y="501" width="40" height="14" rx="2" fill="#17181B" stroke="#7E8085" stroke-width="1.5"/>
-<path d="M574 490h28" stroke="#9A9BA1" stroke-width="3" stroke-linecap="round" opacity=".7"/>
-<circle class="agent-indicator" cx="631" cy="492" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A07: sin datos</title></circle>
-<rect x="578" y="524" width="20" height="8" rx="4" fill="#777980"/>
-<circle cx="588" cy="553" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
-<circle cx="588" cy="553" r="7" fill="#666970" opacity=".9"/>
-<text x="588" y="577" class="label desk-number" text-anchor="middle">A07</text>
-</g>
-<g class="station" data-pick="agent-8" data-status="unknown" tabindex="0" role="button" aria-label="Agente 8, Prototipos">
-<rect x="691" y="481" width="112" height="43" rx="5" fill="#35363A" stroke="#75767B" stroke-width="1.5"/>
-<rect x="727" y="501" width="40" height="14" rx="2" fill="#17181B" stroke="#7E8085" stroke-width="1.5"/>
-<path d="M733 490h28" stroke="#9A9BA1" stroke-width="3" stroke-linecap="round" opacity=".7"/>
-<circle class="agent-indicator" cx="790" cy="492" r="8" fill="#74767C" stroke="#16171A" stroke-width="2"><title>A08: sin datos</title></circle>
-<rect x="737" y="524" width="20" height="8" rx="4" fill="#777980"/>
-<circle cx="747" cy="553" r="15" fill="#45474D" stroke="#909198" stroke-width="1.5"/>
-<circle cx="747" cy="553" r="7" fill="#666970" opacity=".9"/>
-<text x="747" y="577" class="label desk-number" text-anchor="middle">A08</text>
-</g>
-<!-- Puerta interior en muro compartido entre salas, abatida hacia el interior -->
-<g aria-label="Puerta entre recepción y dirección">
-<path d="M930 219H868" fill="none" stroke="#D8D9D7" stroke-width="3"/>
-<path d="M930 282A63 63 0 0 0 868 219" fill="none" stroke="#FF6A1A" stroke-width="1.7" stroke-dasharray="5 5"/>
-<circle cx="930" cy="219" r="4" fill="#FF6A1A"/>
-<text x="839" y="268" class="label link-label" text-anchor="middle">PUERTA INTERIOR</text>
-</g>
-<!-- Dos mesas verticales, alineadas una al lado de la otra en la recepción -->
-<g class="pod" data-pick="input" tabindex="0" role="button" aria-label="Input: coordinador exterior">
-<rect x="947" y="154" width="114" height="294" rx="7" fill="#28292B" stroke="#57595F" stroke-width="1.5"/>
-<rect x="961" y="169" width="4" height="27" rx="2" fill="#FF6A1A"/>
-<text x="973" y="181" class="label pod-title">INPUT</text>
-<text x="973" y="198" class="label pod-sub">COORDINADOR</text>
-<rect x="967" y="232" width="76" height="136" rx="7" fill="#3B3D41" stroke="#8C8D93" stroke-width="1.5"/>
-<rect x="981" y="254" width="48" height="39" rx="4" fill="#141518" stroke="#777"/>
-<path d="M986 316h38" stroke="#B5B6BB" stroke-width="3" stroke-linecap="round"/>
-<circle cx="1005" cy="400" r="17" fill="#56575E" stroke="#FF6A1A" stroke-width="2"/>
-</g>
-<g class="pod" data-pick="worker" tabindex="0" role="button" aria-label="Trabajador principal, puesto al lado del coordinador">
-<rect x="1072" y="154" width="108" height="294" rx="7" fill="#28292B" stroke="#57595F" stroke-width="1.5"/>
-<rect x="1085" y="169" width="4" height="27" rx="2" fill="#FF6A1A"/>
-<text x="1096" y="181" class="label pod-title">TRABAJADOR</text>
-<text x="1096" y="198" class="label pod-sub">PRINCIPAL</text>
-<rect x="1088" y="232" width="76" height="136" rx="7" fill="#3B3D41" stroke="#8C8D93" stroke-width="1.5"/>
-<rect x="1102" y="254" width="48" height="39" rx="4" fill="#141518" stroke="#777"/>
-<path d="M1107 316h38" stroke="#B5B6BB" stroke-width="3" stroke-linecap="round"/>
-<circle cx="1126" cy="400" r="17" fill="#56575E" stroke="#A7A8AD" stroke-width="2"/>
-</g>
-<!-- Pasillo que conecta acceso exterior, recepción y puerta interior -->
-<path d="M1165 592H1004Q986 592 986 574V480" fill="none" stroke="#5E6166" stroke-width="2.5" stroke-dasharray="8 10"/>
-<path d="M986 480V466" stroke="#FF6A1A" stroke-width="2.5" stroke-linecap="round"/>
-<path d="M979 474L986 463L993 474" fill="none" stroke="#FF6A1A" stroke-width="2"/>
-<text x="1066" y="530" class="label pod-sub" text-anchor="middle">ZONA DE PASO</text>
-<!-- Puerta a la calle, en el muro derecho de la zona inferior -->
-<g aria-label="Puerta exterior en el lado derecho">
-<path d="M1195 559H1130" stroke="#D8D9D7" stroke-width="3"/>
-<path d="M1195 625A66 66 0 0 0 1129 559" stroke="#FF6A1A" stroke-width="1.7" fill="none" stroke-dasharray="5 5"/>
-<circle cx="1195" cy="559" r="4" fill="#FF6A1A"/>
-<text x="1129" y="674" class="label room-title" font-size="11" text-anchor="end">ENTRADA EXTERIOR</text>
-<path d="M1232 598H1200" stroke="#FF6A1A" stroke-width="2.2"/>
-<path d="M1209 591L1198 598L1209 605" fill="none" stroke="#FF6A1A" stroke-width="2"/>
-</g>
-<text x="48" y="738" class="label plan-caption">8 AGENTES · 4 UNIDADES · 2 ACCESOS</text>
-<text x="1195" y="738" class="label plan-caption" text-anchor="end">OcToS TEAM / V2.1</text>
-</svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo o uno de los dos puestos exteriores para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div class="bottom">Representación conceptual. No hay agentes conectados ni ejecución automática en esta versión.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
+<section id="room" class="view active"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Plano de referencia · Selecciona una mesa, un grupo o un armario</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
+<div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="140 73 1315 828" role="img" aria-label="Plano de OcToS Team: Grupo 1, Grupo 2 y Grupo 3 arriba; Grupo 4 abajo; Jarvis, Gestor, reuniones, cafetería y recepción">
+<defs><clipPath id="floor-building-clip"><rect x="158" y="84" width="1243" height="803" rx="7"/></clipPath></defs>
+<rect x="140" y="73" width="1315" height="828" fill="#111214"/>
+<image class="plan-image" href="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-team-plano-distribucion-referencia.jpeg" x="0" y="0" width="1536" height="1024" preserveAspectRatio="none" clip-path="url(#floor-building-clip)"/>
+<!-- Zonas de interacción posicionadas según el plano gráfico -->
+<g class="pod hotspot" data-pick="chief" tabindex="0" role="button" aria-label="Dirección y coordinación"><rect x="466" y="111" width="320" height="38" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="cabinet-1" tabindex="0" role="button" aria-label="Armario D1"><rect x="232" y="162" width="127" height="87" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="cabinet-2" tabindex="0" role="button" aria-label="Armario D2"><rect x="368" y="162" width="120" height="87" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="cabinet-3" tabindex="0" role="button" aria-label="Armario D3"><rect x="495" y="162" width="124" height="87" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="cabinet-4" tabindex="0" role="button" aria-label="Armario D4"><rect x="624" y="162" width="121" height="87" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="cabinet-5" tabindex="0" role="button" aria-label="Armario D5"><rect x="753" y="162" width="123" height="87" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="cabinet-6" tabindex="0" role="button" aria-label="Armario D6"><rect x="881" y="162" width="123" height="87" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="group-1" tabindex="0" role="button" aria-label="Grupo 1: Imagen corporativa"><rect x="258" y="350" width="168" height="132" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="group-2" tabindex="0" role="button" aria-label="Grupo 2: Referencia y WMS"><rect x="476" y="350" width="161" height="132" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="group-3" tabindex="0" role="button" aria-label="Grupo 3: SketchUp y Ruby"><rect x="690" y="350" width="171" height="132" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="group-4" tabindex="0" role="button" aria-label="Grupo 4: I+D+i"><rect x="258" y="656" width="191" height="123" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="station hotspot" data-pick="agent-1" data-status="unknown" tabindex="0" role="button" aria-label="Agente 1, Identidad"><rect x="261" y="404" width="82" height="75" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="328" cy="458" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A01: sin datos</title></circle></g>
+<g class="station hotspot" data-pick="agent-2" data-status="unknown" tabindex="0" role="button" aria-label="Agente 2, Interfaces"><rect x="343" y="404" width="82" height="75" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="410" cy="458" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A02: sin datos</title></circle></g>
+<g class="station hotspot" data-pick="agent-3" data-status="unknown" tabindex="0" role="button" aria-label="Agente 3, Cartografía"><rect x="479" y="404" width="78" height="75" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="542" cy="458" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A03: sin datos</title></circle></g>
+<g class="station hotspot" data-pick="agent-4" data-status="unknown" tabindex="0" role="button" aria-label="Agente 4, Integración"><rect x="557" y="404" width="78" height="75" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="619" cy="458" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A04: sin datos</title></circle></g>
+<g class="station hotspot" data-pick="agent-5" data-status="unknown" tabindex="0" role="button" aria-label="Agente 5, Desarrollo Ruby"><rect x="693" y="404" width="83" height="75" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="760" cy="458" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A05: sin datos</title></circle></g>
+<g class="station hotspot" data-pick="agent-6" data-status="unknown" tabindex="0" role="button" aria-label="Agente 6, Herramientas 3D"><rect x="776" y="404" width="82" height="75" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="843" cy="458" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A06: sin datos</title></circle></g>
+<g class="station hotspot" data-pick="agent-7" data-status="unknown" tabindex="0" role="button" aria-label="Agente 7, Investigación"><rect x="261" y="708" width="94" height="69" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="338" cy="761" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A07: sin datos</title></circle></g>
+<g class="station hotspot" data-pick="agent-8" data-status="unknown" tabindex="0" role="button" aria-label="Agente 8, Prototipos"><rect x="355" y="708" width="92" height="69" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="431" cy="761" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A08: sin datos</title></circle></g>
+<g class="pod hotspot" data-pick="jarvis" tabindex="0" role="button" aria-label="Jarvis"><rect x="902" y="345" width="115" height="86" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="gestor" tabindex="0" role="button" aria-label="Gestor"><rect x="902" y="493" width="115" height="91" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="input" tabindex="0" role="button" aria-label="Input, recepción"><rect x="1093" y="381" width="117" height="95" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="worker" tabindex="0" role="button" aria-label="Trabajador 0, control de accesos"><rect x="1210" y="381" width="115" height="95" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="meeting" tabindex="0" role="button" aria-label="Mesa de reuniones"><rect x="531" y="694" width="183" height="104" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+<g class="pod hotspot" data-pick="coffee" tabindex="0" role="button" aria-label="Coffee / Bar"><rect x="827" y="780" width="198" height="76" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
+</svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
 <section id="structure" class="view"><div class="eyebrow">Módulo 02</div><div class="empty"><h2>Organigrama</h2><p>Jerarquía preparada: dirección, cuatro unidades y ocho agentes. La vista gráfica interactiva se incorporará posteriormente.</p><button class="outline" data-page="room">Ver distribución en sala</button></div></section>
 <section id="inbox" class="view"><div class="eyebrow">Módulo 03</div><div class="empty"><h2>Entrada / Input</h2><p>Módulo reservado a solicitudes y flujos de trabajo. En V1 únicamente se representa su puesto conectado con dirección.</p><button class="outline" data-page="room">Ver puesto Input</button></div></section>
 <section id="system" class="view"><div class="eyebrow">Módulo 04</div><div class="empty"><h2>Configuración</h2><p>Área reservada a la definición de agentes, equipos y permisos en versiones posteriores.</p><button class="outline" data-page="home">Volver al inicio</button></div></section>
@@ -335,7 +178,7 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 </main><footer><span>OcToS 3D STUDIO · TEAM</span><span>V2.1 / MONITOR DE ACTIVIDAD</span></footer>
 <script>
 (function(){
-var details={"chief":{"type":"Dirección","name":"Jefe de equipo","zone":"Sala de trabajo","desc":"Coordinación de los cuatro grupos. Recibe la entrada de información desde Input y organiza el flujo general."},"input":{"type":"Sala exterior","name":"Input","zone":"Conectado con Dirección","desc":"Puesto de entrada. Recibe solicitudes, materiales e instrucciones para su traslado a la dirección."},"worker":{"type":"Sala exterior","name":"Trabajador principal","zone":"Área de trabajo independiente","desc":"Puesto principal exterior, separado del espacio de los cuatro grupos."},"group-1":{"type":"Unidad 01","name":"Imagen corporativa","zone":"Sala de trabajo","desc":"Agentes 01 y 02: identidad visual e interfaces."},"group-2":{"type":"Unidad 02","name":"Sistemas de referencia y WMS","zone":"Sala de trabajo","desc":"Agentes 03 y 04: cartografía, fuentes e integración."},"group-3":{"type":"Unidad 03","name":"SketchUp y Caja Ruby","zone":"Sala de trabajo","desc":"Agentes 05 y 06: desarrollo Ruby y herramientas 3D."},"group-4":{"type":"Unidad 04","name":"I+D+i","zone":"Sala de trabajo","desc":"Agentes 07 y 08: investigación y prototipado."},"agent-1":{"type":"Agente 01","name":"Identidad","zone":"Grupo 01","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-2":{"type":"Agente 02","name":"Interfaces","zone":"Grupo 01","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-3":{"type":"Agente 03","name":"Cartografía","zone":"Grupo 02","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-4":{"type":"Agente 04","name":"Integración","zone":"Grupo 02","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-5":{"type":"Agente 05","name":"Desarrollo Ruby","zone":"Grupo 03","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-6":{"type":"Agente 06","name":"Herramientas 3D","zone":"Grupo 03","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-7":{"type":"Agente 07","name":"Investigación","zone":"Grupo 04","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-8":{"type":"Agente 08","name":"Prototipos","zone":"Grupo 04","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."}};
+var details={"chief":{"type":"Dirección","name":"Jefe de equipo","zone":"Sala de trabajo · Directrices / Agentes","desc":"Coordinación de los cuatro grupos. Recibe la entrada de información desde Input y organiza el flujo general."},"input":{"type":"Recepción","name":"Input / Coordinador","zone":"Recepción · 5 × 10 m","desc":"Recepción de solicitudes y coordinación de entradas."},"worker":{"type":"Recepción","name":"Trabajador 0","zone":"Recepción · 5 × 10 m","desc":"Control de accesos, entradas y salidas."},"group-1":{"type":"Unidad 01","name":"Imagen corporativa","zone":"Sala de trabajo","desc":"Agentes 01 y 02: identidad visual e interfaces."},"group-2":{"type":"Unidad 02","name":"Sistemas de referencia y WMS","zone":"Sala de trabajo","desc":"Agentes 03 y 04: cartografía, fuentes e integración."},"group-3":{"type":"Unidad 03","name":"SketchUp y Caja Ruby","zone":"Sala de trabajo","desc":"Agentes 05 y 06: desarrollo Ruby y herramientas 3D."},"group-4":{"type":"Unidad 04","name":"I+D+i","zone":"Sala de trabajo","desc":"Agentes 07 y 08: investigación y prototipado."},"agent-1":{"type":"Agente 01","name":"Identidad","zone":"Grupo 01","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-2":{"type":"Agente 02","name":"Interfaces","zone":"Grupo 01","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-3":{"type":"Agente 03","name":"Cartografía","zone":"Grupo 02","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-4":{"type":"Agente 04","name":"Integración","zone":"Grupo 02","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-5":{"type":"Agente 05","name":"Desarrollo Ruby","zone":"Grupo 03","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-6":{"type":"Agente 06","name":"Herramientas 3D","zone":"Grupo 03","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-7":{"type":"Agente 07","name":"Investigación","zone":"Grupo 04","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-8":{"type":"Agente 08","name":"Prototipos","zone":"Grupo 04","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"cabinet-1":{"type":"Directrices y agentes","name":"Armario D1","zone":"Pared norte · Sala de trabajo","desc":"Información base y directrices de agentes. La edición de parámetros se incorporará en una versión posterior."},"cabinet-2":{"type":"Directrices y agentes","name":"Armario D2","zone":"Pared norte · Sala de trabajo","desc":"Información base y directrices de agentes. La edición de parámetros se incorporará en una versión posterior."},"cabinet-3":{"type":"Directrices y agentes","name":"Armario D3","zone":"Pared norte · Sala de trabajo","desc":"Información base y directrices de agentes. La edición de parámetros se incorporará en una versión posterior."},"cabinet-4":{"type":"Directrices y agentes","name":"Armario D4","zone":"Pared norte · Sala de trabajo","desc":"Información base y directrices de agentes. La edición de parámetros se incorporará en una versión posterior."},"cabinet-5":{"type":"Directrices y agentes","name":"Armario D5","zone":"Pared norte · Sala de trabajo","desc":"Información base y directrices de agentes. La edición de parámetros se incorporará en una versión posterior."},"cabinet-6":{"type":"Directrices y agentes","name":"Armario D6","zone":"Pared norte · Sala de trabajo","desc":"Información base y directrices de agentes. La edición de parámetros se incorporará en una versión posterior."},"jarvis":{"type":"Agente multitarea","name":"Jarvis","zone":"Lado derecho · Sala de trabajo","desc":"Apoyo polivalente para los cuatro grupos."},"gestor":{"type":"Administración","name":"Gestor","zone":"Lado derecho · Sala de trabajo","desc":"Gestión y supervisión de encargos."},"meeting":{"type":"Zona común","name":"Mesa de reuniones","zone":"Sector sur · Sala de trabajo","desc":"Mesa compartida de coordinación."},"coffee":{"type":"Zona común","name":"Coffee / Bar","zone":"Sector sureste · Sala de trabajo","desc":"Zona de descanso y servicio auxiliar."}};
 var zoom=1;
 
 /* Telemetría ligera mediante status.json. La aplicación solo observa estados
