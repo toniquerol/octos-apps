@@ -13,7 +13,7 @@ function parseText(r) {
 async function callAI(env, instructions, input, limit) {
   const resp=await fetch("https://api.openai.com/v1/responses",{
     method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+env.OPENAI_API_KEY},
-    body:JSON.stringify({model:env.OPENAI_MODEL||"gpt-5-mini",instructions,input,max_output_tokens:limit,store:false}),
+    body:JSON.stringify({model:env.OPENAI_MODEL||"gpt-6-luna",instructions,input,max_output_tokens:limit,store:false}),
     signal:AbortSignal.timeout(90000)
   });
   if(!resp.ok)throw Error("Error del proveedor IA (HTTP "+resp.status+").");
@@ -29,7 +29,7 @@ export default {
     if(!env.OPENAI_API_KEY||!env.TEAM_ACCESS_TOKEN)return respond(request,503,{error:"Servicio sin secretos configurados"});
     if(request.headers.get("Authorization")!=="Bearer "+env.TEAM_ACCESS_TOKEN)return respond(request,401,{error:"Token del servicio incorrecto"});
     const pathname=new URL(request.url).pathname;
-    if(request.method==="GET"&&pathname==="/health")return respond(request,200,{ready:true,agents:["chief","agent-3","agent-4"],model:env.OPENAI_MODEL||"gpt-5-mini"});
+    if(request.method==="GET"&&pathname==="/health")return respond(request,200,{ready:true,agents:["chief","agent-3","agent-4"],model:env.OPENAI_MODEL||"gpt-6-luna"});
     if(request.method!=="POST"||pathname!=="/run")return respond(request,404,{error:"Ruta no encontrada"});
     const raw=await request.text();if(raw.length>6000)return respond(request,413,{error:"Petición demasiado grande"});
     let body;try{body=JSON.parse(raw)}catch{return respond(request,400,{error:"JSON no válido"})}
@@ -60,7 +60,7 @@ export default {
             "Solicitud: "+task+"\n\nCartografía:\n"+results[0].text+"\n\nIntegración:\n"+results[1].text+"\n\nEntrega conclusión y próximos pasos.",900);
           state("chief","completed");
           const usage=[...results,director].reduce((a,r)=>({input_tokens:a.input_tokens+r.usage.input_tokens,output_tokens:a.output_tokens+r.usage.output_tokens}),{input_tokens:0,output_tokens:0});
-          send({type:"done",result:director.text,usage,model:env.OPENAI_MODEL||"gpt-5-mini"});
+          send({type:"done",result:director.text,usage,model:env.OPENAI_MODEL||"gpt-6-luna"});
         }catch(e){
           send({type:"error",message:e?.message||"Error de ejecución"});
           ["chief","agent-3","agent-4"].forEach(id=>state(id,"idle"));
