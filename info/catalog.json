@@ -311,6 +311,41 @@
       ]
     },
     {
+      "id": "kitchen",
+      "name": "Kitchen",
+      "category": "Diseño de interiores",
+      "icon": "kitchen/icon.svg",
+      "eyebrow": "Editor paramétrico · CAD 2D y visualización 3D",
+      "headline": "Diseña tu cocina a partir de una planta acotada.",
+      "lead": "Dibuja las paredes, ajusta sus medidas reales y compón tu cocina con muebles modulares intercambiables. Visualiza el resultado en 3D sin utilizar herramientas de modelado complejas.",
+      "summary": "Editor de cocinas modulares con planta 2D, cotas, tres frentes de mobiliario y visor 3D.",
+      "tags": [
+        "PLANTA 2D",
+        "MÓDULOS PARAMÉTRICOS",
+        "VISOR 3D"
+      ],
+      "features": [
+        {
+          "title": "Planta y cotas",
+          "text": "Dibuja muros de forma aproximada y corrige longitudes, altura y espesor mediante parámetros."
+        },
+        {
+          "title": "Mobiliario modular",
+          "text": "Coloca y sustituye muebles de una puerta, dos puertas y tres cajones, con ajuste de dimensiones y acabados."
+        },
+        {
+          "title": "Visualización y proyecto",
+          "text": "Explora el modelo tridimensional, guarda la distribución como JSON y genera capturas de la vista."
+        }
+      ],
+      "steps": [
+        "Dibuja el contorno de la cocina en planta o abre una plantilla.",
+        "Acota los muros e incorpora módulos y equipamiento.",
+        "Revisa la composición en 3D y exporta el proyecto."
+      ],
+      "launch": "../kitchen/"
+    },
+    {
       "id": "wordpress",
       "name": "WordPress",
       "category": "Sitio corporativo",
