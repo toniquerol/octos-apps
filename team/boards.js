@@ -316,10 +316,27 @@ el(".team-board-close").addEventListener("click",close);
 overlay.addEventListener("click",e=>{if(e.target===overlay)close()});
 document.addEventListener("keydown",e=>{if(!overlay.hidden&&e.key==="Escape"){e.preventDefault();close()}});
 document.addEventListener("visibilitychange",()=>{if(document.hidden)stopSpeech(true)});
-const launch=document.createElement("button");launch.type="button";launch.className="mini";
-launch.textContent="Pizarras";launch.title="Abrir pizarras de encargos";
-const topActions=document.querySelector("#room>.room-top .actions");
-if(topActions){const first=topActions.querySelector("button");first?first.insertAdjacentElement("afterend",launch):topActions.append(launch);}
+/* Solo distribución visual: el menú de pizarras se aloja en la columna izquierda. */
+const launch=document.createElement("button");launch.type="button";launch.className="team-board-side-open";
+launch.textContent="Abrir todas las pizarras";launch.title="Abrir pizarras de encargos";
+const sidebar=document.querySelector("#team-board-sidebar-actions");
+if(sidebar){
+ sidebar.append(launch);
+ const shortcuts=create("div","team-board-side-groups");
+ for(const g of groups){
+  const btn=create("button","");
+  btn.type="button";
+  const name=create("span","",g.name);
+  const hint=create("small","","Abrir");
+  btn.append(name,hint);
+  btn.addEventListener("click",()=>open(g.id,btn));
+  shortcuts.append(btn);
+ }
+ sidebar.append(shortcuts);
+}else{
+ const topActions=document.querySelector("#room>.room-top .actions");
+ if(topActions)topActions.prepend(launch);
+}
 launch.addEventListener("click",()=>open(null,launch));
 const previous=window.octosTeamShowConfig;
 window.octosTeamShowConfig=function(id,item){
