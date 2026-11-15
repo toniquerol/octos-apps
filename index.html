@@ -228,7 +228,8 @@ const metadata=[
  {slug:"templates",name:"Templates",type:"Sistema visual",detail:"Plantillas y diseño",icon:"./templates/icon.svg"},
  {slug:"aero",name:"Aero",type:"Simulación 3D",detail:"Visualizador aerodinámico",icon:"./aero/icon.svg"},
  {slug:"roads",name:"Roads",type:"Infraestructuras",detail:"Diseño de carreteras",icon:"./roads/icon.svg"},
- {slug:"team",name:"Team",type:"Organización",detail:"Sala de coordinación",icon:"./team/icon.svg"}
+ {slug:"team",name:"Team",type:"Organización",detail:"Sala de coordinación",icon:"./team/icon.svg"},
+ {slug:"kitchen",name:"Kitchen",type:"Diseño 3D",detail:"Cocinas modulares 2D · 3D",icon:"./kitchen/icon.svg"}
 ];
 const ignored=new Set(["rain-v8","shared","tests","node_modules",".github","info"]);
 const catalog=document.getElementById("catalog"),filter=document.getElementById("filter"),status=document.getElementById("sync-status");
@@ -237,7 +238,7 @@ const titleCase=s=>s.split("-").map(s=>s.charAt(0).toUpperCase()+s.slice(1)).joi
 const wordpress={slug:"wordpress",name:"WordPress",type:"Sitio original",detail:"Página web OcToS 3D Studio",icon:null,href:"https://octos3dstudio.wordpress.com/"};
 const roadsInfoDialog=document.getElementById("roadsInfoDialog"),roadsInfoFrame=document.getElementById("roadsInfoFrame");
 const roadsInfoOpen=document.getElementById("roadsInfoOpen"),roadsInfoTitle=document.getElementById("roadsInfoTitle");
-const infoKnown=new Set(["drive","carto","meteo","rain","layers","templates","aero","roads","team","wordpress"]);
+const infoKnown=new Set(["drive","carto","meteo","rain","layers","templates","aero","roads","team","kitchen","wordpress"]);
 function infoPage(item){
  if(item.slug==="roads")return "./roads/info/";
  if(!infoKnown.has(item.slug))return "./info/";
