@@ -44,7 +44,7 @@ h1{font-size:clamp(43px,5.2vw,80px);line-height:1.06;letter-spacing:-.075em;font
 .preview-window{position:relative;border:1px solid #52545b;border-radius:12px;overflow:hidden;background:#16171a;box-shadow:0 26px 65px #0009}
 .preview-title{height:40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #34363b;background:#202126;padding:0 16px;color:#c5c5c9;font-size:11px}
 .preview-dot{display:inline-block;width:8px;height:8px;border-radius:100%;background:var(--accent);margin-right:9px}
-.preview-window .static-demo{height:340px}
+
 .preview-caption{padding:11px 16px;color:#aaadb3;font-size:11px;border-top:1px solid #35363b}
 .stats{border-block:1px solid var(--line);background:#151518}
 .stats .shell{display:grid;grid-template-columns:repeat(4,1fr)}
@@ -70,7 +70,7 @@ h2{font-size:clamp(30px,3.15vw,46px);line-height:1.14;letter-spacing:-.055em;fon
 .viewer-head .live{display:flex;gap:8px;align-items:center;color:#bfc1c7}
 .viewer-head .live:before{content:"";width:7px;height:7px;background:#ff6a1a;border-radius:50%}
 .viewer-frame{height:min(61vw,660px);min-height:340px}
-.viewer-frame .static-demo{height:100%;width:100%}
+
 .viewer-footer{padding:15px 18px;display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;font-size:11px;color:#b7b9c0;background:#202126}
 .viewer-footer strong{font-weight:700;color:var(--text)}
 .workflow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:36px}
@@ -83,27 +83,42 @@ h2{font-size:clamp(30px,3.15vw,46px);line-height:1.14;letter-spacing:-.055em;fon
 small.legal{display:block;color:#95979f;font-size:11px;max-width:980px;line-height:1.65;margin-top:27px}
 footer{border-top:1px solid #393a3f;padding:26px 0;color:#9ea0a8;font-size:11px}
 footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
-@media(max-width:1000px){.hero-grid{gap:30px}nav{gap:12px}.preview-window .static-demo{height:270px}}
-@media(max-width:760px){.shell{width:min(100% - 32px,620px)}nav a:not(.btn){display:none}.hero{padding:52px 0}.hero-grid{grid-template-columns:1fr}.hero-lead{max-width:none}.preview-window .static-demo{height:250px}.stats .shell{grid-template-columns:repeat(2,1fr)}.stat{padding:17px 14px;border-bottom:1px solid #34363b}.stat:nth-child(2){border-right:0}.grid{grid-template-columns:1fr 1fr}section.content{padding:65px 0}.gallery{padding:65px 0}.section-head{display:block}.tabs{justify-content:start;margin-top:22px}.workflow{grid-template-columns:repeat(2,1fr)}.highlight{grid-template-columns:1fr;padding:28px 23px}.viewer-frame{height:360px}.hero-note{font-size:11px}}
+@media(max-width:1000px){.hero-grid{gap:30px}nav{gap:12px}}
+@media(max-width:760px){.shell{width:min(100% - 32px,620px)}nav a:not(.btn){display:none}.hero{padding:52px 0}.hero-grid{grid-template-columns:1fr}.hero-lead{max-width:none}.stats .shell{grid-template-columns:repeat(2,1fr)}.stat{padding:17px 14px;border-bottom:1px solid #34363b}.stat:nth-child(2){border-right:0}.grid{grid-template-columns:1fr 1fr}section.content{padding:65px 0}.gallery{padding:65px 0}.section-head{display:block}.tabs{justify-content:start;margin-top:22px}.workflow{grid-template-columns:repeat(2,1fr)}.highlight{grid-template-columns:1fr;padding:28px 23px}.viewer-frame{height:360px}.hero-note{font-size:11px}}
 @media(max-width:530px){h1{font-size:42px}.grid{grid-template-columns:1fr}.viewer-frame{height:290px;min-height:290px}.viewer-head{font-size:10px;padding:10px}.viewer-footer{font-size:10px}.btn{padding:10px 14px}.workflow{gap:8px}.brand-kicker{font-size:9px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
 
-/* Demostración estática: no se solicita el editor ni sus recursos. */
-.static-demo{width:100%;display:grid;grid-template-columns:27% minmax(0,1fr);background:#121920;overflow:hidden}
-.static-sidebar{background:#202227;border-right:1px solid #4b4d53;padding:18px 14px;display:flex;flex-direction:column;gap:11px;overflow:hidden}
-.static-sidebar strong{color:#f1f1ef;white-space:nowrap;font:800 13px Manrope,sans-serif;letter-spacing:.02em;margin-bottom:15px}
-.static-sidebar strong span{color:#ff6a1a}
-.static-sidebar small{font:700 9px Manrope,sans-serif;letter-spacing:.1em;color:#afb2ba;margin-top:10px}
-.static-sidebar i{display:block;background:#4c5059;border-radius:3px;width:78%;height:7px;flex:none}
-.static-sidebar i:nth-of-type(2n){width:53%}
-.static-map{min-width:0;min-height:0;position:relative;display:grid;place-items:center}
-.static-map svg{width:100%;height:100%;display:block}
-.static-label{position:absolute;top:12px;right:12px;max-width:80%;background:#111820e0;border:1px solid #55606b;border-radius:5px;padding:8px 10px;color:#bfc5ce;font:700 9px Manrope,sans-serif;letter-spacing:.08em;text-align:right}
-.static-demo[data-view="speed"] .road-points{display:none}
-.static-demo[data-view="speed"] .road-center{stroke:#55b7cc;stroke-width:6;stroke-dasharray:none}
-.static-demo[data-view="axes"] .road-center{stroke:#ff6a1a;stroke-width:4;stroke-dasharray:8 7}
-.static-demo[data-view="design"] .road-center{stroke:#ffd9a8;stroke-width:2.5;stroke-dasharray:13 11}
-@media(max-width:530px){.static-sidebar{padding:13px 9px}.static-sidebar strong{font-size:10px}.static-sidebar small{font-size:7px}.static-label{font-size:7px;padding:5px}}
+
+/* Fotografías reales proporcionadas por el estudio. No se incrusta el editor. */
+.preview-window .preview-image{display:block;width:100%;height:350px;object-fit:cover;object-position:center;background:#10151b}
+.feature{padding:13px 16px 24px;display:flex;flex-direction:column;min-width:0}
+.feature .count{margin-top:15px}.feature h3{margin:11px 0 10px;min-height:44px}.feature p{flex:1}
+.feature-preview{height:175px;margin:0 -3px;position:relative;overflow:hidden;border:1px solid #42464e;border-radius:8px;background:#141c24}
+.feature-preview>img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+.feature-preview.focus-right>img{transform:scale(1.65);transform-origin:90% 60%}
+.feature-preview.focus-left>img{transform:scale(1.75);transform-origin:8% 50%}
+.feature-preview-dual{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.feature-preview-dual>img{min-width:0;object-position:top}
+.feature-preview figcaption{position:absolute;right:8px;bottom:8px;border-radius:4px;border:1px solid #666a72;background:#10141ae8;padding:5px 7px;color:#e6e6e6;font:700 8px Manrope,sans-serif;letter-spacing:.09em}
+.feature-preview-concept{padding:15px;background:repeating-linear-gradient(0deg,#fff3 0 1px,transparent 1px 30px),#171b22;display:flex;flex-direction:column;justify-content:center;gap:13px}
+.diagram-heading{font:700 9px Manrope,sans-serif;letter-spacing:.08em;color:#aeb3bb}
+.file-chips{display:flex;gap:6px;flex-wrap:wrap}
+.file-chips span{padding:8px 9px;border:1px solid #5c6069;border-radius:5px;background:#252b33;font:700 10px Manrope,sans-serif;color:#f1f1ef}
+.file-chips span:nth-child(-n+2){border-color:#b96c40;color:#ffac78}
+.diagram-caption{font:700 10px Manrope,sans-serif;color:#ff995f;letter-spacing:.06em}
+.project-row{display:flex;align-items:center;gap:9px;background:#252b31;border:1px solid #4b5058;border-radius:5px;padding:7px;color:#e3e5e7}
+.project-row>span{font-size:22px;color:#ff6a1a}.project-row strong{font:700 10px Manrope,sans-serif}.project-row small{display:block;font:400 9px "IBM Plex Sans",sans-serif;color:#abb0b8}
+.project-row em{margin-left:auto;color:#ff995f;font:700 9px Manrope,sans-serif}.project-row.second{opacity:.65}
+.tools-sample{margin-top:17px;display:flex;align-items:center;gap:22px;padding:18px 22px;border:1px solid #454952;border-radius:10px;background:#1a1c20}
+.tools-sample>div{flex:0 0 250px}
+.tools-sample h3{font-size:15px;line-height:1.4;margin:7px 0}.tools-sample p{font-size:11px;color:#a5a9b0;line-height:1.6;margin:0}
+.tools-sample img{display:block;min-width:0;width:100%;max-width:850px;height:auto;max-height:92px;object-fit:contain}
+.viewer-frame{height:auto;min-height:0;aspect-ratio:16/10;display:grid;place-items:center;background:#101720}
+.viewer-frame img{display:block;width:100%;height:100%;max-height:720px;object-fit:contain}
+.viewer-head .live:before{background:#33a87d}
+@media(max-width:1000px){.preview-window .preview-image{height:290px}.tools-sample{flex-direction:column;align-items:stretch}.tools-sample>div{flex:auto}}
+@media(max-width:760px){.preview-window .preview-image{height:255px}.viewer-frame{aspect-ratio:4/3}}
+@media(max-width:530px){.feature-preview{height:175px}.feature h3{min-height:0}.tools-sample{padding:12px}.viewer-frame{aspect-ratio:4/3}}
 </style>
 </head>
 <body>
@@ -133,20 +148,9 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
     <p class="hero-note">Para solicitar acceso, indica «OcToS Roads» y el motivo de tu consulta en el formulario de contacto. El eje sigue siendo editable. Al modificarlo se recalculan las curvas y la representación de la calzada. El editor conserva herramientas específicas para rotondas, enlaces, puentes y túneles.</p>
    </div>
    <div class="preview-window">
-    <div class="preview-title"><span><span class="preview-dot"></span>OcToS ROADS / VISTA ILUSTRATIVA</span><span>DISEÑO TÉCNICO</span></div>
-    <div class="static-demo" data-view="design" role="img" aria-label="Ilustración estática del diseño de carreteras, sin enlace a la aplicación">
-<div class="static-sidebar"><strong>OcToS <span>ROADS</span></strong><small>CAPAS Y GEOMETRÍA</small><i></i><i></i><i></i><small>PARÁMETROS</small><i></i><i></i><i></i></div>
-<div class="static-map"><svg viewBox="0 0 800 480" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-<defs><pattern id="static-grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#607386" stroke-width=".7" opacity=".22"/></pattern></defs>
-<rect width="800" height="480" fill="#151f2a"/><rect width="800" height="480" fill="url(#static-grid)"/>
-<path d="M-50 390Q155 315 300 265T850 75" fill="none" stroke="#313841" stroke-width="62" stroke-linecap="round"/>
-<path d="M-50 390Q155 315 300 265T850 75" fill="none" stroke="#85898e" stroke-width="31" stroke-linecap="round"/>
-<path d="M-50 390Q155 315 300 265T850 75" fill="none" stroke="#ffd9a8" stroke-width="2.5" stroke-dasharray="13 11" class="road-center"/>
-<path d="M150 -30Q180 135 300 265T630 500" fill="none" stroke="#6a737c" stroke-width="25" opacity=".65"/>
-<path d="M150 -30Q180 135 300 265T630 500" fill="none" stroke="#ff6a1a" stroke-width="3" stroke-dasharray="10 8"/>
-<g class="road-points" fill="#ff6a1a" stroke="#111820" stroke-width="4"><circle cx="63" cy="348" r="8"/><circle cx="208" cy="300" r="8"/><circle cx="300" cy="265" r="8"/><circle cx="510" cy="184" r="8"/><circle cx="730" cy="104" r="8"/></g></svg>
-<div class="static-label">VISTA ILUSTRATIVA · NO INTERACTIVA</div></div></div>
-    <div class="preview-caption">Ilustración estática · sin acceso a la aplicación</div>
+    <div class="preview-title"><span><span class="preview-dot"></span>OcToS ROADS / CAPTURA REAL</span><span>DISEÑO TÉCNICO</span></div>
+    <img class="preview-image" src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-design.png?w=1000" alt="Captura real de OcToS Roads con el trazado vial, radios de curva y puntos de control sobre una ortofotografía" width="1402" height="1093" fetchpriority="high" decoding="async">
+    <div class="preview-caption">Captura del modo Diseño técnico · sin acceso al editor</div>
    </div>
   </div>
  </div>
@@ -165,45 +169,39 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
     <p>Desde un trazado inicial hasta su representación por carriles y elementos singulares. Los ajustes se realizan en el mismo entorno cartográfico.</p>
    </div>
    <div class="grid">
-    <article class="feature"><div class="count">01 · EJE VIARIO</div><h3>Dibuja y modifica directamente</h3><p>Añade puntos, desplaza vértices y edita tramos sobre el mapa. La geometría derivada sigue los puntos de control.</p></article>
-    <article class="feature"><div class="count">02 · ALINEAMIENTO</div><h3>Radios, arcos y clotoides</h3><p>Resuelve curvas circulares tangentes y transiciones cuando existe espacio suficiente, con radio y velocidad de diseño configurables.</p></article>
-    <article class="feature"><div class="count">03 · SECCIÓN VIARIA</div><h3>Carriles, arcenes y mediana</h3><p>Configura la anchura de carril, secciones 1, 1+1, 2+1 y 2+2, medianas, arcenes y aceras.</p></article>
-    <article class="feature"><div class="count">04 · NODOS Y ENLACES</div><h3>Encuentros en T y X</h3><p>Detecta encuentros entre ejes y representa acuerdos geométricos, además de contar con herramientas de enlace.</p></article>
-    <article class="feature"><div class="count">05 · ELEMENTOS</div><h3>Rotondas, puentes y túneles</h3><p>Inserta rotondas con parámetros propios y clasifica tramos como puentes o túneles, con secciones de referencia.</p></article>
-    <article class="feature"><div class="count">06 · CONTROL TÉCNICO</div><h3>Parámetros y advertencias</h3><p>Consulta radios, transiciones, sobreanchos y avisos calculados según el perfil de referencia disponible.</p></article>
-    <article class="feature"><div class="count">07 · CARTOGRAFÍA</div><h3>Varios fondos y capas</h3><p>Trabaja con cartografía de referencia y capas geográficas dentro del propio visor, con modo de terreno tridimensional.</p></article>
-    <article class="feature"><div class="count">08 · INTERCAMBIO</div><h3>Importación y exportación</h3><p>Admite flujos con KML, DWG, GeoJSON y JSON de proyecto, además de importación de ejes viarios reales por área.</p></article>
-    <article class="feature"><div class="count">09 · PROYECTOS</div><h3>Guarda tu trabajo</h3><p>Biblioteca de proyectos y guardado local en el navegador con opciones de exportación para conservar una copia independiente.</p></article>
+    <article class="feature"><figure class="feature-preview "><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-axes.png?w=650" loading="lazy" decoding="async" alt="Ejes viarios y puntos de control del proyecto real."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">01 · EJE VIARIO</div><h3>Dibuja y modifica directamente</h3><p>Añade puntos, desplaza vértices y edita tramos sobre el mapa. La geometría derivada sigue los puntos de control.</p></article>
+    <article class="feature"><figure class="feature-preview "><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-design.png?w=650" loading="lazy" decoding="async" alt="Radios y alineamientos de carreteras con valores geométricos sobre ortofotografía."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">02 · ALINEAMIENTO</div><h3>Radios, arcos y clotoides</h3><p>Resuelve curvas circulares tangentes y transiciones cuando existe espacio suficiente, con radio y velocidad de diseño configurables.</p></article>
+    <article class="feature"><figure class="feature-preview focus-right"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-sections.png?w=650" loading="lazy" decoding="async" alt="Ventana real de sección transversal con anchuras de carriles y arcenes."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">03 · SECCIÓN VIARIA</div><h3>Carriles, arcenes y mediana</h3><p>Configura la anchura de carril, secciones 1, 1+1, 2+1 y 2+2, medianas, arcenes y aceras.</p></article>
+    <article class="feature"><figure class="feature-preview "><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-axes.png?w=650" loading="lazy" decoding="async" alt="Puntos de unión y ejes viales en el entorno real de Roads."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">04 · NODOS Y ENLACES</div><h3>Encuentros en T y X</h3><p>Detecta encuentros entre ejes y representa acuerdos geométricos, además de contar con herramientas de enlace.</p></article>
+    <article class="feature"><figure class="feature-preview "><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-bridge.png?w=650" loading="lazy" decoding="async" alt="Captura real de un puente de arco con su sección longitudinal y transversal."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">05 · ELEMENTOS</div><h3>Rotondas, puentes y túneles</h3><p>Inserta rotondas con parámetros propios y clasifica tramos como puentes o túneles, con secciones de referencia.</p></article>
+    <article class="feature"><figure class="feature-preview focus-left"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-sections.png?w=650" loading="lazy" decoding="async" alt="Panel real con parámetros del trazado, velocidad, peralte y sección vial."><figcaption>CAPTURA REAL</figcaption></figure><div class="count">06 · CONTROL TÉCNICO</div><h3>Parámetros y advertencias</h3><p>Consulta radios, transiciones, sobreanchos y avisos calculados según el perfil de referencia disponible.</p></article>
+    <article class="feature"><figure class="feature-preview feature-preview-dual"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-geo-information.png?w=430" loading="lazy" decoding="async" alt="Panel real de geoinformación con servicios y ajustes de opacidad"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-project-layers.png?w=430" loading="lazy" decoding="async" alt="Panel real de capas del proyecto, calzadas, velocidad y puntos de control"><figcaption>CAPTURAS REALES</figcaption></figure><div class="count">07 · CARTOGRAFÍA</div><h3>Fondos y capas geográficas</h3><p>Superpone cartografía de referencia, organiza capas geográficas y controla su visibilidad y opacidad.</p></article>
+    <article class="feature"><figure class="feature-preview feature-preview-concept" aria-label="Esquema de formatos compatibles, no captura real"><span class="diagram-heading">FORMATOS DE INTERCAMBIO</span><div class="file-chips"><span>KML</span><span>GeoJSON</span><span>DWG</span><span>JSON</span></div><span class="diagram-caption">IMPORTAR ↔ EXPORTAR</span><figcaption>ESQUEMA DE FUNCIONES</figcaption></figure><div class="count">08 · INTERCAMBIO</div><h3>Importación y exportación</h3><p>Admite flujos con KML, DWG, GeoJSON y JSON de proyecto, además de importación de ejes viarios reales por área.</p></article>
+    <article class="feature"><figure class="feature-preview feature-preview-concept" aria-label="Esquema de la biblioteca de proyectos, no captura real"><span class="diagram-heading">BIBLIOTECA DE PROYECTOS</span><div class="project-row"><span>▤</span><strong>Proyecto de carreteras<small>Guardado local</small></strong><em>JSON</em></div><div class="project-row second"><span>▤</span><strong>Nuevo proyecto<small>Crear y recuperar</small></strong></div><figcaption>ESQUEMA DE FUNCIONES</figcaption></figure><div class="count">09 · PROYECTOS</div><h3>Guarda tu trabajo</h3><p>Biblioteca de proyectos y guardado local en el navegador con opciones de exportación para conservar una copia independiente.</p></article>
+   </div>
+   <div class="tools-sample">
+    <div><span class="eyebrow">Interfaz real</span><h3>Herramientas de dibujo y visualización</h3><p>Seleccionar, crear, insertar, eliminar, enlazar y representar la carretera en distintos modos.</p></div>
+    <img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-toolbar.png" loading="lazy" decoding="async" width="849" height="78" alt="Captura auténtica de los botones de OcToS Roads para dibujar, modificar, enlazar y cambiar los modos de visualización">
    </div>
   </div>
  </section>
  <section class="gallery" id="interfaz">
   <div class="shell">
    <div class="section-head">
-    <div><div class="eyebrow">Vista de producto</div><h2>Diseño del producto sin acceso al editor.</h2><p>La ventana inferior presenta una ilustración no interactiva de los modos de representación.</p></div>
-    <div class="tabs" role="tablist" aria-label="Elegir vista de la aplicación">
-      <button type="button" role="tab" data-view="speed" aria-selected="true">Velocidades</button>
-      <button type="button" role="tab" data-view="axes" aria-selected="false">Ejes</button>
-      <button type="button" role="tab" data-view="design" aria-selected="false">Diseño técnico</button>
+    <div><div class="eyebrow">Capturas reales del proyecto</div><h2>Un trazado, cuatro formas de verlo.</h2><p>Las mismas carreteras en los modos Velocidades, Ejes, Diseño y Gris. Imágenes auténticas del proyecto en 2D, sin cargar la aplicación.</p></div>
+    <div class="tabs" role="tablist" aria-label="Vistas reales de OcToS Roads">
+     <button type="button" role="tab" aria-selected="true" aria-controls="viewer" data-view="speed">Velocidades</button>
+     <button type="button" role="tab" aria-selected="false" aria-controls="viewer" data-view="axes">Ejes</button>
+     <button type="button" role="tab" aria-selected="false" aria-controls="viewer" data-view="design">Diseño técnico</button>
+     <button type="button" role="tab" aria-selected="false" aria-controls="viewer" data-view="gray">Gris</button>
     </div>
    </div>
    <div class="viewer">
-     <div class="viewer-head"><span id="viewer-title">OCToS ROADS · VISTA DE VELOCIDADES</span><span class="live">Vista ilustrativa</span></div>
-     <div class="viewer-frame"><div id="viewer" class="static-demo" data-view="speed" role="img" aria-label="Ilustración estática del diseño de carreteras, sin enlace a la aplicación">
-<div class="static-sidebar"><strong>OcToS <span>ROADS</span></strong><small>CAPAS Y GEOMETRÍA</small><i></i><i></i><i></i><small>PARÁMETROS</small><i></i><i></i><i></i></div>
-<div class="static-map"><svg viewBox="0 0 800 480" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-<defs><pattern id="static-grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#607386" stroke-width=".7" opacity=".22"/></pattern></defs>
-<rect width="800" height="480" fill="#151f2a"/><rect width="800" height="480" fill="url(#static-grid)"/>
-<path d="M-50 390Q155 315 300 265T850 75" fill="none" stroke="#313841" stroke-width="62" stroke-linecap="round"/>
-<path d="M-50 390Q155 315 300 265T850 75" fill="none" stroke="#85898e" stroke-width="31" stroke-linecap="round"/>
-<path d="M-50 390Q155 315 300 265T850 75" fill="none" stroke="#ffd9a8" stroke-width="2.5" stroke-dasharray="13 11" class="road-center"/>
-<path d="M150 -30Q180 135 300 265T630 500" fill="none" stroke="#6a737c" stroke-width="25" opacity=".65"/>
-<path d="M150 -30Q180 135 300 265T630 500" fill="none" stroke="#ff6a1a" stroke-width="3" stroke-dasharray="10 8"/>
-<g class="road-points" fill="#ff6a1a" stroke="#111820" stroke-width="4"><circle cx="63" cy="348" r="8"/><circle cx="208" cy="300" r="8"/><circle cx="300" cy="265" r="8"/><circle cx="510" cy="184" r="8"/><circle cx="730" cy="104" r="8"/></g></svg>
-<div class="static-label">VISTA ILUSTRATIVA · NO INTERACTIVA</div></div></div></div>
-     <div class="viewer-footer"><span id="viewer-description"><strong>Velocidades.</strong> Calzadas segmentadas visualmente por velocidad geométrica.</span><span>Vista estática · sin acceso a la aplicación</span></div>
+    <div class="viewer-head"><span id="viewer-title" aria-live="polite">OcToS ROADS · COLORES POR VELOCIDAD</span><span class="live">Captura real · vista estática</span></div>
+    <div class="viewer-frame"><img id="viewer" src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-velocidades.png?w=1450" width="1414" height="1032" alt="Captura real de carreteras coloreadas por velocidad, con rotonda y accesos sobre ortofotografía" loading="lazy" decoding="async"></div>
+    <div class="viewer-footer"><span id="viewer-description"><strong>Velocidades.</strong> Calzadas coloreadas según velocidad geométrica.</span><span>Capturas del proyecto · sin enlace al editor</span></div>
    </div>
-   <small class="legal">Las ilustraciones representan funciones de OcToS Roads sin cargar la aplicación. No corresponden a un proyecto real ni constituyen un diseño de ingeniería certificado. Las comprobaciones VCHI son una referencia parcial; el perfil de la normativa española 3.1-IC no está implementado completamente.</small>
+   <small class="legal">Capturas auténticas del proyecto OcToS Roads facilitadas por su autor. Se muestran únicamente como imágenes, sin ejecutar el editor. Las comprobaciones VCHI son una referencia parcial; el perfil de la normativa española 3.1-IC no está implementado completamente.</small>
   </div>
  </section>
  <section class="content" id="metodo">
@@ -229,19 +227,31 @@ footer .shell{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
 <footer><div class="shell"><span>© 2026 OcToS 3D Studio · OcToS Roads</span><span>Información de producto · Referencias técnicas sujetas a validación</span></div></footer>
 <script>
 (() => {
- const labels={
-  speed:['OCToS ROADS · VISTA DE VELOCIDADES','<strong>Velocidades.</strong> Calzadas segmentadas visualmente por velocidad geométrica.'],
-  axes:['OCToS ROADS · VISTA DE EJES','<strong>Ejes.</strong> Puntos de control, conexiones y trazado central sin pavimento.'],
-  design:['OCToS ROADS · DIBUJO TÉCNICO','<strong>Diseño técnico.</strong> Ejes, bordes, radios y límites de las secciones.']
+ "use strict";
+ const views={
+  speed:{src:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-velocidades.png?w=1450",title:"OcToS ROADS · COLORES POR VELOCIDAD",description:"<strong>Velocidades.</strong> Calzadas coloreadas según velocidad geométrica.",alt:"Vista real del modo Velocidades sobre ortofotografía."},
+  axes:{src:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-axes.png?w=1450",title:"OcToS ROADS · EJES Y PUNTOS DE CONTROL",description:"<strong>Ejes.</strong> Líneas de trazado, conexiones y puntos de control.",alt:"Vista real de ejes y puntos de control sobre ortofotografía."},
+  design:{src:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-design.png?w=1450",title:"OcToS ROADS · DISEÑO TÉCNICO",description:"<strong>Diseño técnico.</strong> Radios, ejes, peraltes y límites de las secciones.",alt:"Vista real del modo Diseño con geometría, curvas y etiquetas técnicas."},
+  gray:{src:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-roads-gray.png?w=1450",title:"OcToS ROADS · CALZADAS EN GRIS",description:"<strong>Gris.</strong> Plataforma viaria y carriles sin clasificación cromática.",alt:"Vista real de calzadas grises y rotonda sobre ortofotografía."}
  };
- const frame=document.getElementById('viewer');
- for (const button of document.querySelectorAll('[data-view]'))button.addEventListener('click',()=>{
-   const view=button.dataset.view;if(!labels[view])return;
-   document.querySelectorAll('[data-view]').forEach(node=>node.setAttribute('aria-selected',String(node===button)));
-   frame.dataset.view=view;
-   document.getElementById('viewer-title').textContent=labels[view][0];
-   document.getElementById('viewer-description').innerHTML=labels[view][1];
- });
+ const frame=document.getElementById("viewer");
+ const tabs=[...document.querySelectorAll("[data-view]")];
+ function show(view){
+  const x=views[view];if(!x)return;
+  tabs.forEach(b=>b.setAttribute("aria-selected",String(b.dataset.view===view)));
+  frame.src=x.src;frame.alt=x.alt;
+  document.getElementById("viewer-title").textContent=x.title;
+  document.getElementById("viewer-description").innerHTML=x.description;
+ }
+ for(const b of tabs){
+  b.addEventListener("click",()=>show(b.dataset.view));
+  b.addEventListener("keydown",e=>{
+   if(!["ArrowLeft","ArrowRight"].includes(e.key))return;
+   e.preventDefault();
+   const next=tabs[(tabs.indexOf(b)+(e.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length];
+   next.focus();show(next.dataset.view);
+  });
+ }
 })();
 </script>
 </body>
