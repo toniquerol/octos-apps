@@ -165,6 +165,45 @@ svg .chief-station .agent-indicator.blink{animation:team-finished-blink .9s step
 #agents-trace{font-size:11px;line-height:1.55;white-space:pre-wrap;word-break:break-word;overflow:auto;max-height:300px;min-height:90px;margin:12px 0 20px;color:#bbbcc1}
 #agents-result{font-size:12px;white-space:pre-wrap;line-height:1.65;word-break:break-word;color:#ededeb}
 @media(max-width:760px){.agents-form{grid-template-columns:1fr}.agents-top{align-items:start;flex-direction:column}}
+
+/* Resumen de telemetría de la API, integrado en la sala sin alterar el plano. */
+.api-telemetry{margin-top:26px;padding:23px;border:1px solid var(--line);border-radius:14px;background:#17181b}
+.api-telemetry-head{display:flex;align-items:start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.api-telemetry-head h2{font-size:19px;letter-spacing:-.02em;margin:6px 0 8px}
+.api-telemetry-head p{font-size:12px;line-height:1.5;color:var(--muted);margin:0}
+.api-telemetry-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.api-telemetry-actions select,.api-telemetry-actions button{background:#232428;color:var(--ink);border:1px solid #52545a;border-radius:8px;padding:10px 12px;font:inherit;font-size:12px}
+.api-telemetry-actions button:disabled{opacity:.55}
+#api-telemetry-state{min-height:22px;margin:13px 0;color:#9fa1a7;font-size:11px;line-height:1.6}
+#api-telemetry-state.api-warning{color:#eab38b}
+.api-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:15px 0 21px}
+.api-metric{background:#202125;border:1px solid #383a40;border-radius:10px;padding:16px;min-width:0}
+.api-metric strong{font-size:clamp(15px,1.65vw,24px);font-weight:650;letter-spacing:-.04em;line-height:1.2;display:block;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.api-metric span{display:block;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-top:9px;line-height:1.5}
+.api-metric.expense{border-color:#7c5037}
+.api-telemetry-columns{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+.api-chart-panel{border:1px solid var(--line);background:#1b1c20;border-radius:11px;padding:18px;min-width:0}
+.api-chart-panel h3{font-size:13px;font-weight:650;margin:0 0 18px}
+.api-bars{display:flex;align-items:end;gap:3px;height:105px;border-bottom:1px solid #4b4d52}
+.api-bar-slot{min-width:0;flex:1;height:100%;display:flex;align-items:end;justify-content:center}
+.api-bar{width:100%;min-height:1px;background:var(--accent);border-radius:2px 2px 0 0;opacity:.85}
+.api-bar-empty{background:#484a4f}
+.api-axis{font-size:10px;color:var(--muted);margin-top:11px;line-height:1.5}
+.api-agent-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:9px 0;border-top:1px solid #303238}
+.api-agent-row:first-of-type{border-top:0}
+.api-agent-name strong{font-size:12px;display:block}
+.api-agent-name small{font-size:10px;color:var(--muted);display:block;margin-top:5px}
+.api-agent-row>b{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.api-recent-section{margin-top:15px}
+.api-recent-section h3{font-size:13px;font-weight:650;margin:0 0 12px}
+#api-recent{overflow-x:auto}
+.api-recent-table{width:100%;border-collapse:collapse;text-align:left;font-size:11px}
+.api-recent-table th{color:#97999f;font-weight:500;text-transform:uppercase;font-size:10px;letter-spacing:.07em}
+.api-recent-table th,.api-recent-table td{padding:11px 8px;border-bottom:1px solid #34363b;white-space:nowrap}
+.api-empty{font-size:11px;line-height:1.5;color:var(--muted);margin:10px 0}
+.api-telemetry-foot{color:#888a90;font-size:10px;line-height:1.6;margin:16px 0 0}
+@media(max-width:1180px){.api-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.api-telemetry{padding:15px}.api-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.api-telemetry-columns{grid-template-columns:1fr}}
 </style><script src="../shared/nav.js" defer></script></head>
 <body>
 <section id="team-access" role="dialog" aria-modal="true" aria-labelledby="team-access-title">
@@ -192,7 +231,34 @@ svg .chief-station .agent-indicator.blink{animation:team-finished-blink .9s step
 <button class="tile" data-page="system"><div class="tile-top"><span class="tile-index">MÓDULO 04</span><span class="tile-icon">⌘</span></div><h3>Configuración</h3><p>Parámetros de puestos y equipos. Reservado, sin funciones activas.</p><span class="go">VER MÓDULO</span></button>
 </div></section>
 <section id="room" class="view active"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Plano de referencia · Selecciona una mesa, un grupo o un armario</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="mini" data-page="inbox" type="button" style="border-color:var(--accent);color:#ffb485">Nueva petición / Input</button><button class="mini" id="layout-edit" type="button" aria-pressed="false">Editar plano</button><button class="mini" id="layout-save" type="button" disabled>Guardar distribución</button><button class="mini" id="layout-reset" type="button">Restablecer</button><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
-<div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="0 0 1536 1024" role="img" aria-label="Visor editable de la sala OcToS Team"><rect width="1536" height="1024" fill="#101114"/></svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div><p id="layout-hint" class="layout-hint" role="status">Plano vectorial interactivo. Selecciona un puesto o armario para consultar su ficha.</p></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div id="team-config-container" class="team-config" hidden></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="inbox">Nueva petición a agentes</button><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
+<div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="0 0 1536 1024" role="img" aria-label="Visor editable de la sala OcToS Team"><rect width="1536" height="1024" fill="#101114"/></svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div><p id="layout-hint" class="layout-hint" role="status">Plano vectorial interactivo. Selecciona un puesto o armario para consultar su ficha.</p></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div id="team-config-container" class="team-config" hidden></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><section class="api-telemetry" id="api-telemetry" aria-labelledby="api-telemetry-title">
+ <div class="api-telemetry-head"><div>
+  <div class="eyebrow">Gestor · Control de recursos</div>
+  <h2 id="api-telemetry-title">Telemetría de consumo y actividad API</h2>
+  <p>Actividad registrada por OcToS Team en Cloudflare Workers.</p>
+ </div><div class="api-telemetry-actions">
+  <label for="api-period" class="sr-only" style="font-size:11px;color:var(--muted)">Periodo</label>
+  <select id="api-period" aria-label="Periodo de telemetría"><option value="1">24 horas</option><option value="7" selected>7 días</option><option value="30">30 días</option></select>
+  <button type="button" id="api-refresh">Actualizar datos</button>
+  <button type="button" data-page="inbox">Conexión API</button>
+ </div></div>
+ <p id="api-telemetry-state" role="status" aria-live="polite">Esperando conexión segura al Worker.</p>
+ <div class="api-metrics">
+  <div class="api-metric"><strong id="api-calls">—</strong><span>Llamadas API</span></div>
+  <div class="api-metric"><strong id="api-tasks">—</strong><span>Tareas completadas / fallidas</span></div>
+  <div class="api-metric"><strong id="api-input">—</strong><span>Tokens de entrada</span></div>
+  <div class="api-metric"><strong id="api-output">—</strong><span>Tokens de salida</span></div>
+  <div class="api-metric"><strong id="api-cache">—</strong><span>Tokens de caché</span></div>
+  <div class="api-metric expense"><strong id="api-expense">—</strong><span>Coste estimado · USD</span></div>
+ </div>
+ <div class="api-telemetry-columns">
+  <div class="api-chart-panel"><h3>Evolución del consumo</h3><div id="api-trend"><p class="api-empty">Sin datos de uso.</p></div></div>
+  <div class="api-chart-panel"><h3>Consumo por agente</h3><div id="api-agents"><p class="api-empty">Sin actividad registrada.</p></div></div>
+ </div>
+ <div class="api-recent-section"><h3>Últimas llamadas registradas</h3><div id="api-recent"><p class="api-empty">Sin actividad registrada.</p></div></div>
+ <p class="api-telemetry-foot">Los importes son estimaciones según tarifas estándar de OpenAI del 15/11/2026; no equivalen a la factura oficial. Solo se registra el uso de este Worker desde su despliegue actualizado. Los datos pueden tardar en aparecer por la consistencia eventual de Cloudflare KV. No se guardan las consultas, las respuestas ni las claves API en la telemetría.</p>
+</section>
+<div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="inbox">Nueva petición a agentes</button><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
 <section id="structure" class="view">
 <div class="agents-top"><div><div class="eyebrow">Módulo 02 / Organización</div><h1>Organigrama y flujo operativo</h1><p>Todas las peticiones entran por Controlador: Jarvis resuelve tareas sencillas; proyectos complejos van a la mesa de reuniones.</p></div><button class="outline" data-page="inbox">Nueva petición</button></div>
 <div class="agent-specialists">
@@ -1033,4 +1099,5 @@ draw();
 })();
 </script>
 <script src="./agents.js" defer></script>
+<script src="./telemetry.js" defer></script>
 </body></html>
