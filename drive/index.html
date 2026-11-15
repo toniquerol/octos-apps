@@ -80,6 +80,30 @@ header .brand small{font-size:9px;letter-spacing:.17em}
 .shared-bases-inline>summary{font-weight:700;cursor:pointer}
 .shared-bases-inline>select{width:100%;max-width:100%;background:#1f1f22;color:#f5f5f5;border:1px solid #595960;border-radius:6px;padding:6px}
 .shared-bases-inline input[type=checkbox]{accent-color:var(--orange)}
+
+/* DGT / SCT · Paneles de datos oficiales, independiente del panel lateral de carreteras */
+.traffic-panel-control{position:absolute;z-index:1050;top:13px;left:15px;max-width:calc(100% - 30px);pointer-events:auto}
+#trafficPanelBtn{font-weight:750;letter-spacing:.01em}
+#trafficPanelBtn[aria-expanded="true"]{border-color:var(--orange);color:#ffb971}
+.traffic-panel{margin-top:9px;max-height:calc(100dvh - 150px);overflow-y:auto;width:min(365px,calc(100vw - 34px));background:#252529f5;border:1px solid #5a5b61;border-radius:10px;box-shadow:0 9px 29px #000a;color:var(--ink);scrollbar-color:#666 transparent}
+.traffic-panel[hidden]{display:none!important}
+.traffic-panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 12px 10px;border-bottom:1px solid #48494c}
+.traffic-panel-head strong{font:700 12px Manrope,system-ui,sans-serif;letter-spacing:.05em}
+.traffic-panel-head button{background:#333338;border:1px solid #55555a;color:#fff;border-radius:6px;width:29px;height:29px;font-size:19px}
+.traffic-panel-summary{padding:9px 12px;color:#b8b8bf;font-size:10px;line-height:1.5}
+.traffic-item{border-top:1px solid #47474d;padding:10px 11px}
+.traffic-item-title{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:11px;font-weight:650}
+.traffic-item-title input{width:16px;height:16px;accent-color:var(--orange);flex:none}
+.traffic-item-title small{font-size:9px;color:#a9afb7;white-space:nowrap}
+.traffic-item-actions{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:8px 0 0 24px}
+.traffic-item-actions button{background:#333337;color:#f5f5f5;border:1px solid #55555a;border-radius:6px;padding:5px 7px;font-size:10px}
+.traffic-item-actions button:hover{border-color:var(--orange)}
+.traffic-item-actions a{color:#ffb971;font-size:10px;text-decoration:none}
+.traffic-item-status{margin:6px 0 0 24px;color:#b4c3b8;font-size:10px;line-height:1.35;overflow-wrap:anywhere}
+.traffic-item-status.warn{color:#ffba85}
+.traffic-panel-foot{padding:10px 12px;border-top:1px solid #47474d;color:#aeb0b8;font-size:10px;line-height:1.5}
+.traffic-panel-foot a{color:#ffb971;text-decoration:none}
+@media(max-width:780px){.traffic-panel-control{top:10px;left:10px}.traffic-panel{max-height:calc(100dvh - 130px)}}
 </style><link rel="stylesheet" href="../shared/theme.css?v=2"><script src="../shared/theme-core.js?v=1" defer></script><script src="../shared/theme.js?v=2" data-app="drive" defer></script></head><body>
 <header><div class="brand"><div><strong><span>OcToS</span> DRIVE</strong><small>NEED FOR SPEED EDITION</small></div></div></header>
 <div class="shell fold" id="shell"><aside id="sidebar"><div class="sidebar-top"><h1>Carreteras y servicios</h1><p>Red vectorial NFS · puntos de interés por teselas</p><p class="healthline" id="health">Conectando con teselas públicas...</p></div><div class="list">
@@ -111,7 +135,21 @@ header .brand small{font-size:9px;letter-spacing:.17em}
 <details class="section"><summary>Navegación GPS</summary><div class="sectionbody"><label class="option"><input type="checkbox" id="followCheck" checked><span>Seguir mi ubicación</span></label><label class="option"><input type="checkbox" id="headingCheck" checked><span>Orientar flecha con brújula</span></label><label class="option"><input type="checkbox" id="accuracyCheck" checked><span>Círculo de precisión</span></label><button class="button full" id="gpsPerm">Activar GPS y brújula</button><p style="font-size:10px;color:#bcbcbc">Si la brújula no está disponible, se usa el rumbo GPS solo en movimiento. Puede requerir HTTPS.</p></div></details>
 <details class="section"><summary>Herramientas</summary><div class="sectionbody"><button id="spain" class="button full">Mostrar España</button><p style="font-size:10px;color:#bcbcbc;margin:8px 3px">El mapa carga las teselas automáticamente. No es un navegador giro a giro.</p></div></details>
 </div><div id="note" class="note">Carreteras en metros reales aproximados sobre el plano. Gasolineras desde teselas y radares desde datos públicos disponibles.</div></aside><button class="sidebar-close" id="foldButton" title="Mostrar catálogo" aria-label="Mostrar catálogo">›</button>
-<main class="map-area"><div id="map"></div><div class="roadmap-controls" aria-label="Controles del mapa">
+<main class="map-area"><div id="map"></div><div class="traffic-panel-control" aria-label="Paneles oficiales de tráfico">
+ <button id="trafficPanelBtn" type="button" class="float-btn" aria-controls="trafficPanel" aria-expanded="false">Paneles</button>
+ <section id="trafficPanel" class="traffic-panel" hidden aria-label="Capas oficiales de vigilancia y tráfico">
+  <div class="traffic-panel-head"><strong>PANELES · DGT / SCT</strong>
+   <button id="trafficClose" type="button" title="Cerrar paneles" aria-label="Cerrar paneles">×</button></div>
+  <div class="traffic-panel-summary">Capas georreferenciadas de radares y referencias de tramo. Activación independiente. Las ubicaciones no representan controles activos en tiempo real.</div>
+  <div id="trafficSources"></div>
+  <div class="traffic-panel-foot">Los archivos se importan en este navegador. No se modifican las bases del visor.<div style="margin-top:6px">
+    <a href="https://www.dgt.es/conoce-el-estado-del-trafico/vigilancia-y-control/equipos-y-tramos-de-vigilancia/" target="_blank" rel="noopener noreferrer">Inventario oficial DGT (PDF)</a> ·
+    <a href="https://nap.dgt.es/es/dataset" target="_blank" rel="noopener noreferrer">Catálogo DATEX II</a>
+   </div>
+   <div style="margin-top:7px">Pendientes de coordenadas verificadas: radares de tramo DGT, vigilancia móvil, cámaras e incidencias. No se representan mediante posiciones aproximadas.</div>
+  </div>
+ </section>
+</div><div class="roadmap-controls" aria-label="Controles del mapa">
 <button id="locateControl" class="roadmap-control round" type="button" title="Activar ubicación GPS y centrar mapa" aria-label="Activar ubicación GPS y centrar mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
 <button id="bearingControl" class="roadmap-control square" type="button" aria-pressed="false" title="Cambiar entre norte arriba y orientación según rumbo GPS" aria-label="Modo norte arriba; pulsar para seguir el rumbo GPS"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L18 20 12 16 6 20Z"/><path d="M12 7v9"/></svg><span class="ctrl-mini" id="bearingMini">N</span></button>
 <button id="dimensionControl" class="roadmap-control square active" type="button" aria-pressed="true" title="Cambiar a vista 2D cenital" aria-label="Cambiar vista tridimensional a 2D"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m2 19 7-12 4 7 3-4 6 9H2Z"/><path d="M7 14 9 11 12 16M16 10l2 5"/></svg><span class="ctrl-mini" id="dimensionMini">3D</span></button>
@@ -120,7 +158,7 @@ header .brand small{font-size:9px;letter-spacing:.17em}
 <button id="zoomOutControl" class="roadmap-control zoom" type="button" title="Alejar" aria-label="Alejar">−</button>
 </div><div class="map-overlay map-right"><button class="float-btn" id="floatingGps" title="Seguir mi ubicación">⌖ Ubicación</button><div class="status-card"><strong id="gpsState">GPS desconectado</strong><div id="gpsInfo">Pulsa GPS para solicitar permiso.</div></div></div><div class="map-overlay map-bottom"><span id="zoom">Z —</span> · <span id="coords">40.3, -3.7</span> · <span id="headingLabel">Rumbo —</span> · <span id="map3dStatus">Relieve 3D</span></div><div class="legend">NFS DARK · <span id="networkState">Red: esperando</span> · <span id="poiState">POI: esperando</span></div></main></div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="../shared/basemaps.js?v=2.8"></script><script>
+<script src="../shared/basemaps.js?v=2.8"></script><script src="./traffic-panels.js?v=1"></script><script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const setNote=(text,warn=false)=>{const el=$('note');el.textContent=text;el.classList.toggle('warn',warn)};
@@ -149,6 +187,7 @@ d.querySelector('input[type=color]').addEventListener('input',e=>{p.color=e.targ
 $('poiBox').appendChild(d);updatePreview();}
 if(!window.maplibregl){health('No se ha cargado MapLibre GL JS');setNote('Biblioteca cartográfica no disponible; se necesita conexión para cargar el visor.',true);return}
 const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-3.6,40.5],zoom:6,pitch:60,maxPitch:85,minZoom:3,maxZoom:19,antialias:true,attributionControl:false,renderWorldCopies:false});
+ if(window.OcToSTrafficPanels)window.OcToSTrafficPanels.mount({map});
 // V5: controles propios de zoom, localización y orientación del mapa.
 map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-left');
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
