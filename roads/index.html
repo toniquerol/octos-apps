@@ -3726,9 +3726,32 @@ map.on('click',e=>{if(mode==='roundabout'){showRoundaboutCreator(e.latlng);retur
 map.on('mousemove',e=>{if(mode==='draw'&&draft.length){cursor=[e.latlng.lat,e.latlng.lng];drawPreview();}});
 map.on('zoomend',render);
 document.addEventListener('keydown',e=>{if(!$('homeScreen').hidden)return;if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.ctrlKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo();return;}if(e.key==='Escape'){if(realAreaActive){cancelRealArea();status('Importación cancelada.');return;}if(mode==='draw')finish(false);else setMode('select');}if(e.key==='Enter'&&mode==='draw')finish();if(e.key==='Backspace'&&mode==='draw'){e.preventDefault();undo();}if(e.key.toLowerCase()==='v')setMode('select');if(e.key.toLowerCase()==='d')setMode('draw');if(e.key.toLowerCase()==='i')setMode('insert');if(e.key.toLowerCase()==='x')setMode('remove');});
-try{const d=JSON.parse(localStorage.getItem(K)||'null');if(d&&Array.isArray(d.roads)&&d.roads.every(r=>validNodes(r.nodes))){roads=d.roads;roundabouts=Array.isArray(d.roundabouts)&&d.roundabouts.every(validRoundabout)?d.roundabouts.map(({armLengths,...rb})=>rb):[];junctions=Array.isArray(d.junctions)?d.junctions.filter(jxValid).filter(j=>roads.some(r=>r.id===j.fromId)&&roads.some(r=>r.id===j.toId)):[];}}catch(e){}
-setBase('dark');render();setMode('select');if(!restoreHomeView()&&(roads.length||roundabouts.length))fitAll();
-homeInitialize();
+/* Vista de presentación: geometrías sintéticas en memoria, sin guardar proyectos ni alterar datos locales. */
+const showcaseView=new URLSearchParams(window.location.search).get('showcase');
+const showcaseEnabled=['speed','design','axes'].includes(showcaseView);
+if(showcaseEnabled){
+ roads=[
+  {id:'showcase-main',name:'Ejemplo · trazado principal',type:'convencional',radius:150,speed:60,
+   section:'road11',laneWidth:3.5,shoulderWidth:1.5,sidewalkWidth:0,medianWidth:0,
+   normProfile:'vchi',superelevation:.04,transitionMode:'auto',designVehicle:'VL',wheelbase:6,
+   nodes:[[41.112,1.186],[41.122,1.205],[41.130,1.225],[41.138,1.247],[41.147,1.268]]},
+  {id:'showcase-cross',name:'Ejemplo · vía secundaria',type:'urbana',radius:80,speed:40,
+   section:'road11',laneWidth:3,shoulderWidth:0,sidewalkWidth:0,medianWidth:0,
+   normProfile:'vchi',superelevation:.04,transitionMode:'auto',designVehicle:'VL',wheelbase:4,
+   nodes:[[41.146,1.214],[41.131,1.232],[41.117,1.247]]}
+ ];
+ roundabouts=[];junctions=[];selected=showcaseView==='design'?'showcase-main':null;
+ $('homeScreen').hidden=true;
+ map.invalidateSize();
+ setBase('dark');setDisplayMode(showcaseView);
+ map.fitBounds(L.latLngBounds(roads.flatMap(r=>r.nodes)).pad(.12));
+ if(selected)setSelection(selected);
+ status('Vista demostrativa · trazados sintéticos · sin guardar datos.');
+}else{
+ try{const d=JSON.parse(localStorage.getItem(K)||'null');if(d&&Array.isArray(d.roads)&&d.roads.every(r=>validNodes(r.nodes))){roads=d.roads;roundabouts=Array.isArray(d.roundabouts)&&d.roundabouts.every(validRoundabout)?d.roundabouts.map(({armLengths,...rb})=>rb):[];junctions=Array.isArray(d.junctions)?d.junctions.filter(jxValid).filter(j=>roads.some(r=>r.id===j.fromId)&&roads.some(r=>r.id===j.toId)):[];}}catch(e){}
+ setBase('dark');render();setMode('select');if(!restoreHomeView()&&(roads.length||roundabouts.length))fitAll();
+ homeInitialize();
+}
 })();
 </script>
 </body></html>
