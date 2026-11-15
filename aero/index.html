@@ -60987,7 +60987,7 @@ const fill=new T.DirectionalLight(0x9acbde,1.4);fill.position.set(4,3,-5);scene.
 const vehicle=new T.Group();scene.add(vehicle);let flow=null,scenery=null;let content=null,paths=null,points=null,lineMesh=null,playing=true,clock=0,last=0,dirty=true,raf=0,loading=false,token=0;
 let L=4.5,H=1.4,W=1.9,extent=8,triangles=0,TRACKS=0,STEPS=0;
 let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0;
-let generation=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
+let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
 let cameras=[],views=[],orbit=[],frameCount=0,fpsTime=0;
 const ground=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial({color:0x171d25,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.025;scene.add(ground);
 const grid=new T.GridHelper(20,40,0x3c505c,0x23323e);grid.position.y=-.015;scene.add(grid);
@@ -61086,7 +61086,7 @@ async function performRebuild(geometry=true,reframe=true){
     const result=await AeroPaths.build(nextSurface,{L,H,W,extent,precision:$('precision').value,focus:$('focus').value},()=>seq===generation);
     if(!result||seq!==generation){if(nextSurface!==surface)nextSurface.dispose();return;}
     if(nextSurface!==surface){if(surface)surface.dispose();surface=nextSurface;}
-    pathData=result;paths=result.paths;TRACKS=result.tracks;STEPS=result.steps;triangles=surface.triangles;
+    pathData=result;paths=result.paths;TRACKS=result.tracks;STEPS=result.steps;triangles=surface.triangles;fieldRevision++;
     releaseFocus();installPathGuides();setParticles();if(geometry)buildScenery();if(reframe)resetCameras();
     const warning=surface.openEdges===null?'topología no verificada':surface.openEdges?'malla con '+surface.openEdges+' bordes abiertos':'malla sin bordes abiertos detectados';
     status(triangles.toLocaleString('es')+' triángulos · '+TRACKS+' rutas / '+STEPS+' muestras · '+warning+
@@ -61218,7 +61218,7 @@ new ResizeObserver(wake).observe(stage);document.addEventListener('visibilitycha
 layout();install(demo(),'Concepto de demostración');restoreDefault();
 window.aeroReady=()=>buildPromise;
 window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
-  dimensions:[L,H,W],tracks:TRACKS,steps:STEPS,precision:pathData?.precision||null,
+  dimensions:[L,H,W],tracks:TRACKS,steps:STEPS,fieldRevision,precision:pathData?.precision||null,
   rawSamples:pathData?.rawSamples||0,repaired:pathData?.repaired||0,stalled:pathData?.stalled||0,
   openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,
   trailVertices:flow?.trails.geometry.attributes.position.count||0,particleSize:flow?.uniforms.size.value||0,
