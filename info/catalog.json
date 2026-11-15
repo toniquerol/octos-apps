@@ -1,0 +1,349 @@
+{
+  "version": 1,
+  "updated": "2026-11-15",
+  "items": [
+    {
+      "id": "drive",
+      "name": "Drive",
+      "category": "Movilidad",
+      "icon": "https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-drive-symbol.png",
+      "eyebrow": "Cartografía de movilidad · Terreno 3D",
+      "headline": "La infraestructura viaria en su contexto territorial.",
+      "lead": "Visor geográfico con carreteras, terreno tridimensional, mapas base y herramientas de orientación.",
+      "summary": "Visualización territorial de la red viaria y de los servicios asociados a la navegación.",
+      "tags": [
+        "RED VIARIA",
+        "TERRENO 3D",
+        "GPS"
+      ],
+      "features": [
+        {
+          "title": "Red de carreteras",
+          "text": "Representación de la red viaria y sus elementos de referencia."
+        },
+        {
+          "title": "Terreno y perspectiva",
+          "text": "Consulta del relieve y cambio de perspectiva de la escena."
+        },
+        {
+          "title": "Navegación y capas",
+          "text": "GPS, brújula, mapas base y controles de visibilidad."
+        }
+      ],
+      "steps": [
+        "Selecciona el fondo cartográfico.",
+        "Activa las capas y el terreno.",
+        "Explora la red viaria en el visor."
+      ]
+    },
+    {
+      "id": "carto",
+      "name": "Carto",
+      "category": "Cartografía",
+      "icon": "https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-carto-symbol.png",
+      "eyebrow": "Geoinformación · Servicios cartográficos",
+      "headline": "Cartografía organizada por capas y servicios.",
+      "lead": "Visor para localizar, activar y combinar información geográfica de distintas fuentes.",
+      "summary": "Consulta cartográfica con catálogo de capas, servicios geográficos y mapas base.",
+      "tags": [
+        "WMS",
+        "MAPAS BASE",
+        "CAPAS"
+      ],
+      "features": [
+        {
+          "title": "Catálogo de capas",
+          "text": "Clasificación y selección de información geográfica temática."
+        },
+        {
+          "title": "Superposición cartográfica",
+          "text": "Consulta conjunta de servicios y fondos en un mismo visor."
+        },
+        {
+          "title": "Fuentes y visualización",
+          "text": "Acceso a servicios cartográficos y representación de capas seleccionadas."
+        }
+      ],
+      "steps": [
+        "Localiza una capa del catálogo.",
+        "Activa los servicios necesarios.",
+        "Analiza la superposición sobre el mapa."
+      ]
+    },
+    {
+      "id": "meteo",
+      "name": "Meteo",
+      "category": "Meteorología",
+      "icon": "https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-meteo-logo-2026.png",
+      "eyebrow": "Observación meteorológica e hidrológica",
+      "headline": "Redes de observación sobre cartografía.",
+      "lead": "Localización de estaciones y consulta de redes AEMET, SAIH y ACA con referencias a sus fuentes oficiales.",
+      "summary": "Visor de estaciones meteorológicas e hidrológicas de España.",
+      "tags": [
+        "AEMET",
+        "SAIH",
+        "ACA"
+      ],
+      "features": [
+        {
+          "title": "Redes de estaciones",
+          "text": "Localización geográfica de puntos de observación y su identificación."
+        },
+        {
+          "title": "Búsqueda territorial",
+          "text": "Consulta por denominación, código y ámbito geográfico."
+        },
+        {
+          "title": "Fuentes oficiales",
+          "text": "Enlaces a los organismos y registros de referencia disponibles."
+        }
+      ],
+      "steps": [
+        "Selecciona la red de observación.",
+        "Localiza una estación en el mapa.",
+        "Consulta su fuente de datos."
+      ]
+    },
+    {
+      "id": "rain",
+      "name": "Rain",
+      "category": "Hidrología",
+      "icon": "https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-rain-logo-transparente.png",
+      "eyebrow": "Análisis hidrológico · Modelos de terreno",
+      "headline": "Del modelo de elevaciones al análisis de drenaje.",
+      "lead": "Herramientas geográficas para estudiar superficies, seleccionar cuencas y explorar escorrentía sobre un MDT.",
+      "summary": "Selección territorial, análisis de terreno y simulación de drenaje.",
+      "tags": [
+        "MDT",
+        "DRENAJE D8",
+        "CUENCAS"
+      ],
+      "features": [
+        {
+          "title": "Área de estudio",
+          "text": "Selección de ámbitos mediante extensión, recorte o polígono."
+        },
+        {
+          "title": "Terreno y elevaciones",
+          "text": "Trabajo con MDT, recortes ráster y curvas de nivel."
+        },
+        {
+          "title": "Drenaje superficial",
+          "text": "Análisis D8, identificación de salidas y simulación visual de eventos."
+        }
+      ],
+      "steps": [
+        "Delimita el área de estudio.",
+        "Prepara el modelo del terreno.",
+        "Calcula drenaje y revisa los resultados."
+      ]
+    },
+    {
+      "id": "layers",
+      "name": "Layers",
+      "category": "Cartografía",
+      "icon": "layers/icon.svg",
+      "eyebrow": "Catálogos de mapas · Servicios WMS",
+      "headline": "Gestiona capas geográficas desde un catálogo único.",
+      "lead": "Organización y consulta de capas cartográficas con controles de activación y visualización.",
+      "summary": "Visor para catalogar, combinar y consultar servicios cartográficos.",
+      "tags": [
+        "CAPAS",
+        "SERVICIOS",
+        "VISOR"
+      ],
+      "features": [
+        {
+          "title": "Catálogo geográfico",
+          "text": "Acceso estructurado a fuentes y capas cartográficas."
+        },
+        {
+          "title": "Composición de mapas",
+          "text": "Activación de superposiciones sobre distintas bases."
+        },
+        {
+          "title": "Control visual",
+          "text": "Gestión de capas visibles y su representación en el mapa."
+        }
+      ],
+      "steps": [
+        "Elige las fuentes de cartografía.",
+        "Añade las capas al visor.",
+        "Organiza la composición cartográfica."
+      ]
+    },
+    {
+      "id": "templates",
+      "name": "Templates",
+      "category": "Sistema visual",
+      "icon": "templates/icon.svg",
+      "eyebrow": "Identidad corporativa · Sistema de interfaz",
+      "headline": "Una norma visual para todas las aplicaciones.",
+      "lead": "Editor de estilos compartidos para mantener coherencia tipográfica, cromática y de componentes en OcToS.",
+      "summary": "Gestión del máster visual y de las plantillas comunes del ecosistema.",
+      "tags": [
+        "TIPOGRAFÍA",
+        "COMPONENTES",
+        "PUBLICACIÓN"
+      ],
+      "features": [
+        {
+          "title": "Tipografías y jerarquía",
+          "text": "Parámetros independientes para títulos, textos secundarios y controles."
+        },
+        {
+          "title": "Componentes UI",
+          "text": "Diseño común de botones, iconos y estructuras de interfaz."
+        },
+        {
+          "title": "Máster visual",
+          "text": "Borradores, previsualización y publicación de revisiones compartidas."
+        }
+      ],
+      "steps": [
+        "Edita los parámetros del máster.",
+        "Previsualiza escritorio y móvil.",
+        "Guarda y publica la revisión."
+      ]
+    },
+    {
+      "id": "aero",
+      "name": "Aero",
+      "category": "Simulación 3D",
+      "icon": "aero/icon.svg",
+      "eyebrow": "Modelos GLB · Visualización de flujo",
+      "headline": "Exploración tridimensional de flujo alrededor de vehículos.",
+      "lead": "Laboratorio visual 3D con carga de carrocerías GLB, ajuste de escala y representación aproximada de partículas.",
+      "summary": "Visualizador de modelos de vehículo y flujo ilustrativo; no es un simulador CFD.",
+      "tags": [
+        "GLB",
+        "VISOR 3D",
+        "FLUJO VISUAL"
+      ],
+      "features": [
+        {
+          "title": "Importación de vehículos",
+          "text": "Carga de modelos GLB y parametrización de dimensiones."
+        },
+        {
+          "title": "Flujo visual",
+          "text": "Representación de partículas y trayectorias con carácter ilustrativo."
+        },
+        {
+          "title": "Cámaras y perspectivas",
+          "text": "Exploración del modelo mediante distintas vistas 3D."
+        }
+      ],
+      "steps": [
+        "Carga un modelo GLB.",
+        "Ajusta longitud y parámetros visuales.",
+        "Explora el flujo desde distintas cámaras."
+      ]
+    },
+    {
+      "id": "roads",
+      "name": "Roads",
+      "category": "Infraestructuras",
+      "icon": "roads/icon.svg",
+      "eyebrow": "Ingeniería civil aplicada · Diseño vial",
+      "headline": "Del eje en planta a la carretera proyectada.",
+      "lead": "Geometría vial paramétrica, alineamientos, secciones transversales y cartografía de referencia.",
+      "summary": "Landing técnica con capturas auténticas del editor de carreteras.",
+      "tags": [
+        "TRAZADO",
+        "SECCIONES",
+        "CARTOGRAFÍA"
+      ],
+      "features": [
+        {
+          "title": "Alineamiento vial",
+          "text": "Edición de ejes y transiciones geométricas."
+        },
+        {
+          "title": "Secciones y estructuras",
+          "text": "Plataformas viarias, rotondas y obras de paso."
+        },
+        {
+          "title": "Control técnico",
+          "text": "Consulta de radios, peraltes y parámetros geométricos."
+        }
+      ],
+      "steps": [
+        "Define el eje sobre la cartografía.",
+        "Ajusta radios, secciones y conexiones.",
+        "Revisa las vistas técnicas."
+      ],
+      "landing": "../roads/info/",
+      "independent": true
+    },
+    {
+      "id": "team",
+      "name": "Team",
+      "category": "Organización",
+      "icon": "team/icon.svg",
+      "eyebrow": "Coordinación · Operaciones",
+      "headline": "Un centro de control para los procesos OcToS.",
+      "lead": "Sala de coordinación con organización de agentes, solicitudes, permisos y telemetría operativa.",
+      "summary": "Entorno de coordinación interna de tareas y agentes.",
+      "tags": [
+        "AGENTES",
+        "SALA",
+        "TELEMETRÍA"
+      ],
+      "features": [
+        {
+          "title": "Sala operativa",
+          "text": "Plano interactivo de puestos y estados de actividad."
+        },
+        {
+          "title": "Solicitudes y flujo",
+          "text": "Organización jerárquica de encargos y revisiones."
+        },
+        {
+          "title": "Permisos y consumo",
+          "text": "Gestión de accesos e indicadores de uso de la API propia."
+        }
+      ],
+      "steps": [
+        "Organiza equipos y responsabilidades.",
+        "Registra y coordina las solicitudes.",
+        "Revisa ejecución, estados y consumo."
+      ]
+    },
+    {
+      "id": "wordpress",
+      "name": "WordPress",
+      "category": "Sitio corporativo",
+      "icon": "",
+      "eyebrow": "Presencia digital · OcToS 3D Studio",
+      "headline": "Información corporativa y proyectos del estudio.",
+      "lead": "Sitio público de OcToS 3D Studio con proyectos, contenidos y canal de contacto.",
+      "summary": "Página corporativa y formulario de contacto oficial de OcToS.",
+      "tags": [
+        "ESTUDIO",
+        "PROYECTOS",
+        "CONTACTO"
+      ],
+      "features": [
+        {
+          "title": "Presentación del estudio",
+          "text": "Información sobre la identidad y el enfoque de OcToS."
+        },
+        {
+          "title": "Portfolio",
+          "text": "Acceso a contenidos y proyectos publicados."
+        },
+        {
+          "title": "Contacto",
+          "text": "Canal público para consultas y solicitudes de acceso."
+        }
+      ],
+      "steps": [
+        "Explora la información corporativa.",
+        "Consulta los proyectos publicados.",
+        "Envía tu consulta desde Contacto."
+      ],
+      "external": "https://octos3dstudio.wordpress.com/"
+    }
+  ]
+}
