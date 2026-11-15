@@ -1,0 +1,11 @@
+# Cloudflare Wrangler local state / developer secrets
+.dev.vars
+.dev.vars.*
+.env
+.env.*
+.wrangler/
+node_modules/
+secrets.json
+secrets*.json
+*.pem
+*.key
