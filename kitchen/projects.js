@@ -146,7 +146,8 @@ async function renameProject(id){
  const name=prompt("Nombre del proyecto",rec.name);
  if(name===null||!name.trim())return;
  await flush();
- const updated={...rec,name:name.trim().slice(0,80),updatedAt:Date.now(),project:{...rec.project,name:name.trim().slice(0,80)}};
+ const latest=getRecord(id)||rec;
+ const updated={...latest,name:name.trim().slice(0,80),updatedAt:Date.now(),project:{...latest.project,name:name.trim().slice(0,80)}};
  try{await storeRecord(updated);records=records.map(r=>r.id===id?updated:r);render();}
  catch(e){note("No se pudo renombrar: "+e.message);}
 }
