@@ -16,47 +16,54 @@
       "svg": "apps-icon.svg",
       "lightSvg": "apps-icon-light.svg",
       "png128": "apps-icon-128.png",
-      "favicon32": "apps-favicon-32.png"
+      "favicon32": "apps-favicon-32.png",
+      "designState": "Sin cambios de dibujo en la revisión 3"
     },
     {
       "id": "drive",
       "name": "OcToS Drive",
       "description": "Consulta de red viaria, mapas y orientación",
-      "concept": "Mapa y dirección",
+      "concept": "Terreno tridimensional, flecha naranja centrada y trayectoria",
       "svg": "drive/icon.svg",
       "lightSvg": "drive/icon-light.svg",
       "png128": "drive/icon-128.png",
-      "favicon32": "drive/favicon-32.png"
+      "favicon32": "drive/favicon-32.png",
+      "reference": "shared/icons/referencias/drive-aprobado-v2-1.jpg",
+      "designState": "Concepto aprobado: revisión 2.1"
     },
     {
       "id": "carto",
       "name": "OcToS Carto",
       "description": "Consulta de mapas y servicios cartográficos",
-      "concept": "Mapa topográfico y marcador",
+      "concept": "Tres hojas cartográficas horizontales y marcador naranja, sin ruta",
       "svg": "carto/icon.svg",
       "lightSvg": "carto/icon-light.svg",
       "png128": "carto/icon-128.png",
-      "favicon32": "carto/favicon-32.png"
+      "favicon32": "carto/favicon-32.png",
+      "reference": "shared/icons/referencias/carto-aprobado-v2-1.jpg",
+      "designState": "Concepto aprobado: revisión 2.1"
     },
     {
       "id": "meteo",
       "name": "OcToS Meteo",
       "description": "Consulta de observaciones meteorológicas e hidrológicas",
-      "concept": "Sol, nube y observación",
+      "concept": "Nube con viento y lluvia ligera",
       "svg": "meteo/icon.svg",
       "lightSvg": "meteo/icon-light.svg",
       "png128": "meteo/icon-128.png",
-      "favicon32": "meteo/favicon-32.png"
+      "favicon32": "meteo/favicon-32.png",
+      "designState": "Actualizado según instrucciones"
     },
     {
       "id": "rain",
       "name": "OcToS Rain",
       "description": "Análisis del terreno, cuencas y escorrentía",
-      "concept": "Relieve, lluvia y escorrentía",
+      "concept": "Fragmento de montañas en 3D con gotas de lluvia",
       "svg": "rain/icon.svg",
       "lightSvg": "rain/icon-light.svg",
       "png128": "rain/icon-128.png",
-      "favicon32": "rain/favicon-32.png"
+      "favicon32": "rain/favicon-32.png",
+      "designState": "Actualizado según instrucciones"
     },
     {
       "id": "layers",
@@ -66,7 +73,8 @@
       "svg": "layers/icon.svg",
       "lightSvg": "layers/icon-light.svg",
       "png128": "layers/icon-128.png",
-      "favicon32": "layers/favicon-32.png"
+      "favicon32": "layers/favicon-32.png",
+      "designState": "Sin cambios de dibujo en la revisión 3"
     },
     {
       "id": "templates",
@@ -76,27 +84,30 @@
       "svg": "templates/icon.svg",
       "lightSvg": "templates/icon-light.svg",
       "png128": "templates/icon-128.png",
-      "favicon32": "templates/favicon-32.png"
+      "favicon32": "templates/favicon-32.png",
+      "designState": "Sin cambios de dibujo en la revisión 3"
     },
     {
       "id": "aero",
       "name": "OcToS Aero",
       "description": "Visualización 3D de vehículos y flujo ilustrativo, no CFD",
-      "concept": "Vehículo con líneas de flujo",
+      "concept": "BMW E46 Touring blanco de perfil y líneas de flujo naranja",
       "svg": "aero/icon.svg",
       "lightSvg": "aero/icon-light.svg",
       "png128": "aero/icon-128.png",
-      "favicon32": "aero/favicon-32.png"
+      "favicon32": "aero/favicon-32.png",
+      "designState": "Actualizado según instrucciones"
     },
     {
       "id": "roads",
       "name": "OcToS Roads",
       "description": "Diseño y geometría de trazados viarios",
-      "concept": "Calzada curva y eje",
+      "concept": "Fragmento de mapa gris con trazado viario gris y naranja más fino",
       "svg": "roads/icon.svg",
       "lightSvg": "roads/icon-light.svg",
       "png128": "roads/icon-128.png",
-      "favicon32": "roads/favicon-32.png"
+      "favicon32": "roads/favicon-32.png",
+      "designState": "Actualizado según instrucciones"
     },
     {
       "id": "team",
@@ -106,7 +117,8 @@
       "svg": "team/icon.svg",
       "lightSvg": "team/icon-light.svg",
       "png128": "team/icon-128.png",
-      "favicon32": "team/favicon-32.png"
+      "favicon32": "team/favicon-32.png",
+      "designState": "Sin cambios de dibujo en la revisión 3"
     },
     {
       "id": "kitchen",
@@ -116,7 +128,9 @@
       "svg": "kitchen/icon.svg",
       "lightSvg": "kitchen/icon-light.svg",
       "png128": "kitchen/icon-128.png",
-      "favicon32": "kitchen/favicon-32.png"
+      "favicon32": "kitchen/favicon-32.png",
+      "designState": "Sin cambios de dibujo en la revisión 3"
     }
-  ]
+  ],
+  "iconRevision": "3"
 }

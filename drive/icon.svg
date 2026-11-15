@@ -1,7 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Drive</title><desc id="desc">Mapa plegado con ruta y flecha de navegación</desc>
-<path d="M22 46 59 30 99 46 138 30v83l-39 17-40-16-37 16Z" fill="none" stroke="#2A2B2F" stroke-width="9" stroke-linejoin="round"/>
-<path d="M59 30v84m40-68v84" fill="none" stroke="#2A2B2F" stroke-width="6" stroke-linecap="round" opacity=".85"/>
-<path d="M38 102c18-20 31-24 45-18 14 6 18 5 29-17" fill="none" stroke="#FF6A1A" stroke-width="9" stroke-linecap="round"/>
-<circle cx="38" cy="102" r="6" fill="#FF6A1A"/>
-<path d="m104 69 12-22 3 27-8-4-7 10z" fill="#FF6A1A" stroke="#FF6A1A" stroke-width="3" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Drive</title><desc id="desc">Bloque de terreno tridimensional con una pequeña flecha central y trayectoria naranja</desc>
+
+<!-- Superficie isométrica: el fondo se ve a través del mapa. -->
+<path d="M19 70Q19 66 26 61L75 30Q82 26 89 30L138 61Q144 66 140 72L89 106Q83 111 77 107L23 80Q17 76 19 70Z" fill="none" stroke="#2A2B2F" stroke-width="8" stroke-linejoin="round"/>
+<!-- Bordes laterales en gris, nunca naranja. -->
+<path d="M20 78L78 108Q84 112 87 111V134Q83 136 78 133L24 104Q19 102 19 97Z" fill="#CED0D2" stroke="#2A2B2F" stroke-width="7" stroke-linejoin="round"/>
+<path d="M87 111L140 76V96Q140 101 136 104L91 134Q88 136 87 134Z" fill="#CED0D2" stroke="#2A2B2F" stroke-width="7" stroke-linejoin="round"/>
+<path d="M19 78 78 108Q83 111 88 107L140 75" fill="none" stroke="#2A2B2F" stroke-width="7" stroke-linejoin="round"/>
+<!-- Curvas de nivel simplificadas sobre la superficie -->
+<path d="M43 62C55 54 61 53 70 57S87 59 93 53M32 77C43 69 52 69 62 75M76 41C84 40 91 48 102 48M114 69C123 65 129 66 135 70" fill="none" stroke="#2A2B2F" stroke-width="5" stroke-linecap="round"/>
+<!-- Trayectoria punteada y flecha equilibrada en el centro del terreno -->
+<path d="M44 88Q53 86 60 84T72 79Q77 75 80 67" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round" stroke-dasharray="5 10"/>
+<path d="M77 76 107 58Q111 56 108 63L98 91Q96 96 92 89L88 79L77 80Q73 80 77 76Z" fill="#FF6A1A" stroke="#FF6A1A" stroke-width="2" stroke-linejoin="round"/>
+
 </svg>

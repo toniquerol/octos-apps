@@ -29,3 +29,19 @@ Revisar XML SVG y ausencia de imágenes embebidas; alfa cero en bordes y huecos;
 - [Comparativa interactiva de tamaños sobre ambos fondos](comparativa.html) y [lámina PNG](comparativa.png).
 - Para regenerar `icon-128.png` y `favicon-32.png` desde las fuentes SVG: `python shared/icons/export_png.py` (requiere CairoSVG).
 - El documento externo de patrón y las cuatro referencias maestras no se han guardado porque **no se recibieron sus archivos**; no se han sustituido por archivos inventados.
+
+
+## Revisión 3 — iconos aprobados e iconos actualizados (15/11/2026)
+
+- **Drive (concepto aprobado, revisión 2.1):** porción de terreno rectangular en perspectiva 3D; flecha pequeña centrada y ruta naranja; bordes laterales grises. [Imagen de referencia visual aprobada](referencias/drive-aprobado-v2-1.jpg).
+- **Carto (concepto aprobado, revisión 2.1):** hojas/cartografías apiladas horizontalmente y marcador naranja. Sin línea naranja de recorrido. [Imagen de referencia visual aprobada](referencias/carto-aprobado-v2-1.jpg).
+- **Meteo:** nube con rachas de viento y lluvia ligera. **Rain:** relieve montañoso 3D y gotas naranjas.
+- **Aero:** silueta blanca simplificada del BMW Serie 3 E46 Touring, con trazos de flujo naranja; sigue siendo una visualización ilustrativa, **no CFD**. Identidad de carrocería contrastada con [BMW Group Classic](https://www.bmwgroup-classic.com/en/models/bmw-classics/product-description-page.ad-1039-1.bmw-3-series-touring-e46.html).
+- **Roads:** bloque cartográfico gris con carretera sinuosa más fina y eje naranja discontinuo.
+- **Apps, Layers, Templates, Team y Kitchen:** maestros previos conservados sin cambios.
+
+Las láminas originales de Drive y Carto aprobadas en esta conversación se conservan intactas como PNG dentro del paquete descargable de revisión 3; los JPG de esta carpeta son **copias visuales comprimidas solo para consulta**, no sustitutos de los PNG originales. Los SVG son reproducciones vectoriales editables del concepto aprobado, no una conversión automática exacta de esos PNG.
+
+En SVG no se utilizan imágenes raster ni placas de fondo. Los huecos del marcador Carto y las ventanas del BMW Aero conservan alfa transparente. Los PNG se regeneran desde los SVG maestros. En Aero la carrocería se dibuja en blanco cálido en ambos temas; el contorno cambia para conservar contraste. En Rain y Drive, las caras de terreno usan grises diferenciados porque representan superficie y volumen, no un fondo de tarjeta.
+
+La [comparativa completa a cinco tamaños](comparativa.png) y la [comparativa de los seis símbolos intervenidos](cambios-principales.png) corresponden a esta revisión. Para nuevos cambios conservar la referencia aprobada del icono, modificar su SVG canónico y regenerar el PNG y el favicon derivados sin cambiar otros símbolos.

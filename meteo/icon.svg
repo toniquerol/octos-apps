@@ -1,6 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Meteo</title><desc id="desc">Nube, sol y medición meteorológica</desc>
-<circle cx="107" cy="51" r="22" fill="none" stroke="#FF6A1A" stroke-width="9"/>
-<path d="M107 15v8m0 56v8m-36-36h8m56 0h8M82 26l6 6m37 37 6 6m0-49-6 6" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round"/>
-<path d="M43 112h80c15 0 23-11 21-23-1-14-12-23-27-23-4 0-8 1-11 2-8-17-23-25-40-23-20 2-32 17-33 35-13 1-20 11-19 21 1 7 10 11 29 11z" fill="none" stroke="#2A2B2F" stroke-width="10" stroke-linejoin="round"/>
-<path d="M49 130h17m11 0h16m11 0h15" fill="none" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Meteo</title><desc id="desc">Nube meteorológica con viento y lluvia ligera</desc>
+
+<!-- Nube de contorno grueso -->
+<path d="M42 102H109C126 102 136 92 135 78C135 64 124 55 111 55C107 55 104 55 100 57C94 42 83 35 68 35C49 35 38 47 36 65C24 66 17 75 18 86C19 96 27 102 42 102Z" fill="none" stroke="#2A2B2F" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
+<!-- Dos pequeñas gotas de lluvia -->
+<path d="M53 113 46 127M83 113 76 127" fill="none" stroke="#FF6A1A" stroke-width="8" stroke-linecap="round"/>
+<!-- Rachas de viento a la derecha de la nube, naranjas -->
+<path d="M101 116H132Q141 116 141 107M103 131H121Q130 131 130 122" fill="none" stroke="#FF6A1A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
 </svg>

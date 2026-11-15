@@ -1,6 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Carto</title><desc id="desc">Mapa de curvas de nivel y punto geográfico</desc>
-<path d="M22 34c24-10 45-9 65 0 17 8 33 7 51-3v94c-20 10-38 11-57 2-19-8-37-8-59 3z" fill="none" stroke="#F1F1EF" stroke-width="9" stroke-linejoin="round"/>
-<path d="M35 63c16-18 28-18 40-10M36 82c19-15 32-15 44-6m-43 27c21-10 34-10 47-4M101 102c7-6 16-9 25-9" fill="none" stroke="#F1F1EF" stroke-width="6" stroke-linecap="round"/>
-<path d="M100 57a19 19 0 0 1 38 0c0 15-19 38-19 38s-19-23-19-38z" fill="none" stroke="#FF6A1A" stroke-width="9" stroke-linejoin="round"/>
-<circle cx="119" cy="57" r="6" fill="#FF6A1A"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Carto</title><desc id="desc">Tres planos cartográficos horizontales superpuestos y un marcador geográfico naranja</desc>
+
+<!-- Tres hojas cartográficas en disposición horizontal isométrica -->
+<path d="M21 102 78 132Q82 135 87 132L140 103" fill="none" stroke="#F1F1EF" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M21 83 78 113Q83 116 87 113L140 84" fill="none" stroke="#F1F1EF" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M21 64Q17 60 23 56L76 29Q81 26 87 29L139 56Q145 61 140 65L87 95Q83 98 78 95L23 68Q20 66 21 64Z" fill="none" stroke="#F1F1EF" stroke-width="9" stroke-linejoin="round"/>
+<!-- Curvas topográficas sobre la hoja superior -->
+<path d="M36 60C51 45 63 55 77 63S103 64 120 53M45 72C63 59 75 76 89 77S109 70 129 63" fill="none" stroke="#F1F1EF" stroke-width="5" stroke-linecap="round"/>
+<!-- Marcador naranja, sin línea o ruta naranja -->
+<path d="M78 18C65 18 55 28 55 41C55 57 78 79 78 79S101 57 101 41C101 28 91 18 78 18Z M78 32a9 9 0 1 0 0 18a9 9 0 1 0 0-18Z" fill="#FF6A1A" fill-rule="evenodd"/>
+
 </svg>

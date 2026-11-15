@@ -33,3 +33,8 @@ El objetivo es **resolver exactamente lo pedido con la menor lectura, el menor d
 - Usar grafito #2A2B2F, naranja #FF6A1A, transparencia real y geometría vectorial; no placas, textos, sombras ni raster incrustado. Cada símbolo representa una función comprobada y debe distinguirse por su silueta.
 - Verificar 24/32/48/64/128 px sobre fondos claro y oscuro, rutas de catálogo, cabecera, accesos y favicon. No sustituir iconos funcionales de botones ni el monograma «T» autorizado.
 - Conservar los cuatro originales de referencia del usuario sin redibujarlos cuando se aporten; su incorporación al repositorio debe mantenerse independiente de los iconos derivados.
+
+
+## Iconos aprobados — revisión 3
+- Drive y Carto tienen referencias visuales aprobadas en `shared/icons/referencias/`; conservar sus conceptos y no alterarlos sin autorización expresa del usuario.
+- Los maestros y variantes están catalogados en `shared/icons/catalog.json`; regenerar PNG y favicon desde SVG cuando cambie un símbolo. Dejar `apps`, `layers`, `templates`, `team` y `kitchen` intactos salvo petición expresa.

@@ -1,4 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Roads</title><desc id="desc">Carretera curvada con eje de proyecto resaltado</desc>
-<path d="M41 138C43 102 94 102 94 61c0-18 14-29 26-39" fill="none" stroke="#2A2B2F" stroke-width="43" stroke-linecap="round"/>
-<path d="M41 138C43 102 94 102 94 61c0-18 14-29 26-39" fill="none" stroke="#FF6A1A" stroke-width="6" stroke-dasharray="13 12" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Roads</title><desc id="desc">Porción cartográfica gris con una carretera sinuosa más fina y un eje naranja</desc>
+
+<!-- Fragmento de mapa en perspectiva -->
+<path d="M20 66Q20 62 26 58L77 28Q83 25 89 28L139 59Q144 63 139 68L88 100Q82 103 77 100L23 72Q18 69 20 66Z" fill="#E5E6E7" stroke="#2A2B2F" stroke-width="8" stroke-linejoin="round"/>
+<path d="M20 70V96Q20 102 25 105L77 131Q82 135 87 131L137 103Q141 101 141 96V67" fill="none" stroke="#2A2B2F" stroke-width="7" stroke-linejoin="round"/>
+<path d="M83 102V131" stroke="#2A2B2F" stroke-width="6"/>
+<!-- Topografía discreta gris; no iconos de navegación -->
+<path d="M35 62Q46 52 59 57M104 42Q113 46 124 52M102 89Q113 77 128 76" fill="none" stroke="#2A2B2F" stroke-width="4" stroke-linecap="round"/>
+<!-- Carretera fina y eje discontinuo naranja -->
+<path d="M44 89Q38 78 49 71Q61 61 75 69Q87 77 95 61Q102 48 118 51" fill="none" stroke="#2A2B2F" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M44 89Q38 78 49 71Q61 61 75 69Q87 77 95 61Q102 48 118 51" fill="none" stroke="#FF6A1A" stroke-width="4.8" stroke-dasharray="6 7" stroke-linecap="round"/>
+
 </svg>

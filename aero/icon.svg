@@ -1,8 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Aero</title><desc id="desc">Vehículo en grafito con líneas de flujo naranjas</desc>
-<path d="M20 50h31c24 0 29-20 53-20h36m-120 35h19c22 0 30-19 49-19h52" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round"/>
-<path d="M27 111v-13l23-8 27-28h37l23 28 16 7v14" fill="none" stroke="#2A2B2F" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M76 88 89 72h22l13 16Z" fill="none" stroke="#2A2B2F" stroke-width="6" stroke-linejoin="round"/>
-<circle cx="53" cy="113" r="13" fill="none" stroke="#2A2B2F" stroke-width="9"/>
-<circle cx="127" cy="113" r="13" fill="none" stroke="#2A2B2F" stroke-width="9"/>
-<path d="M20 140h120m-12-8 12 8-12 8" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc"><title id="title">OcToS Aero</title><desc id="desc">Silueta blanca BMW Serie 3 E46 Touring y líneas de flujo naranjas; visualización no CFD</desc>
+
+<!-- Líneas de flujo naranjas independientes del vehículo -->
+<path d="M17 35H41C57 35 66 27 83 27H143M18 49H33C55 49 61 41 81 41H142" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round"/>
+<!-- Huecos con regla evenodd: transparencia real en las ventanillas. -->
+<!-- Carrocería Touring E46: morro corto a la izquierda, frontal inclinado,
+     techo largo y casi plano, portón trasero y lunas de carga. Blanca. -->
+<path d="M13 101Q13 94 22 92L47 88 64 71Q70 64 82 64H119Q130 64 136 75L145 82V100Q145 107 137 109H131C130 97 123 91 114 91S97 97 96 109H61C60 97 53 91 44 91S27 97 26 109H20Q13 108 13 101Z M65 84 77 71H95V84ZM101 71H119Q127 71 131 80L133 84H101Z" fill="#F1F1EF" fill-rule="evenodd" stroke="#2A2B2F" stroke-width="7" stroke-linejoin="round"/>
+<!-- Ventanillas de berlina familiar, con huecos transparentes -->
+<path d="M65 84 77 71H95V84ZM101 71H119Q127 71 131 80L133 84H101Z" fill="none" stroke="#2A2B2F" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M97 71V86M100 97v-8M36 90l-7 1" fill="none" stroke="#2A2B2F" stroke-width="3.5" stroke-linecap="round"/>
+<circle cx="44" cy="109" r="13" fill="#2A2B2F" stroke="#2A2B2F" stroke-width="5"/>
+<circle cx="114" cy="109" r="13" fill="#2A2B2F" stroke="#2A2B2F" stroke-width="5"/>
+<circle cx="44" cy="109" r="4" fill="#F1F1EF"/>
+<circle cx="114" cy="109" r="4" fill="#F1F1EF"/>
+<!-- Flujo inferior, sin reinterpretarlo como CFD -->
+<path d="M18 141H142m-10-8 10 8-10 8" fill="none" stroke="#FF6A1A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+
 </svg>
