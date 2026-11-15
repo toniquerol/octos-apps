@@ -107,6 +107,27 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 .team-config button[hidden]{display:none}
 .team-config .team-config-message{font-size:11px;color:#ffb485;min-height:18px;margin-top:9px}
 .team-config .team-cabinet-members{font-size:11px;color:#b6b8bf;line-height:1.6;margin-top:10px}
+
+/* Visor vectorial editable: plano, mobiliario y edificio adaptables */
+#floor .plan-grid{opacity:.46;pointer-events:none}
+#floor .layout-object{cursor:pointer;transition:filter .12s ease}
+#floor .layout-object:hover{filter:brightness(1.18)}
+#floor.layout-editing .layout-object{cursor:grab;touch-action:none}
+#floor.layout-editing .layout-object:active{cursor:grabbing}
+#floor .layout-object.selected>.furniture-body{stroke:#ff6a1a;stroke-width:3}
+#floor .floor-zone{cursor:pointer}
+#floor .floor-zone.selected>.zone-fill{stroke:#ff6a1a;stroke-width:2}
+#floor .layout-resize{cursor:nwse-resize;touch-action:none}
+#floor .layout-resize[hidden]{display:none}
+#floor .floor-wall{pointer-events:none}
+#floor .floor-text{font-family:"IBM Plex Sans",sans-serif;fill:#a7aab1;letter-spacing:1px}
+#floor .furniture-text{font-family:"IBM Plex Sans",sans-serif;fill:#e8e9ea;pointer-events:none}
+#floor .furniture-sub{font-family:"IBM Plex Sans",sans-serif;fill:#acafb6;pointer-events:none}
+#floor .layout-object .agent-indicator{pointer-events:none}
+.layout-hint{margin:0 0 12px 4px;font-size:11px;line-height:1.5;color:#aeb0b7}
+.layout-hint.dirty{color:#ffae80}
+#layout-save:disabled{opacity:.4;cursor:default}
+#layout-edit[aria-pressed=true]{background:#ff6a1a18;border-color:#ff6a1a;color:#ffb284}
 </style></head>
 <body>
 <section id="team-access" role="dialog" aria-modal="true" aria-labelledby="team-access-title">
@@ -133,37 +154,8 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 <button class="tile" data-page="inbox"><div class="tile-top"><span class="tile-index">MÓDULO 03</span><span class="tile-icon">↧</span></div><h3>Entrada / Input</h3><p>Recepción y distribución de encargos. Preparado para su desarrollo posterior.</p><span class="go">VER MÓDULO</span></button>
 <button class="tile" data-page="system"><div class="tile-top"><span class="tile-index">MÓDULO 04</span><span class="tile-icon">⌘</span></div><h3>Configuración</h3><p>Parámetros de puestos y equipos. Reservado, sin funciones activas.</p><span class="go">VER MÓDULO</span></button>
 </div></section>
-<section id="room" class="view active"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Plano de referencia · Selecciona una mesa, un grupo o un armario</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
-<div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="36 20 1464 970" role="img" aria-label="Plano de OcToS Team: Grupo 1, Grupo 2 y Grupo 3 arriba; Grupo 4 abajo; Jarvis, Gestor, reuniones, cafetería y recepción">
-<rect x="36" y="20" width="1464" height="970" fill="#111214"/>
-<image class="plan-image" href="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-team-plano-acera-3m.png" x="0" y="0" width="1536" height="1024" preserveAspectRatio="none"/>
-<!-- Zonas de interacción posicionadas según el plano gráfico -->
-<g class="pod hotspot" data-pick="chief" tabindex="0" role="button" aria-label="Dirección y coordinación"><rect x="250" y="188" width="715" height="25" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="cabinet-1" tabindex="0" role="button" aria-label="Armario D1"><rect x="246" y="217" width="119" height="81" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="cabinet-2" tabindex="0" role="button" aria-label="Armario D2"><rect x="374" y="217" width="117" height="81" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="cabinet-3" tabindex="0" role="button" aria-label="Armario D3"><rect x="497" y="217" width="116" height="81" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="cabinet-4" tabindex="0" role="button" aria-label="Armario D4"><rect x="620" y="217" width="113" height="81" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="cabinet-5" tabindex="0" role="button" aria-label="Armario D5"><rect x="741" y="217" width="116" height="81" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="cabinet-6" tabindex="0" role="button" aria-label="Armario D6"><rect x="866" y="217" width="115" height="81" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="group-1" tabindex="0" role="button" aria-label="Grupo 1: Imagen corporativa"><rect x="219" y="352" width="165" height="132" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="group-2" tabindex="0" role="button" aria-label="Grupo 2: Referencia y WMS"><rect x="219" y="488" width="166" height="127" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="group-3" tabindex="0" role="button" aria-label="Grupo 3: SketchUp y Ruby"><rect x="535" y="379" width="180" height="115" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="group-4" tabindex="0" role="button" aria-label="Grupo 4: I+D+i"><rect x="218" y="687" width="168" height="131" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="station hotspot" data-pick="agent-1" data-status="unknown" tabindex="0" role="button" aria-label="Agente 1, Identidad"><rect x="219" y="351" width="166" height="65" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="369" cy="379" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A01: sin datos</title></circle></g>
-<g class="station hotspot" data-pick="agent-2" data-status="unknown" tabindex="0" role="button" aria-label="Agente 2, Interfaces"><rect x="219" y="416" width="166" height="68" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="369" cy="449" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A02: sin datos</title></circle></g>
-<g class="station hotspot" data-pick="agent-3" data-status="unknown" tabindex="0" role="button" aria-label="Agente 3, Cartografía"><rect x="219" y="487" width="166" height="63" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="370" cy="518" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A03: sin datos</title></circle></g>
-<g class="station hotspot" data-pick="agent-4" data-status="unknown" tabindex="0" role="button" aria-label="Agente 4, Integración"><rect x="219" y="550" width="166" height="65" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="370" cy="585" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A04: sin datos</title></circle></g>
-<g class="station hotspot" data-pick="agent-5" data-status="unknown" tabindex="0" role="button" aria-label="Agente 5, Desarrollo Ruby"><rect x="535" y="380" width="180" height="53" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="700" cy="405" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A05: sin datos</title></circle></g>
-<g class="station hotspot" data-pick="agent-6" data-status="unknown" tabindex="0" role="button" aria-label="Agente 6, Herramientas 3D"><rect x="535" y="433" width="180" height="60" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="700" cy="469" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A06: sin datos</title></circle></g>
-<g class="station hotspot" data-pick="agent-7" data-status="unknown" tabindex="0" role="button" aria-label="Agente 7, Investigación"><rect x="219" y="688" width="167" height="63" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="370" cy="719" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A07: sin datos</title></circle></g>
-<g class="station hotspot" data-pick="agent-8" data-status="unknown" tabindex="0" role="button" aria-label="Agente 8, Prototipos"><rect x="219" y="751" width="167" height="66" rx="3" fill="transparent" stroke="transparent" stroke-width="2"/><circle class="agent-indicator" cx="370" cy="781" r="7" fill="#74767C" stroke="#0E0E10" stroke-width="2"><title>A08: sin datos</title></circle></g>
-<g class="pod hotspot" data-pick="jarvis" tabindex="0" role="button" aria-label="Jarvis"><rect x="883" y="375" width="103" height="81" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="gestor" tabindex="0" role="button" aria-label="Gestor"><rect x="883" y="507" width="104" height="79" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="input" tabindex="0" role="button" aria-label="Input, recepción"><rect x="1058" y="407" width="105" height="82" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="worker" tabindex="0" role="button" aria-label="Trabajador 0, control de accesos"><rect x="1163" y="407" width="110" height="82" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="meeting" tabindex="0" role="button" aria-label="Mesa de reuniones"><rect x="520" y="662" width="186" height="96" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-<g class="pod hotspot" data-pick="coffee" tabindex="0" role="button" aria-label="Coffee / Bar"><rect x="762" y="765" width="220" height="59" rx="4" fill="transparent" stroke="transparent" stroke-width="2"/></g>
-</svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div id="team-config-container" class="team-config" hidden></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
+<section id="room" class="view active"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Plano de referencia · Selecciona una mesa, un grupo o un armario</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="mini" id="layout-edit" type="button" aria-pressed="false">Editar plano</button><button class="mini" id="layout-save" type="button" disabled>Guardar distribución</button><button class="mini" id="layout-reset" type="button">Restablecer</button><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
+<div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="0 0 1536 1024" role="img" aria-label="Visor editable de la sala OcToS Team"><rect width="1536" height="1024" fill="#101114"/></svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div><p id="layout-hint" class="layout-hint" role="status">Plano vectorial interactivo. Selecciona un puesto o armario para consultar su ficha.</p></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div id="team-config-container" class="team-config" hidden></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
 <section id="structure" class="view"><div class="eyebrow">Módulo 02</div><div class="empty"><h2>Organigrama</h2><p>Jerarquía preparada: dirección, cuatro unidades y ocho agentes. La vista gráfica interactiva se incorporará posteriormente.</p><button class="outline" data-page="room">Ver distribución en sala</button></div></section>
 <section id="inbox" class="view"><div class="eyebrow">Módulo 03</div><div class="empty"><h2>Entrada / Input</h2><p>Módulo reservado a solicitudes y flujos de trabajo. En V1 únicamente se representa su puesto conectado con dirección.</p><button class="outline" data-page="room">Ver puesto Input</button></div></section>
 <section id="system" class="view"><div class="eyebrow">Módulo 04</div><div class="empty"><h2>Configuración</h2><p>Área reservada a la definición de agentes, equipos y permisos en versiones posteriores.</p><button class="outline" data-page="home">Volver al inicio</button></div></section>
@@ -194,6 +186,7 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 <script>
 (function(){
 var details={"chief":{"type":"Dirección","name":"Jefe de equipo","zone":"Sala de trabajo · Directrices / Agentes","desc":"Coordinación de los cuatro grupos. Recibe la entrada de información desde Input y organiza el flujo general."},"input":{"type":"Recepción","name":"Input / Coordinador","zone":"Recepción · 5 × 10 m","desc":"Recepción de solicitudes y coordinación de entradas."},"worker":{"type":"Recepción","name":"Trabajador 0","zone":"Recepción · 5 × 10 m","desc":"Control de accesos, entradas y salidas."},"group-1":{"type":"Unidad 01","name":"Imagen corporativa","zone":"Sala de trabajo","desc":"Agentes 01 y 02: identidad visual e interfaces."},"group-2":{"type":"Unidad 02","name":"Sistemas de referencia y WMS","zone":"Sala de trabajo","desc":"Agentes 03 y 04: cartografía, fuentes e integración."},"group-3":{"type":"Unidad 03","name":"SketchUp y Caja Ruby","zone":"Sala de trabajo","desc":"Agentes 05 y 06: desarrollo Ruby y herramientas 3D."},"group-4":{"type":"Unidad 04","name":"I+D+i","zone":"Sala de trabajo","desc":"Agentes 07 y 08: investigación y prototipado."},"agent-1":{"type":"Agente 01","name":"Identidad","zone":"Grupo 01","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-2":{"type":"Agente 02","name":"Interfaces","zone":"Grupo 01","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-3":{"type":"Agente 03","name":"Cartografía","zone":"Grupo 02","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-4":{"type":"Agente 04","name":"Integración","zone":"Grupo 02","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-5":{"type":"Agente 05","name":"Desarrollo Ruby","zone":"Grupo 03","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-6":{"type":"Agente 06","name":"Herramientas 3D","zone":"Grupo 03","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-7":{"type":"Agente 07","name":"Investigación","zone":"Grupo 04","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"agent-8":{"type":"Agente 08","name":"Prototipos","zone":"Grupo 04","desc":"Puesto de trabajo visual. Las funciones operativas se incorporarán en versiones posteriores."},"cabinet-1":{"type":"Directrices y agentes","name":"Armario D1","zone":"Pared norte · Sala de trabajo","desc":"Información base y directrices de agentes. La edición de parámetros se incorporará en una versión posterior."},"cabinet-2":{"type":"Directrices y agentes","name":"Armario D2","zone":"Pared norte · Sala de trabajo","desc":"Información base y directrices de agentes. La edición de parámetros se incorporará en una versión posterior."},"cabinet-3":{"type":"Directrices y agentes","name":"Armario D3","zone":"Pared norte · Sala de trabajo","desc":"Información base y directrices de agentes. La edición de parámetros se incorporará en una versión posterior."},"cabinet-4":{"type":"Directrices y agentes","name":"Armario D4","zone":"Pared norte · Sala de trabajo","desc":"Información base y directrices de agentes. La edición de parámetros se incorporará en una versión posterior."},"cabinet-5":{"type":"Directrices y agentes","name":"Armario D5","zone":"Pared norte · Sala de trabajo","desc":"Información base y directrices de agentes. La edición de parámetros se incorporará en una versión posterior."},"cabinet-6":{"type":"Directrices y agentes","name":"Armario D6","zone":"Pared norte · Sala de trabajo","desc":"Información base y directrices de agentes. La edición de parámetros se incorporará en una versión posterior."},"jarvis":{"type":"Agente multitarea","name":"Jarvis","zone":"Lado derecho · Sala de trabajo","desc":"Apoyo polivalente para los cuatro grupos."},"gestor":{"type":"Administración","name":"Gestor","zone":"Lado derecho · Sala de trabajo","desc":"Gestión y supervisión de encargos."},"meeting":{"type":"Zona común","name":"Mesa de reuniones","zone":"Sector sur · Sala de trabajo","desc":"Mesa compartida de coordinación."},"coffee":{"type":"Zona común","name":"Coffee / Bar","zone":"Sector sureste · Sala de trabajo","desc":"Zona de descanso y servicio auxiliar."}};
+details.building={type:"Arquitectura",name:"Edificio adaptable",zone:"Sala OcToS · Planta 01",desc:"Plano vectorial. Permite redimensionar la planta y distribuir mobiliario mediante el modo de edición."};
 var zoom=1;
 
 /* Telemetría ligera mediante status.json. La aplicación solo observa estados
@@ -290,7 +283,10 @@ window.addEventListener("popstate",function(){
 window.octosTeamNavigate=page;
 page(initial,false);
 function pick(el){var item=details[el.dataset.pick];if(!item)return;document.querySelectorAll('#floor .selected').forEach(function(n){n.classList.remove('selected')});el.classList.add('selected');document.getElementById('detail-title').textContent=item.name;document.getElementById('detail-tag').textContent=item.type;document.getElementById('detail-desc').textContent=item.desc;document.getElementById('detail-zone').textContent=item.zone;updateSelectedStatus(el.dataset.pick);if(window.octosTeamShowConfig)window.octosTeamShowConfig(el.dataset.pick,item)}
-document.querySelectorAll('#floor [data-pick]').forEach(function(el){el.addEventListener('click',function(e){e.stopPropagation();pick(el)});el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(el)}})});
+window.octosTeamPick=pick;
+window.octosTeamSyncIndicators=function(){for(var i=1;i<=8;i++){var id='agent-'+i;setAgentState(id,{state:currentStates[id]||'unknown'});}refreshBlink()};
+document.getElementById("floor").addEventListener("click",function(e){var el=e.target.closest("[data-pick]");if(el){e.stopPropagation();pick(el)}});
+document.getElementById("floor").addEventListener("keydown",function(e){var el=e.target.closest("[data-pick]");if(el&&(e.key==="Enter"||e.key===" ")){e.preventDefault();pick(el)}});
 function changeZoom(n){zoom=Math.min(1.65,Math.max(.65,n));document.getElementById('floor').style.transform='scale('+zoom+')'}
 document.getElementById('plus').onclick=function(){changeZoom(zoom+.15)};document.getElementById('minus').onclick=function(){changeZoom(zoom-.15)};document.getElementById('reset').onclick=function(){changeZoom(1)};
 })();
@@ -597,6 +593,316 @@ window.octosTeamShowConfig=function(id,item){
  else document.getElementById("detail-desc").textContent=data.directives||"Armario disponible para directrices y tareas.";
  appendForm(isAgent?"agent":"cabinet",id);
 };
+})();
+</script>
+<script>
+/* Visor OcToS Team: geometría SVG editable, sin imagen de fondo ni dependencias. */
+(function(){
+"use strict";
+const svg=document.getElementById("floor");
+const editButton=document.getElementById("layout-edit");
+const saveButton=document.getElementById("layout-save");
+const resetButton=document.getElementById("layout-reset");
+const hint=document.getElementById("layout-hint");
+const panel=document.getElementById("team-config-container");
+const KEY="octos-team-floor-v1", NS="http://www.w3.org/2000/svg";
+const BASE_W=1380,BASE_H=880,MIN_W=1150,MAX_W=1400,MIN_H=730,MAX_H=920;
+const presets={
+ "cabinet-1":{x:105,y:104,w:128,h:68},"cabinet-2":{x:250,y:104,w:128,h:68},
+ "cabinet-3":{x:395,y:104,w:128,h:68},"cabinet-4":{x:540,y:104,w:128,h:68},
+ "cabinet-5":{x:685,y:104,w:128,h:68},"cabinet-6":{x:830,y:104,w:128,h:68},
+ "agent-1":{x:99,y:306,w:165,h:98},"agent-2":{x:292,y:306,w:165,h:98},
+ "agent-3":{x:526,y:306,w:165,h:98},"agent-4":{x:734,y:306,w:165,h:98},
+ "agent-5":{x:99,y:563,w:165,h:98},"agent-6":{x:292,y:563,w:165,h:98},
+ "agent-7":{x:526,y:563,w:165,h:98},"agent-8":{x:734,y:563,w:165,h:98},
+ "chief":{x:1110,y:182,w:180,h:94},
+ "jarvis":{x:1020,y:370,w:155,h:94},
+ "gestor":{x:1205,y:370,w:155,h:94},
+ "input":{x:1020,y:687,w:155,h:94},
+ "worker":{x:1205,y:687,w:155,h:94},
+ "meeting":{x:602,y:750,w:300,h:105},
+ "coffee":{x:113,y:758,w:218,h:94}
+};
+const agentNames=["Identidad","Interfaces","Cartografía","Integración","Ruby","Herramientas 3D","Investigación","Prototipos"];
+const zoneDefs=[
+ {id:"group-1",x:72,y:235,w:401,h:220,title:"GRUPO 01",sub:"IMAGEN CORPORATIVA"},
+ {id:"group-2",x:499,y:235,w:474,h:220,title:"GRUPO 02",sub:"CARTOGRAFÍA Y WMS"},
+ {id:"group-3",x:72,y:494,w:401,h:220,title:"GRUPO 03",sub:"SKETCHUP Y RUBY"},
+ {id:"group-4",x:499,y:494,w:474,h:220,title:"GRUPO 04",sub:"I+D+i"}
+];
+function defaultLayout(){
+ return {building:{x:77,y:70,w:1380,h:880},objects:JSON.parse(JSON.stringify(presets))};
+}
+const original=defaultLayout();
+let draft=defaultLayout(),editing=false,dirty=false,selectedId=null,drag=null,suppressClick=false;
+const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
+const snap=n=>Math.round(n/8)*8;
+const validNumber=(v,f)=>Number.isFinite(Number(v))?Number(v):f;
+try{
+ const obj=JSON.parse(localStorage.getItem(KEY)||"null");
+ if(obj&&obj.objects&&obj.building){
+  const b=obj.building;
+  draft.building.w=clamp(validNumber(b.w,1380),MIN_W,MAX_W);
+  draft.building.h=clamp(validNumber(b.h,880),MIN_H,MAX_H);
+  for(const id of Object.keys(presets)){
+   const p=obj.objects[id]||{},def=presets[id];
+   draft.objects[id]={...def,x:clamp(validNumber(p.x,def.x),24,BASE_W-def.w-24),y:clamp(validNumber(p.y,def.y),24,BASE_H-def.h-24)};
+  }
+ }
+}catch(error){}
+function node(tag,props,parent,text){
+ const el=document.createElementNS(NS,tag);
+ if(props)for(const [key,value] of Object.entries(props))el.setAttribute(key,String(value));
+ if(text!==undefined)el.textContent=String(text);
+ if(parent)parent.append(el);
+ return el;
+}
+function rect(parent,x,y,w,h,fill,stroke,rx=0,extra={}){
+ return node("rect",{x,y,width:w,height:h,rx,fill,stroke:stroke||"none",...extra},parent);
+}
+function line(parent,x1,y1,x2,y2,stroke,width=1,extra={}){
+ return node("line",{x1,y1,x2,y2,stroke,"stroke-width":width,...extra},parent);
+}
+function txt(parent,x,y,text,size=12,color="#d3d4d6",extra={}){
+ return node("text",{x,y,fill:color,"font-size":size,...extra},parent,text);
+}
+function markDirty(){dirty=true;saveButton.disabled=false;hint.classList.add("dirty");hint.textContent="Distribución modificada. Pulsa «Guardar distribución» para conservarla en este navegador."}
+function coords(event){
+ const point=svg.createSVGPoint();point.x=event.clientX;point.y=event.clientY;
+ const matrix=svg.getScreenCTM();
+ if(!matrix)return {x:0,y:0};
+ const p=point.matrixTransform(matrix.inverse());
+ return {x:p.x,y:p.y};
+}
+function addDefs(){
+ const defs=node("defs",{},svg);
+ const pattern=node("pattern",{id:"octos-grid",width:28,height:28,patternUnits:"userSpaceOnUse"},defs);
+ node("path",{d:"M28 0H0V28",fill:"none",stroke:"#35383c","stroke-width":0.7},pattern);
+ const gloss=node("linearGradient",{id:"octos-table-shade",x1:"0%",y1:"0%",x2:"0%",y2:"100%"},defs);
+ node("stop",{offset:"0%","stop-color":"#3b3d40"},gloss);
+ node("stop",{offset:"100%","stop-color":"#25272b"},gloss);
+ const floorGrad=node("linearGradient",{id:"octos-floor-shade",x1:"0%",y1:"0%",x2:"100%",y2:"100%"},defs);
+ node("stop",{offset:"0%","stop-color":"#1e2024"},floorGrad);
+ node("stop",{offset:"100%","stop-color":"#15171a"},floorGrad);
+}
+function drawArchitecture(root){
+ const b=draft.building;
+ rect(svg,0,0,1536,1024,"#0f1012");
+ for(let i=0;i<5;i++){
+  rect(svg,33+i*14,30+i*14,1470-i*28,963-i*28,"none","#1b1d20",0,{"stroke-width":1});
+ }
+ rect(svg,b.x+18,b.y+17,b.w,b.h,"#050506","none",9,{opacity:.5});
+ const building=node("g",{transform:"translate("+b.x+" "+b.y+") scale("+(b.w/BASE_W)+" "+(b.h/BASE_H)+")"},svg);
+ rect(building,0,0,BASE_W,BASE_H,"url(#octos-floor-shade)","#414348",11,{"stroke-width":8});
+ rect(building,14,14,BASE_W-28,BASE_H-28,"url(#octos-grid)","none",0,{"class":"plan-grid"});
+ rect(building,18,18,BASE_W-36,BASE_H-36,"none","#27292e",5,{"stroke-width":2});
+ rect(building,52,56,945,160,"#1b1d20","#35373c",8,{"stroke-width":1});
+ txt(building,77,79,"ARCHIVO / DIRECTRICES",12,"#b5b8bf",{"class":"floor-text","letter-spacing":1.8});
+ // Cabecera del edificio y zona administrativa
+ rect(building,1005,45,335,248,"#202125","#3b3d42",9,{"stroke-width":1.3});
+ txt(building,1030,73,"DIRECCIÓN · COORDINACIÓN",12,"#c9cacf",{"class":"floor-text"});
+ rect(building,1005,308,335,250,"#1c1e22","#383a3e",9,{"stroke-width":1.3});
+ txt(building,1030,331,"APOYO OPERATIVO",11,"#aeb0b5",{"class":"floor-text"});
+ rect(building,1005,590,335,247,"#202126","#383a3e",9,{"stroke-width":1.3});
+ txt(building,1030,613,"RECEPCIÓN / ACCESO",11,"#b4b5bb",{"class":"floor-text"});
+ // Pared de separación con puerta de paso
+ line(building,997,219,997,472,"#595b60",9,{"class":"floor-wall"});
+ line(building,997,543,997,835,"#595b60",9,{"class":"floor-wall"});
+ node("path",{d:"M997 472 A71 71 0 0 1 1068 543",fill:"none",stroke:"#787a80","stroke-width":2,"stroke-dasharray":"5 4","pointer-events":"none"},building);
+ line(building,997,472,1052,527,"#a5a6aa",3,{"class":"floor-wall"});
+ // Ventanas exteriores
+ for(let i=0;i<5;i++)line(building,160+i*166,4,253+i*166,4,"#7c8d99",8,{"class":"floor-wall"});
+ for(let i=0;i<3;i++)line(building,1375,300+i*110,1375,366+i*110,"#7c8d99",7,{"class":"floor-wall"});
+ // Puerta de entrada en el muro exterior derecho
+ rect(building,1362,704,21,65,"#1d2022");
+ line(building,1376,703,1320,758,"#b0b1b5",3,{"class":"floor-wall"});
+ node("path",{d:"M1376 760 A57 57 0 0 1 1319 703",fill:"none",stroke:"#74777d","stroke-width":2,"stroke-dasharray":"5 4","pointer-events":"none"},building);
+ txt(building,1300,799,"ENTRADA",10,"#ff9a62",{"class":"floor-text"});
+ txt(building,73,860,"OcToS · PLANTA INTERACTIVA",11,"#7f8289",{"class":"floor-text"});
+ // Áreas grupales con separación visual, sin tabiques cruzados
+ for(const z of zoneDefs){
+  const g=node("g",{"class":"floor-zone pod hotspot","data-pick":z.id,tabindex:0,role:"button","aria-label":z.title+" "+z.sub},building);
+  rect(g,z.x,z.y,z.w,z.h,"#24262a","#393b40",12,{"class":"zone-fill","stroke-width":1.5});
+  rect(g,z.x+7,z.y+7,z.w-14,z.h-14,"none","#303238",8,{"stroke-width":1,"stroke-dasharray":"5 6"});
+  txt(g,z.x+20,z.y+25,z.title,13,"#eaebed",{"class":"floor-text","font-weight":700});
+  txt(g,z.x+20,z.y+43,z.sub,10,"#a9abb0",{"class":"floor-text"});
+ }
+ // Servicios y zona compartida
+ txt(building,90,741,"ZONA COMÚN",11,"#a9acb2",{"class":"floor-text"});
+ txt(building,545,741,"REUNIONES",11,"#a9acb2",{"class":"floor-text"});
+ const selectable=node("g",{"data-pick":"building",tabindex:0,role:"button","aria-label":"Seleccionar edificio"},building);
+ rect(selectable,0,0,BASE_W,BASE_H,"transparent","#73757b",10,{"stroke-width":8,"pointer-events":"stroke"});
+ // Resizador del edificio, solo en modo edición
+ if(editing){
+  const handle=node("g",{"class":"layout-resize","data-resize":"building",tabindex:0,role:"button","aria-label":"Arrastrar para cambiar tamaño del edificio"},svg);
+  rect(handle,b.x+b.w-19,b.y+b.h-19,38,38,"#ff6a1a","#f9aa72",8,{"stroke-width":2});
+  node("path",{d:"M"+(b.x+b.w-8)+" "+(b.y+b.h+5)+" l13 -13 m-1 8 l1 -8 -8 1",fill:"none",stroke:"#17181b","stroke-width":3,"stroke-linecap":"round"},handle);
+ }
+ return building;
+}
+function drawDesk(group,id,p,label){
+ const g=node("g",{"class":"station hotspot layout-object"+(selectedId===id?" selected":""),"data-pick":id,"data-move":id,"data-status":"unknown",tabindex:0,role:"button","aria-label":"Puesto "+label},group);
+ const x=p.x,y=p.y,w=p.w;
+ rect(g,x+3,y+5,w,66,"#090a0c","none",9,{opacity:.42});
+ rect(g,x,y,w,66,"url(#octos-table-shade)","#62656b",9,{"stroke-width":1.6,"class":"furniture-body"});
+ rect(g,x+5,y+6,w-10,10,"#5a5c60","none",3,{opacity:.35});
+ // Monitor + pantalla, soporte y teclado
+ rect(g,x+40,y+14,74,38,"#101113","#767981",4,{"stroke-width":2});
+ rect(g,x+45,y+19,64,28,"#15242a","none",2);
+ line(g,x+50,y+24,x+103,y+24,"#3b6874",1);
+ line(g,x+50,y+30,x+92,y+30,"#2b4e5c",1);
+ line(g,x+50,y+36,x+83,y+36,"#2b4e5c",1);
+ line(g,x+77,y+53,x+77,y+59,"#858991",3);
+ rect(g,x+56,y+60,43,4,"#8c8d91","none",2);
+ rect(g,x+120,y+29,21,20,"#5a5c60","#8b8f97",3);
+ rect(g,x+126,y+34,9,9,"#1e2023","none",2);
+ // Silla con espacio libre alrededor de la mesa
+ rect(g,x+48,y+71,70,25,"#24262b","#77797d",11,{"stroke-width":1.5});
+ rect(g,x+61,y+69,45,13,"#34373b","#8e9096",7);
+ txt(g,x+11,y+85,id.replace("agent-","A").padStart(3,"0"),11,"#f1f1ef",{"class":"furniture-text","font-weight":700});
+ txt(g,x+11,y+45,label.slice(0,13),10,"#b6b8be",{"class":"furniture-sub"});
+ const indicator=node("circle",{"class":"agent-indicator",cx:x+w-14,cy:y+17,r:8,fill:"#74767C",stroke:"#101113","stroke-width":2},g);
+ node("title",{},indicator,"Sin datos");
+}
+function drawCabinet(group,id,p){
+ const g=node("g",{"class":"pod hotspot layout-object"+(selectedId===id?" selected":""),"data-pick":id,"data-move":id,tabindex:0,role:"button","aria-label":"Armario "+id},group);
+ rect(g,p.x+4,p.y+6,p.w,p.h-3,"#09090a","none",6,{opacity:.48});
+ rect(g,p.x,p.y,p.w,p.h-6,"#313439","#777a82",6,{"class":"furniture-body","stroke-width":1.5});
+ rect(g,p.x+7,p.y+7,p.w-14,p.h-20,"#25282c","#52555b",4);
+ line(g,p.x+p.w/2,p.y+9,p.x+p.w/2,p.y+p.h-13,"#676a70",1.4);
+ for(const offset of [-1,1])rect(g,p.x+p.w/2+offset*10-2,p.y+24,4,17,"#94969b","none",2);
+ txt(g,p.x+10,p.y+p.h-10,"D"+id.split("-")[1],12,"#e9e9eb",{"class":"furniture-text","font-weight":700});
+}
+function drawSupport(group,id,p){
+ const labels={chief:"DIRECCIÓN",jarvis:"JARVIS",gestor:"GESTOR",input:"INPUT",worker:"CONTROL",meeting:"REUNIONES",coffee:"CAFETERÍA"};
+ const g=node("g",{"class":"pod hotspot layout-object"+(selectedId===id?" selected":""),"data-pick":id,"data-move":id,tabindex:0,role:"button","aria-label":labels[id]},group);
+ const x=p.x,y=p.y,w=p.w,h=p.h;
+ if(id==="meeting"){
+  rect(g,x+5,y+6,w,h-9,"#0d0e10","none",20,{opacity:.45});
+  rect(g,x+10,y+14,w-20,h-27,"#34363b","#898b92",20,{"class":"furniture-body","stroke-width":1.7});
+  for(let i=0;i<4;i++){rect(g,x+42+i*57,y,40,17,"#27292d","#8d9095",7);rect(g,x+42+i*57,y+h-17,40,17,"#27292d","#8d9095",7)}
+  txt(g,x+w/2,y+h/2+5,"MESA DE REUNIONES",15,"#e0e1e4",{"class":"furniture-text","text-anchor":"middle"});
+ }else if(id==="coffee"){
+  rect(g,x,y,w,h-4,"#393737","#877a70",8,{"class":"furniture-body","stroke-width":1.5});
+  rect(g,x+8,y+7,w-16,15,"#605048","none",4);
+  for(let i=0;i<3;i++)node("circle",{cx:x+36+i*57,cy:y+48,r:15,fill:"#242628",stroke:"#a6a09b","stroke-width":2},g);
+  txt(g,x+11,y+h-13,"CAFETERÍA",11,"#efefef",{"class":"furniture-text"});
+ }else{
+  rect(g,x+4,y+6,w,h-8,"#0a0b0d","none",10,{opacity:.35});
+  rect(g,x,y,w,h-28,id==="chief"?"#49423d":"#36383c","#73767c",9,{"class":"furniture-body","stroke-width":1.7});
+  rect(g,x+12,y+9,w-24,11,"#6b6d72","none",5,{opacity:.5});
+  rect(g,x+w/2-26,y+24,52,25,"#101518","#869097",4,{"stroke-width":1.4});
+  rect(g,x+w/2-20,y+29,40,15,"#20323b","none",2);
+  rect(g,x+w/2-24,y+h-26,48,22,"#24262b","#81848b",9,{"stroke-width":1.4});
+  txt(g,x+9,y+h-43,labels[id],12,"#f0f0f1",{"class":"furniture-text","font-weight":700});
+ }
+}
+function draw(){
+ const oldSelected=svg.querySelector(".selected")?.getAttribute("data-pick");
+ if(oldSelected)selectedId=oldSelected;
+ svg.replaceChildren();addDefs();
+ const building=drawArchitecture();
+ for(const [id,p] of Object.entries(draft.objects)){
+  if(id.startsWith("agent-"))drawDesk(building,id,p,agentNames[Number(id.split("-")[1])-1]||"Agente");
+  else if(id.startsWith("cabinet-"))drawCabinet(building,id,p);
+  else drawSupport(building,id,p);
+ }
+ if(selectedId==="building"){
+  svg.querySelector('[data-pick="building"]')?.setAttribute("class","selected");
+ }
+ svg.classList.toggle("layout-editing",editing);
+ if(window.octosTeamSyncIndicators)window.octosTeamSyncIndicators();
+}
+function canMove(id,x,y){
+ const p=draft.objects[id];if(!p)return false;
+ if(x<22||y<22||x+p.w>BASE_W-20||y+p.h>BASE_H-20)return false;
+ // Evitar que dos muebles ocupen el mismo espacio; mantener separación de 12 unidades.
+ return !Object.entries(draft.objects).some(([key,q])=>key!==id&&x<q.x+q.w+12&&x+p.w+12>q.x&&y<q.y+q.h+12&&y+p.h+12>q.y);
+}
+svg.addEventListener("click",function(e){
+ if(suppressClick){e.preventDefault();e.stopImmediatePropagation();suppressClick=false;return}
+ const pick=e.target.closest("[data-pick]");if(pick)selectedId=pick.getAttribute("data-pick");
+},true);
+svg.addEventListener("pointerdown",function(e){
+ if(!editing||window.octosTeamIsMaster!==true||e.button!==0)return;
+ const resize=e.target.closest("[data-resize]");
+ const object=e.target.closest("[data-move]");
+ if(!resize&&!object)return;
+ const pt=coords(e),b=draft.building;
+ const id=object?.getAttribute("data-move");
+ const p=id&&draft.objects[id];
+ drag={kind:resize?"resize":"object",id,point:pt,oldW:b.w,oldH:b.h,startX:p?.x,startY:p?.y,moved:false};
+ if(id)selectedId=id;
+ svg.setPointerCapture(e.pointerId);
+ e.preventDefault();
+});
+svg.addEventListener("pointermove",function(e){
+ if(!drag)return;
+ const pt=coords(e),dx=pt.x-drag.point.x,dy=pt.y-drag.point.y;
+ if(Math.abs(dx)+Math.abs(dy)<4&&!drag.moved)return;
+ drag.moved=true;
+ if(drag.kind==="resize"){
+  draft.building.w=clamp(snap(drag.oldW+dx),MIN_W,MAX_W);
+  draft.building.h=clamp(snap(drag.oldH+dy),MIN_H,MAX_H);
+ }else{
+  const b=draft.building;
+  const x=snap(drag.startX+dx/(b.w/BASE_W));
+  const y=snap(drag.startY+dy/(b.h/BASE_H));
+  if(canMove(drag.id,x,y)){draft.objects[drag.id].x=x;draft.objects[drag.id].y=y}
+ }
+ markDirty();draw();
+});
+function endDrag(){
+ if(!drag)return;
+ const id=drag.id,wasMoved=drag.moved;
+ drag=null;
+ if(id&&!wasMoved){
+  const node=svg.querySelector('[data-pick="'+id+'"]');
+  if(node&&window.octosTeamPick)window.octosTeamPick(node);
+ }else if(wasMoved){suppressClick=true;setTimeout(()=>{suppressClick=false},150)}
+}
+svg.addEventListener("pointerup",endDrag);
+svg.addEventListener("pointercancel",endDrag);
+editButton.addEventListener("click",function(){
+ if(window.octosTeamIsMaster!==true){hint.textContent="La edición del plano requiere el PIN maestro.";return}
+ editing=!editing;editButton.setAttribute("aria-pressed",String(editing));
+ editButton.textContent=editing?"Finalizar edición":"Editar plano";
+ if(!dirty)hint.textContent=editing?"Arrastra mesas y armarios; ajusta el edificio desde la esquina inferior derecha. Los muebles no pueden solaparse.":"Selecciona un elemento para abrir su ficha. Activa «Editar plano» para moverlo.";
+ draw();
+});
+saveButton.addEventListener("click",function(){
+ if(window.octosTeamIsMaster!==true)return;
+ try{
+  localStorage.setItem(KEY,JSON.stringify(draft));
+  dirty=false;saveButton.disabled=true;hint.classList.remove("dirty");
+  hint.textContent="Distribución actualizada en este navegador. No se sincroniza con otros dispositivos.";
+ }catch(error){hint.textContent="No se ha podido guardar: almacenamiento local no disponible."}
+});
+resetButton.addEventListener("click",function(){
+ if(window.octosTeamIsMaster!==true){hint.textContent="Solo el PIN maestro puede restablecer la sala.";return}
+ if(!confirm("¿Restablecer el edificio y el mobiliario a la distribución inicial?"))return;
+ draft=defaultLayout();markDirty();draw();
+});
+const previousConfig=window.octosTeamShowConfig;
+window.octosTeamShowConfig=function(id,item){
+ if(id!=="building"){if(previousConfig)previousConfig(id,item);return}
+ panel.hidden=false;
+ panel.innerHTML='<h3>Edificio adaptable</h3><p class="team-local-note">Dimensiones gráficas del visor (no son metros reales). También puedes arrastrar la esquina inferior derecha en modo edición.</p><form id="building-form"><fieldset><label>Ancho del edificio<input name="width" type="number" min="'+MIN_W+'" max="'+MAX_W+'" step="8" required></label><label>Fondo del edificio<input name="depth" type="number" min="'+MIN_H+'" max="'+MAX_H+'" step="8" required></label></fieldset><div class="team-config-actions"><button type="submit">Aplicar dimensiones</button></div><div class="team-config-message" role="status"></div></form>';
+ const form=panel.querySelector("form");
+ form.elements.width.value=draft.building.w;
+ form.elements.depth.value=draft.building.h;
+ if(window.octosTeamIsMaster!==true){form.querySelector("fieldset").disabled=true;form.querySelector("button").hidden=true}
+ form.addEventListener("submit",function(e){
+  e.preventDefault();
+  if(window.octosTeamIsMaster!==true)return;
+  const w=Number(form.elements.width.value),h=Number(form.elements.depth.value);
+  if(!Number.isFinite(w)||!Number.isFinite(h)||w<MIN_W||w>MAX_W||h<MIN_H||h>MAX_H){form.querySelector(".team-config-message").textContent="Dimensiones fuera de rango.";return}
+  draft.building.w=w;draft.building.h=h;
+  markDirty();draw();form.querySelector(".team-config-message").textContent="Dimensiones aplicadas. Guarda la distribución.";
+ });
+};
+window.octosTeamFloorState=function(){return {editing,dirty,objectCount:Object.keys(draft.objects).length,building:{...draft.building}}};
+draw();
 })();
 </script>
 </body></html>
