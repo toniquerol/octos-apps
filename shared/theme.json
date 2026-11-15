@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "revision": 4,
+  "revision": 5,
   "version": "1.0",
-  "publishedAt": "2026-11-14",
+  "publishedAt": "2026-11-15",
   "apps": {
     "layers": "3.3",
     "drive": "11.1",
@@ -36,7 +36,7 @@
     "popupPosition": "right",
     "textAlign": "left",
     "headingAlign": "center",
-    "logoUrl": "",
+    "logoUrl": "https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png",
     "iconMenu": "☰",
     "iconClose": "×",
     "iconZoomIn": "+",
