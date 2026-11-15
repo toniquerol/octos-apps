@@ -3751,6 +3751,12 @@ if(showcaseEnabled){
  try{const d=JSON.parse(localStorage.getItem(K)||'null');if(d&&Array.isArray(d.roads)&&d.roads.every(r=>validNodes(r.nodes))){roads=d.roads;roundabouts=Array.isArray(d.roundabouts)&&d.roundabouts.every(validRoundabout)?d.roundabouts.map(({armLengths,...rb})=>rb):[];junctions=Array.isArray(d.junctions)?d.junctions.filter(jxValid).filter(j=>roads.some(r=>r.id===j.fromId)&&roads.some(r=>r.id===j.toId)):[];}}catch(e){}
  setBase('dark');render();setMode('select');if(!restoreHomeView()&&(roads.length||roundabouts.length))fitAll();
  homeInitialize();
+ // Entrada directa desde el menú privado de OcToS Apps: abre el editor real.
+ // Sin datos sintéticos ni reemplazo de los proyectos locales guardados.
+ if(new URLSearchParams(window.location.search).get('open')==='editor'){
+  $('homeScreen').hidden=true;
+  requestAnimationFrame(()=>map.invalidateSize());
+ }
 }
 })();
 </script>
