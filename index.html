@@ -36,7 +36,8 @@ a{text-decoration:none;color:inherit}
 #access-error{font-size:12px;color:#ff9b75;min-height:20px;margin:12px 0 0}
 .site-header{min-height:76px;border-bottom:1px solid var(--line);background:#141416;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px clamp(16px,4vw,62px)}
 .brand{display:flex;gap:14px;align-items:center;min-width:0}
-.brand-mark{border:1px solid #57585e;background:var(--panel2);border-radius:11px;width:43px;height:43px;display:grid;place-items:center;color:var(--accent);font-family:Manrope,sans-serif;font-size:20px;font-weight:800;flex:none}
+.brand-mark{border:0;background:transparent;border-radius:11px;width:43px;height:43px;display:grid;place-items:center;color:var(--accent);font-family:Manrope,sans-serif;font-size:20px;font-weight:800;flex:none}
+ .brand-mark img{width:100%;height:100%;object-fit:contain;display:block}
 .brand-name{font-size:20px;font-weight:800;letter-spacing:-.045em;white-space:nowrap}
 .brand-name strong{color:var(--accent)}
 .brand-sub{font-size:10px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase}
@@ -93,7 +94,7 @@ footer a{text-decoration:underline;text-underline-offset:3px}
 </section>
 <div id="app">
  <header class="site-header">
-  <div class="brand"><div class="brand-mark" aria-hidden="true">T</div><div><div class="brand-name"><strong>OcToS</strong> Apps</div><div class="brand-sub">Centro de aplicaciones</div></div></div>
+  <div class="brand"><div class="brand-mark" aria-hidden="true"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt=""></div><div><div class="brand-name"><strong>OcToS</strong> Apps</div><div class="brand-sub">Centro de aplicaciones</div></div></div>
   <div class="header-actions"><span id="sync-status" class="status">Catálogo local</span><button id="lock-button" class="outline" type="button">Bloquear</button></div>
  </header>
  <main>
