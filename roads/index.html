@@ -457,6 +457,8 @@ body.terrain-readonly .project-layer-dock{pointer-events:none;opacity:.7}
 @media(max-width:650px){#homeScreen{padding:16px 10px}.home-shell{max-height:calc(100dvh - 32px);gap:12px}.home-identity img{width:min(330px,86%)}.home-identity p{font-size:clamp(15px,4vw,20px);letter-spacing:.08em}.home-library{padding:12px}.home-project{grid-template-columns:102px minmax(0,1fr);gap:8px;padding:7px}.home-project-actions{grid-column:1/-1;flex-direction:row;justify-content:flex-end;align-items:center;flex-wrap:wrap;min-width:0}.home-export-controls{flex:1;max-width:230px}.home-export-controls select{width:90px}.home-projects{max-height:49vh}.home-actions .btn{flex:1}.home-project-meta small{font-size:9px}}
 
 </style>
+<link rel="stylesheet" href="./nav-glb.css">
+<script type="importmap">{"imports":{"three":"../aero/vendor/three.module.js","three/addons/":"https://unpkg.com/three@0.170.0/examples/jsm/"}}</script>
 <script src="../shared/nav.js?v=20261115-roads-editor" defer></script></head>
 <body>
 <section id="homeScreen" aria-label="Inicio de OcToS Roads">
@@ -1344,7 +1346,9 @@ function terrainSwitchUI(active){
 function terrainStop(restore=true){
  if(terrainMap){
   const gl=terrainMap,center=gl.getCenter(),zoom=gl.getZoom();
-  terrainMap=null;gl.remove();
+  terrainMap=null;
+  window.dispatchEvent(new CustomEvent('octos:terrain-map',{detail:{map:null}}));
+  gl.remove();
   if(restore)map.setView([center.lat,center.lng],Math.max(2,Math.min(20,zoom)),{animate:false});
  }
  terrainSwitchUI(false);
@@ -1377,6 +1381,7 @@ async function terrainStart(){
    maxPitch:80,maxZoom:20,antialias:false,attributionControl:true});
   terrainMap=gl;
   gl.addControl(new maplibregl.NavigationControl({showZoom:false,showCompass:true,visualizePitch:true}),'top-right');
+  window.dispatchEvent(new CustomEvent('octos:terrain-map',{detail:{map:gl}}));
   await new Promise((resolve,reject)=>{
    const timeout=setTimeout(()=>reject(Error('Tiempo agotado al cargar el mapa 3D')),13000);
    gl.once('load',()=>{clearTimeout(timeout);resolve();});
@@ -3760,4 +3765,5 @@ if(showcaseEnabled){
 }
 })();
 </script>
+<script type="module" src="./nav-glb.js"></script>
 </body></html>
