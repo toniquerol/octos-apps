@@ -1,54 +1,45 @@
-# OcToS Aero V2.0
+# OcToS Aero V2.1 — geometría y precisión adaptativa
 
-Visualizador 3D de flujo aproximado alrededor de carrocerías. V2 visual: 13 de noviembre de 2026.
+**Aplicación:** https://toniquerol.github.io/octos-apps/aero/
 
-**Abrir:** https://toniquerol.github.io/octos-apps/aero/
-
-También se puede guardar `index.html` y abrirlo localmente. El HTML incluye Three.js y no necesita instalar paquetes ni acceder a servicios externos. Los vehículos seleccionados se procesan en el navegador, sin subirlos a un servidor.
+Visualizador **geométrico ilustrativo**, no solver CFD. Los trazadores se desvían mediante una regla local de separación de superficies; **no** calculan presión, coeficientes aerodinámicos, resistencia, sustentación, flujo turbulento ni condiciones de contorno.
 
 ## Uso
 
-1. Prueba el coche de demostración. Arrastra para orbitar y usa la rueda para ajustar el zoom.
-2. Abre un GLB 2.0 estático con recursos incrustados, sin compresión DRACO, Meshopt ni KTX2.
-3. Corrige la orientación con los giros de 90°. El morro debe mirar hacia −X.
-4. Introduce la longitud real en metros y pulsa Aplicar.
-5. Selecciona una, dos o cuatro vistas y ajusta partículas, trayectorias y reproducción.
+1. Abrir demo o importar GLB 2.0 estático con recursos incrustados (sin DRACO, Meshopt o KTX2).
+2. Orientar el morro hacia −X. La importación opcional BMW gira el modelo 180° en Y; siguen disponibles los giros manuales.
+3. Calibrar la longitud real en **metros**. La escala y la rotación reconstruyen las coordenadas del BVH y el atlas.
+4. Elegir **precisión geométrica** por separado de **partículas**: ligera (160 rutas / 192 puntos GPU), equilibrada (360 / 288) o detallada (640 / 384). La integración intermedia usa **pasos adaptativos** y valida los segmentos interpolados.
+5. En cualquiera de las vistas: doble clic en una superficie para centrarla. Mayús+arrastrar desplaza el punto de mira; en vistas ortográficas se desplaza arrastrando. La rueda acerca y, a distancias cortas, concentra un segundo grupo de trazadores alrededor del foco. «Eliminar foco» restablece la inspección global.
 
-## Alcance y precisión
+## Método y límites
 
-**Simulación visual aproximada — no CFD.** Las trayectorias rodean una envolvente conservadora obtenida de 48 secciones de la malla. No se resuelven las ecuaciones del aire, la presión, la resistencia, la sustentación ni la turbulencia. No permite decidir qué modificación aerodinámica funciona mejor.
+- La geometría se extrae de los triángulos de las mallas visibles con las matrices de mundo aplicadas. Un **árbol BVH** permite consultar distancia al triángulo más próximo e intersección de **segmentos completos**. No existe una envolvente por máximos de 48 secciones.
+- La generación de rutas es **determinista** y está separada del renderizado GPU. La geometría se reconstruye al importar, escalar o girar. La precisión cambia cantidad de rutas y muestras integradas; aumentar partículas solo cambia las instancias dibujadas.
+- Se comprueban los tramos tras convertir la integración adaptativa a la textura GPU. Cuando una ruta no puede resamplearse sin penetrar una superficie, se sustituye por una **ruta de seguridad externa**; si el trazado no puede avanzar, se detiene. El estado informa rutas corregidas/detenidas. Esto evita inventar una solución aerodinámica falsa.
+- Los huecos y elementos asimétricos se consultan como triángulos independientes; un hueco realmente libre permanece abierto si las muestras lo alcanzan. **No garantiza** capturar ranuras inferiores a la distancia entre semillas/rutas o a la escala de integración. Un hueco muy pequeño puede quedarse sin trazadores aunque esté geométricamente abierto.
+- Los bordes abiertos se identifican heurísticamente con un recuento de aristas para mallas hasta 90.000 triángulos; mallas mayores indican «topología no verificada». Bordes duplicados, caras invertidas, superficies internas, agujeros y autointersecciones impiden atribuir un interior sólido fiable. Los avisos no impiden inspeccionar.
+- El campo de velocidades ilustrativo está aislado en `src/paths.js` (`velocity()`); los materiales y el atlas GPU están en `src/flow.js`. Zoom y pan **no** cambian ni reconstruyen el atlas subyacente: únicamente añaden trazadores de inspección que reutilizan sus rutas. Los colores son decorativos y carecen de escala física.
+- Cada vista comparte el mismo estado de trayectorias. Las cámaras 3D y ortográficas pueden moverse de forma independiente. La animación GPU no actualiza miles de posiciones de partículas en la CPU.
+- Construcción de triángulos, BVH y rutas en lotes asíncronos con cesiones al evento de navegador. Nuevas importaciones/transformaciones cancelan cálculos pendientes; el BVH y los recursos GPU previos se liberan. En mallas extremas, las consultas de geometría aún pueden requerir tiempo apreciable.
 
-La envolvente puede tapar huecos y pasos bajo la carrocería, y desviar el flujo demasiado pronto. Las partículas son trazadores visuales; sus colores no representan magnitudes físicas.
+## Distribución y desarrollo
 
-Calidad inicial: 6.000 partículas sobre 480 trayectorias precalculadas. Niveles de 2.000, 6.000, 12.000 o 24.000 partículas, animadas en GPU. Puntos suaves de 1 a 3 píxeles y estelas finas desvanecidas. Puedes ajustar el tamaño, la longitud de estela, la intensidad, el color y la anchura de emisión. El color es decorativo, no una escala física.
+`aero/index.html` sigue siendo el paquete autónomo de Three.js, cargador GLB y Aero, utilizable desde `file://` sin instalación de dependencias para el visor principal. El enlace opcional del menú compartido (`../shared/nav.js`) y el logotipo de WordPress requieren recursos externos para esos elementos de interfaz, **no** para el cálculo 3D. No se necesitan APIs ni servidores para modelar localmente.
 
-Un único renderizador para todas las vistas. La animación se detiene en pestañas ocultas; en pausa se redibuja al interactuar. Los modelos grandes pueden tardar al preparar las trayectorias. Si el equipo pierde fluidez, selecciona 2.000 partículas, una vista y el modo Solo partículas. Aumentar la cantidad no aumenta la precisión aerodinámica.
+Archivos de trabajo: `src/geometry.js` (BVH), `src/paths.js` (campo y rutas), `src/flow.js` (GPU), `src/app.js` (cámaras, importación y controles), `src/template.html` (interfaz). `scripts/build.cjs` integra todo con Three.js 0.170.0 (MIT); `tests/` contiene las comprobaciones.
 
-## Estructura independiente
-
-- `index.html`: distribución autónoma y punto de entrada de GitHub Pages.
-- `src/app.js`: escena, importación, envolvente, partículas y controles.
-- `src/flow.js`: atlas de trayectorias, shaders, puntos suaves y estelas en GPU.
-- `src/template.html`: interfaz y estilos.
-- `vendor/`: Three.js 0.170.0 y módulos de la misma versión, licencia MIT incluida.
-- `scripts/build.cjs`: empaquetado reproducible sin instalar dependencias.
-- `tests/check.cjs`: comprobaciones de lógica e importación GLB.
-- `version.json` y `CHANGELOG.md`: identificación de la versión.
-
-Desde esta carpeta, con Node.js disponible:
+Desde `aero/`:
 
 ```sh
 node scripts/build.cjs
 node tests/check.cjs
 node tests/flow.test.cjs
+node tests/geometry.test.cjs
 ```
 
-## Verificación
+El flujo de GitHub Actions `.github/workflows/aero.yml` ejecuta estas comprobaciones y, si son correctas, actualiza `aero/index.html` en la rama del commit. Las pruebas automatizadas del renderizador utilizan un mock de WebGL: no certifican apariencia visual ni FPS reales. La página publicada depende de la actualización de `main` y GitHub Pages; las pruebas navegador y pruebas con un GLB BMW real deben comprobarse por separado si ese recurso no está disponible.
 
-Comprobadas la sintaxis del HTML empaquetado y la lógica de inicio, cuatro vistas, cambio de partículas, pausa, reinicio, escala, giro, rechazo de entradas inválidas e importación de un GLB válido de 12 triángulos. Las pruebas automáticas usan la geometría real de Three.js y un renderizador simulado; no prueban la GPU.
+## Futuro CFD
 
-La V2 se ha comprobado también en navegador: demo, carga de GLB de prueba, modos de flujo, paletas, emisión central, pausa y cuatro cámaras. No se ha medido precisión aerodinámica ni validado Safari. Las pruebas por `file://` quedaron limitadas por la política del navegador de verificación. No se han establecido objetivos de FPS universales. Véase `CHANGELOG.md`.
-
-## Evolución
-
-Afinar la interacción geométrica a partir de carrocerías reales y permitir importar campos de velocidad calculados externamente. Incorporar CFD requerirá un motor físico y validación adicionales; no es una consecuencia automática de mejorar este visor.
+Un solucionador CFD o un lector de volúmenes de velocidades validados podrá sustituir la función de transporte de `paths.js` sin cambiar el renderizador. Importar campos físicos exige unidades, coordenadas, condiciones de contorno y procedencia verificables; los resultados actuales no tienen interpretación física.

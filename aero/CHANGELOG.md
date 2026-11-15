@@ -1,5 +1,16 @@
 # Historial de OcToS Aero
 
+## 2.1.0 — 2026-11-15
+
+- BVH en triángulos reales y verificación de intersección de segmentos, sin envolvente de 48 secciones.
+- Integración de trayectorias con paso adaptativo y comprobación del atlas interpolado. Corrección conservadora de rutas que penetrarían superficies.
+- Precisión geométrica independiente de la cantidad de partículas visibles.
+- Inspección por doble clic, panorámica y zoom; trazadores locales adicionales reutilizan el mismo atlas sin alterar el campo subyacente.
+- Aviso de bordes abiertos en geometrías pequeñas/medias y límite de topología no verificada en geometrías grandes.
+- Procesamiento por lotes asíncronos con cancelación al sustituir el modelo; liberación de recursos GPU/BVH.
+- Pruebas de geometría con huecos y asimetría, giro/escala y ausencia de cruces entre puntos, añadidas al CI.
+- Sigue siendo visualización ilustrativa sin solver CFD ni valores físicos.
+
 ## 2.0.0 — 2026-11-13
 
 - Partículas de 1 a 3 píxeles con borde suave, limitadas en pantalla para evitar el aspecto de bolas al acercar la cámara.

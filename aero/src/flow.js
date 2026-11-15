@@ -36,7 +36,7 @@ const AeroFlow = (() => {
   const trailFragment = `varying float alpha; varying vec3 color;
     void main(){gl_FragColor=vec4(color,alpha*0.38);}`;
 
-  function create(paths, tracks, steps, count, length, pixelRatio) {
+  function create(paths, tracks, steps, count, length, pixelRatio, selection=null) {
     const rgba = new Float32Array(tracks * steps * 4);
     for (let i=0; i<tracks*steps; i++) rgba.set(paths.subarray(i*3,i*3+3),i*4);
     const atlas = new T.DataTexture(rgba,steps,tracks,T.RGBAFormat,T.FloatType);
@@ -47,7 +47,7 @@ const AeroFlow = (() => {
       const track=new Float32Array(total),phase=new Float32Array(total),rate=new Float32Array(total),age=new Float32Array(total);
       for(let i=0;i<n;i++) for(let j=0;j<stride;j++) {
         const k=i*stride+j;
-        track[k]=i%tracks;
+        track[k]=selection?.length?selection[i%selection.length]:i%tracks;
         phase[k]=(i*.61803398875)%1;
         rate[k]=.86+((i*73)%101)/101*.25;
         age[k]=trail?[0,1/3,1/3,2/3,2/3,1][j]:0;
