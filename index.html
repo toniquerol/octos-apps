@@ -55,16 +55,16 @@ main{max-width:1600px;padding:38px 24px 65px;margin:0 auto}
 .toolbar h2{font-size:14px;letter-spacing:.015em;margin:0}
 .search{width:min(100%,275px);background:#161719;border:1px solid var(--line);border-radius:8px;padding:11px 13px;color:var(--ink);font-size:12px}
 .search::placeholder{color:#85878d}
-.catalog{display:grid;grid-template-columns:repeat(3,7cm);justify-content:center;gap:2cm;max-width:100%;margin:0 auto}
-.card{width:7cm;height:7cm;border:1px solid var(--line);border-radius:15px;background:var(--panel);padding:16px;display:flex;flex-direction:column;text-align:center;align-items:center;justify-content:space-between;min-width:0;transition:border-color .15s,background .15s,transform .15s}
+.catalog{display:grid;grid-template-columns:repeat(4,6cm);justify-content:center;gap:2cm;max-width:100%;margin:0 auto}
+.card{width:6cm;height:6cm;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:20px;display:flex;flex-direction:column;text-align:center;align-items:center;justify-content:space-between;min-width:0;transition:border-color .15s,background .15s,transform .15s}
 a.card:hover{border-color:#b46237;background:#222327;transform:translateY(-2px)}
 .card-top{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;min-height:21px}
 .card-order{font-size:11px;letter-spacing:.12em;color:var(--accent);font-family:Manrope,sans-serif;font-weight:800}
 .card-type{font-size:10px;color:#a4a5ac;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
-.card-icon{height:115px;width:135px;display:flex;justify-content:center;align-items:center;margin:5px auto 0}
+.card-icon{height:68px;width:110px;display:flex;justify-content:center;align-items:center;margin:5px auto 0}
 .card-icon img{display:block;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
 .card-monogram{font-family:Manrope,sans-serif;font-weight:800;font-size:57px;letter-spacing:-.09em;color:var(--accent)}
-.card-name{font-size:17px;line-height:1.2;letter-spacing:-.035em;font-weight:750;margin:0}
+.card-name{font-size:15px;line-height:1.2;letter-spacing:-.035em;font-weight:750;margin:0}
 .card-detail{font-size:11px;color:#a7a8ae;line-height:1.3;margin:4px 0 0;min-height:15px}
 .card-with-info:hover{border-color:#b46237;background:#222327}
 .card-actions{display:flex;align-items:center;gap:7px;margin-top:7px}
@@ -87,8 +87,8 @@ a.card:hover .card-link{background:var(--accent);color:#0e0e10;border-color:var(
 .empty-message{max-width:945px;margin:auto;color:var(--muted);font-size:13px;padding:36px 0}
 footer{padding:24px clamp(16px,4vw,62px);border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;color:#92949b;font-size:11px;line-height:1.5}
 footer a{text-decoration:underline;text-underline-offset:3px}
-@media(max-width:1070px){.catalog{grid-template-columns:repeat(2,minmax(0,7cm));gap:22px}.intro,.toolbar{max-width:552px}}
-@media(max-width:620px){.site-header{min-height:68px;padding:11px 16px}.brand-name{font-size:18px}.header-actions .status{display:none}.brand-copy{max-width:calc(100% - 170px)}.brand-sub{font-size:9px;letter-spacing:.05em;line-height:1.3;white-space:normal}main{padding:28px 15px 45px}.catalog{grid-template-columns:1fr;gap:15px;max-width:330px}.card{width:100%;height:7cm}.intro,.toolbar{max-width:330px}.intro{display:block}.count{margin-top:16px}.toolbar{align-items:start;flex-direction:column;gap:12px}.search{width:100%}footer{display:block}}
+@media(max-width:1182px){.catalog{grid-template-columns:repeat(2,6cm)}.intro,.toolbar{max-width:552px}}
+@media(max-width:620px){.site-header{min-height:68px;padding:11px 16px}.brand-name{font-size:18px}.header-actions .status{display:none}.brand-copy{max-width:calc(100% - 170px)}.brand-sub{font-size:9px;letter-spacing:.05em;line-height:1.3;white-space:normal}main{padding:28px 15px 45px}.catalog{grid-template-columns:6cm;max-width:330px}.intro,.toolbar{max-width:330px}.intro{display:block}.count{margin-top:16px}.toolbar{align-items:start;flex-direction:column;gap:12px}.search{width:100%}footer{display:block}}
 @media(prefers-reduced-motion:reduce){.card{transition:none}a.card:hover{transform:none}}
 </style>
 <script src="./shared/nav.js" defer></script>
@@ -277,7 +277,7 @@ function render(){
  const visible=accessible.filter(x=>(x.name+" "+x.type+" "+x.detail).toLocaleLowerCase("es").includes(query));
  const frag=document.createDocumentFragment();
  visible.forEach((item,i)=>frag.append(makeCard(item,i)));
- if(!query){const blanks=(3-(visible.length%3))%3;for(let i=0;i<blanks;i++)frag.append(placeholder())}
+ if(!query){const blanks=(4-(visible.length%4))%4;for(let i=0;i<blanks;i++)frag.append(placeholder())}
  catalog.replaceChildren(frag);
  document.getElementById("app-count").textContent=currentAccess?.kind==="secondary"?accessible.length+" aplicaciones autorizadas (local)":items.length+" aplicaciones + WordPress";
  document.getElementById("empty").hidden=visible.length!==0;
