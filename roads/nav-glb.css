@@ -1,6 +1,7 @@
 /* GLB navigator · isolated from the 2D editor */
 .octos-nav3d[hidden],.octos-nav3d [hidden]{display:none!important}
-#mapWrap>.octos-nav3d{position:absolute;z-index:1370;right:10px;top:9px;color:#F1F1EF;font:11px "IBM Plex Sans",system-ui,sans-serif;pointer-events:none}
+#mapWrap>.octos-nav3d{position:absolute;z-index:1370;right:50px;top:9px;color:#F1F1EF;font:11px "IBM Plex Sans",system-ui,sans-serif;pointer-events:none}
+#mapWrap.octos-nav3d-custom>.octos-nav3d{right:10px}
 .octos-nav3d-head{display:flex;align-items:flex-start;justify-content:flex-end;gap:6px}
 .octos-nav3d-head button{pointer-events:auto;cursor:pointer;border:1px solid #56575c;background:#202125f5;color:#F1F1EF;border-radius:7px}
 .octos-nav3d-toggle{height:33px;min-width:49px;padding:0 7px;font-size:11px;font-weight:700}
@@ -25,6 +26,7 @@
 .octos-nav3d-status.error{color:#ffad91}
 #mapWrap.octos-nav3d-custom #terrain3DView .maplibregl-ctrl-top-right .maplibregl-ctrl-group{display:none}
 @media(max-width:760px){
- #mapWrap>.octos-nav3d{top:7px;right:7px}
+ #mapWrap>.octos-nav3d{top:7px;right:45px}
+ #mapWrap.octos-nav3d-custom>.octos-nav3d{right:7px}
  .octos-nav3d-panel{max-height:calc(100dvh - 230px)}
 }
