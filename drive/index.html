@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>OcToS DRIVE · V11 · Terreno 3D</title>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>OcToS DRIVE · Terreno 3D</title>
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <style>
 :root{--bg:#181819;--panel:#232326;--edge:#444449;--ink:#f6f6f7;--muted:#aeb0b5;--orange:#ff891f;--low:#ffb971}
@@ -75,14 +75,19 @@ header .brand small{font-size:9px;letter-spacing:.17em}
 #map3dStatus{font-weight:600;color:#ffb971}
 @media(max-width:780px){.terrain-provider{display:block}.terrain-provider select{display:block;max-width:none;width:100%;margin-top:6px}}
 @media(max-width:440px){#map3dStatus{display:none}.map-bottom{max-width:65%}}
+/* Catálogo compartido dentro de Visualización del mapa. */
+.shared-bases-inline{position:static;margin:10px 3px 3px;padding:10px;border:1px solid #4d4d52;border-radius:8px;background:#252528;color:var(--ink);font-size:11px}
+.shared-bases-inline>summary{font-weight:700;cursor:pointer}
+.shared-bases-inline>select{width:100%;max-width:100%;background:#1f1f22;color:#f5f5f5;border:1px solid #595960;border-radius:6px;padding:6px}
+.shared-bases-inline input[type=checkbox]{accent-color:var(--orange)}
 </style><link rel="stylesheet" href="../shared/theme.css?v=2"><script src="../shared/theme-core.js?v=1" defer></script><script src="../shared/theme.js?v=2" data-app="drive" defer></script></head><body>
-<header><div class="brand"><div><strong><span>OcToS</span> DRIVE</strong><small>NEED FOR SPEED EDITION</small></div></div><div class="hdr-right"><button class="hdr-chip" id="topGps" title="Seguir ubicación y orientación">⌖ GPS</button><button class="hdr-chip secondary" id="topPanel" title="Mostrar/ocultar catálogo">☷ Capas</button><span class="vtag">V11</span></div></header>
-<div class="shell" id="shell"><aside id="sidebar"><div class="sidebar-top"><h1>Carreteras y servicios</h1><p>Red vectorial NFS · puntos de interés por teselas</p><p class="healthline" id="health">Conectando con teselas públicas...</p></div><div class="list">
+<header><div class="brand"><div><strong><span>OcToS</span> DRIVE</strong><small>NEED FOR SPEED EDITION</small></div></div></header>
+<div class="shell fold" id="shell"><aside id="sidebar"><div class="sidebar-top"><h1>Carreteras y servicios</h1><p>Red vectorial NFS · puntos de interés por teselas</p><p class="healthline" id="health">Conectando con teselas públicas...</p></div><div class="list">
 <details class="section" open><summary>Visualización del mapa</summary><div class="sectionbody">
 <label class="option"><input id="modeNfs" type="radio" name="mapMode"><span>NFS DARK MAP</span><em>Vectorial</em></label><label class="option"><input id="modeSat" type="radio" name="mapMode" checked><span>Satélite PNOA</span></label>
 <label class="option"><input id="lidarEnabled" type="checkbox" checked><span>LiDAR IGN</span><em id="lidarPct">15%</em></label>
 <div class="range-row"><span>Transparencia LiDAR</span><input id="lidarAlpha" type="range" min="0" max="100" step="5" value="15" aria-label="Opacidad LiDAR"></div>
-<div class="help">Carreteras vectoriales y controles de color independientes. PNOA y LiDAR se muestran solo en modo satélite.</div>
+<div class="help">Carreteras vectoriales y controles de color independientes. PNOA y LiDAR se muestran solo en modo satélite.</div><div id="sharedBasemapsSlot"></div>
 </div></details>
 <details class="section terrain-panel" open><summary>Terreno y perspectiva 3D <small>DEM</small></summary><div class="sectionbody">
 <label class="option"><input id="terrainEnabled" type="checkbox" checked><span>Relieve 3D real del terreno</span><em id="terrainOnLabel">Activado</em></label>
@@ -105,7 +110,7 @@ header .brand small{font-size:9px;letter-spacing:.17em}
 <details class="section" open><summary>Servicios en ruta <small id="poiCount">—</small></summary><div class="sectionbody" id="poiBox"></div></details>
 <details class="section"><summary>Navegación GPS</summary><div class="sectionbody"><label class="option"><input type="checkbox" id="followCheck" checked><span>Seguir mi ubicación</span></label><label class="option"><input type="checkbox" id="headingCheck" checked><span>Orientar flecha con brújula</span></label><label class="option"><input type="checkbox" id="accuracyCheck" checked><span>Círculo de precisión</span></label><button class="button full" id="gpsPerm">Activar GPS y brújula</button><p style="font-size:10px;color:#bcbcbc">Si la brújula no está disponible, se usa el rumbo GPS solo en movimiento. Puede requerir HTTPS.</p></div></details>
 <details class="section"><summary>Herramientas</summary><div class="sectionbody"><button id="spain" class="button full">Mostrar España</button><p style="font-size:10px;color:#bcbcbc;margin:8px 3px">El mapa carga las teselas automáticamente. No es un navegador giro a giro.</p></div></details>
-</div><div id="note" class="note">Carreteras en metros reales aproximados sobre el plano. Gasolineras desde teselas y radares desde datos públicos disponibles.</div></aside><button class="sidebar-close" id="foldButton" title="Ocultar catálogo" aria-label="Ocultar catálogo">‹</button>
+</div><div id="note" class="note">Carreteras en metros reales aproximados sobre el plano. Gasolineras desde teselas y radares desde datos públicos disponibles.</div></aside><button class="sidebar-close" id="foldButton" title="Mostrar catálogo" aria-label="Mostrar catálogo">›</button>
 <main class="map-area"><div id="map"></div><div class="roadmap-controls" aria-label="Controles del mapa">
 <button id="locateControl" class="roadmap-control round" type="button" title="Activar ubicación GPS y centrar mapa" aria-label="Activar ubicación GPS y centrar mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
 <button id="bearingControl" class="roadmap-control square" type="button" aria-pressed="false" title="Cambiar entre norte arriba y orientación según rumbo GPS" aria-label="Modo norte arriba; pulsar para seguir el rumbo GPS"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L18 20 12 16 6 20Z"/><path d="M12 7v9"/></svg><span class="ctrl-mini" id="bearingMini">N</span></button>
@@ -331,8 +336,8 @@ $('buildingsAlpha').addEventListener('input',syncBuildings);
 $('lidarEnabled').addEventListener('change',()=>setMode(mode));$('lidarAlpha').addEventListener('input',e=>{if(ready)map.setPaintProperty('octos-lidar-layer','raster-opacity',+e.target.value/100);$('lidarPct').textContent=e.target.value+'%'});
 for(const p of pois){const check=document.querySelector('[data-poi="'+p.id+'"]');if(check){check.checked=p.visible;check.addEventListener('change',e=>{p.visible=e.target.checked;syncPoi(p)})}}
 $('spain').addEventListener('click',()=>map.flyTo({center:[-3.6,40.5],zoom:6}));
-function fold(on){$('shell').classList.toggle('fold',on);$('foldButton').textContent=on?'›':'‹';$('foldButton').title=on?'Mostrar catálogo':'Ocultar catálogo';setTimeout(()=>map.resize(),240)}
-$('foldButton').addEventListener('click',()=>fold(!$('shell').classList.contains('fold')));$('topPanel').addEventListener('click',()=>fold(!$('shell').classList.contains('fold')));if(innerWidth<780)fold(true);window.addEventListener('resize',()=>map.resize());
+function fold(on){$('shell').classList.toggle('fold',on);$('foldButton').textContent=on?'›':'‹';const action=on?'Mostrar catálogo':'Ocultar catálogo';$('foldButton').title=action;$('foldButton').setAttribute('aria-label',action);setTimeout(()=>map.resize(),240)}
+$('foldButton').addEventListener('click',()=>fold(!$('shell').classList.contains('fold')));fold(true);window.addEventListener('resize',()=>map.resize());
 function gpsElement(){const el=document.createElement('div');el.className='gps-pin';el.innerHTML='<svg viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg"><path d="M21 2 L38 38 L21 30 L4 38 Z" fill="#ff891f" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/><path d="M21 9 L21 30" stroke="#8b3605" stroke-width="2"/></svg>';return el}
 function drawGps(){if(!currentPosition)return;const c=currentPosition.coords,lat=c.latitude,lon=c.longitude,h=heading??(Number.isFinite(c.heading)?c.heading:0);if(!gpsMarker)gpsMarker=new maplibregl.Marker({element:gpsElement(),rotationAlignment:'map'}).setLngLat([lon,lat]).addTo(map);else gpsMarker.setLngLat([lon,lat]);gpsMarker.setRotation(h);if(bearingFollow && Number.isFinite(h))map.setBearing(h);
  if($('accuracyCheck').checked){const n=48,vertices=[],r=Math.min(1500,c.accuracy||20),rad=r/111320;for(let i=0;i<=n;i++){const a=i/n*Math.PI*2;vertices.push([lon+Math.cos(a)*rad/Math.max(.1,Math.cos(lat*Math.PI/180)),lat+Math.sin(a)*rad])}const geo={type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'Polygon',coordinates:[vertices]},properties:{}}]};if(!map.getSource('octos-accuracy')){map.addSource('octos-accuracy',{type:'geojson',data:geo});map.addLayer({id:'octos-accuracy-layer',type:'fill',source:'octos-accuracy',paint:{'fill-color':'#ff891f','fill-opacity':.08}})}else map.getSource('octos-accuracy').setData(geo);map.setLayoutProperty('octos-accuracy-layer','visibility','visible')}else if(map.getLayer('octos-accuracy-layer'))map.setLayoutProperty('octos-accuracy-layer','visibility','none');
@@ -342,7 +347,7 @@ function onOrientation(e){if(!$('headingCheck').checked)return;let h=null;if(Num
 async function startGPS(auto=false){const button=$('gpsPerm');button.disabled=true;$('gpsState').textContent=auto?'Solicitando ubicación al iniciar…':'Solicitando permisos…';try{if(!auto&&typeof DeviceOrientationEvent!=='undefined'&&!compassBound){if(typeof DeviceOrientationEvent.requestPermission==='function'){const p=await DeviceOrientationEvent.requestPermission();if(p==='granted'){window.addEventListener('deviceorientation',onOrientation);window.addEventListener('deviceorientationabsolute',onOrientation);compassBound=true}}else{window.addEventListener('deviceorientation',onOrientation);window.addEventListener('deviceorientationabsolute',onOrientation);compassBound=true}}}catch(e){setNote('Brújula: '+e.message,true)}
  if(!navigator.geolocation){$('gpsState').textContent='GPS no disponible';button.disabled=false;return}if(watchId!==null){button.disabled=false;centerFollow=true;if(currentPosition)drawGps();return}
  try{watchId=navigator.geolocation.watchPosition(pos=>{currentPosition=pos;if(Date.now()-lastCompassAt>5000&&Number.isFinite(pos.coords.heading)&&pos.coords.speed>.7)heading=pos.coords.heading;if(ready)drawGps();else if(centerFollow&&$('followCheck').checked)map.jumpTo({center:[pos.coords.longitude,pos.coords.latitude],zoom:15});button.disabled=false},e=>{button.disabled=false;watchId=null;$('gpsState').textContent='GPS sin permiso';$('gpsInfo').textContent=e.message;setNote('Geolocalización necesita permisos y contexto seguro (HTTPS o localhost).',true)},{enableHighAccuracy:true,maximumAge:2000,timeout:16000})}catch(e){button.disabled=false;setNote('Error GPS: '+e.message,true)}}
-$('gpsPerm').addEventListener('click',()=>startGPS(false));$('topGps').addEventListener('click',()=>startGPS(false));$('floatingGps').addEventListener('click',()=>startGPS(false));
+$('gpsPerm').addEventListener('click',()=>startGPS(false));$('floatingGps').addEventListener('click',()=>startGPS(false));
 $('zoomInControl').addEventListener('click',()=>map.zoomIn({duration:260}));
 $('zoomOutControl').addEventListener('click',()=>map.zoomOut({duration:260}));
 $('locateControl').addEventListener('click',()=>{centerFollow=true;$('followCheck').checked=true;startGPS();});
@@ -370,5 +375,12 @@ OcToSBasemaps.mount({app:'drive',map,apply:async b=>{
  map.addLayer({id:'shared-base',type:'raster',source:'shared-base'},map.getStyle().layers[0]?.id);
  for(const l of originals){if(!sharedVisibility.has(l.id))sharedVisibility.set(l.id,map.getLayoutProperty(l.id,'visibility')||'visible');map.setLayoutProperty(l.id,'visibility','none')}
 }});
+// Mover la biblioteca ya montada al panel de capas sin alterar su funcionalidad.
+const sharedBasemapBox=map.getContainer().querySelector('.octos-shared-bases');
+if(sharedBasemapBox){
+ sharedBasemapBox.removeAttribute('style');
+ sharedBasemapBox.classList.add('shared-bases-inline');
+ $('sharedBasemapsSlot').appendChild(sharedBasemapBox);
+}
 })();
 </script></body></html>
