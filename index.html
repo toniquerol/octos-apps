@@ -58,12 +58,12 @@ main{max-width:1600px;padding:38px 24px 65px;margin:0 auto}
 .catalog{display:grid;grid-template-columns:repeat(4,6cm);justify-content:center;gap:2cm;max-width:100%;margin:0 auto}
 .card{width:6cm;height:6cm;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:20px;display:flex;flex-direction:column;text-align:center;align-items:center;justify-content:space-between;min-width:0;transition:border-color .15s,background .15s,transform .15s}
 a.card:hover{border-color:#b46237;background:#222327;transform:translateY(-2px)}
-.card-top{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;min-height:21px}
-.card-order{font-size:11px;letter-spacing:.12em;color:var(--accent);font-family:Manrope,sans-serif;font-weight:800}
-.card-type{font-size:10px;color:#a4a5ac;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.card-top{width:100%;display:flex;justify-content:center;align-items:center;gap:8px;text-align:center;min-height:21px}
+.card-type{font-size:10px;color:#a4a5ac;white-space:normal;overflow-wrap:anywhere;max-width:100%;text-align:center}
 .card-icon{height:68px;width:110px;display:flex;justify-content:center;align-items:center;margin:5px auto 0}
 .card-icon img{display:block;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
 .card-monogram{font-family:Manrope,sans-serif;font-weight:800;font-size:57px;letter-spacing:-.09em;color:var(--accent)}
+.card-copy{width:100%;text-align:center}
 .card-name{font-size:15px;line-height:1.2;letter-spacing:-.035em;font-weight:750;margin:0}
 .card-detail{font-size:11px;color:#a7a8ae;line-height:1.3;margin:4px 0 0;min-height:15px}
 .card-with-info:hover{border-color:#b46237;background:#222327}
@@ -243,19 +243,19 @@ function openRoadsInfo(){
 document.getElementById("roadsInfoClose").addEventListener("click",()=>roadsInfoDialog.close());
 roadsInfoDialog.addEventListener("click",e=>{if(e.target===roadsInfoDialog)roadsInfoDialog.close();});
 function element(tag,cls,value){const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e}
-function makeCard(item,idx){
+function makeCard(item){
  const infoCard=item.slug==="roads";
  const a=document.createElement(infoCard?"article":"a");a.className="card"+(infoCard?" card-with-info":"");
  if(!infoCard){a.href=item.href||("./"+encodeURIComponent(item.slug)+"/");a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Abrir "+item.name);}
  const top=element("div","card-top");
- top.append(element("span","card-order",String(idx+1).padStart(2,"0")),element("span","card-type",item.type||"Aplicación"));
+ top.append(element("span","card-type",item.type||"Aplicación"));
  const icon=element("div","card-icon");
  if(item.icon){
   const img=document.createElement("img");img.src=item.icon;img.alt="";img.loading="lazy";
   img.addEventListener("error",function(){img.remove();icon.append(element("span","card-monogram",item.name.charAt(0).toUpperCase()))},{once:true});
   icon.append(img);
  }else icon.append(element("span","card-monogram",item.name.charAt(0).toUpperCase()));
- const copy=element("div","");
+ const copy=element("div","card-copy");
  copy.append(element("h3","card-name",item.name),element("p","card-detail",item.detail||"Aplicación OcToS"));
  if(infoCard){
   const buttons=element("div","card-actions");
@@ -276,7 +276,7 @@ function render(){
  const accessible=[...items,wordpress].filter(x=>!permitted||permitted.includes(x.slug));
  const visible=accessible.filter(x=>(x.name+" "+x.type+" "+x.detail).toLocaleLowerCase("es").includes(query));
  const frag=document.createDocumentFragment();
- visible.forEach((item,i)=>frag.append(makeCard(item,i)));
+ visible.forEach(item=>frag.append(makeCard(item)));
  if(!query){const blanks=(4-(visible.length%4))%4;for(let i=0;i<blanks;i++)frag.append(placeholder())}
  catalog.replaceChildren(frag);
  document.getElementById("app-count").textContent=currentAccess?.kind==="secondary"?accessible.length+" aplicaciones autorizadas (local)":items.length+" aplicaciones + WordPress";
