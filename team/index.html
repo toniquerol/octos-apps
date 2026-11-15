@@ -130,6 +130,10 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 #layout-edit[aria-pressed=true]{background:#ff6a1a18;border-color:#ff6a1a;color:#ffb284}
 
 /* Piloto operativo de tres agentes */
+.agents-initial-setup{margin-top:18px;padding:14px 15px;border:1px solid #55555b;border-radius:8px;background:#18191c}
+.agents-initial-setup summary{font-size:12px;font-weight:650;cursor:pointer;color:#ffb485}
+.agents-initial-setup[open] summary{margin-bottom:14px}
+.agents-initial-setup .agent-help{margin:10px 0;line-height:1.6}
 svg .chief-station .agent-indicator{transition:fill .25s ease}
 svg .chief-station[data-status="idle"] .agent-indicator,svg .chief-station[data-status="completed"] .agent-indicator{fill:#369D69}
 svg .chief-station[data-status="running"] .agent-indicator{fill:#D94A45}
@@ -187,7 +191,7 @@ svg .chief-station .agent-indicator.blink{animation:team-finished-blink .9s step
 <button class="tile" data-page="inbox"><div class="tile-top"><span class="tile-index">MÓDULO 03</span><span class="tile-icon">↧</span></div><h3>Entrada / Input</h3><p>Recepción y distribución de encargos. Preparado para su desarrollo posterior.</p><span class="go">VER MÓDULO</span></button>
 <button class="tile" data-page="system"><div class="tile-top"><span class="tile-index">MÓDULO 04</span><span class="tile-icon">⌘</span></div><h3>Configuración</h3><p>Parámetros de puestos y equipos. Reservado, sin funciones activas.</p><span class="go">VER MÓDULO</span></button>
 </div></section>
-<section id="room" class="view active"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Plano de referencia · Selecciona una mesa, un grupo o un armario</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="mini" id="layout-edit" type="button" aria-pressed="false">Editar plano</button><button class="mini" id="layout-save" type="button" disabled>Guardar distribución</button><button class="mini" id="layout-reset" type="button">Restablecer</button><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
+<section id="room" class="view active"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Plano de referencia · Selecciona una mesa, un grupo o un armario</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="mini" data-page="inbox" type="button" style="border-color:var(--accent);color:#ffb485">Nueva petición / Input</button><button class="mini" id="layout-edit" type="button" aria-pressed="false">Editar plano</button><button class="mini" id="layout-save" type="button" disabled>Guardar distribución</button><button class="mini" id="layout-reset" type="button">Restablecer</button><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
 <div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="0 0 1536 1024" role="img" aria-label="Visor editable de la sala OcToS Team"><rect width="1536" height="1024" fill="#101114"/></svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div><p id="layout-hint" class="layout-hint" role="status">Plano vectorial interactivo. Selecciona un puesto o armario para consultar su ficha.</p></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div id="team-config-container" class="team-config" hidden></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="inbox">Nueva petición a agentes</button><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
 <section id="structure" class="view">
 <div class="agents-top"><div><div class="eyebrow">Módulo 02 / Jerarquía operativa</div><h1>Agentes conectables · Piloto 01</h1><p>Dirección coordina a dos especialistas. Los demás puestos siguen reservados.</p></div><button class="outline" data-page="inbox">Nueva petición</button></div>
@@ -218,6 +222,16 @@ svg .chief-station .agent-indicator.blink{animation:team-finished-blink .9s step
 <input id="agents-token" type="password" placeholder="Token del servicio, no clave OpenAI" autocomplete="off">
 <p class="agent-help">Nunca introduzcas la clave OpenAI aquí. Se configura como secreto del servidor. La contraseña del servicio no se guarda.</p>
 <div class="agents-actions"><button id="agents-health" type="button">Comprobar conexión</button></div>
+<details class="agents-initial-setup" id="agents-first-use">
+ <summary>Primera conexión · Registrar clave OpenAI</summary>
+ <p class="agent-help">Primero se despliega el Worker en tu cuenta de Cloudflare. Una vez vinculado, puedes pegar la clave aquí: viajará por HTTPS y se almacenará cifrada en el servidor, nunca en GitHub ni en el navegador.</p>
+ <label for="agents-setup-token">Contraseña de configuración del Worker</label>
+ <input id="agents-setup-token" type="password" placeholder="TEAM_SETUP_TOKEN definido en Cloudflare" autocomplete="off" spellcheck="false">
+ <label for="agents-openai-key">Clave API de OpenAI · Solo el primer registro</label>
+ <input id="agents-openai-key" type="password" placeholder="sk-..." autocomplete="off" spellcheck="false">
+ <div class="agents-actions"><button id="agents-setup" type="button" class="primary">Guardar clave cifrada en Worker</button></div>
+ <p class="agent-help">El PIN de OcToS Team no sustituye la contraseña del Worker. No uses este campo si la URL no corresponde a tu propio servicio Cloudflare. La clave no se incluye en los registros y se borra del formulario al confirmar.</p>
+ </details>
 <h2 style="margin-top:25px">Registro de ejecución</h2><pre id="agents-trace">Sin actividad.</pre>
 <h2>Resultado consolidado</h2><div id="agents-result">Todavía no se ha enviado ninguna petición.</div>
 </div>
