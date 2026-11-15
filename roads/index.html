@@ -1407,7 +1407,7 @@ $('zoomMinusBtn').onclick=()=>{const current=terrainMode&&terrainMap?terrainMap:
 
 function status(msg){$('status').textContent=msg;}
 function checkpoint(){history.push(JSON.stringify({roads,roundabouts,junctions}));if(history.length>30)history.shift();}
-function persist(){try{localStorage.setItem(K,JSON.stringify({version:1,roads,roundabouts,junctions}));}catch(e){status('No se ha podido guardar automáticamente. Usa Guardar JSON.');}homeSaveCurrent();}
+function persist(){if(new URLSearchParams(window.location.search).has('showcase'))return;try{localStorage.setItem(K,JSON.stringify({version:1,roads,roundabouts,junctions}));}catch(e){status('No se ha podido guardar automáticamente. Usa Guardar JSON.');}homeSaveCurrent();}
 
 /* Biblioteca de proyectos. IndexedDB conserva proyectos independientes sin modificar
    el formato JSON histórico. LocalStorage actúa como alternativa cuando IDB falla. */
