@@ -140,9 +140,9 @@ header .brand small{font-size:9px;letter-spacing:.17em}
  <section id="trafficPanel" class="traffic-panel" hidden aria-label="Capas oficiales de vigilancia y tráfico">
   <div class="traffic-panel-head"><strong>PANELES · DGT / SCT</strong>
    <button id="trafficClose" type="button" title="Cerrar paneles" aria-label="Cerrar paneles">×</button></div>
-  <div class="traffic-panel-summary">Capas georreferenciadas de radares y referencias de tramo. Activación independiente. Las ubicaciones no representan controles activos en tiempo real.</div>
+  <div class="traffic-panel-summary">Datos oficiales incorporados: DGT y SCT. Activa cada capa para verla en el mapa. Las ubicaciones no indican que un radar esté activo en este momento.</div>
   <div id="trafficSources"></div>
-  <div class="traffic-panel-foot">Los archivos se importan en este navegador. No se modifican las bases del visor.<div style="margin-top:6px">
+  <div class="traffic-panel-foot">Los datos oficiales se cargan automáticamente desde OcToS Drive. La importación manual es opcional y queda guardada en este navegador.<div style="margin-top:6px">
     <a href="https://www.dgt.es/conoce-el-estado-del-trafico/vigilancia-y-control/equipos-y-tramos-de-vigilancia/" target="_blank" rel="noopener noreferrer">Inventario oficial DGT (PDF)</a> ·
     <a href="https://nap.dgt.es/es/dataset" target="_blank" rel="noopener noreferrer">Catálogo DATEX II</a>
    </div>
@@ -158,7 +158,7 @@ header .brand small{font-size:9px;letter-spacing:.17em}
 <button id="zoomOutControl" class="roadmap-control zoom" type="button" title="Alejar" aria-label="Alejar">−</button>
 </div><div class="map-overlay map-right"><button class="float-btn" id="floatingGps" title="Seguir mi ubicación">⌖ Ubicación</button><div class="status-card"><strong id="gpsState">GPS desconectado</strong><div id="gpsInfo">Pulsa GPS para solicitar permiso.</div></div></div><div class="map-overlay map-bottom"><span id="zoom">Z —</span> · <span id="coords">40.3, -3.7</span> · <span id="headingLabel">Rumbo —</span> · <span id="map3dStatus">Relieve 3D</span></div><div class="legend">NFS DARK · <span id="networkState">Red: esperando</span> · <span id="poiState">POI: esperando</span></div></main></div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="../shared/basemaps.js?v=2.8"></script><script src="./traffic-panels.js?v=1"></script><script>
+<script src="../shared/basemaps.js?v=2.8"></script><script src="./traffic-panels.js?v=2"></script><script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const setNote=(text,warn=false)=>{const el=$('note');el.textContent=text;el.classList.toggle('warn',warn)};
