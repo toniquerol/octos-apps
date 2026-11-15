@@ -1,7 +1,7 @@
 /* OcToS Roads — VCHI 2005 technical reference, not engineering certification. */
 (function(){'use strict';window.OcToSRoadGeometry=(function RoadsGeometryVCHI(){
 'use strict';
-const table=[[20,.18,15,15],[30,.17,35,30],[40,.17,60,55],[50,.16,100,90],[60,.15,150,135],[70,.14,215,195],[80,.14,280,250],[90,.13,375,335],[100,.12,490,435],[110,.11,560,null],[120,.09,755,null],[130,.08,950,null]];
+const table=[[20,.18,15,15],[30,.17,35,30],[40,.17,60,55],[50,.16,100,90],[60,.15,150,135],[70,.14,215,195],[80,.14,280,250],[90,.13,375,335],[100,.12,490,435],[110,.11,null,560],[120,.09,null,755],[130,.08,null,950]];
 const spiralLimits={60:300,70:500,80:800,90:1000,100:1300,110:1900,120:2500};
 const source={title:'Manual VCHI (2005)',url:'https://limacap.org/normatividad-2019/transportes/Manual%20VCHI%20%282005%29.pdf',spanish:'BOE-A-2016-2217'};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),V=(x,y)=>({x,y}),add=(a,b)=>V(a.x+b.x,a.y+b.y),sub=(a,b)=>V(a.x-b.x,a.y-b.y),mul=(a,n)=>V(a.x*n,a.y*n);
@@ -12,7 +12,7 @@ function friction(speed){
 }
 function minimumRadius(speed,peralte=.04){
  const s=clamp(Number(speed)||50,20,130),e=clamp(Number(peralte)||0,0,.12),row=table.find(r=>r[0]===s);
- if(row&&Math.abs(e-.04)<1e-9)return row[2];
+ if(row&&Math.abs(e-.04)<1e-9&&row[2])return row[2];
  if(row&&Math.abs(e-.06)<1e-9&&row[3])return row[3];
  return s*s/(127*(e+friction(s)));
 }
@@ -67,6 +67,8 @@ function build(road,toXY,toLL,section){
   const minimum=requiredSpiral(speed,R);
   if(mode!=='off'&&(mode==='on'||isSpiralRequired(speed,R))&&minimum<.86*R*phi)L=minimum;
   let geom;
+  // If the required spiral cannot fit, retain the original radius and try a circular arc.
+  if(L&&centerPath(R,L,phi,sign).T>maxT)L=0;
   for(let iteration=0;iteration<14;iteration++){
    geom=centerPath(R,L,phi,sign);
    if(geom.T<=maxT+.005)break;
