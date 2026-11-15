@@ -168,7 +168,7 @@ export default {
     if(!authorized(request,env.TEAM_ACCESS_TOKEN))return json(request,401,{error:"Contraseña de acceso incorrecta."});
     if(request.method==="GET"&&path==="/health"){
       try{
-        const hasKey=await configured(env);
+        const hasKey=!!(await getKey(env));
         return json(request,200,{ready:hasKey,configured:hasKey,
           storage:env.TEAM_SECRETS?"connected":"missing",
           agents:["chief","agent-3","agent-4"],model:env.OPENAI_MODEL||"gpt-6-luna"});
