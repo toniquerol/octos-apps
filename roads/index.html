@@ -2899,7 +2899,7 @@ function render(){
    const structure=(r.structures||{})[part.segmentIndex]||'normal',activeSegment=selectedRoadSegments(r).includes(part.segmentIndex);
    paintRoadPart(r,part,isSelected,activeSegment,structure,e=>{L.DomEvent.stopPropagation(e);if(mode==='connect'){jxClick(r,e.latlng);return;}if(mode==='draw'||mode==='roundabout')return;if(mode==='insert')insertNode(r,e.latlng);else if(['bridge','tunnel','normal'].includes(mode))setSectionType(r,part.segmentIndex,mode);else selectRoadPart(r,part.segmentIndex);},e=>{L.DomEvent.stopPropagation(e);if(mode==='select'&&selected===r.id)insertNode(r,e.latlng);});
   });
-  if(visible('layerRadius')&&!(isTechnicalView()&&r.id===selected))g.arcs.forEach(a=>{L.tooltip({permanent:true,direction:'center',className:'arc-tooltip',interactive:false,opacity:.94}).setLatLng(a.middle).setContent('R '+Math.round(a.radius)+' m · '+a.speed+' km/h').addTo(labelsGroup);});
+  if(visible('layerRadius'))g.arcs.forEach(a=>{L.tooltip({permanent:true,direction:'center',className:'arc-tooltip',interactive:false,opacity:.94}).setLatLng(a.middle).setContent('R '+Math.round(a.radius)+' m · L '+format(a.transition||0)+' m · S '+format(a.overwidth||0)+' m · '+a.speed+' km/h').addTo(labelsGroup);});
   if(r.id===selected&&mode!=='draw')showEditGuide(r,null,null,g);
   if(r.id===selected&&mode!=='draw'&&visible('layerNodes'))r.nodes.forEach((p,i)=>{
    const icon=L.divIcon({className:'handle-icon',html:'<div class="handle"></div>',iconSize:[14,14],iconAnchor:[7,7]});
@@ -2951,7 +2951,8 @@ function render(){
   const label=technical.profile==='vchi'?'VCHI 2005':technical.profile==='es31ic'?'3.1-IC (no evaluable)':'Sin perfil';
   const state=technical.checks.filter(c=>c.state==='adjust').length;
   const detail=technical.checks.map(c=>'<div style="margin-top:5px"><b>'+safe(c.state==='adjust'?'REVISAR':c.state==='unknown'?'NO EVALUABLE':'REFERENCIA')+'</b> · '+safe(c.label)+'<br><small>'+safe(c.detail)+' · '+safe(c.ref)+'</small></div>').join('');
-  $('selection').insertAdjacentHTML('beforeend','<details style="margin-top:8px;border-top:1px solid #56565b;padding-top:7px" '+(state?'open':'')+'><summary>'+safe(label)+' · '+state+' advertencia'+(state===1?'':'s')+'</summary><div style="padding:6px 0">'+detail+'</div><small>Validación parcial de diseño; no certifica cumplimiento normativo.</small></details>');
+  const curveDetails=(makeGeometry(r).curves||[]).map((c,i)=>'<div style="margin-top:6px;border-top:1px solid #3a3c41;padding-top:5px"><b>Curva '+(i+1)+'</b> · '+safe(c.kind)+'<br>R '+format(c.radius)+' m · T '+format(c.tangent)+' m · transición '+format(c.transition)+' m · sobreancho '+format(c.overwidth||0)+' m</div>').join('');
+  $('selection').insertAdjacentHTML('beforeend','<details style="margin-top:8px;border-top:1px solid #56565b;padding-top:7px" '+(state?'open':'')+'><summary>'+safe(label)+' · '+state+' advertencia'+(state===1?'':'s')+'</summary><div style="padding:6px 0">'+detail+curveDetails+'</div><small>Validación parcial de diseño; no certifica cumplimiento normativo.</small></details>');
  }
  const manualRoads=roads.filter(r=>r.importGroup!=='carreteras-reales');
  const realRoads=roads.filter(r=>r.importGroup==='carreteras-reales');
