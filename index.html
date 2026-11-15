@@ -6,7 +6,9 @@
 <meta name="theme-color" content="#0E0E10">
 <meta name="description" content="OcToS Apps · catálogo central de aplicaciones y herramientas OcToS.">
 <title>OcToS Apps</title>
-<link rel="icon" href="./team/icon.svg" type="image/svg+xml">
+<link rel="icon" href="./apps-favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="./apps-icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./apps-icon-128.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -220,16 +222,16 @@ if(root.classList.contains("pin-locked"))pin.focus();
 
 const repo="toniquerol/octos-apps";
 const metadata=[
- {slug:"drive",name:"Drive",type:"Movilidad",detail:"Conducción y navegación",icon:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-drive-symbol.png"},
- {slug:"carto",name:"Carto",type:"Cartografía",detail:"Visores y mapas",icon:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-carto-symbol.png"},
- {slug:"meteo",name:"Meteo",type:"Meteorología",detail:"Observación del tiempo",icon:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-meteo-logo-2026.png"},
- {slug:"rain",name:"Rain",type:"Hidrología",detail:"Lluvia y terreno 3D",icon:"https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-rain-logo-transparente.png"},
- {slug:"layers",name:"Layers",type:"Cartografía",detail:"Catálogo de capas WMS",icon:"./layers/icon.svg"},
- {slug:"templates",name:"Templates",type:"Sistema visual",detail:"Plantillas y diseño",icon:"./templates/icon.svg"},
- {slug:"aero",name:"Aero",type:"Simulación 3D",detail:"Visualizador aerodinámico",icon:"./aero/icon.svg"},
- {slug:"roads",name:"Roads",type:"Infraestructuras",detail:"Diseño de carreteras",icon:"./roads/icon.svg"},
- {slug:"team",name:"Team",type:"Organización",detail:"Sala de coordinación",icon:"./team/icon.svg"},
- {slug:"kitchen",name:"Kitchen",type:"Diseño 3D",detail:"Cocinas modulares 2D · 3D",icon:"./kitchen/icon.svg"}
+ {slug:"drive",name:"Drive",type:"Movilidad",detail:"Red viaria y terreno 3D",icon:"./drive/icon-light.svg"},
+ {slug:"carto",name:"Carto",type:"Cartografía",detail:"Visores y mapas",icon:"./carto/icon-light.svg"},
+ {slug:"meteo",name:"Meteo",type:"Meteorología",detail:"Observación del tiempo",icon:"./meteo/icon-light.svg"},
+ {slug:"rain",name:"Rain",type:"Hidrología",detail:"Lluvia y terreno 3D",icon:"./rain/icon-light.svg"},
+ {slug:"layers",name:"Layers",type:"Cartografía",detail:"Catálogo de capas WMS",icon:"./layers/icon-light.svg"},
+ {slug:"templates",name:"Templates",type:"Sistema visual",detail:"Plantillas y diseño",icon:"./templates/icon-light.svg"},
+ {slug:"aero",name:"Aero",type:"Visualización 3D",detail:"Vehículos y flujo visual",icon:"./aero/icon-light.svg"},
+ {slug:"roads",name:"Roads",type:"Infraestructuras",detail:"Diseño de carreteras",icon:"./roads/icon-light.svg"},
+ {slug:"team",name:"Team",type:"Organización",detail:"Sala de coordinación",icon:"./team/icon-light.svg"},
+ {slug:"kitchen",name:"Kitchen",type:"Diseño 3D",detail:"Cocinas modulares 2D · 3D",icon:"./kitchen/icon-light.svg"}
 ];
 const ignored=new Set(["rain-v8","shared","tests","node_modules",".github","info"]);
 const catalog=document.getElementById("catalog"),filter=document.getElementById("filter"),status=document.getElementById("sync-status");

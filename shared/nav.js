@@ -8,16 +8,16 @@
   const ROOT_URL=new URL('./',root).href;
   const LOGO_URL='https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png';
   const apps=[
-    {id:'drive',name:'Drive',category:'Movilidad',path:'drive/',icon:'https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-drive-symbol.png'},
-    {id:'carto',name:'Carto',category:'Cartografía',path:'carto/',icon:'https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-carto-symbol.png'},
-    {id:'meteo',name:'Meteo',category:'Meteorología',path:'meteo/',icon:'https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-meteo-logo-2026.png'},
-    {id:'rain',name:'Rain',category:'Hidrología',path:'rain/',icon:'https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-rain-logo-transparente.png'},
-    {id:'layers',name:'Layers',category:'Cartografía',path:'layers/',icon:'layers/icon.svg'},
-    {id:'templates',name:'Templates',category:'Sistema visual',path:'templates/',icon:'templates/icon.svg'},
-    {id:'aero',name:'Aero',category:'Simulación 3D',path:'aero/',icon:'aero/icon.svg'},
-    {id:'roads',name:'Roads',category:'Infraestructuras',path:'roads/index.html?open=editor',icon:'roads/icon.svg'},
-    {id:'team',name:'Team · Sala',category:'Organización',path:'team/',icon:'team/icon.svg'},
-    {id:'kitchen',name:'Kitchen',category:'Diseño de cocinas',path:'kitchen/',icon:'kitchen/icon.svg'}
+    {id:'drive',name:'Drive',category:'Movilidad',path:'drive/',icon:'drive/icon-light.svg'},
+    {id:'carto',name:'Carto',category:'Cartografía',path:'carto/',icon:'carto/icon-light.svg'},
+    {id:'meteo',name:'Meteo',category:'Meteorología',path:'meteo/',icon:'meteo/icon-light.svg'},
+    {id:'rain',name:'Rain',category:'Hidrología',path:'rain/',icon:'rain/icon-light.svg'},
+    {id:'layers',name:'Layers',category:'Cartografía',path:'layers/',icon:'layers/icon-light.svg'},
+    {id:'templates',name:'Templates',category:'Sistema visual',path:'templates/',icon:'templates/icon-light.svg'},
+    {id:'aero',name:'Aero',category:'Simulación 3D',path:'aero/',icon:'aero/icon-light.svg'},
+    {id:'roads',name:'Roads',category:'Infraestructuras',path:'roads/index.html?open=editor',icon:'roads/icon-light.svg'},
+    {id:'team',name:'Team · Sala',category:'Organización',path:'team/',icon:'team/icon-light.svg'},
+    {id:'kitchen',name:'Kitchen',category:'Diseño de cocinas',path:'kitchen/',icon:'kitchen/icon-light.svg'}
   ];
   const website={id:'wordpress',name:'WordPress',category:'Sitio web',href:'https://octos3dstudio.wordpress.com/'};
   const appNames={
@@ -143,6 +143,21 @@
     const header=document.querySelector('body > header, #app > header, header.site-header')||document.querySelector('header');
     if(!header)return;
     const appId=currentApp();
+    // SVG favicon para las páginas que cargan navegación común, incluidos bundles grandes.
+    if (appId === 'apps' || apps.some(app => app.id === appId)) {
+      const iconId = appId === 'apps' ? 'apps' : appId;
+      const iconSvg = iconId === 'apps' ? 'apps-icon.svg' : iconId + '/icon.svg';
+      const png32 = iconId === 'apps' ? 'apps-favicon-32.png' : iconId + '/favicon-32.png';
+      const favicon = document.querySelector('link[rel="icon"][type="image/svg+xml"]') || document.createElement('link');
+      favicon.rel = 'icon';
+      favicon.type = 'image/svg+xml';
+      favicon.href = new URL(iconSvg,root).href;
+      if (!favicon.isConnected) document.head.appendChild(favicon);
+      const fallback = document.querySelector('link[rel="icon"][sizes="32x32"]') || document.createElement('link');
+      fallback.rel = 'icon'; fallback.type = 'image/png'; fallback.sizes = '32x32';
+      fallback.href = new URL(png32,root).href;
+      if (!fallback.isConnected) document.head.insertBefore(fallback, favicon);
+    }
     const homePage=appId==='apps'||appId==='index.html';
     // Cabecera única en todas las aplicaciones, sin modificar el logo original de origen.
     const brand=document.createElement('div');
@@ -209,7 +224,7 @@
       if(app.id==='wordpress')visual.textContent='W';
       else if(app.icon||app.id==='apps'){
         const image=document.createElement('img');
-        image.src=app.id==='apps'?LOGO_URL:/^https:\/\//.test(app.icon)?app.icon:new URL(app.icon,root).href;
+        image.src=app.id==='apps'?new URL('apps-icon-light.svg',root).href:/^https:\/\//.test(app.icon)?app.icon:new URL(app.icon,root).href;
         image.alt='';
         image.loading='lazy';
         image.addEventListener('error',()=>{image.remove();visual.textContent=app.name.charAt(0)}, {once:true});

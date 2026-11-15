@@ -13,7 +13,7 @@
  function safeIcon(icon){
   if(!icon)return "";
   if(/^https:\/\//.test(icon))return icon;
-  if(/^[a-z0-9-]+\/icon\.(svg|png|webp)$/i.test(icon))return new URL("../"+icon,root).href;
+  if(/^[a-z0-9-]+\/icon(?:-light)?\.(svg|png|webp)$/i.test(icon))return new URL("../"+icon,root).href;
   return "";
  }
  function permitted(){try{
