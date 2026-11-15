@@ -16,7 +16,8 @@
     {id:'templates',name:'Templates',category:'Sistema visual',path:'templates/',icon:'templates/icon.svg'},
     {id:'aero',name:'Aero',category:'Simulación 3D',path:'aero/',icon:'aero/icon.svg'},
     {id:'roads',name:'Roads',category:'Infraestructuras',path:'roads/index.html?open=editor',icon:'roads/icon.svg'},
-    {id:'team',name:'Team · Sala',category:'Organización',path:'team/',icon:'team/icon.svg'}
+    {id:'team',name:'Team · Sala',category:'Organización',path:'team/',icon:'team/icon.svg'},
+    {id:'kitchen',name:'Kitchen',category:'Diseño de cocinas',path:'kitchen/',icon:'kitchen/icon.svg'}
   ];
   const website={id:'wordpress',name:'WordPress',category:'Sitio web',href:'https://octos3dstudio.wordpress.com/'};
   const appNames={
@@ -29,7 +30,8 @@
     layers:['LAYERS','CAPAS CARTOGRÁFICAS'],
     templates:['TEMPLATES','SISTEMA VISUAL'],
     aero:['AERO','LABORATORIO 3D'],
-    roads:['ROADS','INFRAESTRUCTURAS']
+    roads:['ROADS','INFRAESTRUCTURAS'],
+    kitchen:['KITCHEN','DISEÑO MODULAR 2D · 3D']
   };
   const glyph={
     home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10"/><path d="M10 21v-7h4v7"/></svg>',
