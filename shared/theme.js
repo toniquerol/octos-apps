@@ -8,7 +8,7 @@
   document.title='OcToS '+names[app]+' · V'+(c.apps[app]||c.version);
   const logos={layers:new URL('../layers/icon.svg',root).href,rain:new URL('../rain/assets/icon.png',root).href,drive:'https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-drive-symbol.png',carto:'https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-carto-symbol.png',meteo:'https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-meteo-logo-2026.png'};
   logo.src=c.tokens.logoUrl||logos[app]||new URL('../templates/icon.svg',root).href;
-  const menu=document.querySelector('.ot-head-left button');if(menu)menu.textContent=c.tokens.iconMenu;
+  const menu=document.querySelector('.ot-head-left > button');if(menu)menu.textContent=c.tokens.iconMenu;
   for(const[id,key]of Object.entries({zoomIn:'iconZoomIn',zoomOut:'iconZoomOut',zoomInControl:'iconZoomIn',zoomOutControl:'iconZoomOut',toggle3d:'icon3d',close:'iconClose'})){const e=document.getElementById(id);if(e){if(!e.hasAttribute('aria-label'))e.setAttribute('aria-label',e.title||e.textContent.trim());e.textContent=c.tokens[key]}}
   window.dispatchEvent(new Event('resize'));
  }
