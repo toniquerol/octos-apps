@@ -53,6 +53,8 @@ main{max-width:1600px;padding:16px 24px 65px;margin:0 auto}
 .count{font-size:12px;white-space:nowrap;color:var(--muted);padding-bottom:3px}
 .toolbar{max-width:945px;display:flex;justify-content:space-between;align-items:center;gap:20px;margin:0 auto 12px;border-bottom:1px solid var(--line);padding:0 0 12px}
 .toolbar h2{font-size:14px;letter-spacing:.015em;margin:0}
+.toolbar-lead{display:flex;align-items:center;gap:13px}
+.toolbar-lead .outline{padding:8px 11px;white-space:nowrap}
 .search{width:min(100%,275px);background:#161719;border:1px solid var(--line);border-radius:8px;padding:11px 13px;color:var(--ink);font-size:12px}
 .search::placeholder{color:#85878d}
 .catalog{display:grid;grid-template-columns:repeat(4,6cm);justify-content:center;gap:1cm;max-width:100%;margin:0 auto}
@@ -67,9 +69,9 @@ a.card:hover{border-color:#b46237;background:#222327;transform:translateY(-2px)}
 .card-name{font-size:15px;line-height:1.2;letter-spacing:-.035em;font-weight:750;margin:0}
 .card-detail{font-size:11px;color:#a7a8ae;line-height:1.3;margin:4px 0 0;min-height:15px}
 .card-with-info:hover{border-color:#b46237;background:#222327}
-.card-actions{display:flex;align-items:center;gap:7px;margin-top:7px}
-.card-actions .card-link{margin:0;min-width:76px;min-height:33px}
-.card-info{display:inline-grid;place-items:center;width:34px;height:33px;border:1px solid #777a80;background:#242529;color:#f1f1ef;border-radius:7px;font:800 15px Manrope,system-ui,sans-serif}
+.card-actions{display:flex;align-items:center;gap:7px;margin-top:7px;width:100%;justify-content:center}
+.card-actions .card-link{margin:0;min-width:0;min-height:33px;flex:1;padding:7px 8px}
+.card-info{display:inline-grid;place-items:center;flex:none;width:34px;height:33px;border:1px solid #777a80;background:#242529;color:#f1f1ef;border-radius:7px;font:800 15px Manrope,system-ui,sans-serif}
 .card-info:hover{background:#FF6A1A;border-color:#FF6A1A;color:#101012}
 .road-info-dialog{width:min(1180px,calc(100vw - 36px));height:min(850px,calc(100dvh - 32px));max-width:none;max-height:none;margin:auto;border:1px solid #505158;border-radius:13px;background:#111214;color:#F1F1EF;padding:0;overflow:hidden;box-shadow:0 22px 80px #000c}
 .road-info-dialog::backdrop{background:#030304d9;backdrop-filter:blur(7px)}
@@ -113,18 +115,18 @@ footer a{text-decoration:underline;text-underline-offset:3px}
   <div class="header-actions"><span id="sync-status" class="status">Catálogo local</span><button id="lock-button" class="outline" type="button">Bloquear</button></div>
  </header>
  <main>
-  <div class="toolbar"><h2>Catálogo de aplicaciones</h2><input id="filter" class="search" type="search" placeholder="Buscar aplicaciones..." aria-label="Buscar aplicaciones"></div>
+  <div class="toolbar"><div class="toolbar-lead"><h2>Catálogo de aplicaciones</h2><a class="outline" href="./info/" target="_blank" rel="noopener noreferrer" aria-label="Abrir índice de información de aplicaciones">Información</a></div><input id="filter" class="search" type="search" placeholder="Buscar aplicaciones..." aria-label="Buscar aplicaciones"></div>
   <section id="catalog" class="catalog" aria-label="Catálogo de aplicaciones"></section>
   <p id="empty" class="empty-message" hidden>No se han encontrado aplicaciones.</p>
  </main>
  <dialog id="roadsInfoDialog" class="road-info-dialog" aria-labelledby="roadsInfoTitle">
-  <div class="road-info-bar"><strong id="roadsInfoTitle">OcToS Roads · Información</strong>
+  <div class="road-info-bar"><strong id="roadsInfoTitle">OcToS · Información</strong>
    <div class="road-info-bar-actions">
-    <a class="outline" href="./roads/info/" target="_blank" rel="noopener noreferrer">Abrir página</a>
+    <a class="outline" id="roadsInfoOpen" href="./info/" target="_blank" rel="noopener noreferrer">Abrir página</a>
     <button type="button" class="road-info-close" id="roadsInfoClose" aria-label="Cerrar ventana informativa">×</button>
    </div>
   </div>
-  <iframe id="roadsInfoFrame" class="road-info-frame" title="Página informativa de OcToS Roads" loading="lazy"></iframe>
+  <iframe id="roadsInfoFrame" class="road-info-frame" title="Página informativa de la aplicación seleccionada" loading="lazy"></iframe>
  </dialog>
  <footer><span>© OcToS 3D Studio · Catálogo alojado en GitHub Pages</span><span>PIN local de interfaz. El contenido público requiere un servicio de autenticación para quedar realmente protegido.</span></footer>
 </div>
@@ -228,24 +230,34 @@ const metadata=[
  {slug:"roads",name:"Roads",type:"Infraestructuras",detail:"Diseño de carreteras",icon:"./roads/icon.svg"},
  {slug:"team",name:"Team",type:"Organización",detail:"Sala de coordinación",icon:"./team/icon.svg"}
 ];
-const ignored=new Set(["rain-v8","shared","tests","node_modules",".github"]);
+const ignored=new Set(["rain-v8","shared","tests","node_modules",".github","info"]);
 const catalog=document.getElementById("catalog"),filter=document.getElementById("filter"),status=document.getElementById("sync-status");
 let items=metadata.slice();
 const titleCase=s=>s.split("-").map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(" ");
 const wordpress={slug:"wordpress",name:"WordPress",type:"Sitio original",detail:"Página web OcToS 3D Studio",icon:null,href:"https://octos3dstudio.wordpress.com/"};
 const roadsInfoDialog=document.getElementById("roadsInfoDialog"),roadsInfoFrame=document.getElementById("roadsInfoFrame");
-function openRoadsInfo(){
- if(!roadsInfoFrame.src)roadsInfoFrame.src="./roads/info/";
- if(typeof roadsInfoDialog.showModal==="function")roadsInfoDialog.showModal();
- else window.open("./roads/info/","_blank","noopener,noreferrer");
+const roadsInfoOpen=document.getElementById("roadsInfoOpen"),roadsInfoTitle=document.getElementById("roadsInfoTitle");
+const infoKnown=new Set(["drive","carto","meteo","rain","layers","templates","aero","roads","team","wordpress"]);
+function infoPage(item){
+ if(item.slug==="roads")return "./roads/info/";
+ if(!infoKnown.has(item.slug))return "./info/";
+ return "./info/"+encodeURIComponent(item.slug)+"/";
 }
-document.getElementById("roadsInfoClose").addEventListener("click",()=>roadsInfoDialog.close());
+function openAppInfo(item){
+ const href=infoPage(item);
+ roadsInfoFrame.src=href;
+ roadsInfoTitle.textContent="OcToS "+item.name+" · Información";
+ roadsInfoOpen.href=href;
+ if(typeof roadsInfoDialog.showModal==="function")roadsInfoDialog.showModal();
+ else window.open(href,"_blank","noopener,noreferrer");
+}
+document.getElementById("roadsInfoClose").addEventListener("click",()=>{
+ roadsInfoDialog.close();roadsInfoFrame.removeAttribute("src");
+});
 roadsInfoDialog.addEventListener("click",e=>{if(e.target===roadsInfoDialog)roadsInfoDialog.close();});
 function element(tag,cls,value){const e=document.createElement(tag);if(cls)e.className=cls;if(value!==undefined)e.textContent=value;return e}
 function makeCard(item){
- const infoCard=item.slug==="roads";
- const a=document.createElement(infoCard?"article":"a");a.className="card"+(infoCard?" card-with-info":"");
- if(!infoCard){a.href=item.href||("./"+encodeURIComponent(item.slug)+"/");a.target="_blank";a.rel="noopener noreferrer";a.setAttribute("aria-label","Abrir "+item.name);}
+ const a=element("article","card card-with-info");
  const top=element("div","card-top");
  top.append(element("span","card-type",item.type||"Aplicación"));
  const icon=element("div","card-icon");
@@ -256,13 +268,16 @@ function makeCard(item){
  }else icon.append(element("span","card-monogram",item.name.charAt(0).toUpperCase()));
  const copy=element("div","card-copy");
  copy.append(element("h3","card-name",item.name),element("p","card-detail",item.detail||"Aplicación OcToS"));
- if(infoCard){
-  const buttons=element("div","card-actions");
-  const open=element("a","card-link","Solicitar acceso");open.href="https://octos3dstudio.wordpress.com/contacto/";open.target="_blank";open.rel="noopener noreferrer";open.setAttribute("aria-label","Solicitar acceso a OcToS Roads");
-  const info=element("button","card-info","i");info.type="button";info.title="Información de Roads";info.setAttribute("aria-label","Información de Roads");
-  info.addEventListener("click",openRoadsInfo);
-  buttons.append(open,info);a.append(top,icon,copy,buttons);
- }else a.append(top,icon,copy,element("span","card-link","Abrir"));
+ const actions=element("div","card-actions");
+ const isRoads=item.slug==="roads";
+ const open=element("a","card-link",isRoads?"Solicitar acceso":"Abrir");
+ open.href=isRoads?"https://octos3dstudio.wordpress.com/contacto/":item.href||("./"+encodeURIComponent(item.slug)+"/");
+ open.target="_blank";open.rel="noopener noreferrer";
+ open.setAttribute("aria-label",isRoads?"Solicitar acceso a OcToS Roads":"Abrir "+item.name);
+ const info=element("button","card-info","i");info.type="button";
+ info.title="Información de "+item.name;info.setAttribute("aria-label","Información de "+item.name);
+ info.addEventListener("click",()=>openAppInfo(item));
+ actions.append(open,info);a.append(top,icon,copy,actions);
  return a;
 }
 function placeholder(){
