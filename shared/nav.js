@@ -19,6 +19,18 @@
     {id:'team',name:'Team · Sala',category:'Organización',path:'team/',icon:'team/icon.svg'}
   ];
   const website={id:'wordpress',name:'WordPress',category:'Sitio web',href:'https://octos3dstudio.wordpress.com/'};
+  const appNames={
+    apps:['APPS','CENTRO DE APLICACIONES'],
+    team:['TEAM','COORDINACIÓN INTERNA'],
+    drive:['DRIVE','MOVILIDAD Y NAVEGACIÓN'],
+    carto:['CARTO','VISOR CARTOGRÁFICO'],
+    meteo:['METEO','METEOROLOGÍA'],
+    rain:['RAIN','ANÁLISIS DEL TERRENO'],
+    layers:['LAYERS','CAPAS CARTOGRÁFICAS'],
+    templates:['TEMPLATES','SISTEMA VISUAL'],
+    aero:['AERO','LABORATORIO 3D'],
+    roads:['ROADS','INFRAESTRUCTURAS']
+  };
   const glyph={
     home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10"/><path d="M10 21v-7h4v7"/></svg>',
     menu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
@@ -33,7 +45,31 @@
     .octos-nav-trigger svg{display:block;width:23px;height:23px;flex:none;pointer-events:none}
     .octos-nav-panel{position:fixed!important;box-sizing:border-box!important;z-index:2147483000!important;width:min(314px,calc(100vw - 16px))!important;max-height:min(690px,calc(100dvh - 72px))!important;overflow:auto!important;color:#f1f1ef!important;background:#1b1c20!important;border:1px solid #52545a!important;border-radius:11px!important;box-shadow:0 18px 45px #000c!important;padding:10px!important;font:12px/1.45 "IBM Plex Sans",system-ui,sans-serif!important}
     .octos-nav-panel[hidden],html.pin-locked .octos-nav-panel{display:none!important}
-    .octos-nav-heading{font-size:10px;font-weight:700;letter-spacing:.13em;color:#aeb0b6;padding:8px 10px 10px}
+    /* Identidad de cabecera común: monograma T oficial + OcToS / aplicación. */
+    .octos-global-brand{position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;z-index:1!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:13px!important;min-width:0!important;max-width:calc(100% - 420px)!important;color:#f1f1ef!important;pointer-events:none!important;white-space:nowrap!important;line-height:1.15!important}
+    .octos-global-brand img{display:block!important;width:38px!important;height:38px!important;object-fit:contain!important;flex:none!important;background:transparent!important;border:0!important;padding:0!important}
+    .octos-global-brand-copy{display:flex;flex-direction:column;gap:4px;min-width:0;text-align:left}
+    .octos-global-brand-name{font:750 19px/1.13 Manrope,system-ui,sans-serif!important;letter-spacing:.045em!important;color:#f1f1ef!important}
+    .octos-global-brand-name span{color:#ff6a1a!important}
+    .octos-global-brand-sub{font:500 10px/1.3 "IBM Plex Sans",system-ui,sans-serif!important;letter-spacing:.14em!important;color:#92949b!important}
+    /* Sólo ocultar marcas duplicadas: los botones y formularios originales permanecen activos. */
+    .octos-has-global-nav body>header{position:relative!important}
+    .octos-has-global-nav body>header .brand{display:none!important}
+    .octos-has-global-nav body>header .ot-head-title{visibility:hidden!important}
+    .octos-has-global-nav body>header .ot-head-left>img{display:none!important}
+    .octos-has-global-nav body>header .head-left>.logo{display:none!important}
+    .octos-has-global-nav[data-octos-global-app="aero"] body>header>img,
+    .octos-has-global-nav[data-octos-global-app="aero"] body>header>b,
+    .octos-has-global-nav[data-octos-global-app="aero"] body>header>small{display:none!important}
+    .octos-has-global-nav #app>header.site-header{position:relative!important}
+    .octos-has-global-nav #app>header.site-header>.brand,
+    .octos-has-global-nav #app>header.site-header>.brand-copy{display:none!important}
+    @media(max-width:1100px){
+      .octos-global-brand{max-width:calc(100% - 310px)!important;gap:9px!important}
+      .octos-global-brand img{width:33px!important;height:33px!important}
+      .octos-global-brand-name{font-size:16px!important}
+      .octos-global-brand-sub{font-size:9px!important;letter-spacing:.07em!important}
+    }
     .octos-nav-list{display:grid;gap:3px}
     .octos-nav-link{box-sizing:border-box;display:flex!important;align-items:center;gap:12px;width:100%;min-height:45px;padding:7px 10px;border:1px solid transparent;border-radius:8px;background:transparent;color:#f1f1ef!important;text-decoration:none!important;text-align:left;line-height:1.25}
     .octos-nav-link:hover,.octos-nav-link:focus-visible{background:#2c2d31;border-color:#55575d;outline:none}
@@ -60,6 +96,10 @@
       .octos-themed .ot-head-left>button{min-width:29px!important;padding:2px 4px!important}
       .octos-themed .ot-head-title strong{font-size:min(var(--ot-titleSize),17px)!important}
       .site-header .brand-copy{max-width:calc(100% - 220px)}
+      .octos-global-brand{max-width:calc(100% - 245px)!important;gap:7px!important}
+      .octos-global-brand img{width:30px!important;height:30px!important}
+      .octos-global-brand-name{font-size:14px!important}
+      .octos-global-brand-sub{display:none!important}
     }
     @media(max-width:540px){
       .octos-nav-toolbar{gap:3px}
@@ -73,6 +113,9 @@
       .site-header .brand{margin-right:auto}
       .site-header .brand-mark{width:30px;height:30px}
       .site-header .brand-copy{max-width:calc(100% - 180px)}
+      .octos-global-brand{max-width:calc(100% - 170px)!important;gap:5px!important}
+      .octos-global-brand img{width:23px!important;height:23px!important}
+      .octos-global-brand-name{font-size:11px!important;letter-spacing:0!important}
     }
   `;
   function makeButton(id,label,icon){
@@ -99,6 +142,30 @@
     if(!header)return;
     const appId=currentApp();
     const homePage=appId==='apps'||appId==='index.html';
+    // Cabecera única en todas las aplicaciones, sin modificar el logo original de origen.
+    const brand=document.createElement('div');
+    brand.className='octos-global-brand';
+    brand.id='octos-global-brand';
+    const brandImage=document.createElement('img');
+    brandImage.src=LOGO_URL;
+    brandImage.alt='';
+    brandImage.setAttribute('aria-hidden','true');
+    const brandCopy=document.createElement('div');
+    brandCopy.className='octos-global-brand-copy';
+    const brandTitle=document.createElement('div');
+    brandTitle.className='octos-global-brand-name';
+    const prefix=document.createTextNode('OcToS ');
+    const appPart=document.createElement('span');
+    const meta=appNames[homePage?'apps':appId]||[appId.toUpperCase(),'APLICACIÓN'];
+    appPart.textContent=meta[0];
+    brandTitle.append(prefix,appPart);
+    const brandSub=document.createElement('div');
+    brandSub.className='octos-global-brand-sub';
+    brandSub.textContent=meta[1];
+    brandCopy.append(brandTitle,brandSub);
+    brand.append(brandImage,brandCopy);
+    header.appendChild(brand);
+    document.documentElement.dataset.octosGlobalApp=homePage?'apps':appId;
     const toolbar=document.createElement('div');
     toolbar.id='octos-app-switcher';
     toolbar.className='octos-nav-toolbar';
@@ -126,9 +193,7 @@
     panel.id='octos-app-list';
     panel.hidden=true;
     panel.setAttribute('aria-label','Cambiar de aplicación OcToS');
-    panel.appendChild(Object.assign(document.createElement('div'),{
-      className:'octos-nav-heading',textContent:'APLICACIONES OCTOS'
-    }));
+    // La lista comienza directamente por las aplicaciones, sin título adicional.
     const list=document.createElement('div');
     list.className='octos-nav-list';
     function item(app){
