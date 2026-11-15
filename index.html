@@ -258,7 +258,7 @@ function makeCard(item){
  copy.append(element("h3","card-name",item.name),element("p","card-detail",item.detail||"Aplicación OcToS"));
  if(infoCard){
   const buttons=element("div","card-actions");
-  const open=element("a","card-link","Abrir");open.href="./roads/";open.target="_blank";open.rel="noopener noreferrer";open.setAttribute("aria-label","Abrir Roads");
+  const open=element("a","card-link","Solicitar acceso");open.href="https://octos3dstudio.wordpress.com/contacto/";open.target="_blank";open.rel="noopener noreferrer";open.setAttribute("aria-label","Solicitar acceso a OcToS Roads");
   const info=element("button","card-info","i");info.type="button";info.title="Información de Roads";info.setAttribute("aria-label","Información de Roads");
   info.addEventListener("click",openRoadsInfo);
   buttons.append(open,info);a.append(top,icon,copy,buttons);
