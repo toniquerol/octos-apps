@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><meta charset="utf-8"><meta name="description" content="OcToS Aero V2: visualizador 3D de flujo aproximado para carrocerías GLB. Procesamiento local, partículas y múltiples vistas. No CFD."><meta name="viewport" content="width=device-width,initial-scale=1"><!-- Three.js 0.170.0 and example modules.
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="description" content="OcToS Aero V2.1: visualizador 3D de flujo aproximado para carrocerías GLB. Procesamiento local, partículas y múltiples vistas. No CFD."><meta name="viewport" content="width=device-width,initial-scale=1"><!-- Three.js 0.170.0 and example modules.
 The MIT License
 
 Copyright © 2010-2024 three.js authors
@@ -22,16 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 -->
-<title>OcToS Aero · V2.0</title><script src="../shared/nav.js" defer></script><style>
+<title>OcToS Aero · V2.1</title><script src="../shared/nav.js" defer></script><style>
 *{box-sizing:border-box}body{margin:0;background:#0e0e10;color:#f1f1ef;font:13px system-ui,Segoe UI,sans-serif}header{height:66px;border-bottom:1px solid #303137;display:flex;align-items:center;padding:0 24px;gap:20px}header b{font-size:24px;letter-spacing:3px}header b span{color:#ff6a1a}header small{color:#95969e;letter-spacing:2px}button,.file{background:#25262b;color:#eee;border:1px solid #3c3e45;border-radius:6px;padding:9px 12px;font:inherit;cursor:pointer}button:hover,.file:hover{border-color:#ff6a1a}.primary{background:#ff6a1a;color:#141414;border-color:#ff6a1a;font-weight:700}header .file{margin-left:auto}main{display:flex;height:calc(100vh - 119px)}aside{width:252px;flex-shrink:0;padding:22px 18px;overflow:auto;border-right:1px solid #303137}h2{font-size:11px;letter-spacing:2px;color:#ff995e;margin:0 0 16px}section{padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid #292b30}label{display:block;color:#c1c3cb;margin:12px 0 6px;font-size:12px}input[type=range]{width:100%;accent-color:#ff6a1a}input[type=number],select{background:#202127;color:#eee;border:1px solid #3b3d46;border-radius:5px;padding:7px;width:100%}input[type=checkbox]{accent-color:#ff6a1a}.row{display:flex;gap:6px}.row>*{flex:1;min-width:0}.hint{font-size:11px;line-height:1.6;color:#9396a1}.stat{font-size:12px;color:#c6c8cf;line-height:1.9}#stage{position:relative;flex:1;min-width:0;overflow:hidden;background:#11151b}canvas{position:absolute;inset:0;width:100%;height:100%}#panels{position:absolute;inset:0;display:grid;pointer-events:none}.view{position:relative;border:1px solid #31384255}.view select{position:absolute;top:14px;left:15px;width:126px;pointer-events:auto;background:#151a22d9;font-size:11px}.view small{position:absolute;right:16px;top:20px;color:#717e90;font-size:10px;letter-spacing:1px}#badge{position:absolute;bottom:18px;left:20px;color:#abb6c5;font-size:11px;background:#11151bca;padding:9px 12px;border:1px solid #313c4b;border-radius:5px;pointer-events:none}footer{height:53px;display:flex;align-items:center;gap:12px;padding:0 20px;border-top:1px solid #303137}#status{flex:1;font-size:12px;color:#b8bec7}#status.error{color:#ffad86}#fps{font:11px monospace;color:#929daa}#filename{overflow-wrap:anywhere;color:#eee;margin-bottom:7px}button:focus-visible,select:focus-visible{outline:2px solid #ff6a1a}#file{display:none}@media(max-width:750px){aside{width:192px;padding:15px 12px}header{padding:0 12px;gap:10px}header small{display:none}#badge{font-size:9px;left:8px}footer{padding:0 10px}#status{font-size:10px}}
 #flowlegend{position:absolute;left:20px;bottom:62px;z-index:2;display:flex;gap:14px;align-items:center;color:#94aab8;font:10px system-ui;letter-spacing:1px;pointer-events:none}#flowlegend b{color:#c2dbe1;font-weight:500}#particlecount{padding:5px 8px;border:1px solid #3b505d;border-radius:4px;background:#101820cc}aside{scrollbar-width:thin;scrollbar-color:#39464f #12161b}section{margin-bottom:15px;padding-bottom:15px}#badge{font-size:10px;color:#8296a6;border-color:#2d424e}header{background:#101216}header small{font-size:10px}input[type=range]{height:14px}.view select{max-width:calc(100% - 30px)}.view small{display:none}@media(max-width:750px){#flowlegend{left:10px;gap:8px;font-size:8px}#flowlegend b{display:none}}
-</style><header><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS" style="width:46px;height:46px;object-fit:contain;flex:none"><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V2.0</small><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></header><main><aside><section><h2>01 / VEHÍCULO</h2><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label><input id="presetBMW" type="checkbox" checked> BMW E46 Touring · orientar Y 180° al importar</label><label>Corregir orientación · +90°</label><div class="row"><button data-axis="x">X</button><button data-axis="y">Y</button><button data-axis="z">Z</button></div><p class="hint">Morro hacia −X. La última importación GLB se guarda en este navegador como vehículo inicial. Los giros manuales siguen disponibles.</p><p class="hint">Modelo de referencia: <a style="color:#ff995e" href="https://sketchfab.com/3d-models/bmw-3-series-touring-e46-2001-478330312c3d46fd94999c3133ce0366" target="_blank" rel="noopener noreferrer">BMW 3 Series Touring (E46) 2001</a> · Luquita · CC BY.</p></section><section><h2>02 / FLUJO VISUAL</h2><label for="quality">Densidad de partículas</label><select id="quality"><option value="2000">Ligero · 2.000</option><option value="6000" selected>Equilibrado · 6.000</option><option value="12000">Denso · 12.000</option><option value="24000">Máximo · 24.000</option></select>
-<label for="flowmode">Representación</label><select id="flowmode"><option value="both">Partículas + estelas</option><option value="trails">Solo estelas</option><option value="points">Solo partículas</option></select>
+</style><header><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS" style="width:46px;height:46px;object-fit:contain;flex:none"><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V2.1</small><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></header><main><aside><section><h2>01 / VEHÍCULO</h2><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label><input id="presetBMW" type="checkbox" checked> BMW E46 Touring · orientar Y 180° al importar</label><label>Corregir orientación · +90°</label><div class="row"><button data-axis="x">X</button><button data-axis="y">Y</button><button data-axis="z">Z</button></div><p class="hint">Morro hacia −X. La última importación GLB se guarda en este navegador como vehículo inicial. Los giros manuales siguen disponibles.</p><p class="hint">Modelo de referencia: <a style="color:#ff995e" href="https://sketchfab.com/3d-models/bmw-3-series-touring-e46-2001-478330312c3d46fd94999c3133ce0366" target="_blank" rel="noopener noreferrer">BMW 3 Series Touring (E46) 2001</a> · Luquita · CC BY.</p></section><section><h2>02 / FLUJO VISUAL</h2><label for="quality">Densidad de partículas</label><select id="quality"><option value="2000">Ligero · 2.000</option><option value="6000" selected>Equilibrado · 6.000</option><option value="12000">Denso · 12.000</option><option value="24000">Máximo · 24.000</option></select>
+<label for="precision">Precisión geométrica (independiente de partículas)</label><select id="precision"><option value="low">Ligera · 160 trazados</option><option value="balanced" selected>Equilibrada · 360 trazados</option><option value="fine">Detallada · 640 trazados</option></select><label for="flowmode">Representación</label><select id="flowmode"><option value="both">Partículas + estelas</option><option value="trails">Solo estelas</option><option value="points">Solo partículas</option></select>
 <label for="pointsize">Tamaño fino · píxeles</label><input id="pointsize" type="range" min="1" max="3" step="0.1" value="1.6">
 <label for="trail">Longitud de estela</label><input id="trail" type="range" min="0.3" max="2.5" step="0.1" value="1">
 <label for="opacity">Intensidad del flujo</label><input id="opacity" type="range" min="0.2" max="1" step="0.05" value="0.8">
 <label for="palette">Color de trazadores</label><select id="palette"><option value="#b8e9ec">Hielo</option><option value="#e5edf2">Perla</option><option value="#ffb16d">Ámbar</option></select>
-<label for="focus">Zona de emisión</label><select id="focus"><option value="all">Anchura completa</option><option value="center">Franja central</option></select><label for="speed">Velocidad de animación <span id="speedval">1×</span></label><input id="speed" type="range" min="0.2" max="2.5" value="1" step="0.1"><label><input id="lines" type="checkbox"> Guías de trayectoria</label><label><input id="tunnel" type="checkbox" checked> Marco del túnel</label><label><input id="body" type="checkbox" checked> Mostrar carrocería</label><label><input id="grid" type="checkbox" checked> Rejilla del suelo</label></section><section><h2>03 / VISTAS</h2><label for="layout">Distribución</label><select id="layout"><option value="1">Una vista</option><option value="2">Dos vistas</option><option value="4">Cuatro vistas</option></select><button id="frame" style="width:100%;margin-top:12px">Reencuadrar cámaras</button><p class="hint">Arrastrar: orbitar en 3D.<br>Rueda: acercar / alejar.<br>El aire avanza de −X a +X.</p></section><p class="hint">Envolvente por secciones de la malla. No representa presión, fuerzas ni turbulencia física.</p></aside><div id="stage"><div id="flowlegend"><b>FLUJO / VISUAL</b><span id="particlecount">6.000 TRAZADORES</span><span>−X → +X</span></div><div id="panels"></div><div id="badge">SIMULACIÓN VISUAL APROXIMADA · NO CFD</div></div></main><footer><button id="play" class="primary">Ⅱ Pausar</button><button id="reset">↺ Reiniciar</button><span id="status" role="status">Preparando escena…</span><span id="fps">— FPS</span></footer><script>const THREE=(()=>{/**
+<label for="focus">Zona de emisión</label><select id="focus"><option value="all">Anchura completa</option><option value="center">Franja central</option></select><label for="speed">Velocidad de animación <span id="speedval">1×</span></label><input id="speed" type="range" min="0.2" max="2.5" value="1" step="0.1"><label><input id="lines" type="checkbox"> Guías de trayectoria</label><label><input id="tunnel" type="checkbox" checked> Marco del túnel</label><label><input id="body" type="checkbox" checked> Mostrar carrocería</label><label><input id="grid" type="checkbox" checked> Rejilla del suelo</label></section><section><h2>03 / VISTAS</h2><label for="layout">Distribución</label><select id="layout"><option value="1">Una vista</option><option value="2">Dos vistas</option><option value="4">Cuatro vistas</option></select><button id="frame" style="width:100%;margin-top:12px">Reencuadrar cámaras</button><button id="clearFocus" style="width:100%;margin-top:8px">Eliminar foco de inspección</button><p class="hint">Arrastrar: orbitar en 3D; desplazar en vistas ortográficas.<br>Mayús + arrastrar: desplazar punto de mira.<br>Doble clic: centrar una zona del modelo.<br>Rueda: zoom y mayor concentración visual local.<br>Las trayectorias globales no cambian por el zoom.</p></section><p class="hint">Colisiones sobre triángulos con aceleración espacial; trazadores ilustrativos, no CFD. Las mallas abiertas, las holguras inferiores a la resolución y los segmentos irresolubles limitan el resultado. Colores decorativos, nunca magnitudes físicas.</p></aside><div id="stage"><div id="flowlegend"><b>FLUJO / VISUAL</b><span id="particlecount">6.000 TRAZADORES</span><span>−X → +X</span></div><div id="panels"></div><div id="badge">TRAYECTORIAS GEOMÉTRICAS ILUSTRATIVAS · NO CFD</div></div></main><footer><button id="play" class="primary">Ⅱ Pausar</button><button id="reset">↺ Reiniciar</button><span id="status" role="status">Preparando escena…</span><span id="fps">— FPS</span></footer><script>const THREE=(()=>{/**
  * @license
  * Copyright 2010-2024 Three.js Authors
  * SPDX-License-Identifier: MIT
@@ -60705,7 +60705,206 @@ function addPrimitiveAttributes( geometry, primitiveDef, parser ) {
 
 return { GLTFLoader };
 
-})();// GPU tracers: immutable path atlas, small soft sprites and tapered line trails.
+})();// World-space triangle BVH. Geometric collision queries; no fluid dynamics.
+const AeroGeometry = (() => {
+  const pause = () => new Promise(resolve => setTimeout(resolve, 0));
+  async function build(faces, current = () => true) {
+    if (!faces.length) throw Error('El modelo no contiene triángulos válidos.');
+    const ids = Array.from({ length: faces.length }, (_, i) => i), nodes = [];
+    const tasks = [{ start: 0, end: ids.length, parent: -1, side: '' }];
+    let processed = 0;
+    while (tasks.length) {
+      if (!current()) return null;
+      const job = tasks.pop(), {start, end} = job;
+      const bb = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
+      const cc = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
+      for (let i = start; i < end; i++) {
+        const f = faces[ids[i]];
+        for (let axis = 0; axis < 3; axis++) {
+          const lo = Math.min(f[axis], f[axis+3], f[axis+6]), hi = Math.max(f[axis], f[axis+3], f[axis+6]);
+          bb[axis] = Math.min(bb[axis], lo); bb[axis+3] = Math.max(bb[axis+3], hi);
+          const c = (f[axis]+f[axis+3]+f[axis+6])/3;
+          cc[axis] = Math.min(cc[axis],c); cc[axis+3] = Math.max(cc[axis+3],c);
+        }
+      }
+      const node = {bb,start,end,left:-1,right:-1}, n = nodes.push(node)-1;
+      if (job.parent >= 0) nodes[job.parent][job.side] = n;
+      if (end-start > 12) {
+        let axis = 0;
+        if (cc[4]-cc[1] > cc[3]-cc[0]) axis=1;
+        if (cc[5]-cc[2] > cc[axis+3]-cc[axis]) axis=2;
+        const pivot = (cc[axis]+cc[axis+3])/2;
+        let i=start,j=end-1;
+        while(i<=j){
+          const f=faces[ids[i]],center=(f[axis]+f[axis+3]+f[axis+6])/3;
+          if (center < pivot) i++; else {const temp=ids[i];ids[i]=ids[j];ids[j]=temp;j--;}
+        }
+        const cut = i>start && i<end ? i : start+Math.floor((end-start)/2);
+        tasks.push({start:cut,end,parent:n,side:'right'}, {start,end:cut,parent:n,side:'left'});
+      }
+      if (++processed % 256 === 0) await pause();
+    }
+    const T=THREE,a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),p=new T.Vector3(),q=new T.Vector3();
+    const triangle=new T.Triangle(),ray=new T.Ray(),hit=new T.Vector3();
+    function setFace(f){a.set(f[0],f[1],f[2]);b.set(f[3],f[4],f[5]);c.set(f[6],f[7],f[8]);triangle.set(a,b,c);}
+    function boxDistance2(bb,x,y,z){let d=0;for(let k=0;k<3;k++){const v=k===0?x:k===1?y:z;const h=v<bb[k]?bb[k]-v:v>bb[k+3]?v-bb[k+3]:0;d+=h*h;}return d;}
+    function closest(point,maxDistance=Infinity){
+      const x=point[0],y=point[1],z=point[2];p.set(x,y,z);
+      let dist2=maxDistance*maxDistance, best=null;const stack=[0];
+      while(stack.length){const id=stack.pop(),node=nodes[id];if(boxDistance2(node.bb,x,y,z)>dist2)continue;
+        if(node.left<0){for(let j=node.start;j<node.end;j++){
+          setFace(faces[ids[j]]);triangle.closestPointToPoint(p,q);
+          const d=q.distanceToSquared(p);if(d<dist2){dist2=d;best=[q.x,q.y,q.z];}
+        }}else{
+          const l=nodes[node.left],r=nodes[node.right];
+          const dl=boxDistance2(l.bb,x,y,z),dr=boxDistance2(r.bb,x,y,z);
+          if(dl<dr){if(dr<=dist2)stack.push(node.right);if(dl<=dist2)stack.push(node.left);}
+          else{if(dl<=dist2)stack.push(node.left);if(dr<=dist2)stack.push(node.right);}
+        }
+      }
+      return best?{point:best,distance:Math.sqrt(dist2)}:null;
+    }
+    function overlaps(bb,lo,hi){return bb[0]<=hi[0]&&bb[3]>=lo[0]&&bb[1]<=hi[1]&&bb[4]>=lo[1]&&bb[5]>=lo[2]&&bb[2]<=hi[2];}
+    function segment(from,to){
+      const delta=new T.Vector3(to[0]-from[0],to[1]-from[1],to[2]-from[2]);
+      const len=delta.length();if(len<1e-9)return null;
+      const tol=Math.min(len*.01,1e-5);delta.divideScalar(len);
+      ray.origin.set(from[0]+delta.x*tol,from[1]+delta.y*tol,from[2]+delta.z*tol);ray.direction.copy(delta);
+      const lo=[Math.min(from[0],to[0])-tol,Math.min(from[1],to[1])-tol,Math.min(from[2],to[2])-tol];
+      const hi=[Math.max(from[0],to[0])+tol,Math.max(from[1],to[1])+tol,Math.max(from[2],to[2])+tol];
+      const stack=[0];let best=null,bestDistance=len+tol;
+      while(stack.length){const node=nodes[stack.pop()];if(!overlaps(node.bb,lo,hi))continue;
+        if(node.left<0){for(let i=node.start;i<node.end;i++){
+          setFace(faces[ids[i]]);if(!ray.intersectTriangle(a,b,c,false,hit))continue;
+          const d=hit.distanceTo(ray.origin)+tol;
+          if(d>=tol && d<=len+tol && d<bestDistance){bestDistance=d;best={point:[hit.x,hit.y,hit.z],distance:d,face:ids[i]};}
+        }}else{stack.push(node.left,node.right);}
+      }
+      return best;
+    }
+    // Edge counts are diagnostics; separate overlapping submeshes can be falsely marked open.
+    let openEdges=null;
+    if(faces.length<=90000){
+      const edges=new Map();let max=1;
+      for(const f of faces)for(const v of f)max=Math.max(max,Math.abs(v));
+      const unit=max*1e-5;
+      const key=(f,j)=>[0,1,2].map(k=>Math.round(f[j+k]/unit)).join(',');
+      for(let i=0;i<faces.length;i++){
+        const f=faces[i],v=[key(f,0),key(f,3),key(f,6)];
+        for(let j=0;j<3;j++){
+          const k=v[j]<v[(j+1)%3]?v[j]+'|'+v[(j+1)%3]:v[(j+1)%3]+'|'+v[j];
+          edges.set(k,(edges.get(k)||0)+1);
+        }
+        if(i%10000===0){if(!current())return null;await pause();}
+      }
+      openEdges=0;for(const count of edges.values())if(count===1)openEdges++;
+    }
+    return {triangles:faces.length,openEdges,closest,segment,dispose(){faces.length=0;nodes.length=0;ids.length=0;}};
+  }
+  async function fromObject(root,current=()=>true){
+    const faces=[],a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3();
+    root.updateMatrixWorld(true);
+    const meshes=[];root.traverse(o=>{if(o.isMesh&&o.visible&&o.geometry?.attributes?.position)meshes.push(o);});
+    let count=0;
+    for(const mesh of meshes){
+      const pos=mesh.geometry.attributes.position,idx=mesh.geometry.index;
+      const len=idx?idx.count:pos.count;
+      for(let k=0;k+2<len;k+=3){
+        a.fromBufferAttribute(pos,idx?idx.getX(k):k).applyMatrix4(mesh.matrixWorld);
+        b.fromBufferAttribute(pos,idx?idx.getX(k+1):k+1).applyMatrix4(mesh.matrixWorld);
+        c.fromBufferAttribute(pos,idx?idx.getX(k+2):k+2).applyMatrix4(mesh.matrixWorld);
+        if(Number.isFinite(a.x+a.y+a.z+b.x+b.y+b.z+c.x+c.y+c.z)&&new THREE.Triangle(a,b,c).getArea()>1e-12){
+          faces.push([a.x,a.y,a.z,b.x,b.y,b.z,c.x,c.y,c.z]);
+        }
+        if(++count%4096===0){if(!current())return null;await pause();}
+      }
+    }
+    if(!current())return null;
+    return build(faces,current);
+  }
+  return {build,fromObject};
+})();
+// Deterministic geometric streamlines. The velocity model is illustrative, not CFD.
+const AeroPaths = (() => {
+  const modes={low:{tracks:160,steps:192},balanced:{tracks:360,steps:288},fine:{tracks:640,steps:384}};
+  const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
+  function velocity(at,surface,{H,L},preferred){
+    const range=Math.max(H*.40,L*.12),probe=[at[0]+range*.72,at[1],at[2]];
+    const near=surface.closest(probe,range*1.8);
+    if(!near)return {direction:[1,0,0],distance:Infinity};
+    let dy=probe[1]-near.point[1],dz=probe[2]-near.point[2];
+    let lateral=Math.hypot(dy,dz);
+    if(lateral<range*.025){dy=preferred===0?1:0;dz=preferred===0?0:preferred;lateral=1;}
+    const strength=Math.max(0,1-near.distance/range);
+    const multiplier=3.6*strength*strength;
+    return {direction:[1,dy/lateral*multiplier,dz/lateral*multiplier],distance:near.distance};
+  }
+  async function build(surface,{L,H,W,extent,precision='balanced',focus='all'},current=()=>true){
+    const {tracks,steps}=modes[precision]||modes.balanced;
+    const paths=new Float32Array(tracks*steps*3),centres=new Float32Array(tracks*3);
+    let seed=71,repaired=0,stalled=0,rawSamples=0;
+    const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
+    const cols=Math.round(Math.sqrt(tracks*1.5)),rows=Math.ceil(tracks/cols);
+    const clearance=Math.max(L*.015,H*.035);
+    const lo=-extent,hi=extent;
+    for(let track=0;track<tracks;track++){
+      if(!current())return null;
+      const col=track%cols,row=Math.floor(track/cols);
+      const y0=.035+(row+random()*.65)/rows*H*1.92;
+      const z0=((col+random()*.65)/cols-.5)*W*(focus==='center'?.85:2.9);
+      const preferred=z0<-.05?-1:z0>.05?1:0;
+      let here=[lo,y0,z0],raw=[here],iterations=0;
+      while(here[0]<hi-1e-8 && iterations++<steps*6){
+        const field=velocity(here,surface,{L,H},preferred);
+        const nominal=2*extent/(steps*.69),nearFactor=Number.isFinite(field.distance)?Math.max(.27,Math.min(1,field.distance/(clearance*2.4))):1;
+        const dx=Math.min(hi-here[0],nominal*nearFactor);
+        let next=[here[0]+dx,Math.max(.025,here[1]+field.direction[1]*dx),here[2]+field.direction[2]*dx];
+        const hit=surface.segment(here,next);
+        if(hit){
+          // Slide toward free space by taking short, segment-checked lateral steps.
+          let accepted=false;
+          for(let attempt=0;attempt<16;attempt++){
+            const direction=attempt%4;
+            const amount=clearance*(.4+Math.floor(attempt/4)*.4);
+            const vy=direction===0?amount:direction===1?-amount:0;
+            const vz=direction===2?amount:direction===3?-amount:0;
+            const candidate=[here[0]+dx/(1+Math.floor(attempt/8)),Math.max(.025,here[1]+vy),here[2]+vz];
+            if(!surface.segment(here,candidate) && (surface.closest(candidate,clearance*.17)?.distance??clearance) >=clearance*.17){next=candidate;accepted=true;break;}
+          }
+          if(!accepted){stalled++;break;}
+        }
+        if(next.every(Number.isFinite)){here=next;raw.push(next);}else{stalled++;break;}
+      }
+      rawSamples+=raw.length;
+      // GPU samples are interpolated from adaptive segments and checked for skipped surfaces.
+      let j=0,invalid=false;
+      for(let s=0;s<steps;s++){
+        const x=lo+(hi-lo)*s/(steps-1);
+        while(j+1<raw.length-1 && raw[j+1][0]<x)j++;
+        const a=raw[j],b=raw[Math.min(j+1,raw.length-1)];
+        const t=Math.max(0,Math.min(1,(x-a[0])/Math.max(1e-10,b[0]-a[0])));
+        const p=x>b[0]&&j===raw.length-2?b:[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];
+        const k=(track*steps+s)*3;
+        paths.set(p,k);
+        if(s>0&&surface.segment([paths[k-3],paths[k-2],paths[k-1]],p)){invalid=true;break;}
+      }
+      if(invalid){
+        repaired++;
+        // Safe fallback entirely above the bounding height, not a closed artificial envelope.
+        for(let s=0;s<steps;s++){
+          const k=(track*steps+s)*3;
+          paths[k]=lo+(hi-lo)*s/(steps-1);paths[k+1]=H+clearance*5;paths[k+2]=z0;
+        }
+      }
+      const mid=(track*steps+Math.floor(steps/2))*3;
+      centres.set([paths[mid],paths[mid+1],paths[mid+2]],track*3);
+      if(track%10===0)await pause();
+    }
+    return {paths,centres,tracks,steps,rawSamples,repaired,stalled,precision};
+  }
+  return {build,velocity,modes};
+})();
+// GPU tracers: immutable path atlas, small soft sprites and tapered line trails.
 // This is a visual transport renderer, not a fluid solver.
 const AeroFlow = (() => {
   const T = THREE;
@@ -60743,7 +60942,7 @@ const AeroFlow = (() => {
   const trailFragment = `varying float alpha; varying vec3 color;
     void main(){gl_FragColor=vec4(color,alpha*0.38);}`;
 
-  function create(paths, tracks, steps, count, length, pixelRatio) {
+  function create(paths, tracks, steps, count, length, pixelRatio, selection=null) {
     const rgba = new Float32Array(tracks * steps * 4);
     for (let i=0; i<tracks*steps; i++) rgba.set(paths.subarray(i*3,i*3+3),i*4);
     const atlas = new T.DataTexture(rgba,steps,tracks,T.RGBAFormat,T.FloatType);
@@ -60754,7 +60953,7 @@ const AeroFlow = (() => {
       const track=new Float32Array(total),phase=new Float32Array(total),rate=new Float32Array(total),age=new Float32Array(total);
       for(let i=0;i<n;i++) for(let j=0;j<stride;j++) {
         const k=i*stride+j;
-        track[k]=i%tracks;
+        track[k]=selection?.length?selection[i%selection.length]:i%tracks;
         phase[k]=(i*.61803398875)%1;
         rate[k]=.86+((i*73)%101)/101*.25;
         age[k]=trail?[0,1/3,1/3,2/3,2/3,1][j]:0;
@@ -60786,8 +60985,10 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));renderer.setClearColor(0
 const scene=new T.Scene();scene.add(new T.HemisphereLight(0xd9eaff,0x46414b,2.5));const light=new T.DirectionalLight(0xffffff,3);light.position.set(-3,7,4);scene.add(light);
 const fill=new T.DirectionalLight(0x9acbde,1.4);fill.position.set(4,3,-5);scene.add(fill);
 const vehicle=new T.Group();scene.add(vehicle);let flow=null,scenery=null;let content=null,paths=null,points=null,lineMesh=null,playing=true,clock=0,last=0,dirty=true,raf=0,loading=false,token=0;
-let L=4.5,H=1.4,W=1.9,extent=8,triangles=0;const SLICES=48,STEPS=240,TRACKS=480;
-let sections=[],cameras=[],views=[],orbit=[],frameCount=0,fpsTime=0;
+let L=4.5,H=1.4,W=1.9,extent=8,triangles=0,TRACKS=0,STEPS=0;
+let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0;
+let generation=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
+let cameras=[],views=[],orbit=[],frameCount=0,fpsTime=0;
 const ground=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial({color:0x171d25,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.025;scene.add(ground);
 const grid=new T.GridHelper(20,40,0x3c505c,0x23323e);grid.position.y=-.015;scene.add(grid);
 const arrow=new T.ArrowHelper(new T.Vector3(1,0,0),new T.Vector3(-6,.06,-2.4),2,0xff6a1a,.3,.17);scene.add(arrow);
@@ -60800,21 +61001,68 @@ const geom=new T.ExtrudeGeometry(shape,{depth:1.62,bevelEnabled:true,bevelSegmen
 for(const z of [-.9,.9]){const win=new T.Mesh(new T.BoxGeometry(1.1,.38,.02),glass);win.position.set(.02,1.1,z*.96);g.add(win);for(const x of [-1.42,1.45]){const wheel=new T.Mesh(new T.CylinderGeometry(.34,.34,.22,24),new T.MeshStandardMaterial({color:0x16171b,roughness:.95}));wheel.rotation.x=Math.PI/2;wheel.position.set(x,.34,z);g.add(wheel);const hub=new T.Mesh(new T.CylinderGeometry(.18,.18,.23,16),mat);hub.rotation.x=Math.PI/2;hub.position.copy(wheel.position);g.add(hub);}}
 return g;}
 function normalize(){vehicle.position.set(0,0,0);vehicle.updateMatrixWorld(true);let b=new T.Box3().setFromObject(vehicle);if(b.isEmpty())throw Error('No hay geometría visible.');const center=b.getCenter(new T.Vector3());vehicle.position.set(-center.x,-b.min.y,-center.z);vehicle.updateMatrixWorld(true);b=new T.Box3().setFromObject(vehicle);const s=b.getSize(new T.Vector3());L=s.x;H=s.y;W=s.z;if(!Number.isFinite(L+H+W)||Math.min(L,H,W)<1e-7)throw Error('Dimensiones no válidas.');extent=Math.max(L*1.65,H*2,W*2);ground.scale.set(extent*2,extent*1.3,1);grid.scale.setScalar(extent/10);arrow.position.set(-extent*.85,.06,-W*.9);arrow.setLength(L*.5,L*.08,L*.04);$('length').value=L.toFixed(2);$('dimensions').textContent=`${L.toFixed(2)} × ${H.toFixed(2)} × ${W.toFixed(2)} m`;}
-function buildEnvelope(){sections=Array.from({length:SLICES},()=>({h:0,w:0}));triangles=0;const a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3();vehicle.traverse(o=>{if(!o.isMesh)return;const p=o.geometry.attributes.position,idx=o.geometry.index;if(!p)return;const count=idx?idx.count:p.count;triangles+=Math.floor(count/3);for(let k=0;k+2<count;k+=3){a.fromBufferAttribute(p,idx?idx.getX(k):k).applyMatrix4(o.matrixWorld);b.fromBufferAttribute(p,idx?idx.getX(k+1):k+1).applyMatrix4(o.matrixWorld);c.fromBufferAttribute(p,idx?idx.getX(k+2):k+2).applyMatrix4(o.matrixWorld);const lo=Math.max(0,Math.floor((Math.min(a.x,b.x,c.x)/L+.5)*(SLICES-1))),hi=Math.min(SLICES-1,Math.ceil((Math.max(a.x,b.x,c.x)/L+.5)*(SLICES-1)));for(let j=lo;j<=hi;j++){sections[j].h=Math.max(sections[j].h,a.y,b.y,c.y);sections[j].w=Math.max(sections[j].w,Math.abs(a.z),Math.abs(b.z),Math.abs(c.z));}}});}
-// Conservative smooth section envelope: each section contributes a Gaussian
-// shoulder; taking the maximum preserves its rectangular obstacle bounds.
-function envelope(x){let h=0,w=0;const shoulder=L*.15;for(let i=0;i<SLICES;i++){const sx=L*(i/(SLICES-1)-.5),d=Math.max(0,Math.abs(x-sx)-L/SLICES),f=Math.exp(-d*d/(shoulder*shoulder));h=Math.max(h,sections[i].h*f);w=Math.max(w,sections[i].w*f);}return [h,w];}
-function buildPaths(){paths=new Float32Array(TRACKS*STEPS*3);const lines=[];let seed=71;const rand=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};let env=Array.from({length:STEPS},(_,i)=>envelope(-extent+2*extent*i/(STEPS-1)));
-for(let p=0;p<TRACKS;p++){const col=p%24,row=Math.floor(p/24),focus=$('focus').value;
-const y0=.05+(row+rand()*.7)/20*H*1.8,z0=((col+rand()*.7)/24-.5)*W*(focus==='center'?.75:2.9);for(let s=0;s<STEPS;s++){const x=-extent+2*extent*s/(STEPS-1),[eh,ew]=env[s];let y=y0,z=z0;const margin=Math.min(L*.025,.12),h=eh+margin,w=ew+margin;const r=Math.max(y0/h,Math.abs(z0)/w);if(eh>.00001){const target=Math.pow(1+Math.pow(r,6),1/6),factor=target/Math.max(r,.001);y=y0*factor;z=z0*factor;}const k=(p*STEPS+s)*3;paths[k]=x;paths[k+1]=y;paths[k+2]=z;if(p%12===0&&s>0)lines.push(...paths.subarray(k-3,k),x,y,z);}}
-if(lineMesh){scene.remove(lineMesh);dispose(lineMesh);}lineMesh=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(lines,3)),new T.LineBasicMaterial({color:0x7fbcc4,transparent:true,opacity:.065,depthWrite:false}));lineMesh.visible=$('lines').checked;scene.add(lineMesh);setParticles();}
+function releaseFocus(){
+  for(const extra of [focusFlow,retiredFocus])if(extra){scene.remove(extra.group);extra.dispose();}
+  focusFlow=retiredFocus=null;focusFade=retiredFade=0;focusLocation=null;
+}
+function clearInspection(){inspectionPoint=null;releaseFocus();if(focusMarker)focusMarker.visible=false;wake();}
+function focusSelection(point){
+  const scores=[];
+  for(let track=0;track<TRACKS;track++){
+    let best=Infinity;
+    for(let s=0;s<STEPS;s+=3){
+      const k=(track*STEPS+s)*3,dx=paths[k]-point.x,dy=paths[k+1]-point.y,dz=paths[k+2]-point.z;
+      const d=dx*dx+dy*dy+dz*dz;if(d<best)best=d;
+    }
+    scores.push([best,track]);
+  }
+  scores.sort((a,b)=>a[0]-b[0]);
+  return scores.slice(0,Math.max(12,Math.ceil(TRACKS*.15))).map(x=>x[1]);
+}
+function updateFocus(force=false,i=0){
+  if(!flow||!paths||loading||!orbit.length)return;
+  const view=orbit[i]||orbit[0],close=view.r<extent*.76||view.zoom>1.8;
+  if(!inspectionPoint&&!close){
+    if(focusFlow){if(retiredFocus){scene.remove(retiredFocus.group);retiredFocus.dispose();}
+      retiredFocus=focusFlow;retiredFade=focusFade;focusFlow=null;focusFade=0;focusLocation=null;wake();}
+    return;
+  }
+  const target=inspectionPoint||view.target;
+  if(!force&&focusFlow&&focusLocation&&focusLocation.distanceTo(target)<Math.max(L*.12,.08))return;
+  if(retiredFocus){scene.remove(retiredFocus.group);retiredFocus.dispose();retiredFocus=null;}
+  retiredFocus=focusFlow;retiredFade=focusFade;
+  const selected=focusSelection(target);
+  focusFlow=AeroFlow.create(paths,TRACKS,STEPS,Math.max(400,Math.floor(+$('quality').value*.45)),L,renderer.getPixelRatio(),selected);
+  scene.add(focusFlow.group);focusFade=0;focusLocation=target.clone();
+  configureFlow();wake();
+}
 function setParticles(){
   if(flow){scene.remove(flow.group);flow.dispose();}
+  releaseFocus();
   flow=AeroFlow.create(paths,TRACKS,STEPS,+$('quality').value,L,renderer.getPixelRatio());
-  points=flow.points;scene.add(flow.group);configureFlow();updateParticles();wake();
+  points=flow.points;scene.add(flow.group);configureFlow();updateParticles();updateFocus(true);wake();
 }
-function configureFlow(){if(!flow)return;flow.configure({size:+$('pointsize').value,trailLength:+$('trail').value*.018,opacity:+$('opacity').value,color:$('palette').value,mode:$('flowmode').value});$('particlecount').textContent=flow.count.toLocaleString('es')+' TRAZADORES';wake();}
-function updateParticles(){if(flow)flow.setTime(clock);}
+function configureFlow(){
+  if(!flow)return;
+  const cfg={size:+$('pointsize').value,trailLength:+$('trail').value*.018,
+    opacity:+$('opacity').value,color:$('palette').value,mode:$('flowmode').value};
+  flow.configure(cfg);
+  if(focusFlow)focusFlow.configure({...cfg,opacity:cfg.opacity*focusFade*.75});
+  if(retiredFocus)retiredFocus.configure({...cfg,opacity:cfg.opacity*retiredFade*.75});
+  $('particlecount').textContent=flow.count.toLocaleString('es')+' TRAZADORES · '+TRACKS+' TRAYECTORIAS';
+  wake();
+}
+function updateParticles(){if(flow)flow.setTime(clock);if(focusFlow)focusFlow.setTime(clock);if(retiredFocus)retiredFocus.setTime(clock);}
+function installPathGuides(){
+  if(lineMesh){scene.remove(lineMesh);dispose(lineMesh);}
+  const lines=[];
+  for(let p=0;p<TRACKS;p+=15)for(let s=1;s<STEPS;s++){
+    const k=(p*STEPS+s)*3;lines.push(...paths.subarray(k-3,k+3));
+  }
+  lineMesh=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.Float32BufferAttribute(lines,3)),
+    new T.LineBasicMaterial({color:0x7fbcc4,transparent:true,opacity:.065,depthWrite:false}));
+  lineMesh.visible=$('lines').checked;scene.add(lineMesh);
+}
 function buildScenery(){
   if(scenery){scene.remove(scenery);dispose(scenery);}scenery=new T.Group();
   const halfZ=Math.max(W*1.65,L*.55),top=H*2.2,halfX=extent*.96;
@@ -60827,14 +61075,133 @@ function buildScenery(){
   const pad=new T.Mesh(new T.BoxGeometry(L*1.15,.035,W*1.35),new T.MeshStandardMaterial({color:0x202e38,roughness:.85,metalness:.15}));pad.position.y=-.02;scenery.add(pad);
   scenery.visible=$('tunnel').checked;scene.add(scenery);
 }
-function rebuild(){normalize();buildEnvelope();buildPaths();buildScenery();resetCameras();status(`${triangles.toLocaleString('es')} triángulos · envolvente geométrica lista`);wake();}
-function install(obj,name,yaw=0){if(content){vehicle.remove(content);dispose(content);}vehicle.rotation.set(0,yaw,0);vehicle.scale.setScalar(1);content=obj;vehicle.add(obj);vehicle.visible=$('body').checked;$('filename').textContent=name;clock=0;rebuild();}
-function resetCameras(){orbit=views.map(()=>({theta:2.35,phi:1.13,r:extent*1.12,zoom:1}));wake();}
+async function performRebuild(geometry=true,reframe=true){
+  const seq=++generation;
+  loading=true;status(geometry?'Analizando triángulos del modelo…':'Refinando trayectorias…');
+  let nextSurface=null;
+  try{
+    if(geometry||!surface){normalize();geometry=true;nextSurface=await AeroGeometry.fromObject(vehicle,()=>seq===generation);}
+    else nextSurface=surface;
+    if(!nextSurface||seq!==generation){if(nextSurface&&nextSurface!==surface)nextSurface.dispose();return;}
+    const result=await AeroPaths.build(nextSurface,{L,H,W,extent,precision:$('precision').value,focus:$('focus').value},()=>seq===generation);
+    if(!result||seq!==generation){if(nextSurface!==surface)nextSurface.dispose();return;}
+    if(nextSurface!==surface){if(surface)surface.dispose();surface=nextSurface;}
+    pathData=result;paths=result.paths;TRACKS=result.tracks;STEPS=result.steps;triangles=surface.triangles;
+    releaseFocus();installPathGuides();setParticles();if(geometry)buildScenery();if(reframe)resetCameras();
+    const warning=surface.openEdges===null?'topología no verificada':surface.openEdges?'malla con '+surface.openEdges+' bordes abiertos':'malla sin bordes abiertos detectados';
+    status(triangles.toLocaleString('es')+' triángulos · '+TRACKS+' rutas / '+STEPS+' muestras · '+warning+
+      (result.repaired||result.stalled?' · '+result.repaired+' rutas corregidas, '+result.stalled+' detenidas':'')+
+      ' · visualización, no CFD');
+  }catch(e){if(seq===generation)status('Error de geometría: '+e.message,true);}
+  finally{if(seq===generation){loading=false;wake();}}
+}
+function rebuild(geometry=true,reframe=true){buildPromise=performRebuild(geometry,reframe);return buildPromise;}
+function install(obj,name,yaw=0){
+  generation++;releaseFocus();
+  if(content){vehicle.remove(content);dispose(content);}
+  vehicle.rotation.set(0,yaw,0);vehicle.scale.setScalar(1);
+  content=obj;vehicle.add(obj);vehicle.visible=$('body').checked;
+  $('filename').textContent=name;clock=0;inspectionPoint=null;focusMarker.visible=false;
+  return rebuild(true,true);
+}
+function resetCameras(){
+  orbit=views.map(()=>({theta:2.35,phi:1.13,r:extent*1.12,zoom:1,target:new T.Vector3(0,H*.55,0)}));
+  if(focusFlow)releaseFocus();wake();
+}
 function layout(){const count=+$('layout').value;$('panels').innerHTML='';$('panels').style.gridTemplateColumns=count===1?'1fr':'1fr 1fr';$('panels').style.gridTemplateRows=count===4?'1fr 1fr':'1fr';views=[];cameras=[];for(let i=0;i<count;i++){const div=document.createElement('div');div.className='view';div.innerHTML=`<select aria-label="Cámara ${i+1}"><option value="3d">Perspectiva 3D</option><option value="side">Lateral</option><option value="top">Superior</option><option value="front">Frontal</option></select><small>0${i+1} / VISTA</small>`;$('panels').append(div);div.querySelector('select').value=['3d','side','top','front'][i];div.querySelector('select').onchange=wake;views.push(div);cameras.push({persp:new T.PerspectiveCamera(42,1,.01,10000),ortho:new T.OrthographicCamera(-1,1,1,-1,.01,10000)});}resetCameras();}
-function render(){const width=stage.clientWidth,height=stage.clientHeight;if(renderer.domElement.width!==Math.round(width*renderer.getPixelRatio())||renderer.domElement.height!==Math.round(height*renderer.getPixelRatio()))renderer.setSize(width,height,false);renderer.setScissorTest(true);const sr=stage.getBoundingClientRect();views.forEach((v,i)=>{const rect=v.getBoundingClientRect(),x=rect.left-sr.left,y=height-(rect.bottom-sr.top),aspect=rect.width/rect.height,type=v.querySelector('select').value,o=orbit[i],target=new T.Vector3(0,H*.55,0);let cam;if(type==='3d'){cam=cameras[i].persp;cam.aspect=aspect;cam.position.set(Math.cos(o.theta)*Math.sin(o.phi)*o.r,H*.55+Math.cos(o.phi)*o.r,Math.sin(o.theta)*Math.sin(o.phi)*o.r);cam.up.set(0,1,0);}else{cam=cameras[i].ortho;const size=extent*.58/o.zoom;cam.left=-size*aspect;cam.right=size*aspect;cam.top=size;cam.bottom=-size;cam.up.set(0,1,0);if(type==='side')cam.position.set(0,H*.55,extent*3);if(type==='front')cam.position.set(-extent*3,H*.55,0);if(type==='top'){cam.position.set(0,extent*3,0);cam.up.set(1,0,0);target.set(0,0,0);}}cam.lookAt(target);cam.updateProjectionMatrix();renderer.setViewport(x,y,rect.width,rect.height);renderer.setScissor(x,y,rect.width,rect.height);renderer.render(scene,cam);});dirty=false;}
-function tick(t){raf=0;const dt=last?Math.min((t-last)/1000,.04):0;last=t;if(document.hidden){last=0;return;}if(playing&&!loading){clock+=dt*+$('speed').value;updateParticles();dirty=true;}if(dirty)render();frameCount++;if(t-fpsTime>1000){$('fps').textContent=playing?Math.round(frameCount*1000/(t-fpsTime))+' FPS':'PAUSA';frameCount=0;fpsTime=t;}if(playing)raf=requestAnimationFrame(tick);}
-let drag=null;function viewAt(e){return views.findIndex(v=>{const r=v.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom;});}renderer.domElement.addEventListener('pointerdown',e=>{const i=viewAt(e);if(i<0)return;drag={i,x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId);});renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;const o=orbit[drag.i];o.theta+=(e.clientX-drag.x)*.008;o.phi=T.MathUtils.clamp(o.phi+(e.clientY-drag.y)*.008,.08,Math.PI*.49);drag.x=e.clientX;drag.y=e.clientY;wake();});renderer.domElement.addEventListener('pointerup',()=>drag=null);renderer.domElement.addEventListener('pointercancel',()=>drag=null);renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();const i=viewAt(e);if(i<0)return;const f=Math.exp(e.deltaY*.001);orbit[i].r=T.MathUtils.clamp(orbit[i].r*f,L*.3,extent*8);orbit[i].zoom=T.MathUtils.clamp(orbit[i].zoom/f,.15,8);wake();},{passive:false});
-$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Ⅱ Pausar':'▶ Reproducir';$('fps').textContent=playing?'— FPS':'PAUSA';last=0;wake();};$('reset').onclick=()=>{clock=0;updateParticles();wake();};$('quality').onchange=setParticles;for(const id of ['pointsize','trail','opacity','palette','flowmode'])$(id).oninput=configureFlow;$('focus').onchange=buildPaths;$('tunnel').onchange=()=>{scenery.visible=$('tunnel').checked;wake();};$('speed').oninput=()=>{$('speedval').textContent=$('speed').value+'×';};$('layout').onchange=layout;$('frame').onclick=resetCameras;$('lines').onchange=()=>{lineMesh.visible=$('lines').checked;wake();};$('body').onchange=()=>{vehicle.visible=$('body').checked;wake();};$('grid').onchange=()=>{grid.visible=$('grid').checked;wake();};$('scale').onclick=()=>{const v=+$('length').value;if(!Number.isFinite(v)||v<.1||v>100){status('Introduce una longitud entre 0,1 y 100 metros.',true);return;}vehicle.scale.multiplyScalar(v/L);rebuild();};document.querySelectorAll('[data-axis]').forEach(b=>b.onclick=()=>{vehicle.rotation[b.dataset.axis]+=Math.PI/2;rebuild();});$('demo').onclick=()=>{token++;loading=false;install(demo(),'Concepto de demostración');};
+function render(){
+  const width=stage.clientWidth,height=stage.clientHeight;
+  if(renderer.domElement.width!==Math.round(width*renderer.getPixelRatio())||renderer.domElement.height!==Math.round(height*renderer.getPixelRatio()))renderer.setSize(width,height,false);
+  renderer.setScissorTest(true);const sr=stage.getBoundingClientRect();
+  views.forEach((v,i)=>{
+    const rect=v.getBoundingClientRect(),x=rect.left-sr.left,y=height-(rect.bottom-sr.top);
+    const aspect=rect.width/Math.max(rect.height,1),type=v.querySelector('select').value,o=orbit[i],target=o.target;
+    let cam;
+    if(type==='3d'){
+      cam=cameras[i].persp;cam.aspect=aspect;
+      cam.position.set(target.x+Math.cos(o.theta)*Math.sin(o.phi)*o.r,
+        target.y+Math.cos(o.phi)*o.r,target.z+Math.sin(o.theta)*Math.sin(o.phi)*o.r);
+      cam.up.set(0,1,0);
+    }else{
+      cam=cameras[i].ortho;const size=extent*.58/o.zoom;
+      cam.left=-size*aspect;cam.right=size*aspect;cam.top=size;cam.bottom=-size;cam.up.set(0,1,0);
+      if(type==='side')cam.position.set(target.x,target.y,target.z+extent*3);
+      if(type==='front')cam.position.set(target.x-extent*3,target.y,target.z);
+      if(type==='top'){cam.position.set(target.x,target.y+extent*3,target.z);cam.up.set(1,0,0);}
+    }
+    cam.lookAt(target);cam.updateProjectionMatrix();cam.updateMatrixWorld(true);
+    renderer.setViewport(x,y,rect.width,rect.height);renderer.setScissor(x,y,rect.width,rect.height);renderer.render(scene,cam);
+  });dirty=false;
+}
+const focusMarker=new T.Mesh(new T.SphereGeometry(.032,10,8),new T.MeshBasicMaterial({color:0xff6a1a,depthTest:false}));
+focusMarker.visible=false;scene.add(focusMarker);
+function tick(t){
+  raf=0;const dt=last?Math.min((t-last)/1000,.04):0;last=t;
+  if(document.hidden){last=0;return;}
+  if(playing&&!loading){clock+=dt*+$('speed').value;updateParticles();dirty=true;}
+  if(focusFlow&&focusFade<1){focusFade=Math.min(1,focusFade+dt*4);focusFlow.uniforms.opacity.value=+$('opacity').value*.75*focusFade;dirty=true;}
+  if(retiredFocus){retiredFade=Math.max(0,retiredFade-dt*4);retiredFocus.uniforms.opacity.value=+$('opacity').value*.75*retiredFade;
+    dirty=true;if(retiredFade===0){scene.remove(retiredFocus.group);retiredFocus.dispose();retiredFocus=null;}}
+  if(dirty)render();
+  frameCount++;if(t-fpsTime>1000){$('fps').textContent=playing?Math.round(frameCount*1000/(t-fpsTime))+' FPS':'PAUSA';frameCount=0;fpsTime=t;}
+  if(playing||focusFlow&&focusFade<1||retiredFocus)raf=requestAnimationFrame(tick);
+}
+let drag=null;
+function viewAt(e){return views.findIndex(v=>{const r=v.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom;});}
+renderer.domElement.addEventListener('pointerdown',e=>{const i=viewAt(e);if(i<0)return;
+  drag={i,x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button===2||views[i].querySelector('select').value!=='3d'};
+  renderer.domElement.setPointerCapture(e.pointerId);});
+renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
+renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;
+  const o=orbit[drag.i],dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(drag.pan||e.shiftKey){
+    const type=views[drag.i].querySelector('select').value,cam=cameras[drag.i][type==='3d'?'persp':'ortho'];
+    const right=new T.Vector3().setFromMatrixColumn(cam.matrixWorld,0);
+    const up=new T.Vector3().setFromMatrixColumn(cam.matrixWorld,1);
+    const unit=type==='3d'?o.r/500:extent/(Math.max(o.zoom,.1)*300);
+    o.target.addScaledVector(right,-dx*unit).addScaledVector(up,dy*unit);
+  }else{
+    o.theta+=dx*.008;o.phi=T.MathUtils.clamp(o.phi+dy*.008,.08,Math.PI*.94);
+  }
+  drag.x=e.clientX;drag.y=e.clientY;wake();
+});
+renderer.domElement.addEventListener('pointerup',()=>{if(drag)updateFocus(false,drag.i);drag=null;});
+renderer.domElement.addEventListener('pointercancel',()=>drag=null);
+renderer.domElement.addEventListener('wheel',e=>{
+  e.preventDefault();const i=viewAt(e);if(i<0)return;
+  const factor=Math.exp(e.deltaY*.001),o=orbit[i];
+  o.r=T.MathUtils.clamp(o.r*factor,L*.025,extent*8);
+  o.zoom=T.MathUtils.clamp(o.zoom/factor,.15,48);
+  updateFocus(false,i);wake();
+},{passive:false});
+renderer.domElement.addEventListener('dblclick',e=>{
+  const i=viewAt(e);if(i<0||!content)return;
+  render();const bounds=views[i].getBoundingClientRect(),type=views[i].querySelector('select').value;
+  const cam=cameras[i][type==='3d'?'persp':'ortho'],ray=new T.Raycaster();
+  ray.setFromCamera({x:(e.clientX-bounds.left)/bounds.width*2-1,y:-(e.clientY-bounds.top)/bounds.height*2+1},cam);
+  const hits=ray.intersectObject(content,true);if(!hits.length)return;
+  inspectionPoint=hits[0].point.clone();
+  orbit[i].target.copy(inspectionPoint);
+  focusMarker.position.copy(inspectionPoint);focusMarker.scale.setScalar(Math.max(L*.35,.1));focusMarker.visible=true;
+  updateFocus(true,i);wake();
+});
+$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Ⅱ Pausar':'▶ Reproducir';$('fps').textContent=playing?'— FPS':'PAUSA';last=0;wake();};
+$('reset').onclick=()=>{clock=0;updateParticles();wake();};
+$('quality').onchange=setParticles;
+$('precision').onchange=()=>rebuild(false,false);
+for(const id of ['pointsize','trail','opacity','palette','flowmode'])$(id).oninput=configureFlow;
+$('focus').onchange=()=>rebuild(false,false);
+$('tunnel').onchange=()=>{scenery.visible=$('tunnel').checked;wake();};
+$('speed').oninput=()=>{$('speedval').textContent=$('speed').value+'×';};
+$('layout').onchange=layout;
+$('frame').onclick=()=>{resetCameras();clearInspection();};
+$('clearFocus').onclick=clearInspection;
+$('lines').onchange=()=>{if(lineMesh)lineMesh.visible=$('lines').checked;wake();};
+$('body').onchange=()=>{vehicle.visible=$('body').checked;wake();};
+$('grid').onchange=()=>{grid.visible=$('grid').checked;wake();};
+$('scale').onclick=()=>{const v=+$('length').value;if(!Number.isFinite(v)||v<.1||v>100){status('Introduce una longitud entre 0,1 y 100 metros.',true);return;}vehicle.scale.multiplyScalar(v/L);rebuild(true,true);};
+document.querySelectorAll('[data-axis]').forEach(b=>b.onclick=()=>{vehicle.rotation[b.dataset.axis]+=Math.PI/2;rebuild(true,true);});
+$('demo').onclick=()=>{token++;loading=false;install(demo(),'Concepto de demostración');};
 // Validate embedded-only GLB before parsing; external network URLs are rejected.
 function validateGLB(buffer){const v=new DataView(buffer);if(v.byteLength<20||v.getUint32(0,true)!==0x46546c67||v.getUint32(4,true)!==2||v.getUint32(8,true)!==v.byteLength)throw Error('No es un GLB 2.0 válido.');let json;for(let p=12;p+8<=v.byteLength;){const n=v.getUint32(p,true),type=v.getUint32(p+4,true);if(p+8+n>v.byteLength)throw Error('GLB incompleto.');if(type===0x4e4f534a)json=JSON.parse(new TextDecoder().decode(new Uint8Array(buffer,p+8,n)));p+=8+n;}if(!json)throw Error('Falta la descripción del modelo.');for(const item of [...json.buffers||[],...json.images||[]])if(item.uri&&!item.uri.startsWith('data:'))throw Error('El GLB contiene recursos externos. Exporta con todo incrustado.');for(const x of json.extensionsUsed||[])if(/draco|meshopt|basisu/i.test(x))throw Error('Exporta sin compresión DRACO, Meshopt o KTX2 para este prototipo.');if(json.skins?.length||json.nodes?.some(n=>n.extensions?.EXT_mesh_gpu_instancing))throw Error('Exporta una malla estática sin esqueletos ni instancias GPU.');}
 // The imported model can be kept locally and restored on the next visit.
@@ -60845,10 +61212,16 @@ async function parseVehicle(buffer){validateGLB(buffer);const manager=new T.Load
 async function restoreDefault(){const t=token;let saved=null;try{saved=await readDefault();}catch(e){/* Private-mode storage may be unavailable. */}if(t!==token)return;
 if(!saved&&window.location&&/^https?:$/.test(window.location.protocol)){try{const r=await fetch('models/bmw-e46-touring.glb');if(r.ok)saved={buffer:await r.arrayBuffer(),name:'BMW 3 Series Touring (E46) 2001',yaw:Math.PI};}catch(e){/* Optional hosted GLB is absent or offline. */}}
 if(t!==token)return;if(!saved){status('Demo activa · Importa el GLB BMW E46 una vez para establecer el modelo predeterminado.');return;}
-loading=true;status('Cargando vehículo predeterminado…');try{const model=await parseVehicle(saved.buffer);if(t!==token){dispose(model);return;}install(model,saved.name,saved.yaw||0);status('Modelo predeterminado cargado · orientación aplicada.');}catch(e){if(t===token)status('No se pudo cargar el modelo predeterminado: '+e.message,true);}finally{if(t===token)loading=false;wake();}}
-$('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=++token;loading=true;status('Leyendo GLB local…');await new Promise(r=>setTimeout(r,30));try{const buf=await f.arrayBuffer(),model=await parseVehicle(buf);if(t!==token){dispose(model);return;}const yaw=$('presetBMW').checked?Math.PI:0;install(model,f.name,yaw);status('GLB cargado · comprueba la longitud real.');try{const saved=await saveDefault(buf,f.name,yaw);if(t===token)status(saved?'GLB cargado y guardado como predeterminado · orientación aplicada.':'GLB cargado · no se pudo guardar en este navegador.');}catch(e){if(t===token)status('GLB cargado · no se pudo guardar para futuros accesos.',true);}}catch(err){if(t===token)status('No se pudo cargar: '+err.message,true);}finally{if(t===token)loading=false;e.target.value='';wake();}};
+loading=true;status('Cargando vehículo predeterminado…');try{const model=await parseVehicle(saved.buffer);if(t!==token){dispose(model);return;}await install(model,saved.name,saved.yaw||0);status('Modelo predeterminado cargado · orientación aplicada.');}catch(e){if(t===token)status('No se pudo cargar el modelo predeterminado: '+e.message,true);}finally{if(t===token)loading=false;wake();}}
+$('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=++token;loading=true;status('Leyendo GLB local…');await new Promise(r=>setTimeout(r,30));try{const buf=await f.arrayBuffer(),model=await parseVehicle(buf);if(t!==token){dispose(model);return;}const yaw=$('presetBMW').checked?Math.PI:0;await install(model,f.name,yaw);status('GLB cargado · comprueba la longitud real.');try{const saved=await saveDefault(buf,f.name,yaw);if(t===token)status(saved?'GLB cargado y guardado como predeterminado · orientación aplicada.':'GLB cargado · no se pudo guardar en este navegador.');}catch(e){if(t===token)status('GLB cargado · no se pudo guardar para futuros accesos.',true);}}catch(err){if(t===token)status('No se pudo cargar: '+err.message,true);}finally{if(t===token)loading=false;e.target.value='';wake();}};
 new ResizeObserver(wake).observe(stage);document.addEventListener('visibilitychange',()=>{last=0;if(!document.hidden)wake();});renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();playing=false;status('Contexto gráfico perdido. Recarga el archivo.',true);});
 layout();install(demo(),'Concepto de demostración');restoreDefault();
-window.aeroDiagnostics=()=>({triangles,particles:points.geometry.attributes.position.count,views:views.length,playing,dimensions:[L,H,W],tracks:TRACKS,steps:STEPS,gpuAnimation:true,trailVertices:flow.trails.geometry.attributes.position.count,particleSize:flow.uniforms.size.value,externalResources:performance.getEntriesByType('resource').filter(r=>/^https?:/.test(r.name)).length,vehicleYaw:vehicle.rotation.y});
+window.aeroReady=()=>buildPromise;
+window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
+  dimensions:[L,H,W],tracks:TRACKS,steps:STEPS,precision:pathData?.precision||null,
+  rawSamples:pathData?.rawSamples||0,repaired:pathData?.repaired||0,stalled:pathData?.stalled||0,
+  openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,
+  trailVertices:flow?.trails.geometry.attributes.position.count||0,particleSize:flow?.uniforms.size.value||0,
+  externalResources:performance.getEntriesByType('resource').filter(r=>/^https?:/.test(r.name)).length,vehicleYaw:vehicle.rotation.y});
 })();
 </script></html>
