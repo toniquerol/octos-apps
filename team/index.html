@@ -336,6 +336,7 @@ header.team-header .octos-global-brand{z-index:1!important}
 /* Controles del editor geométrico */
 #floor.layout-editing .floor-zone{cursor:grab;touch-action:none}
 #floor.layout-editing .layout-wall{cursor:ew-resize;touch-action:none}
+#floor .layout-wall.selected line:not([stroke="transparent"]){stroke:#ff6a1a}
 #floor .layout-rotate-handle{cursor:crosshair;touch-action:none}
 #floor .layout-size-handle{cursor:nwse-resize;touch-action:none}
 #floor .layout-controls{pointer-events:none}
@@ -1005,7 +1006,7 @@ const zoneDefs=[
 ];
 function defaultLayout(){
  return {
-  building:{x:77,y:70,w:1380,h:880},
+  building:{x:77,y:70,w:1380,h:880,wallThickness:8},
   objects:Object.fromEntries(Object.entries(presets).map(([id,p])=>[id,{...p,angle:0}])),
   zones:Object.fromEntries(zoneDefs.map(z=>[z.id,{x:z.x,y:z.y,w:z.w,h:z.h,angle:0}])),
   walls:{partition:{x:997,doorY:472,doorWidth:71,thickness:9}}
@@ -1022,6 +1023,7 @@ try{
   const b=obj.building;
   draft.building.w=clamp(validNumber(b.w,1380),MIN_W,MAX_W);
   draft.building.h=clamp(validNumber(b.h,880),MIN_H,MAX_H);
+  draft.building.wallThickness=clamp(validNumber(b.wallThickness,8),4,22);
   for(const id of Object.keys(presets)){
    const p=obj.objects[id]||{},def=presets[id];
    const w=clamp(validNumber(p.w,def.w),id==="meeting"?110:id.startsWith("cabinet-")?65:95,600);
@@ -1091,7 +1093,7 @@ function drawArchitecture(root){
  }
  rect(svg,b.x+18,b.y+17,b.w,b.h,"#050506","none",9,{opacity:.5});
  const building=node("g",{transform:"translate("+b.x+" "+b.y+") scale("+(b.w/BASE_W)+" "+(b.h/BASE_H)+")"},svg);
- rect(building,0,0,BASE_W,BASE_H,"url(#octos-floor-shade)","#414348",11,{"stroke-width":8});
+ rect(building,0,0,BASE_W,BASE_H,"url(#octos-floor-shade)","#414348",11,{"stroke-width":b.wallThickness});
  rect(building,14,14,BASE_W-28,BASE_H-28,"url(#octos-grid)","none",0,{"class":"plan-grid"});
  rect(building,18,18,BASE_W-36,BASE_H-36,"none","#27292e",5,{"stroke-width":2});
  rect(building,52,56,945,160,"#1b1d20","#35373c",8,{"stroke-width":1});
@@ -1105,7 +1107,7 @@ function drawArchitecture(root){
  txt(building,1030,613,"RECEPCIÓN / ACCESO",11,"#b4b5bb",{"class":"floor-text"});
  // Tabique interior editable: desplazar X, grosor y hueco de paso.
  const wall=draft.walls.partition,wx=wall.x,wy=wall.doorY,ww=wall.doorWidth;
- const partition=node("g",{"class":"layout-wall","data-pick":"wall-partition","data-wall":"partition",tabindex:0,role:"button","aria-label":"Tabique interior editable"},building);
+ const partition=node("g",{"class":"layout-wall"+(selectedId==="wall-partition"?" selected":""),"data-pick":"wall-partition","data-wall":"partition",tabindex:0,role:"button","aria-label":"Tabique interior editable"},building);
  line(partition,wx,219,wx,wy,"#595b60",wall.thickness,{"class":"floor-wall"});
  line(partition,wx,wy+ww,wx,835,"#595b60",wall.thickness,{"class":"floor-wall"});
  node("path",{d:"M"+wx+" "+wy+" A"+ww+" "+ww+" 0 0 1 "+(wx+ww)+" "+(wy+ww),fill:"none",stroke:"#787a80","stroke-width":2,"stroke-dasharray":"5 4","pointer-events":"none"},partition);
@@ -1124,7 +1126,7 @@ function drawArchitecture(root){
  // Áreas grupales con separación visual, sin tabiques cruzados
  for(const z of zoneDefs){
   const value=draft.zones[z.id];
-  const g=node("g",{"class":"floor-zone pod hotspot","data-pick":z.id,"data-move":z.id,tabindex:0,role:"button","aria-label":z.title+" "+z.sub,
+  const g=node("g",{"class":"floor-zone pod hotspot"+(selectedId===z.id?" selected":""),"data-pick":z.id,"data-move":z.id,tabindex:0,role:"button","aria-label":z.title+" "+z.sub,
    transform:elementTransform(value,z)},building);
   rect(g,z.x,z.y,z.w,z.h,"#24262a","#393b40",12,{"class":"zone-fill","stroke-width":1.5});
   rect(g,z.x+7,z.y+7,z.w-14,z.h-14,"none","#303238",8,{"stroke-width":1,"stroke-dasharray":"5 6"});
@@ -1464,14 +1466,14 @@ window.octosTeamShowConfig=function(id,item){
   addGeometryEditor(id);return;
  }
  panel.hidden=false;
- panel.innerHTML='<h3>Edificio adaptable</h3><p class="team-local-note">Ajusta el tamaño exterior del edificio. Unidades gráficas, no metros reales.</p><form id="building-form"><fieldset><label>Ancho del edificio<input name="width" type="number" min="'+MIN_W+'" max="'+MAX_W+'" step="8" required></label><label>Fondo del edificio<input name="depth" type="number" min="'+MIN_H+'" max="'+MAX_H+'" step="8" required></label></fieldset><div class="team-config-actions"><button type="submit">Aplicar dimensiones</button></div><div class="team-config-message" role="status"></div></form>';
- const form=panel.querySelector("form");form.elements.width.value=draft.building.w;form.elements.depth.value=draft.building.h;
+ panel.innerHTML='<h3>Edificio adaptable</h3><p class="team-local-note">Ajusta el tamaño exterior del edificio. Unidades gráficas, no metros reales.</p><form id="building-form"><fieldset><label>Ancho del edificio<input name="width" type="number" min="'+MIN_W+'" max="'+MAX_W+'" step="8" required></label><label>Fondo del edificio<input name="depth" type="number" min="'+MIN_H+'" max="'+MAX_H+'" step="8" required></label><label>Grosor de muros exteriores<input name="wallThickness" type="number" min="4" max="22" step="1" required></label></fieldset><div class="team-config-actions"><button type="submit">Aplicar dimensiones</button></div><div class="team-config-message" role="status"></div></form>';
+ const form=panel.querySelector("form");form.elements.width.value=draft.building.w;form.elements.depth.value=draft.building.h;form.elements.wallThickness.value=draft.building.wallThickness;
  if(window.octosTeamIsMaster!==true){form.querySelector("fieldset").disabled=true;form.querySelector("button").hidden=true}
  form.addEventListener("submit",function(e){
   e.preventDefault();if(window.octosTeamIsMaster!==true)return;
-  const w=Number(form.elements.width.value),h=Number(form.elements.depth.value);
-  if(!Number.isFinite(w)||!Number.isFinite(h)||w<MIN_W||w>MAX_W||h<MIN_H||h>MAX_H){form.querySelector(".team-config-message").textContent="Dimensiones fuera de rango.";return}
-  draft.building.w=w;draft.building.h=h;markDirty();draw();
+  const w=Number(form.elements.width.value),h=Number(form.elements.depth.value),wallThickness=Number(form.elements.wallThickness.value);
+  if(!Number.isFinite(w)||!Number.isFinite(h)||!Number.isFinite(wallThickness)||w<MIN_W||w>MAX_W||h<MIN_H||h>MAX_H||wallThickness<4||wallThickness>22){form.querySelector(".team-config-message").textContent="Dimensiones fuera de rango.";return}
+  draft.building.w=w;draft.building.h=h;draft.building.wallThickness=wallThickness;markDirty();draw();
   form.querySelector(".team-config-message").textContent="Dimensiones aplicadas. Guarda la distribución.";
  });
 };
