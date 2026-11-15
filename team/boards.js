@@ -54,6 +54,20 @@ css.textContent=[
  "@media(max-width:760px){.team-board-overlay{padding:8px}.team-board-window{max-height:96dvh}.team-board-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.team-board-layout{grid-template-columns:1fr}}"
 ].join("\n");
 document.head.append(css);
+const planStyles=document.createElement("style");
+planStyles.textContent=`
+.team-board-plan-menu{margin-top:14px;padding:13px;background:#17181b;border:1px solid #45464c;border-radius:8px}
+.team-board-plan-menu summary{cursor:pointer;color:#ffb485;font-weight:650;font-size:12px}
+.team-board-plan-menu label{display:block;font-size:11px;color:#dedfe1;margin:10px 0 5px}
+.team-board-plan-menu select,.team-board-plan-menu input[type=number],.team-board-plan-menu input[type=datetime-local]{background:#101114;color:#f1f1ef;border:1px solid #555760;border-radius:7px;padding:9px;width:100%;font:13px 'IBM Plex Sans',sans-serif}
+.team-board-plan-menu .plan-frequency{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.team-board-plan-menu .plan-enabled{display:flex;gap:9px;align-items:center}
+.team-board-plan-menu .plan-enabled input{accent-color:#ff6a1a}
+.team-board-plan-menu [hidden]{display:none!important}
+.team-board-plan-menu p,.team-board-plan-label{font-size:11px;color:#bdbec4;line-height:1.5}
+.team-board-plan-label{margin:10px 0;color:#ffb485}
+`;
+document.head.append(planStyles);
 
 const overlay=document.createElement("section");
 overlay.id="team-board-overlay";
@@ -73,6 +87,7 @@ overlay.innerHTML=
  '<label for="team-board-message">Encargo o investigación</label><textarea id="team-board-message" maxlength="2500" rows="6" required placeholder="Escribe o dicta lo que quieres que investiguen…"></textarea>'+
  '<div class="team-board-dictation"><button id="team-board-mic" type="button" aria-label="Iniciar dictado" aria-pressed="false" aria-controls="team-board-message"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button><small id="team-board-speech-status" role="status" aria-live="polite">Micrófono para transcribir, no para enviar.</small></div>'+
  '<p class="team-board-help">El audio puede procesarse mediante el servicio de voz del navegador. Revisa el texto antes de guardar.</p>'+
+ '<details id="team-board-plan-menu" class="team-board-plan-menu"><summary>Programar tarea</summary><label for="team-board-mode">Ejecución</label><select id="team-board-mode"><option value="none">Sin programación</option><option value="once">Una vez</option><option value="repeat">Recurrente</option></select><div id="team-board-date-row" hidden><label for="team-board-date">Fecha y hora</label><input id="team-board-date" type="datetime-local"></div><div id="team-board-period-row" class="plan-frequency" hidden><div><label for="team-board-every">Repetir cada</label><input id="team-board-every" type="number" min="1" max="168" value="2" step="1"></div><div><label for="team-board-unit">Unidad</label><select id="team-board-unit"><option value="minutes">Minutos</option><option value="hours" selected>Horas</option><option value="days">Días</option></select></div></div><label id="team-board-enabled-row" class="plan-enabled" hidden><input id="team-board-enabled" type="checkbox" checked>Preparada (no ejecuta todavía)</label><p>Configuración local. Para ejecutar en segundo plano, falta enlazar el planificador de Cloudflare y OpenAI API.</p></details>'+
  '<div class="team-board-form-actions"><button class="primary" id="team-board-save" type="submit">Añadir tarea</button><button type="button" id="team-board-cancel" hidden>Cancelar edición</button></div>'+
  '<p class="team-board-feedback" role="status" aria-live="polite"></p>'+
  '</form>'+
@@ -85,6 +100,49 @@ const title=el("#team-board-title"),agent=el("#team-board-agent"),message=el("#t
 const save=el("#team-board-save"),cancel=el("#team-board-cancel"),feedback=el(".team-board-feedback");
 const mic=el("#team-board-mic"),speechStatus=el("#team-board-speech-status");
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+const planMenu=el("#team-board-plan-menu"),mode=el("#team-board-mode"),date=el("#team-board-date"),
+ every=el("#team-board-every"),unit=el("#team-board-unit"),enabled=el("#team-board-enabled");
+function localDT(d){return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16)}
+function updatePlan(){
+ const recurring=mode.value==="repeat",once=mode.value==="once";
+ el("#team-board-period-row").hidden=!recurring;
+ el("#team-board-date-row").hidden=!once;
+ el("#team-board-enabled-row").hidden=!(recurring||once);
+ date.disabled=!once;date.required=once;date.min=localDT(new Date());
+ every.disabled=!recurring;every.required=recurring;unit.disabled=!recurring;
+ const bounds={minutes:[15,1440],hours:[1,168],days:[1,365]}[unit.value]||[1,168];
+ every.min=String(bounds[0]);every.max=String(bounds[1]);
+ if(!Number.isFinite(every.valueAsNumber)||every.valueAsNumber<bounds[0])every.value=String(bounds[0]);
+ if(every.valueAsNumber>bounds[1])every.value=String(bounds[1]);
+}
+function setPlan(p){
+ mode.value=p&&["once","repeat"].includes(p.mode)?p.mode:"none";
+ unit.value=p&&["minutes","hours","days"].includes(p.unit)?p.unit:"hours";
+ every.value=String(p&&Number.isInteger(p.every)?p.every:2);
+ date.value=p&&p.at&&!Number.isNaN(Date.parse(p.at))?localDT(new Date(p.at)):"";
+ enabled.checked=!p||p.enabled!==false;updatePlan();
+}
+function readPlan(){
+ if(mode.value==="none")return null;
+ if(mode.value==="once"){
+  const at=new Date(date.value);
+  if(!date.value||!Number.isFinite(at.getTime())||at.getTime()<=Date.now())throw Error("Indica una fecha futura válida.");
+  return {mode:"once",at:at.toISOString(),enabled:enabled.checked};
+ }
+ const amount=Number(every.value);
+ if(!Number.isInteger(amount)||amount<Number(every.min)||amount>Number(every.max))
+  throw Error("Frecuencia fuera del intervalo permitido.");
+ return {mode:"repeat",every:amount,unit:unit.value,enabled:enabled.checked};
+}
+function formatPlan(p){
+ if(!p)return "";
+ const frequency=p.mode==="once"?(Number.isFinite(Date.parse(p.at))?new Date(p.at).toLocaleString("es-ES"):"Fecha no válida"):
+  "Cada "+p.every+" "+({minutes:"minutos",hours:"horas",days:"días"}[p.unit]||"horas");
+ return frequency+" · "+(p.enabled?"Preparada":"Pausada")+" (sin ejecución automática)";
+}
+mode.addEventListener("change",()=>{enabled.checked=true;updatePlan()});
+unit.addEventListener("change",updatePlan);
+setPlan(null);
 let active="group-2",editing=null,lastTrigger=null,speech=null,records=[];
 try{
  const parsed=JSON.parse(localStorage.getItem(KEY)||"[]");
@@ -150,7 +208,7 @@ mic.addEventListener("click",()=>{
  try{recognition.start()}catch(_){stopSpeech(true);speechStatus.textContent="No se pudo iniciar el micrófono."}
 });
 function clearForm(){
- stopSpeech(true);editing=null;form.reset();title.value="";message.value="";
+ stopSpeech(true);editing=null;form.reset();title.value="";message.value="";setPlan(null);planMenu.open=false;
  save.textContent="Añadir tarea";cancel.hidden=true;el("#team-board-form-title").textContent="Nueva tarea";
  renderAgents();status("");
 }
@@ -173,6 +231,13 @@ function renderTabs(){
 function create(tag,className,text){
  const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=text;return n;
 }
+function editTask(t,scheduling){
+ stopSpeech(true);editing=t.id;title.value=t.title||"";message.value=t.message;renderAgents(t.agent);setPlan(t.schedule);
+ save.textContent="Guardar cambios";cancel.hidden=false;el("#team-board-form-title").textContent="Editar tarea";
+ planMenu.open=scheduling||!!t.schedule;
+ status("Edita y guarda los cambios.");
+ if(scheduling)planMenu.scrollIntoView({block:"nearest"});else message.focus();
+}
 function renderList(){
  const tasks=currentTasks();
  count.textContent="("+tasks.length+")";
@@ -184,6 +249,7 @@ function renderList(){
   card.append(create("p","",t.message));
   const assigned=current().agents.find(([id])=>id===t.agent);
   card.append(create("div","team-board-meta",(assigned?assigned[1]:"Sin asignar")+" · "+new Date(t.createdAt||Date.now()).toLocaleDateString("es-ES")));
+  if(t.schedule)card.append(create("p","team-board-plan-label",formatPlan(t.schedule)));
   const actions=create("div","team-board-card-actions"),label=create("label");
   label.textContent="Estado manual";
   const select=create("select");select.setAttribute("aria-label","Estado de "+(t.title||"tarea"));
@@ -195,25 +261,36 @@ function renderList(){
   });
   label.append(select);actions.append(label);
   const edit=create("button","team-board-action","Editar");edit.type="button";
-  edit.addEventListener("click",()=>{
-   stopSpeech(true);editing=t.id;title.value=t.title||"";message.value=t.message;renderAgents(t.agent);
-   save.textContent="Guardar cambios";cancel.hidden=false;el("#team-board-form-title").textContent="Editar tarea";
-   status("Editando la tarea. Los cambios se guardan al confirmar.");message.focus();
-  });
+  edit.addEventListener("click",()=>editTask(t,false));
+  const program=create("button","team-board-action",t.schedule?"Cambiar frecuencia":"Programar");
+  program.type="button";program.addEventListener("click",()=>editTask(t,true));
+  actions.append(edit,program);
+  if(t.schedule){
+   const toggle=create("button","team-board-action",t.schedule.enabled?"Pausar":"Reanudar");
+   toggle.type="button";
+   toggle.addEventListener("click",()=>{
+    const next=records.map(x=>x.id===t.id?{...x,schedule:{...x.schedule,enabled:!x.schedule.enabled},updatedAt:new Date().toISOString()}:x);
+    if(persist(next)){renderList();status("Programación local actualizada; el planificador sigue pendiente de conectar.");}
+   });
+   actions.append(toggle);
+  }
   const del=create("button","team-board-action team-board-delete","Eliminar");del.type="button";
   del.addEventListener("click",()=>{
    if(!confirm("¿Eliminar esta tarea de la pizarra?"))return;
    if(persist(records.filter(x=>x.id!==t.id))){if(editing===t.id)clearForm();renderList();status("Tarea eliminada.");}
   });
-  actions.append(edit,del);card.append(actions);list.append(card);
+  actions.append(del);card.append(actions);list.append(card);
  }
 }
 form.addEventListener("submit",event=>{
  event.preventDefault();stopSpeech(true);
  const description=message.value.trim().slice(0,2500);
  if(!description){status("Escribe o dicta un encargo antes de guardarlo.");message.focus();return}
+ let schedule;
+ try{updatePlan();schedule=readPlan()}
+ catch(err){planMenu.open=true;status(err.message);return}
  const now=new Date().toISOString();
- const data={title:title.value.trim().slice(0,100),message:description,agent:agent.value,group:active,updatedAt:now};
+ const data={title:title.value.trim().slice(0,100),message:description,agent:agent.value,group:active,schedule,updatedAt:now};
  let next;
  if(editing){
   next=records.map(x=>x.id===editing?{...x,...data}:x);
