@@ -123,11 +123,13 @@
  }
  let controller=null;
  async function load(){
-  if(!section.closest(".view.active"))return;
-  if(window.octosTeamIsMaster!==true){
+  section.hidden=window.octosTeamIsMaster!==true;
+  if(section.hidden){
+   if(controller){controller.abort();controller=null;refresh.disabled=false}
    state.textContent="Telemetría reservada al PIN maestro.";
    return;
   }
+  if(!section.closest(".view.active"))return;
   let base;
   try{base=url()}catch(err){state.textContent=err.message;return}
   const key=auth?.value?.trim();
@@ -164,6 +166,9 @@
  });
  auth?.addEventListener("change",()=>{if(section.closest(".view.active"))load()});
  endpoint?.addEventListener("change",()=>{if(section.closest(".view.active"))load()});
+ // El acceso PIN se verifica de forma asíncrona; no depender de un retardo fijo.
+ new MutationObserver(()=>{void load()}).observe(document.documentElement,{
+  attributes:true,attributeFilter:["class"]});
  window.addEventListener("pageshow",()=>setTimeout(load,100));
  document.addEventListener("visibilitychange",()=>{if(!document.hidden)load()});
  setInterval(()=>{if(!document.hidden&&section.closest(".view.active"))load()},60000);
