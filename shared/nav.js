@@ -15,7 +15,7 @@
     {id:'layers',name:'Layers',category:'Cartografía',path:'layers/',icon:'layers/icon.svg'},
     {id:'templates',name:'Templates',category:'Sistema visual',path:'templates/',icon:'templates/icon.svg'},
     {id:'aero',name:'Aero',category:'Simulación 3D',path:'aero/',icon:'aero/icon.svg'},
-    {id:'roads',name:'Roads',category:'Infraestructuras',path:'roads/',icon:'roads/icon.svg'},
+    {id:'roads',name:'Roads',category:'Infraestructuras',path:'roads/info/',icon:'roads/icon.svg'},
     {id:'team',name:'Team · Sala',category:'Organización',path:'team/',icon:'team/icon.svg'}
   ];
   const website={id:'wordpress',name:'WordPress',category:'Sitio web',href:'https://octos3dstudio.wordpress.com/'};
