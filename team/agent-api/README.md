@@ -35,4 +35,4 @@ En OcToS Team → Entrada / Input, configurar la URL HTTPS del Worker, introduci
 - `Probar recorrido local` es una **simulación de estados**, no genera respuestas IA ni consume tokens.
 - La animación de actividad representa únicamente la sesión de navegador que ejecuta la petición. No altera `team/status.json` ni sincroniza otros equipos.
 - Los agentes no tienen navegación web: no afirmar que verificaron la disponibilidad de servicios WMS.
-- Modelo por defecto: `gpt-5-mini`. Límite de salida: 650 + 650 + 900 tokens por ejecución.
+- Modelo por defecto: `gpt-6-luna`. Límite de salida: 650 + 650 + 900 tokens por ejecución.
