@@ -6,6 +6,7 @@
 'use strict';
 const SOURCES={
  dgt:{name:'Radares fijos DGT',url:'https://infocar.dgt.es/datex2/dgt/PredefinedLocationsPublication/radares/content.xml',color:'#ff596f',format:'xml'},
+ dgtSections:{name:'Radares de tramo DGT · extremos',url:'https://infocar.dgt.es/datex2/dgt/PredefinedLocationsPublication/radares/content.xml',color:'#ab9cfa',format:'xml'},
  sct:{name:'Radares fijos SCT',url:'https://transit.gencat.cat/web/.content/documents/seguretat_viaria/radars.txt',color:'#ff9f49',format:'txt'},
  sections:{name:'Referencias de radar de tramo SCT',url:'https://transit.gencat.cat/web/.content/documents/seguretat_viaria/radars.txt',color:'#a99afa',format:'txt'},
  trailer:{name:'Cinemómetros de remolque SCT',url:'https://transit.gencat.cat/web/.content/documents/seguretat_viaria/radars-remolc.txt',color:'#66d8cd',format:'txt'}
@@ -40,9 +41,10 @@ function parseSCT(textValue,filter){
  for(let i=0;i<lines.length;i++){
   const line=lines[i].trim();
   if(!line||/^(?:\(?ETRS89\)?|Via\b|Vía\b)/i.test(line))continue;
-  const parts=line.split(/\s+/);
-  if(parts.length!==5){rejected.push(i+1);continue}
-  const [road,pk,speedToken,xToken,yToken]=parts;
+  // Admitir nombre de vía compuesto y espacios en intervalos PK.
+  const m=line.match(/^(.+?)\s+(\d+(?:[.,]\d+)?(?:\s*-\s*\d+(?:[.,]\d+)?)?)\s+(\d+(?:[.,]\d+)?)\s+([-\d,.]+)\s+([-\d,.]+)$/);
+  if(!m){rejected.push(i+1);continue}
+  const [,road,rawPK,speedToken,xToken,yToken]=m,pk=rawPK.replace(/\s+/g,'');
   const segment=pk.includes('-');
   if(filter==='fixed'&&segment||filter==='section'&&!segment)continue;
   const E=number(xToken),N=number(yToken),speed=number(speedToken);
@@ -50,36 +52,41 @@ function parseSCT(textValue,filter){
   if(!coord||!Number.isFinite(speed)||speed<10||speed>140){rejected.push(i+1);continue}
   const key=[road,pk,coord.map(n=>n.toFixed(5)).join(','),filter].join('|');
   if(seen.has(key))continue;seen.add(key);
-  const type=filter==='trailer'?'Cinemómetro en remolque':segment?'Referencia radar de tramo':'Radar fijo SCT';
+  const kind=filter==='trailer'?'trailer':segment?'sections':'sct';
   features.push({type:'Feature',geometry:{type:'Point',coordinates:coord},
-   properties:{name:type,road,pk,speed,kind:filter,source:'Servei Català de Trànsit',
-    note:segment?'Coordenada de referencia; el TXT no define un trazado geográfico completo del tramo.':
-     filter==='trailer'?'Localización publicada; no implica que esté activo en este momento.':''}});
+   properties:{name:kind==='trailer'?'Cinemómetro en remolque SCT':segment?'Referencia radar de tramo SCT':'Radar fijo SCT',
+    road,pk,speed,kind,source:'Servei Català de Trànsit',
+    note:segment?'Punto de referencia publicado. No representa el trazado completo.':
+     kind==='trailer'?'Punto publicado, no certifica actividad actual.':'Ubicación oficial publicada.'}});
  }
  return {data:{type:'FeatureCollection',features},rejected};
 }
 function extractDGT(xml){
  const doc=new DOMParser().parseFromString(xml,'application/xml');
- if(doc.querySelector('parsererror'))throw Error('El archivo no contiene XML válido');
- const nodes=Array.from(doc.getElementsByTagName('*')).filter(n=>
-  ['predefinedlocation','predefinedlocationreference'].includes(n.localName.toLowerCase()));
- const seen=new Set(),features=[],rejected=[];
- const all=(node,tag)=>Array.from(node.getElementsByTagName('*')).filter(x=>x.localName.toLowerCase()===tag.toLowerCase());
- const val=(node,tags)=>{for(const tag of tags){const el=all(node,tag)[0];if(el?.textContent?.trim())return el.textContent.trim()}return ''};
+ if(doc.querySelector('parsererror'))throw Error('Archivo XML no válido');
+ // DATEX II 1.0 contiene predefinedLocation anidado: usar solo el que tiene id.
+ const nodes=Array.from(doc.getElementsByTagName('*')).filter(n=>n.localName==='predefinedLocation'&&n.hasAttribute('id'));
+ const all=(node,tag)=>Array.from(node.getElementsByTagName('*')).filter(n=>n.localName===tag);
+ const val=(node,tag)=>all(node,tag)[0]?.textContent?.trim()||'';
+ const features=[],sections=[],rejected=[];
  for(const node of nodes){
-  const lat=number(val(node,['latitude'])),lon=number(val(node,['longitude']));
-  if(!isES(lat,lon)){rejected.push(node.getAttribute('id')||'?');continue}
-  const id=node.getAttribute('id')||val(node,['predefinedLocationReference','name'])||String(features.length);
-  const road=val(node,['roadNumber','roadIdentifier','linearElementIdentifier','roadName','road']);
-  const pk=val(node,['distanceAlongLinearElement','kilometerPoint','kilometrePoint']);
-  const key=[id,lat.toFixed(5),lon.toFixed(5)].join('|');
-  if(seen.has(key))continue;seen.add(key);
-  features.push({type:'Feature',geometry:{type:'Point',coordinates:[lon,lat]},
-   properties:{name:'Radar fijo DGT',id,road,pk,kind:'dgt',source:'Dirección General de Tráfico',
-    note:'Posición del catálogo DATEX II; no indica actividad ni mediciones en tiempo real.'}});
+  const id=node.getAttribute('id'),isSection=/^GUID_CVM_/.test(id),isFixed=/^GUID_CABINACINEMOMETRO_/.test(id);
+  if(!isSection&&!isFixed)continue;
+  const coords=all(node,'pointCoordinates').map(c=>({lat:number(val(c,'latitude')),lon:number(val(c,'longitude'))}));
+  if(coords.length!==(isSection?2:1)||coords.some(c=>!isES(c.lat,c.lon))){rejected.push(id);continue}
+  const road=val(node,'roadNumber'),dist=number(val(node,'referencePointDistance'));
+  const common={id,road,pk:dist>0?String(Math.round(dist)/1000):'',source:'DGT · DATEX II',
+   note:isSection?'Extremo de radar de tramo georreferenciado; no se infiere el recorrido entre extremos.':
+    'Posición de cabina, no indica actividad del radar.'};
+  if(isSection){
+   for(const [k,c] of [coords[1],coords[0]].entries())sections.push({type:'Feature',
+    geometry:{type:'Point',coordinates:[c.lon,c.lat]},
+    properties:{...common,name:'Radar de tramo DGT · '+(k?'Fin':'Inicio'),endpoint:k?'fin':'inicio',kind:'dgtSections'}});
+  }else features.push({type:'Feature',geometry:{type:'Point',coordinates:[coords[0].lon,coords[0].lat]},
+   properties:{...common,name:'Radar fijo DGT',kind:'dgt'}});
  }
- if(!features.length)throw Error('No se encontraron localizaciones DGT con coordenadas geográficas válidas en el XML.');
- return {data:{type:'FeatureCollection',features},rejected};
+ if(!features.length&&!sections.length)throw Error('XML sin coordenadas geográficas de radares DGT');
+ return {data:{type:'FeatureCollection',features},sections:{type:'FeatureCollection',features:sections},rejected};
 }
 function dbOpen(){
  return new Promise((resolve,reject)=>{
@@ -136,16 +143,23 @@ function mount({map}){
   catch(err){setStatus(key,'Datos visibles, pero sin almacenamiento persistente: '+err.message,true)}
  }
  async function importText(key,contents,from){
-  const type=key==='sct'?'fixed':key==='sections'?'section':key==='trailer'?'trailer':null;
-  const result=key==='dgt'?extractDGT(contents):parseSCT(contents,type);
-  // Los ficheros del SCT contienen filas de radar fijo y de tramo: conservar ambas capas.
-  const keys=(key==='sct'||key==='sections')?['sct','sections']:[key];
-  for(const k of keys){
-   const parsed=(k===key)?result:parseSCT(contents,k==='sct'?'fixed':'section');
-   if(parsed.data.features.length)await save(k,parsed.data,parsed,from);
-   else{setStatus(k,'Sin registros válidos para esta categoría',true);update(k)}
+  if(key==='dgt'||key==='dgtSections'){
+   const result=extractDGT(contents);
+   for(const [k,data] of [['dgt',result.data],['dgtSections',result.sections]]){
+    if(data.features.length)await save(k,data,{data,rejected:result.rejected},from);
+    else setStatus(k,'Sin registros DGT válidos de esta categoría',true);
+   }
+   return;
   }
-  if(!result.data.features.length)throw Error('El archivo no contiene registros válidos para '+SOURCES[key].name);
+  const type=key==='sct'?'fixed':key==='sections'?'section':'trailer';
+  const result=parseSCT(contents,type);
+  const keys=key==='sct'||key==='sections'?['sct','sections']:[key];
+  for(const k of keys){
+   const parsed=k===key?result:parseSCT(contents,k==='sct'?'fixed':'section');
+   if(parsed.data.features.length)await save(k,parsed.data,parsed,from);
+   else setStatus(k,'Sin registros válidos para esta categoría',true);
+  }
+  if(!result.data.features.length)throw Error('Archivo sin registros válidos para '+SOURCES[key].name);
  }
  function createItem(key){
   const def=SOURCES[key],section=document.createElement('div');section.className='traffic-item';
