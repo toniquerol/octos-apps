@@ -828,6 +828,11 @@ function drawDesk(group,id,p,label){
  // Silla con espacio libre alrededor de la mesa
  rect(g,x+48,y+71,70,25,"#24262b","#77797d",11,{"stroke-width":1.5});
  rect(g,x+61,y+69,45,13,"#34373b","#8e9096",7);
+ // Icono de persona sentada. Se muestra también en estado disponible.
+ if(id==="agent-3"||id==="agent-4"){
+  rect(g,x+63,y+81,38,12,"#ff6a1a","#17181b",6,{"stroke-width":1.5,"class":"agent-occupant"});
+  node("circle",{cx:x+82,cy:y+77,r:9,fill:"#f1f1ef",stroke:"#17181b","stroke-width":2,"class":"agent-occupant"},g);
+ }
  txt(g,x+11,y+85,id.replace("agent-","A").padStart(3,"0"),11,"#f1f1ef",{"class":"furniture-text","font-weight":700});
  txt(g,x+11,y+45,label.slice(0,13),10,"#b6b8be",{"class":"furniture-sub"});
  const indicator=node("circle",{"class":"agent-indicator",cx:x+w-14,cy:y+17,r:8,fill:"#74767C",stroke:"#101113","stroke-width":2},g);
@@ -844,7 +849,7 @@ function drawCabinet(group,id,p){
 }
 function drawSupport(group,id,p){
  const labels={chief:"DIRECCIÓN",jarvis:"JARVIS",gestor:"GESTOR",input:"INPUT",worker:"CONTROL",meeting:"REUNIONES",coffee:"CAFETERÍA"};
- const g=node("g",{"class":"pod hotspot layout-object"+(selectedId===id?" selected":""),"data-pick":id,"data-move":id,tabindex:0,role:"button","aria-label":labels[id]},group);
+ const g=node("g",{"class":"pod hotspot layout-object"+(id==="chief"?" chief-station":"")+(selectedId===id?" selected":""),"data-pick":id,"data-move":id,"data-status":id==="chief"?"idle":"unknown",tabindex:0,role:"button","aria-label":labels[id]},group);
  const x=p.x,y=p.y,w=p.w,h=p.h;
  if(id==="meeting"){
   rect(g,x+5,y+6,w,h-9,"#0d0e10","none",20,{opacity:.45});
@@ -864,6 +869,12 @@ function drawSupport(group,id,p){
   rect(g,x+w/2-20,y+29,40,15,"#20323b","none",2);
   rect(g,x+w/2-24,y+h-26,48,22,"#24262b","#81848b",9,{"stroke-width":1.4});
   txt(g,x+9,y+h-43,labels[id],12,"#f0f0f1",{"class":"furniture-text","font-weight":700});
+  if(id==="chief"){
+   rect(g,x+w/2-19,y+h-18,38,12,"#ff6a1a","#17181b",6,{"stroke-width":1.5,"class":"agent-occupant"});
+   node("circle",{cx:x+w/2,cy:y+h-22,r:9,fill:"#f1f1ef",stroke:"#17181b","stroke-width":2,"class":"agent-occupant"},g);
+   const indicator=node("circle",{"class":"agent-indicator",cx:x+w-14,cy:y+15,r:8,fill:"#369D69",stroke:"#101113","stroke-width":2},g);
+   node("title",{},indicator,"Dirección · Disponible");
+  }
  }
 }
 function draw(){
