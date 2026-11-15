@@ -46,6 +46,8 @@
     .octos-nav-divider{border:0;border-top:1px solid #383a40;margin:8px 3px}
     /* En Team sustituimos los dos accesos antiguos para evitar duplicados. */
     .octos-has-global-nav body>header .nav-shortcuts{display:none!important}
+    .octos-has-global-nav body>header:has(.nav-shortcuts){padding-left:15px!important}
+    .site-header:has(.octos-nav-toolbar){padding-left:15px!important}
     /* El editor del Máster y las apps con cabecera común conservan sus botones propios. */
     .octos-themed .ot-head-left .octos-nav-toolbar{flex:none}
     .octos-themed .ot-head-left{gap:6px!important}
@@ -60,6 +62,9 @@
       .site-header .brand-copy{max-width:calc(100% - 220px)}
     }
     @media(max-width:540px){
+      .octos-nav-toolbar{gap:3px}
+      .octos-nav-trigger{width:30px!important;min-width:30px!important;height:30px!important;min-height:30px!important}
+      .octos-nav-trigger svg{width:18px;height:18px}
       .octos-themed .ot-head-left>img{display:none!important}
       .octos-themed .ot-head-title{font-size:12px}
       .octos-themed body>header{grid-template-columns:minmax(120px,1fr) minmax(0,1fr) minmax(80px,1fr)!important}
