@@ -935,7 +935,7 @@ function autoRoadAxis(r,lat0){
   const p=xy(llp,lat0),q=points[points.length-1];
   if(q&&dist(p,q)<.05)continue;
   if(q){const v=sub(p,q),len=length(v);
-   segments.push({a:q,b:p,v:mul(v,1/len),len,at:total,kind:(r.structures||{})[part.segmentIndex]||'normal'});total+=len;}
+   segments.push({a:q,b:p,v:mul(v,1/len),len,at:total,speed:part.speed,kind:(r.structures||{})[part.segmentIndex]||'normal'});total+=len;}
   points.push(p);
  }
  if(!segments.length)return null;
@@ -946,8 +946,8 @@ function autoRoadAxis(r,lat0){
 }
 function autoRoadArms(a,k,t){
  const s=a.segments[k],at=s.at+s.len*t,arms=[];
- if(at>2)arms.push({v:mul(s.v,-1),w:a.w,len:at,r:a.r});
- if(a.total-at>2)arms.push({v:s.v,w:a.w,len:a.total-at,r:a.r});
+ if(at>2)arms.push({v:mul(s.v,-1),w:a.w,len:at,r:a.r,speed:s.speed});
+ if(a.total-at>2)arms.push({v:s.v,w:a.w,len:a.total-at,r:a.r,speed:s.speed});
  return arms;
 }
 function autoCrossEvents(input=roads){
@@ -992,7 +992,7 @@ function autoCrossEvents(input=roads){
     if(gap>AUTO_CROSS_SNAP||distance<Math.max(5,main.w)||main.total-distance<Math.max(5,main.w)||match&&gap>=match.gap)continue;
     match={foot,gap,k,t};
    }
-   if(match)register(match.foot,[{v:dir,w:branch.w,len:branch.total,r:branch.r},...autoRoadArms(main,match.k,match.t)],
+   if(match)register(match.foot,[{v:dir,w:branch.w,len:branch.total,r:branch.r,speed:edge.speed},...autoRoadArms(main,match.k,match.t)],
     match.gap>.1?{a:endpoint,b:match.foot,width:branch.w*2,r:branch.r}:null);
   }
  }
@@ -1082,13 +1082,108 @@ function autoCrossShapes(event){
  }
  return {fill,corners,throat,priority:t?{main:t.main.id,branch:t.branch.id,side:t.direction}:null};
 }
+
+/* Superficie continua de calzada y acera en T y X.
+   Los nodos y atributos originales permanecen intactos. */
+function junctionSurface(event){
+ const arms=event.arms.map(a=>{
+  const sec=sectionOf(a.r),edge=sec.roadWidth/2+sec.shoulderWidth+sec.sidewalkWidth;
+  return {...a,sec,edge,angle:Math.atan2(a.v.y,a.v.x),
+   cut:Math.min(a.len-1.5,Math.max(17,edge*2+12))};
+ }).sort((a,b)=>a.angle-b.angle);
+ if(arms.length<3||arms.length>4||arms.some(a=>a.cut<=a.edge+1.5))return null;
+ const pointAt=(a,d,offset=0)=>ll(add(event.p,add(mul(a.v,d),
+  mul({x:-a.v.y,y:a.v.x},offset))),event.lat0);
+ function contour(width){
+  const polygon=[],edges=[];
+  for(let i=0;i<arms.length;i++){
+   const a=arms[i],b=arms[(i+1)%arms.length],wa=width(a),wb=width(b);
+   const left={x:-a.v.y,y:a.v.x},right={x:b.v.y,y:-b.v.x};
+   const from=add(event.p,sub(mul(a.v,a.cut),mul(left,wa)));
+   const to=add(event.p,add(mul(a.v,a.cut),mul(left,wa)));
+   polygon.push(from,to);
+   const border=[to],theta=(b.angle-a.angle+2*Math.PI)%(2*Math.PI);
+   if(theta<Math.PI-.04&&theta>.04){
+    const offA=mul(left,wa),offB=mul(right,wb),den=cross(a.v,b.v);
+    if(den<=.0001)return null;
+    const diff=sub(offB,offA),sa=cross(diff,b.v)/den,sb=cross(diff,a.v)/den;
+    if(!finite(sa)||!finite(sb)||sa>=a.cut-1||sb>=b.cut-1)return null;
+    const corner=add(event.p,add(offA,mul(a.v,sa)));
+    const cot=1/Math.tan(theta/2),extra=(wa-a.sec.roadWidth/2+wb-b.sec.roadWidth/2)/2;
+    const wanted=Math.max(1.2,(window.OcToSRoadGeometry?.turningRadius(a.r,b.r)||7)-extra);
+    const radius=Math.min(wanted,Math.max(0,Math.min((a.cut-sa-1)/cot,(b.cut-sb-1)/cot)));
+    if(radius<.55){polygon.push(corner);border.push(corner);}
+    else{
+     const p1=add(corner,mul(a.v,radius*cot)),p2=add(corner,mul(b.v,radius*cot));
+     const center=add(p1,mul(left,radius)),start=Math.atan2(p1.y-center.y,p1.x-center.x);
+     const end=Math.atan2(p2.y-center.y,p2.x-center.x);
+     let sweep=Math.atan2(Math.sin(end-start),Math.cos(end-start));
+     if(sweep>0)sweep-=2*Math.PI;
+     if(sweep<-Math.PI*1.1)return null;
+     for(let k=0;k<=16;k++){
+      const angle=start+sweep*k/16;
+      const p=add(center,{x:radius*Math.cos(angle),y:radius*Math.sin(angle)});
+      polygon.push(p);border.push(p);
+     }
+    }
+   }
+   const next=add(event.p,sub(mul(b.v,b.cut),mul(right,wb)));
+   border.push(next);
+   edges.push(border.map(p=>ll(p,event.lat0)));
+  }
+  if(polygon.some(p=>!finite(p.x)||!finite(p.y)))return null;
+  return {polygon:polygon.map(p=>ll(p,event.lat0)),edges};
+ }
+ const road=contour(a=>a.sec.roadWidth/2),curb=contour(a=>a.edge);
+ const mixed=arms.some(a=>a.sec.sidewalkWidth>0&&a.sec.shoulderWidth>0);
+ const shoulder=mixed?contour(a=>a.sec.roadWidth/2+a.sec.shoulderWidth):null;
+ if(!road||!curb||(mixed&&!shoulder))return null;
+ const main=autoTConnection(event)?.main||arms[0].r;
+ return {arms,road,curb,shoulder,pointAt,mainId:main.id,
+  fill:visible('layerSpeed')?color(main.speed||90):'#C2CDD0',
+  curbColor:arms.some(a=>a.sec.sidewalkWidth>0)?'#979A9E':
+   arms.some(a=>a.sec.shoulderWidth>0)?'#747D83':'#292929'};
+}
+function paintJunctionSurface(surface){
+ const paint=(shape,c,weight=2)=>{
+  if(!shape)return;
+  L.polygon(shape.polygon,{stroke:false,fillColor:c,fillOpacity:1,interactive:false}).addTo(autoCrossGroup);
+  for(const edge of shape.edges)L.polyline(edge,{color:'#292929',weight,opacity:1,
+   lineCap:'butt',lineJoin:'round',interactive:false}).addTo(autoCrossGroup);
+ };
+ paint(surface.curb,surface.curbColor,2.2);
+ if(surface.shoulder)paint(surface.shoulder,'#747D83',1.8);
+ paint(surface.road,surface.fill,1.8);
+ const main=surface.arms.find(a=>a.r.id===surface.mainId);
+ for(const arm of surface.arms){
+  const start=arm.r.id===surface.mainId?1.5:Math.max(2,(main?.sec.roadWidth||arm.sec.roadWidth)/2+.35);
+  if(arm.cut<=start+1)continue;
+  if(visible('layerSpeed')){
+   const tint=color(arm.speed||arm.r.speed||90);
+   if(tint!==surface.fill)L.polyline([surface.pointAt(arm,start),surface.pointAt(arm,arm.cut+.5)],
+    {color:tint,weight:Math.max(.2,widthInPixels(arm.sec.roadWidth)-.3),
+     opacity:1,lineCap:'butt',interactive:false}).addTo(autoCrossGroup);
+  }
+  if(visible('layerAxes'))for(const mark of arm.sec.lines){
+   const offset=mark.offset*arm.sec.laneWidth+
+    (arm.sec.splitAfter&&mark.offset*arm.sec.laneWidth<arm.sec.medianOffset?
+     -arm.sec.medianWidth/2:arm.sec.splitAfter?arm.sec.medianWidth/2:0);
+   L.polyline([surface.pointAt(arm,start,offset),surface.pointAt(arm,arm.cut+.5,offset)],
+    {color:'#F1F1EF',weight:mark.solid?1.5:1.2,dashArray:mark.solid?null:'6 7',
+     opacity:.9,interactive:false}).addTo(autoCrossGroup);
+  }
+ }
+}
+
 function drawAutoCrossings(replacement=null,precomputed=null){
  autoCrossGroup.clearLayers();if(isTechnicalView()||!visible('layerRoad'))return;
  const list=replacement?roads.map(r=>r.id===replacement.id?replacement:r):roads;
  const events=precomputed||autoCrossEvents(list);
  for(const event of events){
+  const joined=junctionSurface(event);
+  if(joined){paintJunctionSurface(joined);continue;}
   const data=autoCrossShapes(event);
-  // La garganta tapa el arcén de la principal, sin invadir su calzada ni su mediana.
+  // Respaldo para intersecciones de longitud insuficiente o ángulo singular.
   if(data.throat)L.polygon(data.throat.fill,{stroke:false,fillColor:data.fill,fillOpacity:1,interactive:false}).addTo(autoCrossGroup);
   for(const corner of data.corners)if(corner.border)
    L.polygon(corner.border,{stroke:false,fillColor:corner.borderColor,fillOpacity:1,interactive:false}).addTo(autoCrossGroup);
@@ -1349,10 +1444,17 @@ function terrainFeatureCollection(){
  }
  for(const j of junctions){const g=jxGeometry(j);if(g)paint(g.points,j.width,'#C2CDD0');}
  if(visible('layerRoad'))for(const event of autoEvents){
-  const g=autoCrossShapes(event);
-  if(g.throat)addPoly(g.throat.fill,g.fill,'auto-crossing');
-  for(const corner of g.corners)if(corner.border)addPoly(corner.border,corner.borderColor,'auto-cross-border');
-  for(const corner of g.corners)addPoly(corner.fill,g.fill,'auto-crossing');
+  const joint=junctionSurface(event);
+  if(joint){
+   addPoly(joint.curb.polygon,joint.curbColor,'auto-cross-border');
+   if(joint.shoulder)addPoly(joint.shoulder.polygon,'#747D83','auto-cross-border');
+   addPoly(joint.road.polygon,joint.fill,'auto-crossing');
+  }else{
+   const g=autoCrossShapes(event);
+   if(g.throat)addPoly(g.throat.fill,g.fill,'auto-crossing');
+   for(const corner of g.corners)if(corner.border)addPoly(corner.border,corner.borderColor,'auto-cross-border');
+   for(const corner of g.corners)addPoly(corner.fill,g.fill,'auto-crossing');
+  }
  }
  for(const rb of roundabouts){
   const shape=roundaboutGeometry(rb),dim=shape.dimensions,roundaboutColor=visible('layerSpeed')?color(90):'#C2CDD0';
