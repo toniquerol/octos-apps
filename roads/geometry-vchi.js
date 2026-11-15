@@ -83,7 +83,14 @@ function build(road,toXY,toLL,section){
   const world=p=>add(TS,add(mul(u,p.x),mul(normal,p.y))),extra=overwidth(speed,R,sec.lanes||2,road.wheelbase??6)||0;
   emit([last,TS],0,0,i-1);
   if(L){const p=geom.entry.map(world);emit(p,R,sign,i-1,'clothoid-entry',extra,p.map((_,k)=>extra*k/(p.length-1)));}
-  const circular=geom.arc.map(world);emit(circular,R,sign,i-1,'arc',extra,circular.map(()=>extra));
+  const circular=geom.arc.map(world);
+  // Widening is progressively introduced for simple arcs; spirals handle their own gradual ramp.
+  const circularWidening=circular.map((_,j)=>{
+   if(L)return extra;
+   const n=circular.length-1,f=n>0?j/n:0,arcLength=geom.circle*R;
+   return extra*clamp(Math.min(f,1-f)*arcLength/Math.min(30,Math.max(1,arcLength/3)),0,1);
+  });
+  emit(circular,R,sign,i-1,'arc',extra,circularWidening);
   if(L){const p=geom.exit.map(world);emit(p,R,sign,i-1,'clothoid-exit',extra,p.map((_,k)=>extra*(1-k/(p.length-1))));}
   last=world((L?geom.exit:geom.arc).at(-1));
   arcs.push({center:toLL(PI,lat0),middle:toLL(circular[Math.floor(circular.length/2)],lat0),radius:R,speed:parts.at(-1).speed,transition:L,kind:L?'clothoid+arc':'circular'});
