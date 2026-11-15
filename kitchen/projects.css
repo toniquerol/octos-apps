@@ -1,0 +1,44 @@
+/* OcToS Kitchen · Inicio y biblioteca local de proyectos. */
+#kitchen-home{position:fixed;inset:0;z-index:5000;display:flex;justify-content:center;align-items:center;overflow:auto;padding:28px 15px;background:#0e0e10;color:#f1f1ef;font-family:"IBM Plex Sans",system-ui,sans-serif;isolation:isolate}
+#kitchen-home[hidden]{display:none!important}
+#kitchen-home::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 60% 3%,#49403672,transparent 55%),repeating-linear-gradient(0deg,transparent 0 45px,#f1f1ef08 45px 46px),repeating-linear-gradient(90deg,transparent 0 45px,#f1f1ef08 45px 46px)}
+.khome-shell{display:flex;flex-direction:column;align-items:center;width:min(900px,100%);min-height:0;gap:24px;margin:auto}
+.khome-identity{text-align:center;display:flex;align-items:center;flex-direction:column;gap:5px}
+.khome-identity img{width:54px;height:54px;object-fit:contain}
+.khome-identity .khome-eyebrow{color:#ff6a1a;letter-spacing:.23em;font:750 11px Manrope,system-ui,sans-serif;text-transform:uppercase;margin-top:6px}
+.khome-identity h1{font:750 clamp(30px,4vw,47px)/1.1 Manrope,system-ui,sans-serif;letter-spacing:-.055em;margin:5px 0}
+.khome-identity h1 em{font-style:normal;color:#ff6a1a}
+.khome-identity p{color:#a9aab0;font-size:12px;line-height:1.6;max-width:520px;margin:4px auto 0}
+.khome-library{width:min(800px,100%);border:1px solid #494b4f;border-radius:12px;padding:23px;background:#1a1b1eec;box-shadow:0 18px 70px #0007}
+.khome-actions{display:flex;gap:10px;flex-wrap:wrap}
+.khome-actions button{min-height:40px;padding:8px 15px}
+.khome-section-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:23px 0 12px;border-bottom:1px solid #404145;padding:0 0 12px}
+.khome-section-header strong{font:700 13px Manrope,system-ui,sans-serif}
+.khome-section-header span{font-size:11px;color:#a0a2a9}
+.khome-list{display:grid;gap:9px;max-height:min(48vh,425px);overflow-y:auto;scrollbar-color:#55575e transparent;padding-right:4px}
+.khome-item{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:15px;align-items:center;min-width:0;padding:11px;border:1px solid #3a3c42;border-radius:9px;background:#242529}
+.khome-item.current{border-color:#8a694a}
+.khome-thumb{padding:0;width:100%;aspect-ratio:16/9;display:block;overflow:hidden;border:1px solid #494b4f;border-radius:6px;background:#17191b;cursor:pointer}
+.khome-thumb svg{display:block;width:100%;height:100%}
+.khome-meta{min-width:0}
+.khome-title{display:block;border:0;background:none;color:#f1f1ef;font:700 12px Manrope,system-ui,sans-serif;cursor:pointer;padding:0;text-align:left;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.khome-title:hover{text-decoration:underline}
+.khome-meta small{display:block;font-size:10px;color:#a9aab0;line-height:1.8;margin-top:5px}
+.khome-item-actions{display:flex;flex-wrap:wrap;gap:5px;justify-content:end;max-width:235px}
+.khome-item-actions button{min-height:29px;padding:5px 7px;border:1px solid #53555b;border-radius:5px;background:#303136;color:#eee;font-size:10px;cursor:pointer}
+.khome-item-actions button:hover{border-color:#ff6a1a}
+.khome-item-actions .khome-danger{color:#f0aaa6}
+.khome-empty{padding:35px 15px;border:1px dashed #58595e;border-radius:7px;text-align:center;font-size:12px;color:#adafb6}
+.khome-foot{border-top:1px solid #3e4045;margin-top:13px;padding-top:12px;display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:10px;color:#a2a4ac}
+#khome-status{overflow-wrap:anywhere}
+.khome-tag{color:#ffb081;font-size:9px;font-weight:650;letter-spacing:.05em}
+#kitchen-home button:focus-visible{outline:2px solid #ff6a1a;outline-offset:2px}
+#kitchen-project-dialog{border:1px solid #56585d;background:#202125;border-radius:12px;color:#f1f1ef;padding:24px;width:min(425px,calc(100vw - 30px));box-shadow:0 20px 80px #000c}
+#kitchen-project-dialog::backdrop{background:#000b;backdrop-filter:blur(4px)}
+#kitchen-project-dialog h2{font:700 19px Manrope,system-ui,sans-serif;margin:0 0 14px}
+#kitchen-project-dialog label{display:block;font-size:11px;color:#b6b8bf;margin-bottom:6px}
+#kitchen-project-dialog input{width:100%;height:40px;background:#141517;border:1px solid #55575c;border-radius:6px;padding:8px 10px;color:#fff}
+#kitchen-project-dialog .khome-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+#kitchen-project-dialog .khome-dialog-actions button{padding:9px 15px}
+@media(max-width:700px){#kitchen-home{padding:15px 9px}.khome-shell{gap:15px}.khome-identity img{width:39px;height:39px}.khome-library{padding:14px}.khome-item{grid-template-columns:110px minmax(0,1fr);gap:9px;padding:8px}.khome-item-actions{grid-column:1/-1;max-width:none;justify-content:flex-end}.khome-list{max-height:52vh}.khome-foot{align-items:start;flex-direction:column}.khome-identity h1{font-size:29px}}
+@media(max-width:450px){.khome-item{grid-template-columns:87px minmax(0,1fr)}.khome-item-actions button{font-size:9px;padding:5px}.khome-identity p{font-size:11px}}
