@@ -1,6 +1,7 @@
 /* OcToS Drive · fuentes oficiales de vigilancia vial, integración aislada.
  * DATEX II (DGT) y TXT ETRS89/UTM31N (Servei Català de Trànsit).
  * No convertir PK de un PDF en posiciones inferidas.
+ * Los GeoJSON verificados se alojan en /drive/data/official-radars-v1.json.
  */
 (function(global){
 'use strict';
@@ -224,14 +225,43 @@ function mount({map}){
   const layers=Object.keys(SOURCES).map(layerName).filter(id=>map.getLayer(id)&&map.getLayoutProperty(id,'visibility')==='visible');
   if(layers.length&&map.queryRenderedFeatures(event.point,{layers}).length)map.getCanvas().style.cursor='pointer';
  });
- dbAction('all').then(saved=>{
-  for(const item of saved){
-   if(!SOURCES[item.id]||item.data?.type!=='FeatureCollection'||!Array.isArray(item.data.features))continue;
-   state[item.id]={data:item.data,loadedAt:item.loadedAt,visible:true,valid:true};
-   update(item.id);setStatus(item.id,item.data.features.length+' ubicaciones guardadas · carga local '+new Date(item.loadedAt).toLocaleDateString('es-ES'));
+ // Conjunto de archivos facilitados y preprocesados, servido en el propio repositorio:
+ // lectura automática sin CORS y sin pedir los archivos de nuevo al visitante.
+ async function startData(){
+  try{
+   const saved=await dbAction('all');
+   for(const item of saved){
+    if(!SOURCES[item.id]||item.data?.type!=='FeatureCollection'||!Array.isArray(item.data.features))continue;
+    state[item.id]={data:item.data,loadedAt:item.loadedAt,visible:false,valid:true};
+    update(item.id);
+    setStatus(item.id,item.data.features.length+' puntos · archivo importado en este navegador');
+   }
+  }catch(err){/* IndexedDB opcional; el catálogo integrado sigue operativo. */}
+  try{
+   const res=await fetch('./data/official-radars-v1.json?v=1',{cache:'no-store'});
+   if(!res.ok)throw Error('HTTP '+res.status);
+   const published=await res.json();
+   if(published.schema!=='octos-drive-official-traffic-v1')throw Error('Formato de catálogo desconocido');
+   for(const key of Object.keys(SOURCES)){
+    if(state[key].valid)continue; // Respetar archivos importados por el usuario.
+    const data=published.datasets?.[key];
+    if(data?.type!=='FeatureCollection'||!Array.isArray(data.features))continue;
+    if(data.features.some(f=>f?.geometry?.type!=='Point'||!Array.isArray(f.geometry.coordinates)||
+      !isES(f.geometry.coordinates[1],f.geometry.coordinates[0])))continue;
+    state[key]={data,loadedAt:published.generated,visible:false,valid:true};
+    update(key);
+    const description=key==='dgtSections'?'47 tramos · '+data.features.length+' extremos':
+     data.features.length+' ubicaciones';
+    const sourceDate=(key==='dgt'||key==='dgtSections')?'DATEX II 18/12/2025':'TXT SCT aportado';
+    setStatus(key,description+' · integrado · '+sourceDate);
+   }
+  }catch(err){
+   for(const key of Object.keys(SOURCES))if(!state[key].valid)
+    setStatus(key,'No se cargó el catálogo ('+err.message+'). Importar archivo manualmente.',true);
   }
   syncAll();
- }).catch(()=>syncAll());
+ }
+ void startData();
 }
 global.OcToSTrafficPanels={mount,parseSCT,extractDGT,etrsUtm31ToWgs84};
 })(window);
