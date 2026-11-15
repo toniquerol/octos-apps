@@ -130,7 +130,17 @@
      <input id="manage-file" type="file" accept=".json,application/json" hidden>
     </div></form><p class="manager-message" id="manager-message" role="status"></p>
    </div></div></main>`+footer;
-  if(typeof window.OcToSInfoManager==="function")window.OcToSInfoManager({config,root,infoLink,storageKey,draftConfig,esc});
+  if(typeof window.OcToSInfoManager==="function"){
+   try{window.OcToSInfoManager({config,root,infoLink,storageKey,draftConfig,esc})}
+   catch(error){
+    const status=document.getElementById("manager-message");
+    if(status)status.textContent="No se ha podido iniciar el editor: "+error.message;
+    console.error("OcToS Info: editor",error);
+   }
+  }else{
+   const status=document.getElementById("manager-message");
+   if(status)status.textContent="No se ha cargado el módulo de edición. Actualiza esta página.";
+  }
  }
  async function init(){
   try{
