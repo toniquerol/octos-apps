@@ -3,14 +3,15 @@ const AeroPaths = (() => {
   const modes={low:{tracks:160,steps:192},balanced:{tracks:360,steps:288},fine:{tracks:640,steps:384}};
   const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
   function velocity(at,surface,{H,L},preferred){
-    const range=Math.max(H*.40,L*.12),probe=[at[0]+range*.72,at[1],at[2]];
+    // Limit the visual influence zone: the previous ~0.6 m radius produced wide, early deflections.
+    const range=Math.max(H*.15,L*.045),probe=[at[0]+range*.60,at[1],at[2]];
     const near=surface.closest(probe,range*1.8);
     if(!near)return {direction:[1,0,0],distance:Infinity};
     let dy=probe[1]-near.point[1],dz=probe[2]-near.point[2];
     let lateral=Math.hypot(dy,dz);
     if(lateral<range*.025){dy=preferred===0?1:0;dz=preferred===0?0:preferred;lateral=1;}
     const strength=Math.max(0,1-near.distance/range);
-    const multiplier=3.6*strength*strength;
+    const multiplier=1.85*strength*strength;
     return {direction:[1,dy/lateral*multiplier,dz/lateral*multiplier],distance:near.distance};
   }
   async function build(surface,{L,H,W,extent,precision='balanced',focus='all'},current=()=>true){
@@ -19,13 +20,71 @@ const AeroPaths = (() => {
     let seed=71,repaired=0,stalled=0,rawSamples=0;
     const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
     const cols=Math.round(Math.sqrt(tracks*1.5)),rows=Math.ceil(tracks/cols);
-    const clearance=Math.max(L*.015,H*.035);
+    // Keep a small surface offset (about 3 cm for a 4.6 m vehicle), while retaining segment collision tests.
+    const clearance=Math.max(L*.006,H*.018);
     const lo=-extent,hi=extent;
+    // Surface-attached visual lanes sample real triangles (not the vehicle envelope).
+    // They complement rather than alter the free-field illustrative velocity model.
+    function surfaceLane(track){
+      const kind=track%10,roof=kind<4,under=kind===8,side=!roof&&!under;
+      const sign=kind<6?-1:1;
+      const u=(track*.61803398875)%1;
+      const laneZ=(u-.5)*W*(roof?1.02:.82);
+      const laneY=.08+u*H*.86;
+      const offsets=new Array(steps).fill(null);
+      for(let s=0;s<steps;s++){
+        const x=lo+(hi-lo)*s/(steps-1);
+        let hit;
+        if(roof)hit=surface.segment([x,H+extent*.5,laneZ],[x,-extent*.5,laneZ]);
+        else if(under)hit=surface.segment([x,-extent*.5,laneZ],[x,H+extent*.5,laneZ]);
+        else hit=surface.segment([x,laneY,sign*extent*.8],[x,laneY,-sign*extent*.8]);
+        if(hit){
+          const coord=roof?hit.point[1]+clearance:under?hit.point[1]-clearance:hit.point[2]+sign*clearance;
+          if(!under||coord>.025)offsets[s]=coord;
+        }
+      }
+      let first=offsets.findIndex(v=>v!==null);
+      if(first<0)return false;
+      let previous=first;
+      for(let s=0;s<first;s++)offsets[s]=offsets[first];
+      for(let s=first+1;s<steps;s++)if(offsets[s]!==null){
+        const delta=s-previous,a=offsets[previous],b=offsets[s];
+        for(let k=previous+1;k<s;k++)offsets[k]=a+(b-a)*(k-previous)/delta;
+        previous=s;
+      }
+      for(let s=previous+1;s<steps;s++)offsets[s]=offsets[previous];
+      for(let s=0;s<steps;s++){
+        const x=lo+(hi-lo)*s/(steps-1);
+        let pos=roof?[x,offsets[s],laneZ]:under?[x,Math.max(.025,offsets[s]),laneZ]:[x,laneY,offsets[s]];
+        if(s>0){
+          const k=(track*steps+s)*3;
+          const from=[paths[k-3],paths[k-2],paths[k-1]];
+          let amount=clearance;
+          for(let attempt=0;attempt<18 && surface.segment(from,pos);attempt++,amount*=1.35){
+            pos=roof?[x,offsets[s]+amount,laneZ]:
+              under?[x,Math.max(.025,offsets[s]-amount),laneZ]:
+              [x,laneY,offsets[s]+sign*amount];
+          }
+          if(surface.segment(from,pos))return false;
+        }
+        paths.set(pos,(track*steps+s)*3);
+      }
+      return true;
+    }
     for(let track=0;track<tracks;track++){
       if(!current())return null;
+      // Reserve approximately 55% of routes for roof, sides and underbody clearance.
+      if(track<Math.floor(tracks*.62) && track%10!==9 && surfaceLane(track)){
+        rawSamples+=steps;
+        const mid=(track*steps+Math.floor(steps/2))*3;
+        centres.set([paths[mid],paths[mid+1],paths[mid+2]],track*3);
+        if(track%10===0)await pause();
+        continue;
+      }
       const col=track%cols,row=Math.floor(track/cols);
-      const y0=.035+(row+random()*.65)/rows*H*1.92;
-      const z0=((col+random()*.65)/cols-.5)*W*(focus==='center'?.85:2.9);
+      // Sample the roof, sides and underbody more densely instead of wasting most streams in empty air.
+      const y0=.035+(row+random()*.65)/rows*H*1.42;
+      const z0=((col+random()*.65)/cols-.5)*W*(focus==='center'?.85:1.8);
       const preferred=z0<-.05?-1:z0>.05?1:0;
       let here=[lo,y0,z0],raw=[here],iterations=0;
       while(here[0]<hi-1e-8 && iterations++<steps*6){

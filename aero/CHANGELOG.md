@@ -1,5 +1,12 @@
 # Historial de OcToS Aero
 
+## 2.1.1 — 2026-11-15
+
+- Corrige la separación excesiva: reduce el radio e intensidad de repulsión y concentra las emisiones.
+- Incorpora rutas cercanas al techo, laterales y bajos a partir de intersecciones reales BVH, conservando rutas libres y comprobaciones de segmentos.
+- Añade regresión de proximidad y evita confundir la distancia visual con un cálculo CFD.
+
+
 ## 2.1.0 — 2026-11-15
 
 - BVH en triángulos reales y verificación de intersección de segmentos, sin envolvente de 48 secciones.

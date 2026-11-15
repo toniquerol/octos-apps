@@ -1,4 +1,4 @@
-# OcToS Aero V2.1 — geometría y precisión adaptativa
+# OcToS Aero V2.1.1 — geometría y precisión adaptativa
 
 **Aplicación:** https://toniquerol.github.io/octos-apps/aero/
 
@@ -15,6 +15,8 @@ Visualizador **geométrico ilustrativo**, no solver CFD. Los trazadores se desv�
 ## Método y límites
 
 - La geometría se extrae de los triángulos de las mallas visibles con las matrices de mundo aplicadas. Un **árbol BVH** permite consultar distancia al triángulo más próximo e intersección de **segmentos completos**. No existe una envolvente por máximos de 48 secciones.
+- Las rutas visuales próximas a la superficie se guían por impactos reales de rayos sobre techo, laterales y bajos. Se combinan con trayectorias libres y cada segmento final se contrasta con la malla. La separación nominal para un coche de 4,6 m es de unos **3 cm**; cerca de bordes, huecos y pendientes pronunciadas puede aumentar para evitar penetraciones. El resultado sigue sin ser aerodinámica física.
+- El radio de influencia del desvío libre se ha reducido y la zona de emisión se ha concentrado en torno a la carrocería. Las rutas que no encuentran intersección no se fuerzan a una superficie ficticia.
 - La generación de rutas es **determinista** y está separada del renderizado GPU. La geometría se reconstruye al importar, escalar o girar. La precisión cambia cantidad de rutas y muestras integradas; aumentar partículas solo cambia las instancias dibujadas.
 - Se comprueban los tramos tras convertir la integración adaptativa a la textura GPU. Cuando una ruta no puede resamplearse sin penetrar una superficie, se sustituye por una **ruta de seguridad externa**; si el trazado no puede avanzar, se detiene. El estado informa rutas corregidas/detenidas. Esto evita inventar una solución aerodinámica falsa.
 - Los huecos y elementos asimétricos se consultan como triángulos independientes; un hueco realmente libre permanece abierto si las muestras lo alcanzan. **No garantiza** capturar ranuras inferiores a la distancia entre semillas/rutas o a la escala de integración. Un hueco muy pequeño puede quedarse sin trazadores aunque esté geométricamente abierto.
