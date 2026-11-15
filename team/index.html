@@ -128,6 +128,39 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 .layout-hint.dirty{color:#ffae80}
 #layout-save:disabled{opacity:.4;cursor:default}
 #layout-edit[aria-pressed=true]{background:#ff6a1a18;border-color:#ff6a1a;color:#ffb284}
+
+/* Piloto operativo de tres agentes */
+svg .chief-station .agent-indicator{transition:fill .25s ease}
+svg .chief-station[data-status="idle"] .agent-indicator,svg .chief-station[data-status="completed"] .agent-indicator{fill:#369D69}
+svg .chief-station[data-status="running"] .agent-indicator{fill:#D94A45}
+svg .chief-station[data-status="waiting"] .agent-indicator{fill:#DBA53E}
+svg .chief-station .agent-indicator.blink{animation:team-finished-blink .9s steps(1,end) infinite}
+@media(prefers-reduced-motion:reduce){svg .chief-station .agent-indicator.blink{animation:none;stroke:#f1f1ef;stroke-width:4}}
+.agents-top{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:2px 0 24px}
+.agents-top h1{margin:8px 0;font-size:26px;letter-spacing:-.03em}
+.agents-top p{color:var(--muted);font-size:12px;line-height:1.6;margin:0}
+.agent-card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:18px;min-width:0}
+.agent-card strong{font-size:14px;display:block}
+.agent-card small{display:block;font-size:11px;color:var(--muted);line-height:1.6;margin-top:7px}
+.agent-card .agent-state{font-size:10px;color:#70b992;margin-top:12px;display:block}
+.agent-branch{max-width:600px;margin:0 auto 16px}
+.agent-specialists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.agent-line{width:1px;height:24px;background:#62646a;margin:0 auto}
+.agents-form{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(270px,.8fr);gap:18px;align-items:start}
+.agents-panel{border:1px solid var(--line);background:var(--panel);border-radius:13px;padding:22px;min-width:0}
+.agents-panel h2{font-size:16px;margin:0 0 14px}
+.agents-panel label{display:block;color:#dedfe1;font-size:12px;margin:12px 0 7px}
+.agents-panel input,.agents-panel textarea{width:100%;min-width:0;border:1px solid #555760;border-radius:8px;background:#101114;color:var(--ink);font:13px "IBM Plex Sans",sans-serif;padding:12px;resize:vertical}
+.agents-panel input:focus,.agents-panel textarea:focus{border-color:var(--accent);outline:1px solid var(--accent)}
+.agents-panel .agent-help{font-size:11px;color:var(--muted);line-height:1.6}
+.agents-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:17px}
+.agents-actions button{border:1px solid #64666d;background:#292a2e;color:var(--ink);border-radius:8px;padding:10px 12px;font-size:12px}
+.agents-actions button.primary{background:var(--accent);border-color:var(--accent);color:#151515;font-weight:700}
+.agents-actions button:disabled{opacity:.5;cursor:wait}
+#agents-notice{font-size:12px;color:#ffb485;margin:14px 0;min-height:22px;line-height:1.5}
+#agents-trace{font-size:11px;line-height:1.55;white-space:pre-wrap;word-break:break-word;overflow:auto;max-height:300px;min-height:90px;margin:12px 0 20px;color:#bbbcc1}
+#agents-result{font-size:12px;white-space:pre-wrap;line-height:1.65;word-break:break-word;color:#ededeb}
+@media(max-width:760px){.agents-form{grid-template-columns:1fr}.agents-top{align-items:start;flex-direction:column}}
 </style></head>
 <body>
 <section id="team-access" role="dialog" aria-modal="true" aria-labelledby="team-access-title">
@@ -155,9 +188,41 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 <button class="tile" data-page="system"><div class="tile-top"><span class="tile-index">MÓDULO 04</span><span class="tile-icon">⌘</span></div><h3>Configuración</h3><p>Parámetros de puestos y equipos. Reservado, sin funciones activas.</p><span class="go">VER MÓDULO</span></button>
 </div></section>
 <section id="room" class="view active"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Plano de referencia · Selecciona una mesa, un grupo o un armario</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="mini" id="layout-edit" type="button" aria-pressed="false">Editar plano</button><button class="mini" id="layout-save" type="button" disabled>Guardar distribución</button><button class="mini" id="layout-reset" type="button">Restablecer</button><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
-<div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="0 0 1536 1024" role="img" aria-label="Visor editable de la sala OcToS Team"><rect width="1536" height="1024" fill="#101114"/></svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div><p id="layout-hint" class="layout-hint" role="status">Plano vectorial interactivo. Selecciona un puesto o armario para consultar su ficha.</p></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div id="team-config-container" class="team-config" hidden></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
-<section id="structure" class="view"><div class="eyebrow">Módulo 02</div><div class="empty"><h2>Organigrama</h2><p>Jerarquía preparada: dirección, cuatro unidades y ocho agentes. La vista gráfica interactiva se incorporará posteriormente.</p><button class="outline" data-page="room">Ver distribución en sala</button></div></section>
-<section id="inbox" class="view"><div class="eyebrow">Módulo 03</div><div class="empty"><h2>Entrada / Input</h2><p>Módulo reservado a solicitudes y flujos de trabajo. En V1 únicamente se representa su puesto conectado con dirección.</p><button class="outline" data-page="room">Ver puesto Input</button></div></section>
+<div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="0 0 1536 1024" role="img" aria-label="Visor editable de la sala OcToS Team"><rect width="1536" height="1024" fill="#101114"/></svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div><p id="layout-hint" class="layout-hint" role="status">Plano vectorial interactivo. Selecciona un puesto o armario para consultar su ficha.</p></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div id="team-config-container" class="team-config" hidden></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="inbox">Nueva petición a agentes</button><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
+<section id="structure" class="view">
+<div class="agents-top"><div><div class="eyebrow">Módulo 02 / Jerarquía operativa</div><h1>Agentes conectables · Piloto 01</h1><p>Dirección coordina a dos especialistas. Los demás puestos siguen reservados.</p></div><button class="outline" data-page="inbox">Nueva petición</button></div>
+<div class="agent-branch agent-card" style="text-align:center"><strong>Dirección OcToS · Coordinador</strong><small>Recibe peticiones, distribuye y sintetiza</small><span class="agent-state" data-agent-live="chief">Disponible</span></div>
+<div class="agent-line"></div>
+<div class="agent-specialists">
+<div class="agent-card"><strong>Agente 03 · Cartografía</strong><small>Fuentes geográficas, WMS, WMTS, WFS y CRS</small><span class="agent-state" data-agent-live="agent-3">Disponible</span></div>
+<div class="agent-card"><strong>Agente 04 · Integración</strong><small>Compatibilidad, riesgos y validación técnica GIS</small><span class="agent-state" data-agent-live="agent-4">Disponible</span></div>
+</div>
+<p style="font-size:11px;color:var(--muted);margin-top:15px">«Disponible» indica un puesto preparado en la interfaz, no una conexión API. La conexión real se configura en Entrada / Input.</p>
+</section>
+<section id="inbox" class="view">
+<div class="agents-top"><div><div class="eyebrow">Módulo 03 / Entrada de peticiones</div><h1>Solicitudes a los agentes</h1><p>Prueba de comunicación entre Dirección, Cartografía e Integración.</p></div><button class="outline" data-page="room">Volver a sala</button></div>
+<form id="agents-form" class="agents-form">
+<div class="agents-panel">
+<h2>Petición</h2>
+<label for="agents-task">Consulta técnica</label>
+<textarea id="agents-task" rows="6" maxlength="2500" minlength="8" required>Analiza cómo integrar un servicio WMS del IGN en OcToS Layers: obtención de capacidades, compatibilidad de CRS, posibles problemas de CORS y procedimiento de validación.</textarea>
+<p class="agent-help">El director delega en dos especialistas y consolida sus informes. Esta prueba no modifica repositorios ni aplicaciones.</p>
+<div class="agents-actions"><button id="agents-demo" type="button">Probar recorrido local</button><button id="agents-send" type="submit" class="primary">Enviar con API</button></div>
+<p id="agents-notice" role="status" aria-live="polite">Sin servidor configurado: disponible la simulación local sin coste API.</p>
+</div>
+<div class="agents-panel">
+<h2>Conexión segura</h2>
+<label for="agents-endpoint">URL HTTPS del servicio de agentes</label>
+<input id="agents-endpoint" type="url" inputmode="url" placeholder="https://mi-servicio.workers.dev" autocomplete="url">
+<label for="agents-token">Contraseña privada del servicio</label>
+<input id="agents-token" type="password" placeholder="Token del servicio, no clave OpenAI" autocomplete="off">
+<p class="agent-help">Nunca introduzcas la clave OpenAI aquí. Se configura como secreto del servidor. La contraseña del servicio no se guarda.</p>
+<div class="agents-actions"><button id="agents-health" type="button">Comprobar conexión</button></div>
+<h2 style="margin-top:25px">Registro de ejecución</h2><pre id="agents-trace">Sin actividad.</pre>
+<h2>Resultado consolidado</h2><div id="agents-result">Todavía no se ha enviado ninguna petición.</div>
+</div>
+</form>
+</section>
 <section id="system" class="view"><div class="eyebrow">Módulo 04</div><div class="empty"><h2>Configuración</h2><p>Área reservada a la definición de agentes, equipos y permisos en versiones posteriores.</p><button class="outline" data-page="home">Volver al inicio</button></div></section>
 <section id="permissions" class="view" aria-labelledby="perms-title">
  <div class="perms-head"><div><div class="eyebrow">Administración / Sala de trabajo</div><h1 id="perms-title">Permisos y accesos</h1><p>Gestiona PIN secundarios y las aplicaciones autorizadas para cada perfil.</p></div><button class="outline" data-page="room" type="button">Volver a la sala</button></div>
@@ -192,14 +257,17 @@ var zoom=1;
 /* Telemetría ligera mediante status.json. La aplicación solo observa estados
    que otro proceso publique; no lee actividad de ChatGPT automáticamente. */
 var completedEvents=Object.create(null);
+var installedAgents=new Set(["chief","agent-3","agent-4"]);
+var localRuntimeStates=Object.create(null);
 var currentStates=Object.create(null);
 var labels={idle:"Disponible",waiting:"En espera",running:"Trabajando",completed:"Finalizado",unknown:"Sin datos"};
 function setAgentState(id,record){
-  var node=document.querySelector('#floor .station[data-pick="'+id+'"]');
+  var node=document.querySelector('#floor [data-pick="'+id+'"]');
   if(!node)return;
   var val=record&&typeof record.state==="string"?record.state:"unknown";
   if(val==="working"||val==="busy")val="running";
   if(!Object.prototype.hasOwnProperty.call(labels,val))val="unknown";
+  if(installedAgents.has(id))val=localRuntimeStates[id]||(val==="unknown"?"idle":val);
   var signal=String(record&&record.task_id||"")+"|"+String(record&&record.changed_at||"")+"|"+val;
   if(val==="completed"){
     if(!completedEvents[id]||completedEvents[id].signal!==signal){
@@ -212,18 +280,18 @@ function setAgentState(id,record){
   node.dataset.status=val;
   var title=node.querySelector(".agent-indicator title");
   if(title)title.textContent=id.toUpperCase().replace("AGENT-","A")+" · "+labels[val];
-  if(document.querySelector("#floor .station.selected")===node)updateSelectedStatus(id);
+  if(document.querySelector("#floor .selected")===node)updateSelectedStatus(id);
 }
 function refreshBlink(){
-  for(var i=1;i<=8;i++){
-    var id="agent-"+i,node=document.querySelector('#floor .station[data-pick="'+id+'"]');
+  for(const id of ["chief","agent-1","agent-2","agent-3","agent-4","agent-5","agent-6","agent-7","agent-8"]){
+    var node=document.querySelector('#floor [data-pick="'+id+'"]');
     if(!node)continue;
     var circle=node.querySelector(".agent-indicator");
     if(circle)circle.classList.toggle("blink",!!completedEvents[id]&&(Date.now()-completedEvents[id].seenAt<15000));
   }
 }
 function updateSelectedStatus(id){
-  if(id.indexOf("agent-")!==0)return;
+  if(id!=="chief"&&id.indexOf("agent-")!==0)return;
   var item=details[id];if(!item)return;
   var status=labels[currentStates[id]||"unknown"];
   document.getElementById("detail-desc").textContent=(window.octosTeamDescribe?window.octosTeamDescribe(id,item):item.desc)+" Estado: "+status+".";
@@ -235,14 +303,14 @@ async function readTelemetry(){
     if(!response.ok)throw new Error("HTTP "+response.status);
     var data=await response.json();
     if(!data||!data.agents||typeof data.agents!=="object")throw new Error("Datos no válidos");
-    for(var i=1;i<=8;i++){var id="agent-"+i;setAgentState(id,data.agents[id]);}
+    for(var i=1;i<=8;i++){var id="agent-"+i;setAgentState(id,data.agents[id]);}setAgentState("chief",{state:"idle"});
     output.classList.remove("error");
     output.textContent="Consultado: "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
     refreshBlink();
   }catch(error){
     output.classList.add("error");
     output.textContent="Sin conexión de estados";
-    for(var i=1;i<=8;i++)setAgentState("agent-"+i,{state:"unknown"});
+    for(var i=1;i<=8;i++)setAgentState("agent-"+i,{state:"unknown"});setAgentState("chief",{state:"idle"});
     refreshBlink();
   }
 }
@@ -284,7 +352,8 @@ window.octosTeamNavigate=page;
 page(initial,false);
 function pick(el){var item=details[el.dataset.pick];if(!item)return;document.querySelectorAll('#floor .selected').forEach(function(n){n.classList.remove('selected')});el.classList.add('selected');document.getElementById('detail-title').textContent=item.name;document.getElementById('detail-tag').textContent=item.type;document.getElementById('detail-desc').textContent=item.desc;document.getElementById('detail-zone').textContent=item.zone;updateSelectedStatus(el.dataset.pick);if(window.octosTeamShowConfig)window.octosTeamShowConfig(el.dataset.pick,item)}
 window.octosTeamPick=pick;
-window.octosTeamSyncIndicators=function(){for(var i=1;i<=8;i++){var id='agent-'+i;setAgentState(id,{state:currentStates[id]||'unknown'});}refreshBlink()};
+window.octosTeamSyncIndicators=function(){for(const id of ["chief","agent-1","agent-2","agent-3","agent-4","agent-5","agent-6","agent-7","agent-8"])setAgentState(id,{state:currentStates[id]||"unknown"});refreshBlink()};
+window.octosTeamSetRuntimeState=function(id,state){if(!installedAgents.has(id)||!Object.prototype.hasOwnProperty.call(labels,state))return;localRuntimeStates[id]=state;setAgentState(id,{state});refreshBlink()};
 document.getElementById("floor").addEventListener("click",function(e){var el=e.target.closest("[data-pick]");if(el){e.stopPropagation();pick(el)}});
 document.getElementById("floor").addEventListener("keydown",function(e){var el=e.target.closest("[data-pick]");if(el&&(e.key==="Enter"||e.key===" ")){e.preventDefault();pick(el)}});
 function changeZoom(n){zoom=Math.min(1.65,Math.max(.65,n));document.getElementById('floor').style.transform='scale('+zoom+')'}
@@ -905,4 +974,5 @@ window.octosTeamFloorState=function(){return {editing,dirty,objectCount:Object.k
 draw();
 })();
 </script>
+<script src="./agents.js" defer></script>
 </body></html>
