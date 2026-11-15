@@ -1,4 +1,4 @@
-name = "octos-team-agents"
+name = "octos-apps"
 main = "worker.js"
 compatibility_date = "2026-11-15"
 
