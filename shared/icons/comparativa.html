@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0E0E10"><title>OcToS · Comparativa de iconos</title>
+<meta name="description" content="Comparación de los iconos OcToS en cinco tamaños sobre fondos claros y oscuros.">
+<link rel="icon" href="../../apps-icon.svg" type="image/svg+xml">
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#2A2B2F;background:#F1F1EF}
+*{box-sizing:border-box}body{margin:0}header{background:#0E0E10;color:#F1F1EF;padding:28px max(24px,calc((100% - 1320px)/2))}
+h1{font-size:clamp(23px,3vw,36px);margin:0 0 7px}header p{color:#bbbcc1;margin:0;line-height:1.5}
+main{max-width:1360px;margin:0 auto;padding:28px 18px 56px}
+.sheet-row{border-bottom:1px solid #c8c8c7;padding:22px 0;display:grid;grid-template-columns:170px 1fr;gap:18px}
+.sheet-row h2{margin:6px 0;font-size:19px}.sheet-row p{margin:0;color:#606164;font-size:13px;line-height:1.5}
+.samples{display:grid;grid-template-columns:repeat(5,minmax(115px,1fr));gap:12px}
+.sample{min-width:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:26px 142px;gap:4px;margin:0}
+.sample figcaption{grid-column:1/-1;text-align:center;font-size:12px;color:#56575b}
+.tile{min-width:0;border-radius:11px;display:flex;align-items:center;justify-content:center}
+.tile.light{background:#fff}.tile.dark{background:#0E0E10}
+.tile img{display:block;max-width:100%;height:auto}
+footer{color:#646469;font-size:12px;margin-top:28px}
+@media(max-width:1050px){.sheet-row{grid-template-columns:1fr}.samples{overflow-x:auto;grid-template-columns:repeat(5,125px)}}
+</style></head><body>
+<header><h1>OcToS · Comparativa de iconos</h1><p>Escala real: 24, 32, 48, 64 y 128 px · Grafito #2A2B2F · Naranja #FF6A1A · Transparencia SVG</p></header>
+<main><div id="sheet" aria-live="polite">Cargando catálogo de iconos…</div>
+<footer>Fuentes canónicas: carpetas de cada aplicación · Referencias y norma: <a href="README.md">Patrón de iconos OcToS</a></footer></main>
+<script>
+(async function(){
+ const sheet=document.getElementById("sheet");
+ try{
+  const response=await fetch("./catalog.json");
+  if(!response.ok)throw Error("Catálogo no disponible");
+  const data=await response.json(), root=new URL("../../",location.href);
+  const sizes=[24,32,48,64,128];
+  sheet.replaceChildren();
+  for(const app of data.entries){
+   const row=document.createElement("section"); row.className="sheet-row";
+   const info=document.createElement("div"),h=document.createElement("h2"),p=document.createElement("p");
+   h.textContent=app.name;p.textContent=app.description;info.append(h,p);
+   const samples=document.createElement("div");samples.className="samples";
+   for(const size of sizes){
+    const figure=document.createElement("figure");figure.className="sample";
+    const cap=document.createElement("figcaption");cap.textContent=size+" px";
+    figure.append(cap);
+    for(const [theme,path] of [["light",app.svg],["dark",app.lightSvg]]){
+     const tile=document.createElement("div");tile.className="tile "+theme;
+     const img=document.createElement("img");img.src=new URL(path,root).href;img.width=size;img.height=size;
+     img.alt=app.name+" en "+size+" píxeles sobre fondo "+(theme==="light"?"claro":"oscuro");
+     tile.append(img);figure.append(tile);
+    }
+    samples.append(figure);
+   }
+   row.append(info,samples);sheet.append(row);
+  }
+ }catch(e){sheet.textContent="No se ha podido cargar el catálogo: "+e.message}
+})();
+</script></body></html>

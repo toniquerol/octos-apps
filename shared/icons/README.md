@@ -24,3 +24,8 @@ La web externa de WordPress queda fuera del repositorio; esta implementación so
 
 ## Verificación
 Revisar XML SVG y ausencia de imágenes embebidas; alfa cero en bordes y huecos; contraste en ambos fondos; tamaños del catálogo; enlaces de SVG, PNG y favicon; cabeceras y vista móvil. No alterar contenido funcional de los visores para corregir un icono.
+
+## Lámina y regeneración
+- [Comparativa interactiva de tamaños sobre ambos fondos](comparativa.html) y [lámina PNG](comparativa.png).
+- Para regenerar `icon-128.png` y `favicon-32.png` desde las fuentes SVG: `python shared/icons/export_png.py` (requiere CairoSVG).
+- El documento externo de patrón y las cuatro referencias maestras no se han guardado porque **no se recibieron sus archivos**; no se han sustituido por archivos inventados.
