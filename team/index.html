@@ -192,7 +192,7 @@ svg .chief-station .agent-indicator.blink{animation:team-finished-blink .9s step
 <button class="tile" data-page="system"><div class="tile-top"><span class="tile-index">MÓDULO 04</span><span class="tile-icon">⌘</span></div><h3>Configuración</h3><p>Parámetros de puestos y equipos. Reservado, sin funciones activas.</p><span class="go">VER MÓDULO</span></button>
 </div></section>
 <section id="room" class="view active"><div class="room-top"><div><div class="eyebrow">Módulo 01 / Vista de sala</div><h1>Distribución operativa</h1><p>Plano de referencia · Selecciona una mesa, un grupo o un armario</p></div><div class="actions"><span id="telemetry-check" class="telemetry-check" role="status" aria-live="polite">Telemetría: pendiente</span><button class="mini" data-page="inbox" type="button" style="border-color:var(--accent);color:#ffb485">Nueva petición / Input</button><button class="mini" id="layout-edit" type="button" aria-pressed="false">Editar plano</button><button class="mini" id="layout-save" type="button" disabled>Guardar distribución</button><button class="mini" id="layout-reset" type="button">Restablecer</button><button class="outline" data-page="home">Volver</button><button id="minus" class="mini" aria-label="Alejar">−</button><button id="plus" class="mini" aria-label="Acercar">+</button><button id="reset" class="mini">Ajustar</button></div></div>
-<div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="0 0 1536 1024" role="img" aria-label="Visor editable de la sala OcToS Team"><rect width="1536" height="1024" fill="#101114"/></svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div><p id="layout-hint" class="layout-hint" role="status">Plano vectorial interactivo. Selecciona un puesto o armario para consultar su ficha.</p></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div class="meta">UBICACIÓN<strong id="detail-zone">OcToS Team · Planta 01</strong></div><div id="team-config-container" class="team-config" hidden></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="inbox">Nueva petición a agentes</button><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
+<div class="room-layout"><div><div class="map-wrap"><svg id="floor" viewBox="0 0 1536 1024" role="img" aria-label="Visor editable de la sala OcToS Team"><rect width="1536" height="1024" fill="#101114"/></svg></div><div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div><p id="layout-hint" class="layout-hint" role="status">Plano vectorial interactivo. Selecciona un puesto o armario para consultar su ficha.</p></div></div><aside class="inspector" aria-live="polite"><div class="inspector-head">FICHA DE ELEMENTO</div><h2 id="detail-title">Plano general</h2><div class="tag" id="detail-tag">Distribución</div><p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p><div class="divider"></div><div id="team-config-container" class="team-config" hidden></div><div class="bottom">Plano gráfico interactivo. El estado de los agentes depende de status.json; no implica ejecución automática.</div></aside></div><div class="room-bottom-bar" aria-label="Barra de herramientas de la sala"><span class="bar-label">Administración de la sala</span><button type="button" data-page="inbox">Nueva petición a agentes</button><button type="button" data-page="permissions">Permisos y accesos</button></div></section>
 <section id="structure" class="view">
 <div class="agents-top"><div><div class="eyebrow">Módulo 02 / Jerarquía operativa</div><h1>Agentes conectables · Piloto 01</h1><p>Dirección coordina a dos especialistas. Los demás puestos siguen reservados.</p></div><button class="outline" data-page="inbox">Nueva petición</button></div>
 <div class="agent-branch agent-card" style="text-align:center"><strong>Dirección OcToS · Coordinador</strong><small>Recibe peticiones, distribuye y sintetiza</small><span class="agent-state" data-agent-live="chief">Disponible</span></div>
@@ -365,7 +365,7 @@ window.addEventListener("popstate",function(){
 });
 window.octosTeamNavigate=page;
 page(initial,false);
-function pick(el){var item=details[el.dataset.pick];if(!item)return;document.querySelectorAll('#floor .selected').forEach(function(n){n.classList.remove('selected')});el.classList.add('selected');document.getElementById('detail-title').textContent=item.name;document.getElementById('detail-tag').textContent=item.type;document.getElementById('detail-desc').textContent=item.desc;document.getElementById('detail-zone').textContent=item.zone;updateSelectedStatus(el.dataset.pick);if(window.octosTeamShowConfig)window.octosTeamShowConfig(el.dataset.pick,item)}
+function pick(el){var item=details[el.dataset.pick];if(!item)return;document.querySelectorAll('#floor .selected').forEach(function(n){n.classList.remove('selected')});el.classList.add('selected');document.getElementById('detail-title').textContent=item.name;document.getElementById('detail-tag').textContent=item.type;document.getElementById('detail-desc').textContent=item.desc;updateSelectedStatus(el.dataset.pick);if(window.octosTeamShowConfig)window.octosTeamShowConfig(el.dataset.pick,item)}
 window.octosTeamPick=pick;
 window.octosTeamSyncIndicators=function(){for(const id of ["chief","agent-1","agent-2","agent-3","agent-4","agent-5","agent-6","agent-7","agent-8"])setAgentState(id,{state:currentStates[id]||"unknown"});refreshBlink()};
 window.octosTeamSetRuntimeState=function(id,state){if(!installedAgents.has(id)||!Object.prototype.hasOwnProperty.call(labels,state))return;localRuntimeStates[id]=state;setAgentState(id,{state});refreshBlink()};
@@ -573,11 +573,12 @@ registry=read();renderList();
 })();
 </script>
 
+<script src="./organization.js"></script>
 <script>
 /* Configuración visual de agentes y armarios. Datos locales: no son credenciales ni activan la API. */
 (function(){
 "use strict";
-const STORE="octos-team-config-v1";
+const STORE="octos-team-config-v2",LEGACY_STORE="octos-team-config-v1";
 const panel=document.getElementById("team-config-container");
 const names=["Identidad","Interfaces","Cartografía","Integración","Desarrollo Ruby","Herramientas 3D","Investigación","Prototipos"];
 const roles=[
@@ -587,17 +588,25 @@ const roles=[
 "Investigación y evaluación técnica","Prototipado y pruebas de concepto"
 ];
 let state={agents:{},cabinets:{}};
-try{
- const parsed=JSON.parse(localStorage.getItem(STORE)||"null");
- if(parsed&&typeof parsed==="object"&&parsed.agents&&parsed.cabinets)state=parsed;
+try {
+ const v2=localStorage.getItem(STORE);
+ const parsed=JSON.parse(v2||localStorage.getItem(LEGACY_STORE)||"null");
+ if(parsed&&typeof parsed==="object"&&parsed.agents&&parsed.cabinets){
+  state=parsed;
+  if(!v2)for(const kind of ["agents","cabinets"])for(const [id,record] of Object.entries(state[kind]||{})){
+   for(const [key,val] of Object.entries(record||{})){
+    if(val===""||(kind==="cabinets"&&key==="name"&&val==="Armario D"+id.split("-")[1])||(kind==="agents"&&key==="cabinet"&&val==="cabinet-"+Math.ceil(Number(id.split("-")[1])/2)))delete record[key];
+   }
+  }
+ }
 }catch(error){}
 function clean(value,max){return String(value==null?"":value).trim().slice(0,max)}
 function agentDefault(id){
  const n=Number(id.split("-")[1]);
- return {name:names[n-1],role:roles[n-1],mission:"",tasks:"",instructions:"",cabinet:"cabinet-"+Math.ceil(n/2)};
+ return Object.assign({name:names[n-1],role:roles[n-1],mission:"",tasks:"",instructions:"",cabinet:"cabinet-"+Math.ceil(n/2)},window.octosTeamOrg.agents[id]||{});
 }
 function cabinetDefault(id){
- return {name:"Armario D"+id.split("-")[1],directives:"",tasks:""};
+ return Object.assign({name:"Armario D"+id.split("-")[1],directives:"",tasks:"",instructions:""},window.octosTeamOrg.cabinets[id]||{});
 }
 function agent(id){return Object.assign(agentDefault(id),state.agents[id]||{})}
 function cabinet(id){return Object.assign(cabinetDefault(id),state.cabinets[id]||{})}
@@ -609,12 +618,13 @@ window.octosTeamDescribe=function(id,item){
 function appendForm(kind,id){
  const isAgent=kind==="agent",data=isAgent?agent(id):cabinet(id);
  panel.innerHTML=isAgent?
- '<h3>Ficha del agente · Armario personal</h3><p class="team-local-note">Define sus tareas e instrucciones. No se ejecutan automáticamente.</p><form id="team-config-form"><fieldset><label>Nombre del agente<input name="name" maxlength="70" required></label><label>Especialidad / función<input name="role" maxlength="180" required></label><label>Misión<textarea name="mission" maxlength="1500" rows="3"></textarea></label><label>Tareas asignadas<textarea name="tasks" maxlength="4000" rows="5"></textarea></label><label>Instrucciones permanentes<textarea name="instructions" maxlength="4000" rows="5"></textarea></label><label>Armario de directrices<select name="cabinet"></select></label></fieldset><div class="team-config-actions"><button type="submit">Actualizar configuración</button><button id="team-open-cabinet" type="button">Abrir armario</button></div><div class="team-config-message" role="status"></div></form>':
- '<h3>Armario de directrices</h3><p class="team-local-note">Repositorio de indicaciones compartidas. No guardes claves API ni contraseñas.</p><form id="team-config-form"><fieldset><label>Nombre del armario<input name="name" maxlength="70" required></label><label>Directrices compartidas<textarea name="directives" maxlength="4000" rows="6"></textarea></label><label>Tareas generales<textarea name="tasks" maxlength="4000" rows="5"></textarea></label></fieldset><p id="team-cabinet-members" class="team-cabinet-members"></p><div class="team-config-actions"><button type="submit">Actualizar configuración</button></div><div class="team-config-message" role="status"></div></form>';
+ '<h3>Ficha del agente · Armario personal</h3><p class="team-local-note">Define sus tareas e instrucciones. No se ejecutan automáticamente.</p><form id="team-config-form"><fieldset><label>Nombre del agente<input name="name" maxlength="70" required></label><label>Especialidad / función<input name="role" maxlength="180" required></label><label>Misión<textarea name="mission" maxlength="1500" rows="3"></textarea></label><label>Tareas asignadas<textarea name="tasks" maxlength="4000" rows="5"></textarea></label><label>Instrucciones permanentes<textarea name="instructions" maxlength="4000" rows="5"></textarea></label><label>Armario de directrices<select name="cabinet"></select></label></fieldset><details class="agents-initial-setup"><summary>Normativa corporativa · D1</summary><p id="team-corporate-rule" style="white-space:pre-wrap;font-size:11px;line-height:1.6"></p></details><div class="team-config-actions"><button type="submit">Actualizar configuración</button><button id="team-open-cabinet" type="button">Abrir armario</button></div><div class="team-config-message" role="status"></div></form>':
+ '<h3>Armario de directrices</h3><p class="team-local-note">Repositorio de indicaciones compartidas. No guardes claves API ni contraseñas.</p><form id="team-config-form"><fieldset><label>Nombre del armario<input name="name" maxlength="70" required></label><label>Directrices compartidas<textarea name="directives" maxlength="4000" rows="6"></textarea></label><label>Tareas generales<textarea name="tasks" maxlength="4000" rows="5"></textarea></label><label>Instrucciones permanentes<textarea name="instructions" maxlength="4000" rows="6"></textarea></label></fieldset><p id="team-cabinet-members" class="team-cabinet-members"></p><div class="team-config-actions"><button type="submit">Actualizar configuración</button></div><div class="team-config-message" role="status"></div></form>';
  const form=document.getElementById("team-config-form");
  Object.keys(data).forEach(key=>{if(form.elements.namedItem(key))form.elements.namedItem(key).value=data[key]});
  if(isAgent){
-  const sel=form.elements.namedItem("cabinet");
+   document.getElementById("team-corporate-rule").textContent=window.octosTeamOrg.common;
+   const sel=form.elements.namedItem("cabinet");
   for(let n=1;n<=6;n++){
    const option=document.createElement("option");option.value="cabinet-"+n;option.textContent="D"+n+" · "+cabinet("cabinet-"+n).name;sel.append(option);
   }
@@ -645,7 +655,7 @@ function appendForm(kind,id){
   }:{
    name:clean(v.namedItem("name").value,70),
    directives:clean(v.namedItem("directives").value,4000),
-   tasks:clean(v.namedItem("tasks").value,4000)
+    tasks:clean(v.namedItem("tasks").value,4000),instructions:clean(v.namedItem("instructions").value,4000)
   };
   if(!next.name||(isAgent&&!next.role)){form.querySelector(".team-config-message").textContent="Completa los campos obligatorios.";return}
   const previous=state[isAgent?"agents":"cabinets"][id];
@@ -662,7 +672,7 @@ function appendForm(kind,id){
    const statusLabel={idle:"Disponible",waiting:"En espera",running:"Trabajando",completed:"Finalizado",unknown:"Sin datos"}[status]||"Sin datos";
    document.getElementById("detail-desc").textContent=window.octosTeamDescribe(id,{desc:""})+" Estado: "+statusLabel+".";
   }else{
-   document.getElementById("detail-desc").textContent=next.directives||"Armario disponible para directrices y tareas.";
+   document.getElementById("detail-desc").textContent="Directrices, tareas e instrucciones compartidas del departamento.";
   }
   form.querySelector(".team-config-message").textContent="Configuración actualizada y guardada en este navegador.";
  });
@@ -674,11 +684,12 @@ window.octosTeamShowConfig=function(id,item){
  const data=isAgent?agent(id):cabinet(id);
  document.getElementById("detail-title").textContent=data.name;
  if(isAgent){document.getElementById("detail-desc").textContent=window.octosTeamDescribe(id,item)+" Estado: "+({idle:"Disponible",waiting:"En espera",running:"Trabajando",completed:"Finalizado",unknown:"Sin datos"}[document.querySelector('#floor [data-pick="'+id+'"]')?.dataset.status]||"Sin datos")+"."}
- else document.getElementById("detail-desc").textContent=data.directives||"Armario disponible para directrices y tareas.";
+ else document.getElementById("detail-desc").textContent="Directrices, tareas e instrucciones compartidas del departamento.";
  appendForm(isAgent?"agent":"cabinet",id);
 };
 })();
 </script>
+<script>window.octosTeamOrg.install();</script>
 <script>
 /* Visor OcToS Team: geometría SVG editable, sin imagen de fondo ni dependencias. */
 (function(){
