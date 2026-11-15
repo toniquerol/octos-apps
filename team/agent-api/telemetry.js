@@ -35,7 +35,11 @@ function newCount(fields={}) {
 export async function readMetrics(env,days) {
  if(!env.TEAM_SECRETS)throw new Error("Falta TEAM_SECRETS");
  if(![1,7,30].includes(days))throw new Error("Periodo inválido");
- const now=Date.now(),since=now-days*86400000;
+ const now=Date.now();
+ // Los límites coinciden con los intervalos mostrados por el gráfico (UTC).
+ const currentBucket=days===1?Math.floor(now/3600000)*3600000:
+  Math.floor(now/86400000)*86400000;
+ const since=currentBucket-(days===1?23*3600000:(days-1)*86400000);
  const events=[];
  let cursor,complete=false;
  // Una sola lectura de lista por página: metadatos en KV, sin descargar los valores.
