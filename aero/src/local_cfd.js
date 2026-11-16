@@ -38,7 +38,7 @@
   };
  }
  function act(fn){
-  try{fn();note.textContent='Archivo preparado. No se ha ejecutado ningún cálculo CFD.';}
+  try{fn();}
   catch(error){note.textContent='No se pudo preparar CFD: '+error.message;}
  }
  $('cfdExportStl').addEventListener('click',()=>act(()=>{
