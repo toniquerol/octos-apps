@@ -417,6 +417,11 @@ function layout(){
     select.onchange=()=>{
       if(select.value==='section')setSection(sectionValue,i,false);
       else if(sectionViewIndex===i&&!viewSelects.some(v=>v.value==='section'))clearSection();
+      if(select.value==='side'||select.value==='front'){
+        const bounds=new T.Box3().setFromObject(vehicle);
+        orbit[i].target.copy(bounds.isEmpty()?new T.Vector3(0,H*.5,0):bounds.getCenter(new T.Vector3()));
+        orbit[i].zoom=1;
+      }
       wake();
     };
     group.append(label);group.append(select);$('viewTypes').append(group);
