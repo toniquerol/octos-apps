@@ -189,6 +189,14 @@ THE SOFTWARE.
 <p class="hint" id="emitterStatus">Selecciona el volumen turquesa en el visor. Arrastra el punto central para moverlo en Y/Z; utiliza los tiradores de borde para cambiar anchura y altura. X permanece fijo. Compatible con ratón y pantalla táctil.</p></div>
 <label for="focus">Zona de emisión</label><select id="focus"><option value="all">Anchura completa</option><option value="center" selected>Franja central</option></select><label for="speed">Velocidad de animación <span id="speedval">1,5×</span></label><input id="speed" type="range" min="0.2" max="2.5" value="1.5" step="0.1"><label><input id="lines" type="checkbox"> Guías de trayectoria</label><label><input id="tunnel" type="checkbox"> Marco del túnel</label><label><input id="body" type="checkbox" checked> Mostrar carrocería</label><label><input id="grid" type="checkbox" checked> Rejilla del suelo</label></section><section id="cfdPanelContent"><h2>03 / CAMPO CFD</h2>
 <label class="file" for="cfdfile" style="display:block;text-align:center">Importar campo CFD JSON</label><input id="cfdfile" type="file" accept=".json,application/json" style="display:none">
+<div class="cfd-local" style="margin:16px 0 8px;padding:13px 12px;border:1px solid #44464d;border-radius:7px;background:#17191e">
+<h3 style="font:600 13px Manrope,system-ui;margin:0 0 8px;color:#f1f1ef">PREPARAR CFD EN EL ORDENADOR</h3>
+<p class="hint">Genera la geometría STL con la orientación actual y un manifiesto para OpenFOAM. El CFD se calcula en Windows/WSL2; este navegador no ejecuta el solver.</p>
+<label for="cfdCaseSpeed">Velocidad del aire (m/s)</label><input id="cfdCaseSpeed" type="number" min="0.1" max="100" step="0.1" value="25" inputmode="decimal" style="width:100%;background:#101114;color:#f1f1ef;border:1px solid #44464d;padding:9px;margin:4px 0 10px">
+<button id="cfdExportStl" type="button" style="width:100%;margin:4px 0">Exportar geometría STL</button>
+<button id="cfdExportManifest" type="button" style="width:100%;margin:4px 0">Exportar configuración CFD</button>
+<p id="cfdLocalStatus" class="hint" aria-live="polite">Exporta ambos archivos. La geometría puede necesitar reparación antes del mallado; la configuración no equivale a un caso ejecutable.</p>
+</div>
 <button id="clearCFD" style="width:100%;margin-top:9px">Volver a flujo visual</button>
 <p id="fieldinfo" class="hint" aria-live="polite">Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.</p>
 <p class="hint">Formato octos-cfd-v1: rejilla XYZ en metros y velocidad [vx, vy, vz] en m/s. Los datos deben coincidir con la posición y escala del vehículo. Las trayectorias visuales evitan intersecciones con la malla; el campo CFD original no cambia. No resuelve CFD en el navegador.</p>
@@ -61370,7 +61378,11 @@ const AeroCFD = (() => {
     }
     const bounds=origin.map((v,i)=>[v,v+(dims[i]-1)*spacing[i]]);
     return {dims,origin,spacing,velocity,maxSpeed,displayMaxSpeed:maxSpeed,
-      referenceSpeed,bounds,source:String(data.source||'Campo CFD importado').slice(0,100),sample};
+      referenceSpeed,bounds,source:String(data.source||'Campo CFD importado').slice(0,100),
+      caseInfo:data.case&&typeof data.case==='object'?
+        {vehicleFile:String(data.case.vehicleFile||'').slice(0,140),
+         vehicleName:String(data.case.vehicleName||'').slice(0,140),
+         stl:String(data.case.stl||'').slice(0,140)}:null,sample};
   }
   async function build(field,surface,{L,H,W,extent,precision='balanced',focus='all',emitterWidth=2.6,emitterHeight=2.0,emitterOffsetY=0,emitterOffsetZ=0},current=()=>true){
     const {tracks,steps}=AeroPaths.modes[precision]||AeroPaths.modes.balanced;
@@ -62152,6 +62164,10 @@ $('cfdfile').onchange=async e=>{
     if(f.size>110*1024*1024)throw Error('El archivo supera el máximo de 110 MB.');
     status('Leyendo campo de velocidades CFD…');
     const field=AeroCFD.parse(await f.text());
+    const requestedFile=field.caseInfo?.vehicleFile;
+    const currentFile=$('filename').textContent;
+    if(requestedFile&&currentFile&&requestedFile!==currentFile)
+      throw Error('El CFD pertenece a '+requestedFile+', pero el visor muestra '+currentFile+'. Importa el GLB correspondiente.');
     if(requested!==token)return;
     activeCFD=field;
     $('palette').value='velocity';
@@ -62265,8 +62281,50 @@ async function projectRestore(project){
  updateEmitterVisual();wake();
  return {vehicleRestored:matching};
 }
+/* Export the transformed mesh in Aero scene metres (X longitudinal, Y up, Z lateral).
+   The STL is input geometry ONLY; this does not create a watertight CFD mesh. */
+function exportCFDSTL(){
+ if(!content)throw Error('Importa un GLB antes de exportar geometría CFD.');
+ content.updateWorldMatrix(true,true);
+ const meshes=[];let faces=0;
+ content.traverse(mesh=>{
+  const positions=mesh.geometry?.attributes?.position;
+  if(!mesh.isMesh||!mesh.visible||!positions)return;
+  const geometry=mesh.geometry,indices=geometry.index;
+  const n=indices?indices.count:positions.count;
+  if(n%3!==0)throw Error('La geometría contiene triángulos incompletos.');
+  faces+=n/3;
+  if(faces>2000000)throw Error('El STL supera 2 millones de triángulos; simplifica la geometría.');
+  meshes.push({mesh,positions,indices,n});
+ });
+ if(!faces)throw Error('El modelo no contiene triángulos exportables.');
+ const bytes=new ArrayBuffer(84+faces*50),view=new DataView(bytes);
+ const header='OcToS Aero CFD geometry · metres · X longitudinal Y vertical Z transverse';
+ for(let i=0;i<Math.min(80,header.length);i++)view.setUint8(i,header.charCodeAt(i));
+ view.setUint32(80,faces,true);
+ const a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),u=new T.Vector3(),v=new T.Vector3(),n=new T.Vector3();
+ let p=84;
+ const writeVector=q=>{for(const k of ['x','y','z']){if(!Number.isFinite(q[k]))throw Error('La geometría tiene coordenadas inválidas.');view.setFloat32(p,q[k],true);p+=4;}};
+ for(const {mesh,positions,indices,n:count} of meshes){
+  for(let j=0;j<count;j+=3){
+   const idx=k=>indices?indices.getX(k):k;
+   a.fromBufferAttribute(positions,idx(j)).applyMatrix4(mesh.matrixWorld);
+   b.fromBufferAttribute(positions,idx(j+1)).applyMatrix4(mesh.matrixWorld);
+   c.fromBufferAttribute(positions,idx(j+2)).applyMatrix4(mesh.matrixWorld);
+   u.subVectors(b,a);v.subVectors(c,a);n.crossVectors(u,v);
+   if(n.lengthSq()>1e-24)n.normalize();else n.set(0,0,0);
+   writeVector(n);writeVector(a);writeVector(b);writeVector(c);
+   view.setUint16(p,0,true);p+=2;
+  }
+ }
+ const bounds=new T.Box3().setFromObject(content),min=bounds.min.toArray(),max=bounds.max.toArray();
+ if(min.concat(max).some(x=>!Number.isFinite(x)))throw Error('No se pudo obtener la extensión del STL.');
+ return {blob:new Blob([bytes],{type:'application/octet-stream'}),triangles:faces,bounds:{min,max}};
+}
+
 window.aeroProjectBridge={
  snapshot:projectSnapshot,
+ exportGeometrySTL:exportCFDSTL,
  restore:projectRestore,
  startNew:async()=>{
    token++;resetField();currentCFDFile=null;
@@ -62491,4 +62549,58 @@ const AeroProjects=(()=>{
   return {format:FORMAT,makeProject,validated,goHome:showHome,
     getCurrent:()=>current?copy(current):null,isHome:()=>homeVisible};
 })();
-</script></html>
+/* OcToS Aero · preparation package for an external OpenFOAM run.
+   No local executable is started by this browser-only module. */
+(()=>{
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ const speed=$('cfdCaseSpeed'),note=$('cfdLocalStatus');
+ if(!speed||!note)return;
+ const clean=name=>(String(name||'vehiculo').replace(/\.glb$/i,'')
+  .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,70)||'vehiculo');
+ const fileBase=()=>clean(window.aeroProjectBridge?.snapshot?.().vehicle?.name);
+ function download(blob,name){
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name;document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+ }
+ function manifest(){
+  const s=window.aeroProjectBridge?.snapshot?.();
+  if(!s)throw Error('No hay vehículo cargado en el visor.');
+  const v=Number(speed.value);
+  if(!Number.isFinite(v)||v<0.1||v>100)throw Error('Velocidad de entrada: de 0,1 a 100 m/s.');
+  const name=fileBase();
+  return {
+   format:'octos-cfd-case-v1',createdAt:new Date().toISOString(),
+   project:{name:window.AeroProjects?.getCurrent?.()?.name||s.vehicle.name,
+    vehicle:s.vehicle,transformations:s.transformations},
+   geometry:{stl:name+'-aero.stl',unit:'m',
+    axis:'X longitudinal (morro -X), Y vertical (suelo Y=0), Z transversal',
+    note:'STL exportado con transformaciones aplicadas. Revisar estanqueidad, normales, superficies internas y paso de ruedas antes del mallado.'},
+   simulation:{engine:'OpenFOAM',analysis:'External aerodynamics',
+    approach:'steady RANS',turbulenceModel:'kOmegaSST',
+    velocityMps:v,inletVector:[v,0,0],
+    fluid:'air',direction:'+X',
+    note:'Configuración preliminar. Dominio, suelo, ruedas, viscosidad, y+, intensidad turbulenta, condiciones de contorno y criterios de convergencia requieren validación.'},
+   output:{format:'octos-cfd-v1',grid:'uniform Cartesian',
+    axes:'X/Y/Z Aero',units:'m/s',
+    instructions:'Resample To Image en ParaView, CSV Points:0/1/2 + U:0/1/2, convertir con aero/tools/cfd_csv_to_json.py e importar desde Campo CFD.'}
+  };
+ }
+ function act(fn){
+  try{fn();}
+  catch(error){note.textContent='No se pudo preparar CFD: '+error.message;}
+ }
+ $('cfdExportStl').addEventListener('click',()=>act(()=>{
+  const out=window.aeroProjectBridge?.exportGeometrySTL?.();
+  if(!out)throw Error('Exportación de geometría no disponible.');
+  download(out.blob,fileBase()+'-aero.stl');
+  note.textContent='STL exportado: '+out.triangles.toLocaleString('es')+' triángulos. Valida geometría antes del mallado.';
+ }));
+ $('cfdExportManifest').addEventListener('click',()=>act(()=>{
+  download(new Blob([JSON.stringify(manifest(),null,2)],{type:'application/json'}),
+   fileBase()+'-cfd-case.json');
+ }));
+ window.aeroCFDCaseManifest=manifest;
+})();</script></html>
