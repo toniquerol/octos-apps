@@ -43,6 +43,16 @@ async function run(){
   }
   assert.deepEqual(Array.from(field.spacing),originalSpacing);
   assert.deepEqual(Array.from(field.dims),originalDims);
+  const moved=await ctx.CFD.build(field,{segment:()=>null},{L:4,H:2,W:2,extent:4,precision:'low',
+    emitterWidth:1.1,emitterHeight:.65,emitterOffsetY:.35,emitterOffsetZ:.5});
+  for(let i=0;i<moved.tracks;i++){
+    const k=i*moved.steps*3;
+    assert(moved.paths[k+1]>=.385 && moved.paths[k+1]<=1.001,'shifted CFD Y seed');
+    assert(moved.paths[k+2]>=-.051 && moved.paths[k+2]<=1.051,'shifted CFD Z seed');
+    assert(Math.abs(moved.paths[k]+3.32)<.01,'fixed CFD upstream X');
+  }
+  assert.deepEqual(Array.from(field.velocity.slice(0,15)),velocity.slice(0,15),
+    'moving the emitter must not mutate the imported CFD field');
   assert.throws(()=>ctx.CFD.parse({...make(),spacing:[0,1,1]}));
 
   // A constant straight CFD vector crosses this solid car. The display-only
