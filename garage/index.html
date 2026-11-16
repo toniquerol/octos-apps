@@ -20,6 +20,13 @@ body{overflow:hidden}button,input{font:inherit}button{cursor:pointer}button:focu
 #top .group{display:flex;gap:6px;background:#101114cf;border:1px solid #454549;border-radius:7px;padding:5px;backdrop-filter:blur(12px);pointer-events:auto}.vbtn{background:transparent;color:#b6b6b9;border:1px solid transparent;border-radius:4px;padding:8px 10px;font:600 11px Manrope}.vbtn.active{background:#333438;color:white;border-color:#5a5b5c}.vbtn:hover{color:white}
 #badge{position:absolute;bottom:18px;left:18px;background:#0c0d10d9;padding:12px 15px;border:1px solid #36363b;border-radius:6px;max-width:470px;font-size:11px;line-height:1.55;color:#b7b7b9;z-index:2;pointer-events:none}#badge b{color:white}#badge .orange{color:var(--accent)}
 #floating{position:absolute;right:17px;bottom:17px;display:flex;flex-direction:column;gap:6px;z-index:2}.floatingbtn{background:#161719d9;border:1px solid #414245;border-radius:5px;padding:9px;color:white;font-size:12px}
+#liftWidget{position:absolute;z-index:5;display:flex;align-items:center;gap:7px;transform:translate(-50%,-100%);padding:6px;border:1px solid #56575c;border-radius:9px;background:#161719f2;box-shadow:0 8px 24px #0008;backdrop-filter:blur(10px);white-space:nowrap;pointer-events:auto}
+#liftWidget[hidden],body.editing #liftWidget{display:none!important}
+#liftWidget .lift-id{font:700 11px Manrope,sans-serif;color:#F1F1EF;padding:0 7px 0 4px}
+#liftWidget .lift-btn{width:38px;height:38px;display:grid;place-items:center;background:#292b30;color:#F1F1EF;border:1px solid #505157;border-radius:6px;font:700 23px Manrope,sans-serif;line-height:1}
+#liftWidget .lift-btn:hover{border-color:#FF6A1A;color:#FF6A1A}
+#liftWidget .lift-btn:disabled{opacity:.35;cursor:default}
+@media(max-width:840px){#liftWidget{gap:4px;padding:5px}#liftWidget .lift-btn{width:34px;height:34px;font-size:21px}}
 #loader{position:absolute;inset:0;background:#0d0e10;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:8;font:500 13px Manrope}#loader .spinner{border:2px solid #393a3e;border-top-color:var(--accent);border-radius:100%;width:24px;height:24px;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
 #toast{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);background:#25262a;border:1px solid #55565a;border-radius:5px;padding:9px 12px;z-index:6;font-size:12px;display:none;max-width:80%;text-align:center}
 @media(max-width:840px){#app{display:block}#sidebar{position:absolute;left:0;bottom:0;top:auto;width:100%;max-width:none;height:180px;overflow:hidden;border-top:1px solid var(--border);border-right:0;z-index:4}#brand{display:none}#nav{padding:6px 10px;overflow:auto}#nav .metrics,#nav .sectionTitle{display:none}#spaces{display:flex;width:max-content;min-height:53px}#spaces .space{width:104px;padding:7px}.space b{font-size:10px}#actions{padding:5px 8px;display:flex;align-items:center;gap:8px;overflow-x:auto}#actions .row{margin:0;display:flex;white-space:nowrap}#actions .hint,.colorRow{display:none}#view{height:calc(100dvh - 180px)}#top{left:8px;right:8px;top:8px}#top .group{padding:3px;gap:1px}.vbtn{font-size:10px;padding:7px 8px}#badge{left:8px;bottom:8px;max-width:76%;font-size:10px;padding:7px 9px}#floating{bottom:8px;right:8px}}
@@ -74,7 +81,7 @@ body.editing #editorPanel{display:block}body.editing #nav,body.editing #actions{
   <div id="actions">
     <div class="row"><button id="import" class="btn primary fill">+ Importar coche GLB</button><input id="file" hidden type="file" accept=".glb,model/gltf-binary"/><button id="remove" class="btn" title="Eliminar coche seleccionado">Eliminar</button></div>
     <div class="row"><button id="rotL" class="btn sm fill">↶ Girar 90°</button><button id="rotR" class="btn sm fill">Girar 90° ↷</button><button id="small" class="btn sm">−</button><button id="big" class="btn sm">+</button></div>
-    <div class="row"><div class="colorRow" style="flex:1">Color carrocería <input id="paint" type="color" value="#b2b2b2"></div><button id="raise" class="btn fill">Elevar +</button><button id="lower" class="btn fill">Bajar −</button></div>
+    <div class="row"><div class="colorRow" style="flex:1">Color carrocería <input id="paint" type="color" value="#b2b2b2"></div></div>
     <div class="hint">Selecciona una plaza y carga un GLB. Se conserva en este navegador cuando admite IndexedDB.</div>
   </div>
 <section id="editorPanel" aria-label="Editor 3D del taller">
@@ -120,7 +127,7 @@ body.editing #editorPanel{display:block}body.editing #nav,body.editing #actions{
    <p id="editStatus" class="editor-status" role="status">Base: ancho 15,20 m; alero 6,80 m; cumbrera 8,20 m; largo estimado 36,60 m. Modelo editable de prueba, no levantamiento definitivo.</p>
   </div>
 </section></aside>
-<main id="view"><div id="loader"><div class="spinner"></div><span>Cargando taller 3D</span></div><div id="top"><div class="group"><button class="vbtn" data-view="inside">Interior</button><button class="vbtn active" data-view="iso">Perspectiva</button><button class="vbtn" data-view="top">Planta</button><button class="vbtn" data-view="outside">Exterior</button></div><div class="group"><button id="roof" class="vbtn">Cubierta: oculta</button><button id="cut" class="vbtn active">Corte: activo</button></div></div><div id="badge"><b>MRM PERFORMANCE · TALLER 3D</b><br>Plano CAD + fotografías reales. <span class="orange">10 aparcamientos</span> · 4 elevadores · altillo · portón 5,8 × 4,7 m.<br>Longitud inferida del plano: pendiente de cotejo CAD.</div><div id="floating"><button class="floatingbtn" id="reset" title="Centrar cámara">⟲ Cámara</button></div><div id="toast"></div></main>
+<main id="view"><div id="loader"><div class="spinner"></div><span>Cargando taller 3D</span></div><div id="top"><div class="group"><button class="vbtn" data-view="inside">Interior</button><button class="vbtn active" data-view="iso">Perspectiva</button><button class="vbtn" data-view="top">Planta</button><button class="vbtn" data-view="outside">Exterior</button></div><div class="group"><button id="roof" class="vbtn">Cubierta: oculta</button><button id="cut" class="vbtn active">Corte: activo</button></div></div><div id="badge"><b>MRM PERFORMANCE · TALLER 3D</b><br>Plano CAD + fotografías reales. <span class="orange">10 aparcamientos</span> · 4 elevadores · altillo · portón 5,8 × 4,7 m.<br>Longitud inferida del plano: pendiente de cotejo CAD.</div><div id="floating"><button class="floatingbtn" id="reset" title="Centrar cámara">⟲ Cámara</button></div><div id="liftWidget" hidden role="group" aria-label="Controles del elevador seleccionado"><span id="liftWidgetName" class="lift-id">E01</span><button type="button" id="raise" class="lift-btn" title="Subir elevador" aria-label="Subir elevador">↑</button><button type="button" id="lower" class="lift-btn" title="Bajar elevador" aria-label="Bajar elevador">↓</button></div><div id="toast"></div></main>
 </div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"}}</script>
 <script type="module">
@@ -146,6 +153,7 @@ for(let z of [-13,-3,7,14]){const l=new THREE.PointLight(0xfff8e9,36,19,2);l.pos
 // Reference grid outside the building
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(130,130),new THREE.MeshStandardMaterial({color:0x919192,roughness:.95}));ground.rotation.x=-Math.PI/2;ground.position.y=-.345;scene.add(ground);
 let shell,roofParts=[],frontParts=[],sideParts=[],liftParts=[[],[],[],[]];
+const liftHitMeshes=[],liftWidget=document.getElementById('liftWidget'),liftWidgetName=document.getElementById('liftWidgetName');
 const getByName=(o,pre)=>o.name.startsWith(pre);
 const zParking=Array.from({length:10},(_,i)=>-15.2+i*2.55),zLifts=[-5.45,-.2,5.05,10.3];
 const slots=[...zParking.map((z,i)=>({id:'P'+String(i+1).padStart(2,'0'),type:'parking',x:-5.25,z,w:4.55,d:2.49})),...zLifts.map((z,i)=>({id:'E'+String(i+1).padStart(2,'0'),type:'lift',x:4.3,z,w:5.1,d:4.92,liftIndex:i}))];
@@ -167,9 +175,30 @@ for(const s of slots){
 }
 const mkHighlight=()=>{if(highlight)scene.remove(highlight);const s=slots.find(s=>s.id===selected);highlight=new THREE.Mesh(new THREE.PlaneGeometry(s.w,s.type==='parking'?2.43:4.95),threeMat(0xff6a1a));highlight.rotation.x=-Math.PI/2;highlight.position.set(s.x,.075,s.z);scene.add(highlight)};
 function renderSlots(){sidebar.innerHTML='';for(const s of slots){if(s.type==='lift'&&!sidebar.dataset.liftTitle){const title=document.createElement('div');title.style.cssText='grid-column:span 2;font:700 11px Manrope;color:#8e8e92;letter-spacing:1px;margin:12px 3px 0';title.textContent='ELEVADORES';sidebar.appendChild(title);sidebar.dataset.liftTitle='1'}const b=document.createElement('button');b.className='space'+(s.id===selected?' selected':'')+(occupied.has(s.id)?' loaded':'');const a=document.createElement('b');a.textContent=s.id+' · '+(s.type==='parking'?'Plaza':'Elevador');const d=document.createElement('span');d.className='status';d.textContent=occupied.get(s.id)?.filename||'Libre';b.append(a,d);b.onclick=()=>select(s.id);sidebar.append(b);}sidebar.dataset.liftTitle='';}
-function select(id){selected=id;renderSlots();mkHighlight();const car=occupied.get(id);document.getElementById('paint').value=car?.tint||'#b2b2b2';}
+function syncLiftWidget(){
+ const s=slots.find(item=>item.id===selected);
+ liftWidget.hidden=s?.type!=='lift'||document.body.classList.contains('editing');
+ if(s?.type==='lift'){
+  liftWidgetName.textContent=s.id;
+  document.getElementById('raise').disabled=liftHeights[s.liftIndex]>=1.75;
+  document.getElementById('lower').disabled=liftHeights[s.liftIndex]<=0;
+ }
+}
+function positionLiftWidget(){
+ if(liftWidget.hidden||document.body.classList.contains('editing'))return;
+ const s=slots.find(item=>item.id===selected);if(!s)return;
+ const anchor=new THREE.Vector3(s.x,1.85,s.z+1.55);
+ const group=editGroups.get('elevador-'+(s.liftIndex+1));
+ if(group){anchor.sub(group.userData.home);group.localToWorld(anchor)}
+ const p=anchor.project(camera);
+ if(p.z< -1||p.z>1||Math.abs(p.x)>1.16||Math.abs(p.y)>1.16){liftWidget.style.visibility='hidden';return}
+ liftWidget.style.visibility='visible';
+ liftWidget.style.left=Math.max(90,Math.min(view.clientWidth-90,(p.x+1)*.5*view.clientWidth))+'px';
+ liftWidget.style.top=Math.max(90,Math.min(view.clientHeight-14,(1-p.y)*.5*view.clientHeight-14))+'px';
+}
+function select(id){selected=id;renderSlots();mkHighlight();const car=occupied.get(id);document.getElementById('paint').value=car?.tint||'#b2b2b2';syncLiftWidget();}
 const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
-renderer.domElement.addEventListener('pointerup',evt=>{if(evt.button!==0||document.body.classList.contains('editing'))return;const r=renderer.domElement.getBoundingClientRect();mouse.set(((evt.clientX-r.left)/r.width)*2-1,-((evt.clientY-r.top)/r.height)*2+1);ray.setFromCamera(mouse,camera);const hits=ray.intersectObjects(pickers,false);if(hits.length)select(hits[0].object.userData.slot)});
+renderer.domElement.addEventListener('pointerup',evt=>{if(evt.button!==0||document.body.classList.contains('editing'))return;const r=renderer.domElement.getBoundingClientRect();mouse.set(((evt.clientX-r.left)/r.width)*2-1,-((evt.clientY-r.top)/r.height)*2+1);ray.setFromCamera(mouse,camera);const liftHits=ray.intersectObjects(liftHitMeshes,false);if(liftHits.length){select(liftHits[0].object.userData.slot);return}const hits=ray.intersectObjects(pickers,false);if(hits.length)select(hits[0].object.userData.slot)});
 function setRoofs(v){roofShown=v;if(shell){for(const o of roofParts)o.visible=v};document.getElementById('roof').textContent='Cubierta: '+(v?'visible':'oculta');document.getElementById('roof').classList.toggle('active',v)}
 function setCut(v){cutShown=v;if(shell){for(const o of frontParts)o.visible=!v;for(const o of sideParts)o.visible=!v};document.getElementById('cut').textContent='Corte: '+(v?'activo':'inactivo');document.getElementById('cut').classList.toggle('active',v)}
 const cams={
@@ -203,7 +232,7 @@ document.getElementById('rotR').onclick=()=>mutate(e=>e.rot+=Math.PI/2);
 document.getElementById('small').onclick=()=>mutate(e=>e.scale=Math.max(.2,e.scale*.92));
 document.getElementById('big').onclick=()=>mutate(e=>e.scale=Math.min(4,e.scale*1.08));
 document.getElementById('paint').oninput=async e=>{const car=occupied.get(selected);if(!car)return;car.tint=e.target.value;paintCar(car);saveCar(car)};
-function liftMove(dir){const s=slots.find(s=>s.id===selected);if(s?.type!=='lift'){toast('Selecciona un elevador E01–E04');return}liftHeights[s.liftIndex]=Math.max(0,Math.min(1.75,liftHeights[s.liftIndex]+dir*.25));liftParts[s.liftIndex].forEach(mesh=>mesh.position.y=liftHeights[s.liftIndex]);if(occupied.has(s.id))positionCar(occupied.get(s.id))}
+function liftMove(dir){const s=slots.find(s=>s.id===selected);if(s?.type!=='lift')return;liftHeights[s.liftIndex]=Math.max(0,Math.min(1.75,liftHeights[s.liftIndex]+dir*.25));liftParts[s.liftIndex].forEach(mesh=>mesh.position.y=mesh.userData.baseLiftY+liftHeights[s.liftIndex]);if(occupied.has(s.id))positionCar(occupied.get(s.id));syncLiftWidget()}
 document.getElementById('raise').onclick=()=>liftMove(+1);
 document.getElementById('lower').onclick=()=>liftMove(-1);
 document.querySelectorAll('[data-view]').forEach(el=>el.onclick=()=>setCamera(el.dataset.view));
@@ -311,7 +340,7 @@ function applyEditorFields(){
  saveLayout();
 }
 function setEditorMode(on){
- document.body.classList.toggle('editing',on);
+ document.body.classList.toggle('editing',on);syncLiftWidget();
  field('tabCars').classList.toggle('active',!on);field('tabWorkshop').classList.toggle('active',on);
  if(editControls){editControls.visible=on;if(on&&activeEditId)editControls.attach(editGroups.get(activeEditId));else editControls.detach();}
  if(editBox)editBox.visible=on;
@@ -388,10 +417,78 @@ function setupWorkshopEditor(){
  catch(e){editStatus('No se ha podido recuperar el diseño local; se mantiene el modelo base.')}
 }
 
+
+/* Elevadores de dos columnas independientes: no hay travesaño superior.
+ * Se conservan los identificadores E01–E04 y la edición por componentes. */
+function buildTwoPostLifts(){
+ const oldParts=[];shell.traverse(o=>{if(o.isMesh&&/^lift_0[1-4]_/.test(o.name))oldParts.push(o)});
+ for(const part of oldParts)part.parent.remove(part);
+ const blue=new THREE.MeshStandardMaterial({color:0x24435a,roughness:.57,metalness:.5});
+ const blueLight=new THREE.MeshStandardMaterial({color:0x315972,roughness:.56,metalness:.48});
+ const steel=new THREE.MeshStandardMaterial({color:0x78848e,roughness:.43,metalness:.72});
+ const steelDark=new THREE.MeshStandardMaterial({color:0x313942,roughness:.52,metalness:.65});
+ const yellow=new THREE.MeshStandardMaterial({color:0xdca431,roughness:.55,metalness:.35});
+ const rubber=new THREE.MeshStandardMaterial({color:0x161a1d,roughness:.9});
+ const red=new THREE.MeshStandardMaterial({color:0xc73e30,roughness:.52});
+ const green=new THREE.MeshStandardMaterial({color:0x399c72,roughness:.5});
+ for(const s of slots.filter(s=>s.type==='lift')){
+  const pre='lift_0'+(s.liftIndex+1)+'_';
+  function put(name,geo,mat,x,y,z,moving=false,hit=false){
+   const m=new THREE.Mesh(geo,mat);m.name=pre+(moving?'moving_':'fixed_')+name;
+   m.position.set(x,y,z);m.userData.slot=s.id;shell.add(m);
+   if(hit)liftHitMeshes.push(m);return m;
+  }
+  function box(name,x,y,z,w,h,d,mat,moving=false,hit=false){
+   return put(name,new THREE.BoxGeometry(w,h,d),mat,x,y,z,moving,hit);
+  }
+  function disc(name,x,y,z,r,h,mat,moving=false){
+   return put(name,new THREE.CylinderGeometry(r,r,h,16),mat,x,y,z,moving);
+  }
+  function arm(name,a,b,width,mat){
+   const mid=a.clone().add(b).multiplyScalar(.5);
+   const m=box(name,mid.x,mid.y,mid.z,a.distanceTo(b),.085,width,mat,true,true);
+   m.rotation.y=-Math.atan2(b.z-a.z,b.x-a.x);return m;
+  }
+  for(const side of [-1,1]){
+   const z=s.z+side*1.52;
+   // Perfiles estructurales abiertos hacia la zona del vehículo.
+   box('post_'+side,s.x,1.8,z,.32,3.6,.31,blue,false,true);
+   box('guide_'+side,s.x,1.79,z-side*.184,.15,3.39,.046,steelDark);
+   box('rail_'+side,s.x,1.79,z-side*.221,.075,3.26,.03,steel);
+   box('top_cap_'+side,s.x,3.62,z,.38,.06,.36,steelDark);
+   box('base_plate_'+side,s.x,.055,z,.66,.11,.61,steel);
+   for(const dx of [-.24,.24])for(const dz of [-.22,.22])
+    disc('anchor_'+side+'_'+dx+'_'+dz,s.x+dx,.122,z+dz,.031,.045,steelDark);
+   box('bumper_'+side,s.x,.95,z-side*.17,.24,.75,.042,rubber);
+   // Carro guiado, dos brazos articulados y extensiones telescópicas por poste.
+   box('carriage_'+side,s.x,.48,z-side*.205,.40,.56,.32,yellow,true,true);
+   box('slider_'+side,s.x,.49,z-side*.402,.26,.39,.10,steelDark,true);
+   for(const fore of [-1,1]){
+    const p=new THREE.Vector3(s.x+fore*.17,.274,z-side*.41);
+    const elbow=new THREE.Vector3(s.x+fore*.65,.274,s.z+side*.91);
+    const pad=new THREE.Vector3(s.x+fore*1.02,.274,s.z+side*.53);
+    disc('pivot_'+side+'_'+fore,p.x,.28,p.z,.13,.11,steelDark,true);
+    arm('arm_'+side+'_'+fore,p,elbow,.16,blueLight);
+    arm('telescopic_'+side+'_'+fore,elbow,pad,.125,steel);
+    disc('pad_stem_'+side+'_'+fore,pad.x,.34,pad.z,.053,.11,steelDark,true);
+    disc('rubber_pad_'+side+'_'+fore,pad.x,.401,pad.z,.125,.045,rubber,true);
+   }
+   if(side<0){
+    box('motor_body',s.x+.04,3.07,z-side*.28,.32,.48,.25,steelDark);
+    disc('motor_cap',s.x+.04,3.35,z-side*.28,.12,.16,blueLight);
+    box('control_box',s.x+.20,1.39,z+side*.24,.18,.49,.22,steelDark);
+    box('control_face',s.x+.305,1.4,z+side*.24,.015,.38,.15,steel);
+    disc('emergency_stop',s.x+.322,1.34,z+side*.21,.042,.034,red);
+    disc('raise_indication',s.x+.322,1.49,z+side*.21,.023,.025,green);
+   }
+  }
+ }
+}
+
 async function start(){
  try{
  const binary=Uint8Array.from(atob(MODEL64),c=>c.charCodeAt(0)).buffer;
- const gltf=await parseGlb(binary);shell=gltf.scene;scene.add(shell);
+ const gltf=await parseGlb(binary);shell=gltf.scene;scene.add(shell);buildTwoPostLifts();
  shell.traverse(o=>{if(!o.isMesh)return;
    // Trimesh bakes all geometry into named nodes. Dynamic visibility by node prefix.
    if(/^(roof_|roof_windows_|roof_structure_)/.test(o.name))roofParts.push(o);
@@ -400,10 +497,10 @@ async function start(){
    const m=o.name.match(/^lift_(\d+)_moving_/);if(m)liftParts[Number(m[1])-1]?.push(o);
    o.castShadow=false;o.receiveShadow=false;
  });
- setupWorkshopEditor();setCamera('iso');select(selected);resize();display.remove();initAutos();
+ setupWorkshopEditor();for(const parts of liftParts)for(const mesh of parts)mesh.userData.baseLiftY=mesh.position.y;setCamera('iso');select(selected);resize();display.remove();initAutos();
  }catch(err){console.error(err);display.innerHTML='No ha sido posible cargar el modelo. Comprueba la conexión a Internet para Three.js.'}
 }
-function animate(){requestAnimationFrame(animate);if(editBox&&editBox.visible)editBox.update();ctl.update();renderer.render(scene,camera)}
+function animate(){requestAnimationFrame(animate);if(editBox&&editBox.visible)editBox.update();ctl.update();positionLiftWidget();renderer.render(scene,camera)}
 animate();start();
 </script>
 </body></html>
