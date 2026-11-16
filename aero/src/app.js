@@ -15,7 +15,8 @@ let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,reti
 let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
 const emitter={width:2.6,height:2.0}; // Independent of the CFD field's physical domain.
 let cameras=[],views=[],viewSelects=[],orbit=[],frameCount=0,fpsTime=0;
-let sectionEnabled=false,sectionPick=false,sectionX=0,sectionViewIndex=0;
+let sectionEnabled=false,sectionPick=false,sectionAxis='y',sectionValue=H*.5,sectionViewIndex=0;
+const sectionFocus=new T.Vector3(0,H*.5,0);
 /* Floating panels: each has its own scroll viewport and an independently adjustable width. */
 function syncDockScroll(){
   for(const id of ['vehicleDock','flowDock','viewDock']){
@@ -76,30 +77,64 @@ function initDockLayout(){
 const ground=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial({color:0x171d25,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.025;scene.add(ground);
 const grid=new T.GridHelper(20,40,0x3c505c,0x23323e);grid.position.y=-.015;scene.add(grid);
 const arrow=new T.ArrowHelper(new T.Vector3(1,0,0),new T.Vector3(-6,.06,-2.4),2,0xff6a1a,.3,.17);scene.add(arrow);
-// Vertical YZ slicing plane, normal +X: in section view only the downstream half is visible.
-const sectionPlane=new T.Plane(new T.Vector3(1,0,0),0);
+// Section plane: default horizontal XZ (Y axis), with selectable X/Y/Z normal.
+// Keep the opposite half-space to the viewing camera so the cut face is visible.
+const sectionPlane=new T.Plane(new T.Vector3(0,-1,0),0);
 const sectionMarker=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshBasicMaterial({
   color:0xff6a1a,transparent:true,opacity:.17,depthWrite:false,side:T.DoubleSide}));
-sectionMarker.rotation.y=Math.PI/2;sectionMarker.visible=false;scene.add(sectionMarker);
+sectionMarker.visible=false;scene.add(sectionMarker);
+const sectionAxisName={x:'X · transversal YZ',y:'Y · horizontal XZ',z:'Z · longitudinal XY'};
+function sectionRange(axis=sectionAxis){
+  if(axis==='x')return [-L*.5,L*.5];
+  if(axis==='z')return [-W*.5,W*.5];
+  return [0,H];
+}
+function sectionCameraDirection(axis=sectionAxis){
+  return axis==='x'?new T.Vector3(-1,0,0):
+    axis==='z'?new T.Vector3(0,0,1):new T.Vector3(0,1,0);
+}
+function resetSectionCamera(i){
+  const o=orbit[i];if(!o)return;
+  // Spherical coordinates are the same as the freely orbiting perspective view.
+  if(sectionAxis==='x'){o.theta=Math.PI;o.phi=Math.PI*.5;}
+  else if(sectionAxis==='z'){o.theta=Math.PI*.5;o.phi=Math.PI*.5;}
+  else{o.theta=-Math.PI*.5;o.phi=.001;}
+  o.r=extent*2;o.zoom=1;
+}
 function updateSectionUI(){
   $('section').setAttribute('aria-pressed',sectionPick?'true':'false');
-  $('section').textContent=sectionPick?'Clic en el modelo…':'Crear sección';
+  $('section').textContent=sectionPick?'Selecciona un punto…':'Crear sección';
   $('sectionHint').textContent=sectionPick?
-    'Selecciona una posición sobre el vehículo o el suelo; se abrirá el corte en vista frontal-oblicua.':
-    sectionEnabled?'Sección YZ activa. Ajusta el corte X o elimínalo para recuperar la vista.':
-      'Pulsa «Crear sección» y haz clic sobre el vehículo o el suelo.';
+    'Eje '+sectionAxis.toUpperCase()+': haz clic sobre el vehículo o el suelo para situar el plano.':
+    sectionEnabled?'Sección '+sectionAxis.toUpperCase()+
+      ' activa. La cámara comienza perpendicular al plano; arrastra para orbitar y usa la rueda para ampliar.':
+      'Elige el eje, pulsa «Crear sección» y haz clic sobre el vehículo. La nueva vista será perpendicular al plano.';
   stage.classList.toggle('section-pick',sectionPick);
 }
 function updateSectionMarker(){
-  sectionX=T.MathUtils.clamp(sectionX,-L*.5,L*.5);
-  sectionPlane.constant=-sectionX;
-  sectionMarker.position.set(sectionX,H*.58,0);
-  sectionMarker.scale.set(Math.max(W*1.6,1.8),Math.max(H*1.32,1.6),1);
+  const [min,max]=sectionRange();
+  sectionValue=T.MathUtils.clamp(sectionValue,min,max);
+  sectionFocus[sectionAxis]=sectionValue;
+  const n=sectionPlane.normal;
+  n.set(sectionAxis==='x'?1:0,sectionAxis==='y'?-1:0,sectionAxis==='z'?-1:0);
+  sectionPlane.constant=-n[sectionAxis]*sectionValue;
+  sectionMarker.position.copy(sectionFocus);
+  sectionMarker.rotation.set(0,0,0);
+  if(sectionAxis==='x'){
+    sectionMarker.rotation.y=Math.PI*.5;
+    sectionMarker.scale.set(Math.max(W*1.6,1.8),Math.max(H*1.45,1.6),1);
+  }else if(sectionAxis==='y'){
+    sectionMarker.rotation.x=-Math.PI*.5;
+    sectionMarker.scale.set(Math.max(L*1.2,2.3),Math.max(W*1.7,2.0),1);
+  }else{
+    sectionMarker.scale.set(Math.max(L*1.2,2.3),Math.max(H*1.45,1.6),1);
+  }
   sectionMarker.visible=sectionEnabled;
-  $('sectionPosition').min=(-L*.5).toFixed(2);
-  $('sectionPosition').max=(L*.5).toFixed(2);
-  $('sectionPosition').value=sectionX.toFixed(2);
-  $('sectionValue').textContent=sectionX.toFixed(2).replace('.',',')+' m';
+  $('sectionPositionLabel').textContent='Posición '+sectionAxis.toUpperCase();
+  $('sectionPosition').min=min.toFixed(2);
+  $('sectionPosition').max=max.toFixed(2);
+  $('sectionPosition').value=sectionValue.toFixed(2);
+  $('sectionValue').textContent=sectionValue.toFixed(2).replace('.',',')+' m';
   updateSectionUI();wake();
 }
 function clearSection(){
@@ -107,19 +142,24 @@ function clearSection(){
   for(const select of viewSelects)if(select.value==='section')select.value='3d';
   sectionMarker.visible=false;updateSectionUI();wake();
 }
-function setSection(x,sourceIndex=0,split=true){
-  sectionX=T.MathUtils.clamp(x,-L*.5,L*.5);
+function setSection(value,sourceIndex=0,split=true,hitPoint=null){
+  const [min,max]=sectionRange();
+  sectionValue=T.MathUtils.clamp(value,min,max);
+  if(hitPoint)sectionFocus.copy(hitPoint);
+  sectionFocus[sectionAxis]=sectionValue;
   sectionEnabled=true;sectionPick=false;
   if(split&&views.length===1){
-    sectionViewIndex=1; // Preserve 3D view 1, reserve new view 2 for the section.
+    sectionViewIndex=1; // Keep the first perspective and place the cut in view 2.
     $('layout').value='2';layout();
   }else sectionViewIndex=Math.max(0,Math.min(views.length-1,sourceIndex));
   viewSelects[sectionViewIndex].value='section';
+  resetSectionCamera(sectionViewIndex);
   updateSectionMarker();
 }
 function pickSection(e,i){
   if(!content)return;
-  // Use the camera under the pointer. Fall back to the ground plane for clicks beside the car.
+  // Raycast at the clicked point; use the floor when the model itself isn't hit.
+  render();
   const bounds=views[i].getBoundingClientRect(),type=viewSelects[i].value;
   const cam=cameras[i][type==='3d'?'persp':'ortho'],ray=new T.Raycaster();
   ray.setFromCamera({x:(e.clientX-bounds.left)/bounds.width*2-1,y:-(e.clientY-bounds.top)/bounds.height*2+1},cam);
@@ -127,7 +167,7 @@ function pickSection(e,i){
   const groundHit=ray.ray.intersectPlane(new T.Plane(new T.Vector3(0,1,0),0),new T.Vector3());
   const chosen=hits.length?hits[0].point:groundHit;
   if(!chosen){status('No se pudo situar el corte. Haz clic sobre el vehículo o el suelo.',true);return;}
-  setSection(chosen.x,i,true);
+  setSection(chosen[sectionAxis],i,true,chosen);
 }
 function status(s,error=false){$('status').textContent=s;$('status').classList.toggle('error',error);}
 function wake(){dirty=true;if(!raf)raf=requestAnimationFrame(tick);}
@@ -137,7 +177,7 @@ const shape=new T.Shape();shape.moveTo(-2.25,.28);shape.lineTo(-2.2,.65);shape.l
 const geom=new T.ExtrudeGeometry(shape,{depth:1.62,bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:.07,bevelThickness:.08});geom.translate(0,0,-.81);g.add(new T.Mesh(geom,mat));
 for(const z of [-.9,.9]){const win=new T.Mesh(new T.BoxGeometry(1.1,.38,.02),glass);win.position.set(.02,1.1,z*.96);g.add(win);for(const x of [-1.42,1.45]){const wheel=new T.Mesh(new T.CylinderGeometry(.34,.34,.22,24),new T.MeshStandardMaterial({color:0x16171b,roughness:.95}));wheel.rotation.x=Math.PI/2;wheel.position.set(x,.34,z);g.add(wheel);const hub=new T.Mesh(new T.CylinderGeometry(.18,.18,.23,16),mat);hub.rotation.x=Math.PI/2;hub.position.copy(wheel.position);g.add(hub);}}
 return g;}
-function normalize(){vehicle.position.set(0,0,0);vehicle.updateMatrixWorld(true);let b=new T.Box3().setFromObject(vehicle);if(b.isEmpty())throw Error('No hay geometría visible.');const center=b.getCenter(new T.Vector3());vehicle.position.set(-center.x,-b.min.y,-center.z);vehicle.updateMatrixWorld(true);b=new T.Box3().setFromObject(vehicle);const s=b.getSize(new T.Vector3());L=s.x;H=s.y;W=s.z;if(!Number.isFinite(L+H+W)||Math.min(L,H,W)<1e-7)throw Error('Dimensiones no válidas.');extent=Math.max(L*1.65,H*2,W*2);sectionX=T.MathUtils.clamp(sectionX,-L*.5,L*.5);updateSectionMarker();ground.scale.set(extent*2,extent*1.3,1);grid.scale.setScalar(extent/10);arrow.position.set(-extent*.85,.06,-W*.9);arrow.setLength(L*.5,L*.08,L*.04);$('length').value=L.toFixed(2);$('dimensions').textContent=`${L.toFixed(2)} × ${H.toFixed(2)} × ${W.toFixed(2)} m`;}
+function normalize(){vehicle.position.set(0,0,0);vehicle.updateMatrixWorld(true);let b=new T.Box3().setFromObject(vehicle);if(b.isEmpty())throw Error('No hay geometría visible.');const center=b.getCenter(new T.Vector3());vehicle.position.set(-center.x,-b.min.y,-center.z);vehicle.updateMatrixWorld(true);b=new T.Box3().setFromObject(vehicle);const s=b.getSize(new T.Vector3());L=s.x;H=s.y;W=s.z;if(!Number.isFinite(L+H+W)||Math.min(L,H,W)<1e-7)throw Error('Dimensiones no válidas.');extent=Math.max(L*1.65,H*2,W*2);if(!sectionEnabled){sectionFocus.set(0,H*.5,0);sectionValue=sectionFocus[sectionAxis];}updateSectionMarker();ground.scale.set(extent*2,extent*1.3,1);grid.scale.setScalar(extent/10);arrow.position.set(-extent*.85,.06,-W*.9);arrow.setLength(L*.5,L*.08,L*.04);$('length').value=L.toFixed(2);$('dimensions').textContent=`${L.toFixed(2)} × ${H.toFixed(2)} × ${W.toFixed(2)} m`;}
 function releaseFocus(){
   for(const extra of [focusFlow,retiredFocus])if(extra){scene.remove(extra.group);extra.dispose();}
   focusFlow=retiredFocus=null;focusFade=retiredFade=0;focusLocation=null;
@@ -247,7 +287,7 @@ function resetField(){
   $('fieldinfo').textContent='Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.';
 }
 function install(obj,name,yaw=0){
-  generation++;releaseFocus();resetField();clearSection();sectionX=0;
+  generation++;releaseFocus();resetField();clearSection();sectionValue=H*.5;
   if(content){vehicle.remove(content);dispose(content);}
   vehicle.rotation.set(0,yaw,0);vehicle.scale.setScalar(1);
   content=obj;vehicle.add(obj);vehicle.visible=$('body').checked;
@@ -256,6 +296,7 @@ function install(obj,name,yaw=0){
 }
 function resetCameras(){
   orbit=views.map(()=>({theta:2.35,phi:1.13,r:extent*1.12,zoom:1,target:new T.Vector3(0,H*.55,0)}));
+  for(let i=0;i<viewSelects.length;i++)if(viewSelects[i].value==='section')resetSectionCamera(i);
   if(focusFlow)releaseFocus();wake();
 }
 function layout(){
@@ -271,10 +312,10 @@ function layout(){
     const label=document.createElement('label');label.textContent='Vista '+(i+1);
     const select=document.createElement('select');
     select.setAttribute('aria-label','Tipo de vista '+(i+1));
-    select.innerHTML='<option value="3d">Perspectiva 3D</option><option value="side">Lateral</option><option value="top">Superior</option><option value="front">Frontal</option><option value="section">Sección vertical YZ</option>';
+    select.innerHTML='<option value="3d">Perspectiva 3D</option><option value="side">Lateral</option><option value="top">Superior</option><option value="front">Frontal</option><option value="section">Sección del plano</option>';
     select.value=prior[i]||['3d','side','top','front'][i];
     select.onchange=()=>{
-      if(select.value==='section')setSection(sectionX,i,false);
+      if(select.value==='section')setSection(sectionValue,i,false);
       else if(sectionViewIndex===i&&!viewSelects.some(v=>v.value==='section'))clearSection();
       wake();
     };
@@ -296,7 +337,7 @@ function render(){
   views.forEach((v,i)=>{
     const rect=v.getBoundingClientRect(),x=rect.left-sr.left,y=height-(rect.bottom-sr.top);
     const aspect=rect.width/Math.max(rect.height,1),type=viewSelects[i].value,o=orbit[i];
-    const target=type==='section'?new T.Vector3(sectionX+L*.23,H*.56,0):o.target;
+    const target=type==='section'?sectionFocus:o.target;
     let cam;
     if(type==='3d'){
       cam=cameras[i].persp;cam.aspect=aspect;
@@ -304,24 +345,35 @@ function render(){
         target.y+Math.cos(o.phi)*o.r,target.z+Math.sin(o.theta)*Math.sin(o.phi)*o.r);
       cam.up.set(0,1,0);
     }else{
-      cam=cameras[i].ortho;const size=(type==='section'?Math.max(W*.85,H*1.1,1.2):extent*.58)/o.zoom;
+      cam=cameras[i].ortho;
+      const sectionSize=sectionAxis==='x'?Math.max(W*.9,H*1.15,1.25):
+        sectionAxis==='y'?Math.max(L*.64,W*.95,1.35):Math.max(L*.64,H*1.15,1.35);
+      const size=(type==='section'?sectionSize:extent*.58)/o.zoom;
       cam.left=-size*aspect;cam.right=size*aspect;cam.top=size;cam.bottom=-size;cam.up.set(0,1,0);
       if(type==='side')cam.position.set(target.x,target.y,target.z+extent*3);
       if(type==='front')cam.position.set(target.x-extent*3,target.y,target.z);
       if(type==='top'){cam.position.set(target.x,target.y+extent*3,target.z);cam.up.set(1,0,0);}
-      if(type==='section')cam.position.set(sectionX-extent*2,H+extent*.53,extent*.43);
+      if(type==='section'){
+        // Orthogonal projection. Initially directly normal to the chosen section plane.
+        // Spherical camera direction permits subsequent free orbit using drag.
+        const radius=extent*2;
+        cam.position.set(target.x+Math.cos(o.theta)*Math.sin(o.phi)*radius,
+          target.y+Math.cos(o.phi)*radius,
+          target.z+Math.sin(o.theta)*Math.sin(o.phi)*radius);
+        cam.up.set(sectionAxis==='y'?-1:0,sectionAxis==='y'?0:1,0);
+      }
     }
     cam.lookAt(target);cam.updateProjectionMatrix();cam.updateMatrixWorld(true);
     const sliced=type==='section'&&sectionEnabled;
     renderer.clippingPlanes=sliced?[sectionPlane]:[];
     sectionMarker.visible=sectionEnabled&&!sliced;
-    for(const group of [flow,focusFlow,retiredFocus])if(group?.setClip)group.setClip(sliced,sectionX);
+    for(const group of [flow,focusFlow,retiredFocus])if(group?.setClip)group.setClip(sliced,sectionPlane.normal,sectionPlane.constant);
     renderer.setViewport(x,y,rect.width,rect.height);
     renderer.setScissor(x,y,rect.width,rect.height);
     renderer.render(scene,cam);
   });
   renderer.clippingPlanes=[];
-  for(const group of [flow,focusFlow,retiredFocus])if(group?.setClip)group.setClip(false,sectionX);
+  for(const group of [flow,focusFlow,retiredFocus])if(group?.setClip)group.setClip(false,sectionPlane.normal,sectionPlane.constant);
   sectionMarker.visible=sectionEnabled;dirty=false;
 }
 const focusMarker=new T.Mesh(new T.SphereGeometry(.032,10,8),new T.MeshBasicMaterial({color:0xff6a1a,depthTest:false}));
@@ -341,12 +393,11 @@ let drag=null;
 function viewAt(e){return views.findIndex(v=>{const r=v.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom;});}
 renderer.domElement.addEventListener('pointerdown',e=>{const i=viewAt(e);if(i<0)return;
   if(sectionPick&&e.button===0){pickSection(e,i);return;}
-  drag={i,x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button===2||viewSelects[i].value!=='3d'};
+  drag={i,x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button===2||!['3d','section'].includes(viewSelects[i].value)};
   renderer.domElement.setPointerCapture(e.pointerId);});
 renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
 renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;
   const o=orbit[drag.i],dx=e.clientX-drag.x,dy=e.clientY-drag.y;
-  if(viewSelects[drag.i].value==='section')return;
   if(drag.pan||e.shiftKey){
     const type=viewSelects[drag.i].value,cam=cameras[drag.i][type==='3d'?'persp':'ortho'];
     const right=new T.Vector3().setFromMatrixColumn(cam.matrixWorld,0);
@@ -354,7 +405,7 @@ renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;
     const unit=type==='3d'?o.r/500:extent/(Math.max(o.zoom,.1)*300);
     o.target.addScaledVector(right,-dx*unit).addScaledVector(up,dy*unit);
   }else{
-    o.theta+=dx*.008;o.phi=T.MathUtils.clamp(o.phi+dy*.008,.08,Math.PI*.94);
+    o.theta+=dx*.008;o.phi=T.MathUtils.clamp(o.phi+dy*.008,.001,Math.PI-.001);
   }
   drag.x=e.clientX;drag.y=e.clientY;wake();
 });
@@ -374,7 +425,8 @@ renderer.domElement.addEventListener('dblclick',e=>{
   ray.setFromCamera({x:(e.clientX-bounds.left)/bounds.width*2-1,y:-(e.clientY-bounds.top)/bounds.height*2+1},cam);
   const hits=ray.intersectObject(content,true);if(!hits.length)return;
   inspectionPoint=hits[0].point.clone();
-  orbit[i].target.copy(inspectionPoint);
+  if(type==='section'){sectionFocus.copy(inspectionPoint);sectionFocus[sectionAxis]=sectionValue;}
+  else orbit[i].target.copy(inspectionPoint);
   focusMarker.position.copy(inspectionPoint);focusMarker.scale.setScalar(Math.max(L*.35,.1));focusMarker.visible=true;
   updateFocus(true,i);wake();
 });
@@ -388,11 +440,17 @@ function playback(on){
 }
 $('play').onclick=()=>playback(true);
 $('pause').onclick=()=>playback(false);
-$('section').onclick=()=>{sectionPick=!sectionPick;updateSectionUI();wake();};
+$('section').onclick=()=>{sectionAxis=$('sectionAxis').value;sectionPick=!sectionPick;updateSectionUI();wake();};
+$('sectionAxis').onchange=()=>{
+  sectionAxis=$('sectionAxis').value;
+  sectionValue=sectionEnabled?sectionFocus[sectionAxis]:sectionRange().reduce((a,b)=>a+b)/2;
+  for(let i=0;i<viewSelects.length;i++)if(viewSelects[i].value==='section')resetSectionCamera(i);
+  updateSectionMarker();
+};
 $('clearSection').onclick=clearSection;
 $('sectionPosition').oninput=()=>{
-  sectionX=Number($('sectionPosition').value);
-  if(!sectionEnabled)setSection(sectionX,0,false);
+  sectionValue=Number($('sectionPosition').value);
+  if(!sectionEnabled)setSection(sectionValue,0,false);
   updateSectionMarker();
 };
 $('reset').onclick=()=>{clock=0;updateParticles();wake();};
@@ -467,7 +525,13 @@ new ResizeObserver(wake).observe(stage);document.addEventListener('visibilitycha
 initDockLayout();layout();updateSectionUI();playback(true);install(demo(),'Concepto de demostración');restoreDefault();
 window.aeroReady=()=>buildPromise;
 window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
-  sectionEnabled,sectionPick,sectionX,sectionViewIndex,viewModes:viewSelects.map(s=>s.value),
+  sectionEnabled,sectionPick,sectionAxis,sectionValue,sectionViewIndex,
+  sectionNormal:[sectionPlane.normal.x,sectionPlane.normal.y,sectionPlane.normal.z],
+  sectionPlaneConstant:sectionPlane.constant,
+  sectionCameraDirection:(()=>{
+    const o=orbit[sectionViewIndex];
+    return o?[Math.cos(o.theta)*Math.sin(o.phi),Math.cos(o.phi),Math.sin(o.theta)*Math.sin(o.phi)]:null;
+  })(),viewModes:viewSelects.map(s=>s.value),
   dimensions:[L,H,W],emitter:[emitter.width,emitter.height],tracks:TRACKS,steps:STEPS,fieldRevision,precision:pathData?.precision||null,
   rawSamples:pathData?.rawSamples||0,repaired:pathData?.repaired||0,stalled:pathData?.stalled||0,
   openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,cfd:!!pathData?.physical,cfdSource:activeCFD?.source||null,
