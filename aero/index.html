@@ -60876,7 +60876,7 @@ const AeroPaths = (() => {
   async function build(surface,{L,H,W,extent,precision='balanced',focus='all',emitterWidth=2.6,emitterHeight=2.0},current=()=>true){
     const {tracks,steps}=modes[precision]||modes.balanced;
     const emitter=AeroEmitter.bounds(emitterWidth,emitterHeight,focus);
-    const paths=new Float32Array(tracks*steps*3),centres=new Float32Array(tracks*3);
+    const paths=new Float32Array(tracks*steps*3),centres=new Float32Array(tracks*3),inactive=new Uint8Array(tracks);
     let seed=71,repaired=0,stalled=0,rawSamples=0;
     const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
     const cols=Math.round(Math.sqrt(tracks*1.5)),rows=Math.ceil(tracks/cols);
@@ -60987,11 +60987,12 @@ const AeroPaths = (() => {
         if(s>0&&surface.segment([paths[k-3],paths[k-2],paths[k-1]],p)){invalid=true;break;}
       }
       if(invalid){
-        repaired++;
-        // Safe fallback entirely above the bounding height, not a closed artificial envelope.
+        repaired++;inactive[track]=1;
+        // Retain the seed position but hide an invalid path instead of emitting
+        // a fake fallback lane outside the user-defined emitter rectangle.
         for(let s=0;s<steps;s++){
           const k=(track*steps+s)*3;
-          paths[k]=lo+(hi-lo)*s/(steps-1);paths[k+1]=H+clearance*5;paths[k+2]=z0;
+          paths[k]=lo;paths[k+1]=seedY;paths[k+2]=seedZ;
         }
       }
       const mid=(track*steps+Math.floor(steps/2))*3;
@@ -61004,6 +61005,7 @@ const AeroPaths = (() => {
     for(let track=0;track<tracks;track++){
       const phase=track*2.3999632297,swirl=track%2===0?1:-1;
       for(let s=0;s<steps;s++){
+        if(inactive[track]){speeds[track*steps+s]=0;continue;}
         const k=(track*steps+s)*3, x=paths[k], y=paths[k+1], z=paths[k+2];
         const downstream=Math.max(0,(x-rear)/L),wake=downstream>0&&downstream<2.2;
         if(wake){
