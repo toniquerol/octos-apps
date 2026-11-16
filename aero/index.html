@@ -60815,7 +60815,6 @@ function addPrimitiveAttributes( geometry, primitiveDef, parser ) {
 return { GLTFLoader };
 
 })();// World-space triangle BVH. Geometric collision queries; no fluid dynamics.
-// World-space triangle BVH. Geometric collision queries; no fluid dynamics.
 const AeroGeometry = (() => {
   const pause = () => new Promise(resolve => setTimeout(resolve, 0));
   async function build(faces, current = () => true) {
