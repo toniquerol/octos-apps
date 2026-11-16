@@ -21,8 +21,12 @@ async function test(){
     pointsize:'1.6',trail:'1.6',opacity:'0.6',palette:'#ffb16d',
     emitterWidth:'0.2',emitterHeight:'2.0',focus:'center',speed:'1.5'
   };
-  for(const [id,value] of Object.entries(defaultInputs))
-    assert.equal(await page.locator('#'+id).inputValue(),value,'default '+id);
+  const numericDefaults=new Set(['pointsize','trail','opacity','emitterWidth','emitterHeight','speed']);
+  for(const [id,value] of Object.entries(defaultInputs)){
+    const actual=await page.locator('#'+id).inputValue();
+    assert.equal(numericDefaults.has(id)?Number(actual):actual,
+      numericDefaults.has(id)?Number(value):value,'default '+id);
+  }
   assert.equal(await page.locator('#tunnel').isChecked(),false);
   assert.equal(await page.locator('#speedval').textContent(),'1,5×');
   assert.deepEqual(start.emitterOffset,[0,0]);
