@@ -3,7 +3,7 @@ const html=fs.readFileSync(__dirname+'/../index.html','utf8');
 const js=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
 const ctx={console,setTimeout,clearTimeout};
 vm.createContext(ctx);
-vm.runInContext(js.slice(0,js.indexOf("(()=>{'use strict';"))+'\nglobalThis.CFD=AeroCFD;',ctx);
+vm.runInContext(js.slice(0,js.indexOf("(()=>{'use strict';"))+'\nglobalThis.CFD=AeroCFD;globalThis.Geo=AeroGeometry;globalThis.T=THREE;',ctx);
 const dims=[9,5,5],velocity=[];
 for(let z=0;z<dims[2];z++)for(let y=0;y<dims[1];y++)for(let x=0;x<dims[0];x++)
   velocity.push(12,0,0);
@@ -44,6 +44,31 @@ async function run(){
   assert.deepEqual(Array.from(field.spacing),originalSpacing);
   assert.deepEqual(Array.from(field.dims),originalDims);
   assert.throws(()=>ctx.CFD.parse({...make(),spacing:[0,1,1]}));
-  console.log('PASS: CFD uniform grid validation, trilinear samples, finite RK4 trajectories, preserved CFD grid and bounded emitter seeds.');
+
+  // A constant straight CFD vector crosses this solid car. The display-only
+  // geometric correction must go around it instead of running through it.
+  const model=new ctx.T.Group(),box=new ctx.T.Mesh(
+    new ctx.T.BoxGeometry(4,1.4,1.8),new ctx.T.MeshBasicMaterial());
+  box.position.set(0,.8,0);model.add(box);
+  const surface=await ctx.Geo.fromObject(model);
+  const before=Array.from(field.velocity);
+  const constrained=await ctx.CFD.build(field,surface,{L:4,H:1.5,W:1.8,extent:4,precision:'low'});
+  assert(constrained.physical&&constrained.surfaceAdjusted>0,
+    'straight CFD flow must be visually redirected near body');
+  let activeSteps=0;
+  for(let track=0;track<constrained.tracks;track++)for(let step=1;step<constrained.steps;step++){
+    const i=track*constrained.steps+step,k=i*3;
+    if(constrained.speeds[i]<=0)continue;
+    const from=[...constrained.paths.slice(k-3,k)];
+    const to=[...constrained.paths.slice(k,k+3)];
+    assert(!surface.segment(from,to),'CFD renderer path crosses triangle shell');
+    assert(!(Math.abs(to[0])<1.99&&to[1]>.11&&to[1]<1.49&&Math.abs(to[2])<.89),
+      'CFD renderer path entered the solid vehicle interior');
+    activeSteps++;
+  }
+  assert(activeSteps>5000,'surface correction cannot remove most CFD particles');
+  assert.deepEqual(Array.from(field.velocity),before,'never mutate imported CFD field');
+  surface.dispose();
+  console.log('PASS: CFD interpolation, RK4, mesh-aware visible surface flow and immutable original CFD grid.');
 }
 run().catch(e=>{console.error(e);process.exitCode=1;});
