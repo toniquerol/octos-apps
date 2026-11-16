@@ -2,6 +2,7 @@ const assert=require('assert'),path=require('path'),fs=require('fs');
 const {chromium}=require('playwright');
 async function test(){
   const browser=await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-webgl']});
+  try {
   const page=await browser.newPage({viewport:{width:1400,height:900},deviceScaleFactor:1});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const file='file://'+path.resolve(__dirname,'../index.html');
@@ -158,6 +159,8 @@ async function test(){
   assert.equal((await page.evaluate(()=>window.aeroDiagnostics())).sectionEnabled,false);
   if(errors.length)throw Error('Unhandled browser errors: '+errors.join('; '));
   console.log('PASS: Chromium WebGL2, interactive demo, local tracer zoom without field changes, 1/2/4 views, independent particle density/precision, scale, yaw, GLB import, CFD JSON loading, independent emitter size and clearing. '+JSON.stringify({initial:start,zoom:afterZoom,precise,scaled,rotated}));
-  await browser.close();
+  } finally {
+    await browser.close();
+  }
 }
 test().catch(e=>{console.error(e);process.exitCode=1;});

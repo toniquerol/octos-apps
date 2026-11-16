@@ -44,6 +44,7 @@ jobs:
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
           npx playwright install chromium --with-deps
       - name: Chromium WebGL2 and interactive smoke test
+        timeout-minutes: 12
         run: node aero/tests/browser.cjs
       - name: Upload browser screenshots
         if: always()
