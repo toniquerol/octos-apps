@@ -47,6 +47,13 @@ async function run(){
   }
   assert(closeRoof+closeSides>=5,'car needs near-surface tracers on roof or sides');
   assert(closePaths.stalled<closePaths.tracks*.3,'reducing offset must not stall most trajectories');
+  const narrowPaths=await planner.build(carSurface,{L:4.4,H:1.52,W:1.85,extent:7.3,
+    precision:'low',emitterWidth:1.2,emitterHeight:.85});
+  for(let track=0;track<narrowPaths.tracks;track++){
+    const k=track*narrowPaths.steps*3;
+    assert(narrowPaths.paths[k+1]>=.034&&narrowPaths.paths[k+1]<=.851,'illustrative seed Y outside emitter');
+    assert(Math.abs(narrowPaths.paths[k+2])<=.601,'illustrative seed Z outside emitter');
+  }
   console.log('PROXIMITY: roof='+closeRoof+' side='+closeSides+' stalled='+closePaths.stalled+'/'+closePaths.tracks);
   carSurface.dispose();
   const t0=Date.now();
