@@ -10,6 +10,8 @@ async function test(){
   await page.evaluate(()=>window.aeroReady());
   const start=await page.evaluate(()=>window.aeroDiagnostics());
   assert(start.triangles>0 && start.tracks===360 && start.steps===288);
+  assert.equal(start.particles,12000);
+  assert.deepEqual(start.emitter,[2.6,2.0]);
   const b=await page.locator('#stage').boundingBox();
   await page.mouse.move(b.x+b.width*.5,b.y+b.height*.52);
   await page.mouse.wheel(0,-1700);
@@ -58,11 +60,24 @@ async function test(){
   await page.waitForFunction(()=>window.aeroDiagnostics?.().cfd===true,{timeout:120000});
   await page.evaluate(()=>window.aeroReady());
   assert.equal((await page.evaluate(()=>window.aeroDiagnostics())).cfdSource,'Uniform test field');
+  const beforeEmitter=await page.evaluate(()=>window.aeroDiagnostics());
+  await page.locator('#emitterWidth').fill('1.4');
+  await page.locator('#emitterWidth').dispatchEvent('change');
+  await page.evaluate(()=>window.aeroReady());
+  await page.locator('#emitterHeight').fill('1.1');
+  await page.locator('#emitterHeight').dispatchEvent('change');
+  await page.evaluate(()=>window.aeroReady());
+  const afterEmitter=await page.evaluate(()=>window.aeroDiagnostics());
+  assert(afterEmitter.cfd,'emitter editing must preserve imported CFD');
+  assert.equal(afterEmitter.cfdSource,beforeEmitter.cfdSource);
+  assert.deepEqual(afterEmitter.emitter,[1.4,1.1]);
+  assert(afterEmitter.fieldRevision>beforeEmitter.fieldRevision);
+  assert.equal(afterEmitter.particles,24000);
   await page.locator('#clearCFD').click();
   await page.evaluate(()=>window.aeroReady());
   assert.equal((await page.evaluate(()=>window.aeroDiagnostics())).cfd,false);
   if(errors.length)throw Error('Unhandled browser errors: '+errors.join('; '));
-  console.log('PASS: Chromium WebGL2, interactive demo, local tracer zoom without field changes, 1/2/4 views, independent particle density/precision, scale, yaw, GLB import, CFD JSON loading and clearing. '+JSON.stringify({initial:start,zoom:afterZoom,precise,scaled,rotated}));
+  console.log('PASS: Chromium WebGL2, interactive demo, local tracer zoom without field changes, 1/2/4 views, independent particle density/precision, scale, yaw, GLB import, CFD JSON loading, independent emitter size and clearing. '+JSON.stringify({initial:start,zoom:afterZoom,precise,scaled,rotated}));
   await browser.close();
 }
 test().catch(e=>{console.error(e);process.exitCode=1;});
