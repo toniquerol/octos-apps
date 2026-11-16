@@ -92,6 +92,22 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 @media(max-width:780px){.perms-layout{grid-template-columns:1fr}.perms-head{align-items:start;flex-direction:column}.perms-master{align-items:start;flex-direction:column}}
 @media(max-width:610px){.nav-shortcuts{margin-right:0;gap:5px}.nav-shortcuts button{min-width:33px;height:34px}.perms-panel{padding:17px}header{gap:7px}.perms-apps{grid-template-columns:1fr}nav{gap:4px}nav button{padding:7px}}
 
+
+/* Dirección: acceso a reuniones sin consumo de API desde la sala */
+.chief-gpt{margin:18px 0 12px}
+.chief-gpt[hidden],.chief-gpt-setup[hidden]{display:none}
+.chief-gpt-buttons{display:flex;flex-wrap:wrap;gap:8px}
+.chief-gpt-buttons button,.chief-gpt-setup button{border:1px solid #666970;border-radius:7px;padding:10px 12px;font-size:12px;color:var(--ink);background:#292a2e}
+.chief-gpt-buttons .chief-gpt-meeting,.chief-gpt-setup button{background:var(--accent);border-color:var(--accent);color:#0e0e10;font-weight:700}
+.chief-gpt-setup{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:9px;background:#131417}
+.chief-gpt-setup label{display:block;font-size:12px;margin-bottom:7px;color:var(--ink)}
+.chief-gpt-setup input{width:100%;min-width:0;background:#0e0e10;color:var(--ink);border:1px solid #494b51;border-radius:7px;padding:9px;font:12px "IBM Plex Sans",sans-serif}
+.chief-gpt-link-row{display:flex;flex-wrap:wrap;gap:8px}
+.chief-gpt-link-row input{flex:1 1 180px}
+.chief-gpt-setup p,.chief-gpt-message{font-size:11px;line-height:1.5;color:var(--muted)}
+.chief-gpt-setup a{font-size:12px;color:var(--accent);text-decoration:underline}
+.chief-gpt-message{min-height:16px;margin:9px 0 0}
+
 /* Fichas editables y armarios OcToS Team: sin cambios de geometría */
 .team-config{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
 .team-config h3{font-size:14px;margin:0 0 8px}
@@ -464,6 +480,23 @@ header.team-header .octos-global-brand{z-index:1!important}
    <div class="tag" id="detail-tag">Distribución</div>
    <p id="detail-desc">Selecciona una mesa, un grupo, un armario o un puesto de coordinación para consultar su función.</p>
    <div class="divider"></div>
+
+   <section id="chief-gpt" class="chief-gpt" hidden aria-label="Acceso al GPT de Dirección">
+    <div class="chief-gpt-buttons">
+     <button id="chief-gpt-meeting" class="chief-gpt-meeting" type="button">Tener reunión</button>
+     <button id="chief-gpt-settings" type="button" aria-expanded="false" aria-controls="chief-gpt-setup">Configuración básica</button>
+    </div>
+    <div id="chief-gpt-setup" class="chief-gpt-setup" hidden>
+     <label for="chief-gpt-link">Enlace del GPT personalizado de Dirección</label>
+     <div class="chief-gpt-link-row">
+      <input id="chief-gpt-link" type="url" placeholder="https://chatgpt.com/g/..." autocomplete="off" spellcheck="false">
+      <button id="chief-gpt-save" type="button">Guardar enlace</button>
+     </div>
+     <p>Vincula aquí un GPT existente. El enlace se guarda únicamente en este navegador; no se utiliza la API.</p>
+     <a href="https://chatgpt.com/gpts" target="_blank" rel="noopener noreferrer">Administrar y editar GPTs en ChatGPT</a>
+    </div>
+    <p id="chief-gpt-message" class="chief-gpt-message" role="status" aria-live="polite"></p>
+   </section>
    <div id="team-config-container" class="team-config" hidden></div>
    <p id="layout-hint" class="layout-hint" role="status">Plano vectorial interactivo. Selecciona un puesto o armario para consultar su ficha.</p>
    <div class="legend"><span><i class="dot running"></i>Rojo: trabajando</span><span><i class="dot idle"></i>Verde: libre / finalizado</span><span><i class="dot unknown"></i>Gris: sin datos</span><span>Verde intermitente 15 s: tarea finalizada</span></div>
@@ -721,7 +754,7 @@ window.addEventListener("popstate",function(){
 });
 window.octosTeamNavigate=page;
 page(initial,false);
-function pick(el){var item=details[el.dataset.pick];if(!item)return;document.querySelectorAll('#floor .selected').forEach(function(n){n.classList.remove('selected')});el.classList.add('selected');document.getElementById('detail-title').textContent=item.name;document.getElementById('detail-tag').textContent=item.type;document.getElementById('detail-desc').textContent=item.desc;updateSelectedStatus(el.dataset.pick);if(window.octosTeamShowConfig)window.octosTeamShowConfig(el.dataset.pick,item)}
+function pick(el){var item=details[el.dataset.pick];if(!item)return;document.querySelectorAll('#floor .selected').forEach(function(n){n.classList.remove('selected')});el.classList.add('selected');document.getElementById('detail-title').textContent=item.name;document.getElementById('detail-tag').textContent=item.type;document.getElementById('detail-desc').textContent=item.desc;updateSelectedStatus(el.dataset.pick);if(window.octosTeamShowConfig)window.octosTeamShowConfig(el.dataset.pick,item);if(window.octosTeamUpdateChiefGPT)window.octosTeamUpdateChiefGPT(el.dataset.pick)}
 window.octosTeamPick=pick;
 window.octosTeamSyncIndicators=function(){for(const id of ["chief","agent-1","agent-2","agent-3","agent-4","agent-5","agent-6","agent-7","agent-8"])setAgentState(id,{state:currentStates[id]||"unknown"});refreshBlink()};
 window.octosTeamSetRuntimeState=function(id,state){if(!installedAgents.has(id)||!Object.prototype.hasOwnProperty.call(labels,state))return;localRuntimeStates[id]=state;setAgentState(id,{state});refreshBlink()};
@@ -1560,6 +1593,70 @@ window.octosTeamFloorState=function(){return {editing,dirty,objectCount:Object.k
  zoneCount:Object.keys(draft.zones).length,building:{...draft.building},
  walls:JSON.parse(JSON.stringify(draft.walls))}};
 draw();
+})();
+</script>
+
+<script>
+/* Acceso externo al GPT de Dirección. El vínculo es local y no contiene credenciales. */
+(function(){
+"use strict";
+const key="octos-team-chief-gpt-link-v1";
+const section=document.getElementById("chief-gpt");
+const meeting=document.getElementById("chief-gpt-meeting");
+const settings=document.getElementById("chief-gpt-settings");
+const setup=document.getElementById("chief-gpt-setup");
+const input=document.getElementById("chief-gpt-link");
+const save=document.getElementById("chief-gpt-save");
+const message=document.getElementById("chief-gpt-message");
+function validGPTLink(value){
+ try{
+  const url=new URL(String(value).trim());
+  if(url.protocol!=="https:"||url.hostname!=="chatgpt.com"||url.username||url.password)return null;
+  if(!/^\/g\/[^/]+\/?$/.test(url.pathname))return null;
+  return url.href;
+ }catch(error){return null}
+}
+function currentLink(){
+ try{return validGPTLink(localStorage.getItem(key)||"")}catch(error){return null}
+}
+function openSetup(){
+ setup.hidden=false;
+ settings.setAttribute("aria-expanded","true");
+ input.value=currentLink()||"";
+}
+window.octosTeamUpdateChiefGPT=function(id){
+ const active=id==="chief";
+ section.hidden=!active;
+ setup.hidden=true;
+ settings.setAttribute("aria-expanded","false");
+ message.textContent="";
+ if(active)input.value=currentLink()||"";
+};
+settings.addEventListener("click",function(){
+ if(setup.hidden){openSetup();message.textContent="";}
+ else{setup.hidden=true;settings.setAttribute("aria-expanded","false")}
+});
+meeting.addEventListener("click",function(){
+ const link=currentLink();
+ if(!link){
+  openSetup();
+  message.textContent="Falta vincular el GPT de Dirección. Guarda su enlace para iniciar reuniones.";
+  input.focus();
+  return;
+ }
+ window.open(link,"_blank","noopener,noreferrer");
+});
+save.addEventListener("click",function(){
+ const raw=input.value.trim();
+ const link=raw?validGPTLink(raw):null;
+ if(raw&&!link){message.textContent="Introduce un enlace válido de un GPT en chatgpt.com/g/...";return}
+ try{
+  if(link)localStorage.setItem(key,link);
+  else localStorage.removeItem(key);
+  message.textContent=link?"GPT de Dirección vinculado en este navegador.":"Vínculo del GPT eliminado en este navegador.";
+  input.value=link||"";
+ }catch(error){message.textContent="No se ha podido guardar el enlace en este navegador."}
+});
 })();
 </script>
 <script src="./agents.js" defer></script>
