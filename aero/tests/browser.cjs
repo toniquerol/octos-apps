@@ -97,8 +97,7 @@ async function test(){
   assert.equal(sliced.sectionEnabled,true,'click should activate section');
   assert.equal(sliced.views,2,'section should open comparative second view');
   assert(sliced.viewModes.includes('section'));
-  await page.locator('#sectionPosition').fill('0.4');
-  await page.locator('#sectionPosition').dispatchEvent('input');
+  await page.locator('#sectionPosition').evaluate(el=>{el.value='0.4';el.dispatchEvent(new Event('input',{bubbles:true}));});
   assert(Math.abs((await page.evaluate(()=>window.aeroDiagnostics())).sectionX-.4)<.011);
   await page.screenshot({path:path.resolve(__dirname,'aero-section.png')});
   await page.locator('#clearSection').click();
