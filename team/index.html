@@ -346,7 +346,55 @@ header.team-header .octos-global-brand{z-index:1!important}
 .team-geometry label{min-width:0}
 .team-geometry input{width:100%;min-width:0}
 .team-geometry .team-config-actions button[data-turn]{border-color:#ff6a1a55;color:#ffb485}
-</style><script src="../shared/nav.js?v=20261115-roads-editor" defer></script></head>
+
+/* Sección interna Marca · OcToS Team */
+#nav-brand[hidden]{display:none!important}
+#brand-guide{font-family:"IBM Plex Sans",system-ui,sans-serif}
+#brand-guide h1,#brand-guide h2,#brand-guide h3,#brand-guide .identity-type-title{font-family:Manrope,system-ui,sans-serif}
+#brand-guide .identity-head{display:flex;align-items:end;justify-content:space-between;gap:25px;padding:25px 0 28px;border-bottom:1px solid var(--line)}
+#brand-guide h1{font-size:clamp(34px,4.6vw,54px);letter-spacing:-.045em;line-height:1.1;margin:10px 0 13px}
+#brand-guide .identity-head p{max-width:650px;font-size:13px;color:#b5b7bd;line-height:1.7;margin:0}
+#brand-guide .identity-edition{color:#a4a6ad;font-size:11px;line-height:1.8;white-space:nowrap}
+#brand-guide .identity-section{margin:38px 0 47px}
+#brand-guide .identity-section-title{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:17px}
+#brand-guide .identity-section-title span,#brand-guide .identity-kind{display:block;color:#ff9f69;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+#brand-guide h2{font-size:clamp(21px,2.2vw,28px);letter-spacing:-.035em;margin:7px 0 0}
+#brand-guide .identity-section-title p{color:#aaaeb6;font-size:12px;line-height:1.6;max-width:480px;margin:0}
+#brand-guide .identity-grid,#brand-guide .identity-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+#brand-guide .identity-card,#brand-guide .identity-panel{background:#191a1e;border:1px solid #3b3d42;border-radius:12px;overflow:hidden;min-width:0}
+#brand-guide .identity-preview{height:214px;display:flex;align-items:center;justify-content:center;padding:32px;background:#0e0e10}
+#brand-guide .identity-preview.light{background:#f1f1ef}
+#brand-guide .identity-preview img{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain}
+#brand-guide .identity-preview img.monogram{max-height:126px}
+#brand-guide .identity-missing{font-size:12px;color:#aeb1b6;line-height:1.6;text-align:center}
+#brand-guide .identity-card-body{padding:18px 21px 22px}
+#brand-guide .identity-card h3,#brand-guide .identity-panel h3{font-size:15px;margin:8px 0 10px}
+#brand-guide .identity-card p,#brand-guide .identity-panel p,#brand-guide .identity-panel li{color:#b7bac0;font-size:12px;line-height:1.7}
+#brand-guide .identity-card p{margin:0 0 13px}
+#brand-guide .identity-card a,#brand-guide .identity-note a{color:#f1f1ef;text-underline-offset:3px}
+#brand-guide .identity-card a{font-size:11px}
+#brand-guide .identity-panel{padding:24px}
+#brand-guide .identity-panel ul{padding-left:19px;margin:12px 0 0}
+#brand-guide .identity-panel li{margin:6px 0}
+#brand-guide .identity-palette{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#brand-guide .identity-color{border:1px solid #3b3d42;border-radius:12px;background:#191a1e;overflow:hidden}
+#brand-guide .identity-swatch{height:100px}
+#brand-guide .identity-color-info{padding:14px}
+#brand-guide .identity-color-info b,#brand-guide .identity-color-info code,#brand-guide .identity-color-info small{display:block}
+#brand-guide .identity-color-info b,#brand-guide .identity-color-info code{font-size:12px}
+#brand-guide .identity-color-info code{margin-top:6px}
+#brand-guide .identity-color-info small{color:#9fa1a8;font-size:11px;margin-top:8px}
+#brand-guide .identity-type-title{font-size:clamp(26px,3vw,38px)!important;font-weight:600;line-height:1.2!important;letter-spacing:-.04em;color:#f1f1ef!important}
+#brand-guide .identity-type-text{font-size:22px!important;color:#f1f1ef!important;margin:21px 0!important}
+#brand-guide .identity-icons{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+#brand-guide .identity-icon{border:1px solid #3b3d42;border-radius:11px;background:#191a1e;text-align:center;padding:15px 7px}
+#brand-guide .identity-icon img{width:62px;height:62px;display:block;object-fit:contain;margin:0 auto 11px}
+#brand-guide .identity-icon span{font-size:11px}
+#brand-guide .identity-note{border-left:2px solid #ff6a1a;padding:12px 15px;background:#1b1a1a;color:#afb2b8;font-size:11px;line-height:1.7;margin:16px 0 0}
+@media(max-width:1090px){#brand-guide .identity-icons{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:750px){#brand-guide .identity-head,#brand-guide .identity-section-title{align-items:start;flex-direction:column}#brand-guide .identity-palette{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:610px){#brand-guide .identity-grid,#brand-guide .identity-columns{grid-template-columns:1fr}#brand-guide .identity-icons{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style><script src="../shared/nav.js?v=20261115-roads-editor" defer></script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Manrope:wght@400;600;700&display=swap"></head>
 <body>
 <section id="team-access" role="dialog" aria-modal="true" aria-labelledby="team-access-title">
  <div class="team-access-card">
@@ -365,7 +413,7 @@ header.team-header .octos-global-brand{z-index:1!important}
  <div class="team-header-left">
  <div class="nav-shortcuts"><button id="nav-home" type="button" title="Ir a la sala" aria-label="Ir a la sala">⌂</button><button id="nav-back" type="button" title="Volver a la página anterior" aria-label="Volver atrás">←</button></div>
  <span class="team-header-divider fixed" aria-hidden="true"></span>
- <nav aria-label="Páginas de Team"><button data-page="home">Inicio</button><button data-page="room" class="active">Sala</button></nav>
+ <nav aria-label="Páginas de Team"><button data-page="home">Inicio</button><button data-page="room" class="active">Sala</button><button id="nav-brand" data-page="brand-guide" type="button" hidden>Marca</button></nav>
  <span class="team-header-spacer" aria-hidden="true"></span>
  <span class="team-header-divider adjustable" aria-hidden="true"></span>
  <button class="mini team-header-input" data-page="inbox" type="button">Nueva petición / Input</button>
@@ -529,6 +577,33 @@ header.team-header .octos-global-brand{z-index:1!important}
  </div>
 </section>
 
+<section id="brand-guide" class="view" aria-labelledby="identity-title">
+ <div class="identity-head"><div><div class="eyebrow">OcToS 3D Studio · Sistema interno</div><h1 id="identity-title">Identidad corporativa</h1><p>Referencia visual de los logotipos, símbolos, colores, tipografías y criterios de aplicación de la marca.</p></div><div class="identity-edition">MANUAL 01<br>Julio 2026 · Uso interno</div></div>
+ <div class="identity-section"><div class="identity-section-title"><div><span>01 / LOGOTIPOS</span><h2>Firmas y símbolos</h2></div><p>Los cuatro tipos de activos establecidos en el manual. Los recursos originales conservan sus proporciones.</p></div><div class="identity-grid"><article class="identity-card"><div class="identity-preview light"><img loading="lazy"  src="https://octos3dstudio.wordpress.com/wp-content/uploads/2022/01/octos-3d-studio-logo-1-x-3-a-2.png" alt="Firma corporativa horizontal"></div><div class="identity-card-body"><span class="identity-kind">Firma principal</span><h3>Firma corporativa horizontal</h3><p>Portadas, documentación, propuestas, web y presentaciones.</p><a href="https://octos3dstudio.wordpress.com/wp-content/uploads/2022/01/octos-3d-studio-logo-1-x-3-a-2.png" target="_blank" rel="noopener noreferrer">Archivo original</a></div></article>
+<article class="identity-card"><div class="identity-preview"><img loading="lazy"  src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-play-firma-oficial.png" alt="Versión para fondo oscuro"></div><div class="identity-card-body"><span class="identity-kind">Firma negativa</span><h3>Versión para fondo oscuro</h3><p>Firma clara para pantallas y material audiovisual.</p><a href="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-play-firma-oficial.png" target="_blank" rel="noopener noreferrer">Archivo original</a></div></article>
+<article class="identity-card"><div class="identity-preview"><img loading="lazy" class="monogram" src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="Monograma oficial"></div><div class="identity-card-body"><span class="identity-kind">Monograma T</span><h3>Monograma oficial</h3><p>Favicon, cabeceras y sellos mínimos. Activo transparente.</p><a href="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" target="_blank" rel="noopener noreferrer">Archivo original</a></div></article>
+ <article class="identity-card"><div class="identity-preview"><div class="identity-missing">Emblema de diafragma<br>Archivo maestro pendiente de incorporación</div></div><div class="identity-card-body"><span class="identity-kind">Emblema</span><h3>Sello gráfico</h3><p>Se reserva para avatares y sellos. No se redibuja ni sustituye por un símbolo provisional.</p></div></article></div>
+ <p class="identity-note">Los tres activos mostrados se recuperan de la biblioteca corporativa de WordPress. La firma horizontal es un recurso alojado históricamente: comprobar su equivalencia con el original de edición 01 antes de producir documentos finales. <a href="https://octos3dstudio.wordpress.com/wp-content/uploads/2024/05/octos-3d-studio-logo-1-x-1-a.png" target="_blank" rel="noopener noreferrer">Referencia cuadrada histórica</a> no validada como emblema.</p></div>
+ <div class="identity-section"><div class="identity-section-title"><div><span>02 / COLOR</span><h2>Paleta corporativa</h2></div><p>El naranja no se aplica a los logotipos; se reserva para la señalización y las acciones activas.</p></div><div class="identity-palette"><div class="identity-color"><div class="identity-swatch" style="background:#0E0E10"></div><div class="identity-color-info"><b>Carbón</b><code>#0E0E10</code><small>Fondo principal</small></div></div>
+<div class="identity-color"><div class="identity-swatch" style="background:#F1F1EF"></div><div class="identity-color-info"><b>Blanco cálido</b><code>#F1F1EF</code><small>Texto y soportes claros</small></div></div>
+<div class="identity-color"><div class="identity-swatch" style="background:#2A2B2F"></div><div class="identity-color-info"><b>Antracita</b><code>#2A2B2F</code><small>Paneles secundarios</small></div></div>
+<div class="identity-color"><div class="identity-swatch" style="background:#FF6A1A"></div><div class="identity-color-info"><b>Naranja</b><code>#FF6A1A</code><small>Acento y activación</small></div></div></div></div>
+ <div class="identity-section"><div class="identity-section-title"><div><span>03 / TIPOGRAFÍA</span><h2>Sistema tipográfico</h2></div><p>Jerarquía precisa: títulos expresivos y textos funcionales de alta legibilidad.</p></div><div class="identity-columns"><div class="identity-panel"><span class="identity-kind">Manrope · Semibold 600</span><p class="identity-type-title">Precisión técnica,<br>resultado visual.</p><p>Tipografía principal. Títulos, mensajes de identidad y números destacados. H1 de 28–34 pt y H2 de 17–20 pt en documentos.</p></div><div class="identity-panel"><span class="identity-kind">IBM Plex Sans · Regular / Semibold</span><p class="identity-type-text">Aa Bb Cc 0123456789</p><p>Texto continuo, tablas, fichas, botones y metadatos. Cuerpo documental de 9,5–11 pt.</p></div></div></div>
+ <div class="identity-section"><div class="identity-section-title"><div><span>04 / ESTRUCTURA</span><h2>Retícula y protección</h2></div><p>Espaciado modular y relaciones de tamaño consistentes.</p></div><div class="identity-columns"><div class="identity-panel"><h3>Composición</h3><ul><li>Retícula de 12 columnas.</li><li>Módulo de espaciado de 8 pt: 8 / 16 / 24–32 / 48–64.</li><li>Márgenes generosos, títulos breves, espacios negativos y alineación rigurosa.</li></ul></div><div class="identity-panel"><h3>Protección de la marca</h3><ul><li>Mínimos digitales: firma 160 px, compacta 110 px.</li><li>Monograma 32 px, emblema 48 px.</li><li>Área de reserva: ¼ del ancho del monograma central.</li></ul></div></div></div>
+ <div class="identity-section"><div class="identity-section-title"><div><span>05 / ECOSISTEMA</span><h2>Símbolos de aplicaciones</h2></div><p>Iconos activos del repositorio. Son independientes de las firmas corporativas.</p></div><div class="identity-icons"><div class="identity-icon"><img loading="lazy" src="../apps-icon-light.svg" alt="Icono actual OcToS Apps"><span>Apps</span></div>
+<div class="identity-icon"><img loading="lazy" src="icon-light.svg" alt="Icono actual OcToS Team"><span>Team</span></div>
+<div class="identity-icon"><img loading="lazy" src="../layers/icon-light.svg" alt="Icono actual OcToS Layers"><span>Layers</span></div>
+<div class="identity-icon"><img loading="lazy" src="../templates/icon-light.svg" alt="Icono actual OcToS Templates"><span>Templates</span></div>
+<div class="identity-icon"><img loading="lazy" src="../kitchen/icon-light.svg" alt="Icono actual OcToS Kitchen"><span>Kitchen</span></div>
+<div class="identity-icon"><img loading="lazy" src="../drive/icon-light.svg" alt="Icono actual OcToS Drive"><span>Drive</span></div>
+<div class="identity-icon"><img loading="lazy" src="../carto/icon-light.svg" alt="Icono actual OcToS Carto"><span>Carto</span></div>
+<div class="identity-icon"><img loading="lazy" src="../aero/icon-light.svg" alt="Icono actual OcToS Aero"><span>Aero</span></div>
+<div class="identity-icon"><img loading="lazy" src="../roads/icon-light.svg" alt="Icono actual OcToS Roads"><span>Roads</span></div>
+<div class="identity-icon"><img loading="lazy" src="../meteo/icon-light.svg" alt="Icono actual OcToS Meteo"><span>Meteo</span></div>
+<div class="identity-icon"><img loading="lazy" src="../rain/icon-light.svg" alt="Icono actual OcToS Rain"><span>Rain</span></div></div><p class="identity-note">Las versiones de Drive y Carto conservan referencias visuales aprobadas. El resto representa el estado actual del repositorio, sin atribuir aprobación adicional.</p></div>
+ <div class="identity-section"><div class="identity-section-title"><div><span>06 / NORMATIVA</span><h2>Uso y aplicaciones</h2></div><p>Criterios de documentos técnicos, imágenes y soporte digital.</p></div><div class="identity-columns"><div class="identity-panel"><h3>Aplicación correcta</h3><ul><li>Usar los originales positivos o negativos según el contraste.</li><li>Mantener relación entre OcToS, 3D Studio y el símbolo ©.</li><li>Imágenes con geometría creíble, luz dirigida y materiales realistas.</li><li>Documentar con código, fecha, revisión y estado.</li></ul></div><div class="identity-panel"><h3>No permitido</h3><ul><li>Estirar, recolorear, recomponer o redibujar el logotipo.</li><li>Añadir colores ajenos a la paleta oficial.</li><li>Aplicar halos, saturación excesiva o adornos sin función.</li><li>Inventar un activo en lugar del maestro aprobado.</li></ul></div></div>
+ <p class="identity-note">Acceso de interfaz reservado al administrador de Teams. GitHub Pages publica el HTML y las imágenes sin autenticación de servidor: el PIN oculta la vista, pero no impide consultar el código público. No incluir aquí información confidencial.</p></div>
+</section>
 </main><footer><span>OcToS 3D STUDIO · TEAM</span><span>V2.1 / MONITOR DE ACTIVIDAD</span></footer>
 <script>
 (function(){
@@ -613,7 +688,7 @@ readTelemetry();
 setInterval(readTelemetry,10000);
 setInterval(refreshBlink,250);
 
-var validPages=new Set(["room","home","structure","inbox","system","permissions"]);
+var validPages=new Set(["room","home","structure","inbox","system","permissions","brand-guide"]);
 var teamHistory=[];
 var initial=validPages.has(location.hash.slice(1))?location.hash.slice(1):"room";
 var currentPage=initial;
@@ -621,6 +696,7 @@ history.replaceState({octosTeamPage:initial},"","#"+initial);
 function page(name,record=true){
  if(!validPages.has(name))return;
  if(name==="permissions"&&window.octosTeamIsMaster===false){name="room"}
+  if(name==="brand-guide"&&window.octosTeamIsMaster!==true){name="room";if(location.hash==="#brand-guide")history.replaceState({octosTeamPage:"room"},"","#room")}
  if(name!==currentPage&&record){
   teamHistory.push(currentPage);
   history.pushState({octosTeamPage:name},"","#"+name);
@@ -695,11 +771,14 @@ function enter(role){
  root.classList.remove("pin-locked");gate.hidden=true;pin.value="";error.textContent="";
  lastActivity=Date.now();lastSessionRefresh=lastActivity;persist();
  document.querySelectorAll('[data-page="permissions"]').forEach(el=>el.hidden=!window.octosTeamIsMaster);
- if(!window.octosTeamIsMaster&&location.hash==="#permissions"){history.replaceState({octosTeamPage:"room"},"","#room");window.octosTeamNavigate("room",false)}
+  document.getElementById('nav-brand').hidden=!window.octosTeamIsMaster;
+ if(!window.octosTeamIsMaster&&(location.hash==="#permissions"||location.hash==="#brand-guide")){history.replaceState({octosTeamPage:"room"},"","#room");window.octosTeamNavigate("room",false)}
 }
 function lock(){
  clear();currentRole=null;window.octosTeamIsMaster=null;root.classList.add("pin-locked");
  gate.hidden=false;pin.value="";error.textContent="";pin.focus();
+  document.getElementById("nav-brand").hidden=true;
+  if(location.hash==="#brand-guide"){history.replaceState({octosTeamPage:"room"},"","#room");window.octosTeamNavigate("room",false)}
  document.querySelectorAll('[data-page="permissions"]').forEach(el=>el.hidden=true);
 }
 try{
