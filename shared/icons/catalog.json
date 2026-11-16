@@ -105,7 +105,9 @@
       "concept": "Nave-taller en perspectiva con puerta y elevador naranja",
       "svg": "garage/icon.svg",
       "lightSvg": "garage/icon-light.svg",
-      "designState": "V1 nueva aplicación; SVG canónico y variante clara"
+      "designState": "V1 nueva aplicación; SVG canónico y variante clara",
+      "png128": "garage/icon-128.png",
+      "favicon32": "garage/favicon-32.png"
     },
     {
       "id": "roads",
