@@ -104,7 +104,72 @@ THE SOFTWARE.
 #vehiclePanelContent .row,#flowPanelContent .row,#viewPanelContent .row{min-width:0}
 @media(max-width:900px){.right-docks{width:250px}.view-float[open]{width:290px;max-width:calc(100% - 255px)}}
 @media(max-width:620px){.right-docks{width:43%;min-width:142px}.view-float[open]{width:49%;max-width:50%}.float-panel summary{height:42px}.float-panel:not([open]){height:42px}}
-</style><header><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS" style="width:46px;height:46px;object-fit:contain;flex:none"><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V2.6</small></header><main><aside id="controlShelf"><section id="vehiclePanelContent"><h2>01 / VEHÍCULO</h2><div class="row"><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></div><div class="rotate-tools"><div class="rotate-title">GIRAR MODELO · +90°</div><div class="row"><button type="button" data-axis="x" title="Girar 90° en X">X ↻</button><button type="button" data-axis="y" title="Girar 90° en Y">Y ↻</button><button type="button" data-axis="z" title="Girar 90° en Z">Z ↻</button></div></div><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label><input id="presetBMW" type="checkbox" checked> BMW E46 Touring · orientar Y 180° al importar</label><p class="hint">Morro hacia −X. La última importación GLB se guarda en este navegador como vehículo inicial. Los giros manuales siguen disponibles.</p><p class="hint">Modelo de referencia: <a style="color:#ff995e" href="https://sketchfab.com/3d-models/bmw-3-series-touring-e46-2001-478330312c3d46fd94999c3133ce0366" target="_blank" rel="noopener noreferrer">BMW 3 Series Touring (E46) 2001</a> · Luquita · CC BY.</p></section><section id="flowPanelContent"><h2>02 / FLUJO Y PARTÍCULAS</h2><label for="quality">Densidad de partículas</label><select id="quality"><option value="2000">Ligero · 2.000</option><option value="6000">Equilibrado · 6.000</option><option value="12000" selected>Denso · 12.000</option><option value="24000">Máximo · 24.000</option></select>
+
+
+/* Phase 1 · project landing (isolated from the existing WebGL controls). */
+#projectHome{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;overflow:auto;
+ background:#0e0e10;color:#f1f1ef;font-family:"IBM Plex Sans",system-ui,sans-serif}
+#projectHome[hidden],#projectLibraryPanel[hidden]{display:none!important}
+.project-top{height:80px;flex:none;display:flex;align-items:center;gap:15px;padding:0 clamp(20px,5vw,78px);border-bottom:1px solid #2a2b2f}
+.project-top img{width:42px;height:42px;object-fit:contain}
+.project-top strong{font:700 20px Manrope,system-ui,sans-serif;letter-spacing:.045em}
+.project-top strong em{color:#ff6a1a;font-style:normal}
+.project-top span{margin-left:auto;color:#9c9da4;font-size:11px;letter-spacing:.15em}
+.project-shell{width:100%;max-width:1350px;margin:auto;padding:clamp(24px,5vw,72px);display:grid;
+ grid-template-columns:repeat(12,minmax(0,1fr));gap:32px;align-items:start}
+.project-intro{grid-column:span 5;padding-top:20px}
+.project-kicker{color:#ff6a1a;font-size:11px;letter-spacing:.22em;font-weight:600}
+.project-intro h1{font:700 clamp(34px,4.2vw,62px)/1.15 Manrope,system-ui,sans-serif;letter-spacing:-.04em;margin:22px 0}
+.project-intro p{color:#b0b1b8;font-size:14px;line-height:1.8;max-width:390px}
+.project-meta{border-top:1px solid #3b3c42;margin-top:44px;padding-top:19px;color:#8c8e97;font-size:12px}
+.project-panel{grid-column:span 7;background:#19191c;border:1px solid #35353b;border-radius:10px;padding:clamp(20px,3vw,34px)}
+.project-panel h2{font:600 16px Manrope,system-ui,sans-serif;letter-spacing:0;color:#f1f1ef;margin:0 0 12px}
+.project-panel label{font-size:11px;letter-spacing:.06em;color:#acadb5;margin:0 0 8px}
+#projectName{width:100%;background:#101114;border:1px solid #404148;border-radius:6px;color:#f1f1ef;padding:13px 14px;font:14px "IBM Plex Sans",sans-serif}
+.project-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 10px}
+#projectHome button{padding:12px 13px;border-radius:6px;background:#27282d;border:1px solid #47484e;text-align:left;font-size:12px}
+#projectHome button:hover{border-color:#ff6a1a}
+#projectHome button:disabled{opacity:.4;cursor:not-allowed}
+#projectHome .primary{background:#ff6a1a;color:#101010;border-color:#ff6a1a}
+.project-subactions{display:flex;flex-wrap:wrap;gap:9px}
+.project-subactions button{flex:1;min-width:130px;text-align:center!important}
+.project-divider{height:1px;background:#33343a;margin:24px 0 19px}
+.project-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.project-section-head small{color:#a3a4aa}
+#projectRecent{margin:11px 0 0;max-height:200px;overflow:auto}
+.project-recent-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #35363c}
+.project-recent-title{min-width:0;display:flex;flex-direction:column;gap:4px;overflow-wrap:anywhere}
+.project-recent-title strong{font-size:12px;font-weight:600}
+.project-recent-title small,.project-empty{font-size:11px;color:#999ba3;line-height:1.5}
+.project-recent-item button{flex:none;padding:7px 10px!important}
+#projectLibraryPanel{padding:12px;background:#222328;margin-top:12px;border:1px solid #44464b;border-radius:7px}
+#projectLibraryPanel p{font-size:11px;color:#b0b2ba;line-height:1.7}
+#projectMessage{display:block;min-height:17px;font-size:11px;line-height:1.5;margin-top:15px}
+.aero-header-controls{margin-left:auto;display:flex;align-items:center;gap:9px}
+.aero-header-controls #projectActiveName{max-width:180px;color:#acadb6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}
+.aero-header-controls button{white-space:nowrap;font-size:11px;padding:7px 9px}
+@media(max-width:850px){.project-shell{gap:24px}.project-intro{grid-column:span 4}.project-panel{grid-column:span 8}}
+@media(max-width:640px){.project-top{height:65px;padding:0 18px}.project-top span{display:none}
+ .project-shell{display:block;padding:22px 15px}.project-intro{padding:0}.project-intro h1{font-size:30px;margin:12px 0}.project-intro p{font-size:12px}
+ .project-meta{margin:18px 0}.project-panel{padding:18px}.project-actions{grid-template-columns:1fr 1fr}
+ .aero-header-controls #projectActiveName{display:none}.aero-header-controls{gap:5px}
+ .aero-header-controls button{font-size:10px;padding:6px}header b{font-size:17px!important;letter-spacing:1px!important}}
+</style><div id="projectHome" aria-label="Inicio de proyectos OcToS Aero">
+<div class="project-top"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS"><strong>OcToS <em>/ AERO</em></strong><span>GESTIÓN DE PROYECTOS · CFD</span></div>
+<div class="project-shell">
+<div class="project-intro"><div class="project-kicker">LABORATORIO AERODINÁMICO</div><h1>Proyectos y análisis de flujo.</h1>
+<p>Gestiona vehículos, configuraciones y referencias a campos CFD externos. El visor conserva su funcionamiento y las trayectorias ilustrativas no sustituyen una simulación física.</p>
+<div class="project-meta">OcToS 3D Studio / Aero · Fase 1<br>Formato portátil JSON · Cálculo CFD externo</div></div>
+<div class="project-panel"><h2>Gestión de proyectos</h2><label for="projectName">NOMBRE DEL PROYECTO</label><input id="projectName" type="text" maxlength="140" value="Proyecto sin título" autocomplete="off">
+<div class="project-actions"><button id="projectNew" type="button" class="primary">Nuevo proyecto</button><button id="projectOpen" type="button">Abrir proyecto (.octosaero)</button>
+<button id="projectSave" type="button">Guardar proyecto</button><button id="projectSaveAs" type="button">Guardar como…</button>
+<button id="projectLibraryButton" type="button" aria-expanded="false">Biblioteca de simulaciones</button><button id="projectEnterViewer" type="button">Acceder al visor</button></div>
+<input id="projectFile" type="file" accept=".octosaero,.json,application/json" hidden>
+<div id="projectLibraryPanel" hidden><h2>Biblioteca CFD · referencias</h2><p>Listado inicial de campos JSON asociados al proyecto. Para visualizar sus datos, importa el JSON desde el panel CFD del visor.</p><div id="projectLibraryList"></div></div>
+<div class="project-divider"></div>
+<div class="project-section-head"><h2>Proyectos recientes</h2><small id="projectRecentCount">0 proyectos</small></div>
+<div id="projectRecent" aria-live="polite"></div><output id="projectMessage" role="status">Los proyectos se descargan como archivos locales; GitHub Pages no permite guardarlos en el servidor.</output>
+</div></div></div><header><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS" style="width:46px;height:46px;object-fit:contain;flex:none"><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V2.6</small><div class="aero-header-controls"><span id="projectActiveName">Visor sin proyecto</span><button id="projectHomeButton" type="button" aria-expanded="true">Inicio / proyectos</button><button id="projectHeaderSave" type="button" disabled>Guardar</button></div></header><main><aside id="controlShelf"><section id="vehiclePanelContent"><h2>01 / VEHÍCULO</h2><div class="row"><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></div><div class="rotate-tools"><div class="rotate-title">GIRAR MODELO · +90°</div><div class="row"><button type="button" data-axis="x" title="Girar 90° en X">X ↻</button><button type="button" data-axis="y" title="Girar 90° en Y">Y ↻</button><button type="button" data-axis="z" title="Girar 90° en Z">Z ↻</button></div></div><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label><input id="presetBMW" type="checkbox" checked> BMW E46 Touring · orientar Y 180° al importar</label><p class="hint">Morro hacia −X. La última importación GLB se guarda en este navegador como vehículo inicial. Los giros manuales siguen disponibles.</p><p class="hint">Modelo de referencia: <a style="color:#ff995e" href="https://sketchfab.com/3d-models/bmw-3-series-touring-e46-2001-478330312c3d46fd94999c3133ce0366" target="_blank" rel="noopener noreferrer">BMW 3 Series Touring (E46) 2001</a> · Luquita · CC BY.</p></section><section id="flowPanelContent"><h2>02 / FLUJO Y PARTÍCULAS</h2><label for="quality">Densidad de partículas</label><select id="quality"><option value="2000">Ligero · 2.000</option><option value="6000">Equilibrado · 6.000</option><option value="12000" selected>Denso · 12.000</option><option value="24000">Máximo · 24.000</option></select>
 <label for="precision">Precisión geométrica (independiente de partículas)</label><select id="precision"><option value="low">Ligera · 160 trazados</option><option value="balanced">Equilibrada · 360 trazados</option><option value="fine" selected>Detallada · 640 trazados</option></select><label for="flowmode">Representación</label><select id="flowmode"><option value="both">Partículas + estelas</option><option value="trails" selected>Solo estelas</option><option value="points">Solo partículas</option></select>
 <label for="pointsize">Tamaño fino · píxeles</label><input id="pointsize" type="range" min="1" max="4" step="0.1" value="1.6">
 <label for="trail">Longitud de estela</label><input id="trail" type="range" min="0.3" max="3.5" step="0.1" value="1.6">
@@ -60822,8 +60887,6 @@ function addPrimitiveAttributes( geometry, primitiveDef, parser ) {
 return { GLTFLoader };
 
 })();// World-space triangle BVH. Geometric collision queries; no fluid dynamics.
-// World-space triangle BVH. Geometric collision queries; no fluid dynamics.
-// World-space triangle BVH. Geometric collision queries; no fluid dynamics.
 const AeroGeometry = (() => {
   const pause = () => new Promise(resolve => setTimeout(resolve, 0));
   async function build(faces, current = () => true) {
@@ -60942,7 +61005,6 @@ const AeroGeometry = (() => {
   }
   return {build,fromObject};
 })();
-
 // Deterministic geometric streamlines. The velocity model is illustrative, not CFD.
 // Shared emitter-plane limits. The emitter constrains only initial tracers, never CFD grid data.
 const AeroEmitter = (() => {
@@ -61260,7 +61322,6 @@ const AeroPaths = (() => {
   }
   return {build,velocity,modes};
 })();
-
 // Structured CFD velocity volumes; imported data are never computed by this viewer.
 // OCTOS-CFD-V1: uniform Cartesian grid in scene metres, velocities in m/s.
 // Index: (((z * ny) + y) * nx + x) * 3; X varies fastest.
@@ -61371,7 +61432,6 @@ const AeroCFD = (() => {
   }
   return {parse,build};
 })();
-
 // GPU tracers: immutable path atlas, small soft sprites and tapered line trails.
 // This is a visual transport renderer, not a fluid solver.
 const AeroFlow = (() => {
@@ -61475,7 +61535,6 @@ const AeroFlow = (() => {
   }
   return {create};
 })();
-
 (()=>{'use strict';
 const $=id=>document.getElementById(id), T=THREE, stage=$('stage');
 // Relocate the existing controls into their floating docks without duplicating IDs or handlers.
@@ -61491,6 +61550,7 @@ const vehicle=new T.Group();scene.add(vehicle);let flow=null,scenery=null;let co
 let L=4.5,H=1.4,W=1.9,extent=8,triangles=0,TRACKS=0,STEPS=0;
 let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0,activeCFD=null;
 let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
+let currentCFDFile=null;
 const emitter={width:0.2,height:2.0,offsetY:0,offsetZ:0,visible:true};
 let emitterSelected=false,emitterDrag=null,emitterTimer=null; // XY fixed: translation in YZ only.
 let cameras=[],views=[],viewSelects=[],orbit=[],frameCount=0,fpsTime=0;
@@ -61860,7 +61920,7 @@ async function performRebuild(geometry=true,reframe=true){
 }
 function rebuild(geometry=true,reframe=true){buildPromise=performRebuild(geometry,reframe);return buildPromise;}
 function resetField(){
-  activeCFD=null;
+  activeCFD=null;currentCFDFile=null;
   $('fieldinfo').textContent='Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.';
 }
 function install(obj,name,yaw=0){
@@ -62098,6 +62158,7 @@ $('cfdfile').onchange=async e=>{
     await rebuild(false,false);
     if(requested!==token)return;
     if(!pathData?.physical)throw Error('El campo no pudo generar trayectorias.');
+    currentCFDFile=f.name;
   }catch(err){
     if(requested===token){
       activeCFD=previous;
@@ -62120,6 +62181,99 @@ loading=true;status('Cargando vehículo predeterminado…');try{const model=awai
 $('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=++token;loading=true;status('Leyendo GLB local…');await new Promise(r=>setTimeout(r,30));try{const buf=await f.arrayBuffer(),model=await parseVehicle(buf);if(t!==token){dispose(model);return;}const yaw=$('presetBMW').checked?Math.PI:0;await install(model,f.name,yaw);status('GLB cargado · comprueba la longitud real.');try{const saved=await saveDefault(buf,f.name,yaw);if(t===token)status(saved?'GLB cargado y guardado como predeterminado · orientación aplicada.':'GLB cargado · no se pudo guardar en este navegador.');}catch(e){if(t===token)status('GLB cargado · no se pudo guardar para futuros accesos.',true);}}catch(err){if(t===token)status('No se pudo cargar: '+err.message,true);}finally{if(t===token)loading=false;e.target.value='';wake();}};
 new ResizeObserver(wake).observe(stage);document.addEventListener('visibilitychange',()=>{last=0;if(!document.hidden)wake();});renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();playing=false;status('Contexto gráfico perdido. Recarga el archivo.',true);});
 initDockLayout();layout();updateSectionUI();updateEmitterVisual();playback(true);install(demo(),'Concepto de demostración');restoreDefault();
+
+/* Project bridge: capture and restore viewer state without changing the BVH/CFD engines. */
+const projectControls=['quality','precision','flowmode','pointsize','trail','opacity',
+ 'palette','focus','speed','layout','lines','tunnel','body','grid',
+ 'emitterWidth','emitterHeight','emitterOffsetY','emitterOffsetZ','emitterShow'];
+const booleanControls=new Set(['lines','tunnel','body','grid','emitterShow']);
+const validChoices={quality:['2000','6000','12000','24000'],precision:['low','balanced','fine'],
+ flowmode:['both','trails','points'],palette:['velocity','#b8e9ec','#e5edf2','#ffb16d'],
+ focus:['all','center'],layout:['1','2','4']};
+const validRanges={pointsize:[1,4],trail:[.3,3.5],opacity:[.2,1],speed:[.2,2.5],
+ emitterWidth:[.2,20],emitterHeight:[.2,20],emitterOffsetY:[0,20],emitterOffsetZ:[-20,20]};
+function projectSnapshot(){
+ const controls={};
+ for(const id of projectControls)controls[id]=booleanControls.has(id)?$(id).checked:$(id).value;
+ const name=$('filename').textContent;
+ return {
+  vehicle:{name,fileRef:name.endsWith('.glb')?name:null,unit:'m'},
+  transformations:{position:vehicle.position.toArray(),rotation:[vehicle.rotation.x,vehicle.rotation.y,vehicle.rotation.z],
+    scale:vehicle.scale.toArray(),lengthMeters:L,coordinateSystem:'X / longitudinal, Y / vertical, Z / transversal'},
+  cfd:{fieldRef:currentCFDFile},
+  results:currentCFDFile&&activeCFD?[{fileRef:currentCFDFile,source:activeCFD.source||'',
+    referenceSpeed:activeCFD.referenceSpeed||null,dimensions:activeCFD.dims?.slice()||[0,0,0]}]:[],
+  viewer:{controls,viewModes:viewSelects.map(s=>s.value),section:{
+    axis:sectionAxis,value:sectionValue,enabled:sectionEnabled}}
+ };
+}
+async function projectRestore(project){
+ token++; // Cancel a pending asynchronous default GLB restoration.
+ const wanted=project.vehicle?.name||'Concepto de demostración';
+ let matching=wanted===$('filename').textContent;
+ if(!matching){
+   let saved=null;
+   try{saved=await readDefault();}catch(e){/* Local model storage optional. */}
+   if(saved?.name===wanted&&saved.buffer){
+     const obj=await parseVehicle(saved.buffer);
+     await install(obj,saved.name,saved.yaw||0);matching=true;
+   }else await install(demo(),'Concepto de demostración');
+ }
+ resetField(); // CFD references alone cannot restore the physical velocity buffer.
+ const controls=project.viewer?.controls||{};
+ for(const id of projectControls){
+   const el=$(id),value=controls[id];
+   if(booleanControls.has(id)){if(typeof value==='boolean')el.checked=value;continue;}
+   if(value===undefined)continue;
+   const s=String(value);
+   if(validChoices[id]&&!validChoices[id].includes(s))continue;
+   if(validRanges[id]){
+     const n=Number(s),[min,max]=validRanges[id];
+     if(!Number.isFinite(n)||n<min||n>max)continue;
+   }
+   el.value=s;
+ }
+ Object.assign(emitter,{
+  width:Number($('emitterWidth').value),height:Number($('emitterHeight').value),
+  offsetY:Number($('emitterOffsetY').value),offsetZ:Number($('emitterOffsetZ').value),
+  visible:$('emitterShow').checked
+ });
+ if(matching){
+   const t=project.transformations||{};
+   if(Array.isArray(t.rotation)&&t.rotation.length===3&&t.rotation.every(Number.isFinite))
+     vehicle.rotation.set(...t.rotation);
+   if(Array.isArray(t.scale)&&t.scale.length===3&&t.scale.every(n=>Number.isFinite(n)&&n>0&&n<=10000))
+     vehicle.scale.set(...t.scale);
+ }
+ $('speedval').textContent=$('speed').value.replace('.',',')+'×';
+ $('layout').value=validChoices.layout.includes(String(controls.layout))?String(controls.layout):'1';
+ layout();
+ if(Array.isArray(project.viewer?.viewModes))
+   for(let i=0;i<viewSelects.length;i++)
+     if(['3d','side','top','front'].includes(project.viewer.viewModes[i]))
+       viewSelects[i].value=project.viewer.viewModes[i];
+ sectionAxis=['x','y','z'].includes(project.viewer?.section?.axis)?project.viewer.section.axis:'y';
+ $('sectionAxis').value=sectionAxis;
+ clearSection();
+ await rebuild(matching,true);
+ if(project.viewer?.section?.enabled===true&&Number.isFinite(project.viewer.section.value))
+   setSection(project.viewer.section.value,0,true);
+ setParticles();configureFlow();
+ grid.visible=$('grid').checked;vehicle.visible=$('body').checked;
+ if(scenery)scenery.visible=$('tunnel').checked;
+ if(lineMesh)lineMesh.visible=$('lines').checked;
+ updateEmitterVisual();wake();
+ return {vehicleRestored:matching};
+}
+window.aeroProjectBridge={
+ snapshot:projectSnapshot,
+ restore:projectRestore,
+ startNew:async()=>{
+   token++;resetField();currentCFDFile=null;
+   await install(demo(),'Concepto de demostración');
+ }
+};
+
 window.aeroReady=()=>buildPromise;
 window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
   sectionEnabled,sectionPick,sectionAxis,sectionValue,sectionViewIndex,
@@ -62134,5 +62288,207 @@ window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.pos
   openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,cfd:!!pathData?.physical,cfdSource:activeCFD?.source||null,
   trailVertices:flow?.trails.geometry.attributes.position.count||0,particleSize:flow?.uniforms.size.value||0,
   externalResources:performance.getEntriesByType('resource').filter(r=>/^https?:/.test(r.name)).length,vehicleYaw:vehicle.rotation.y});
+})();
+/* OcToS Aero · Phase 1: lightweight, portable project manifests. */
+const AeroProjects=(()=>{
+  'use strict';
+  const FORMAT='octos-aero-project-v1', KEY='octos-aero-projects-v1';
+  const $=id=>document.getElementById(id);
+  let current=null,assetPending=false,homeVisible=true;
+  const uniqueId=()=>typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():
+    'aero-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
+  const str=(s,max=140)=>typeof s==='string'?s.slice(0,max):'';
+  const copy=x=>JSON.parse(JSON.stringify(x));
+  const finite3=(v,def)=>Array.isArray(v)&&v.length===3&&v.every(n=>typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<100000)?v.slice():def.slice();
+  const readCache=()=>{try{const list=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(list)?list.slice(0,30):[];}catch{return [];}};
+  function makeProject(name){
+    const now=new Date().toISOString();
+    return {format:FORMAT,id:uniqueId(),name:str(name.trim())||'Proyecto sin título',
+      createdAt:now,updatedAt:now,vehicle:{name:'Concepto de demostración',fileRef:null,unit:'m'},
+      transformations:{position:[0,0,0],rotation:[0,0,0],scale:[1,1,1],lengthMeters:4.5,coordinateSystem:'X / longitudinal, Y / vertical, Z / transversal'},
+      cfd:{configuration:null,fieldRef:null},results:[],viewer:{controls:{},viewModes:['3d'],section:null}};
+  }
+  function validated(data){
+    if(!data||data.format!==FORMAT||typeof data.id!=='string'||!data.id||
+       typeof data.name!=='string'||!data.name.trim()||data.name.length>140)
+      throw Error('Formato de proyecto OcToS Aero no válido.');
+    if(!data.vehicle||typeof data.vehicle!=='object'||!data.transformations||
+       typeof data.transformations!=='object'||!data.viewer||typeof data.viewer!=='object')
+      throw Error('El proyecto está incompleto.');
+    const p=makeProject(data.name);
+    p.id=str(data.id,140);p.createdAt=str(data.createdAt,40)||p.createdAt;
+    p.updatedAt=str(data.updatedAt,40)||p.updatedAt;
+    p.vehicle={name:str(data.vehicle.name)||'Concepto de demostración',
+      fileRef:str(data.vehicle.fileRef)||null,unit:'m'};
+    const t=data.transformations;
+    p.transformations={position:finite3(t.position,[0,0,0]),rotation:finite3(t.rotation,[0,0,0]),
+      scale:finite3(t.scale,[1,1,1]).map(n=>n>0&&n<=10000?n:1),
+      lengthMeters:Number.isFinite(t.lengthMeters)&&t.lengthMeters>.01&&t.lengthMeters<1000?t.lengthMeters:4.5,
+      coordinateSystem:'X / longitudinal, Y / vertical, Z / transversal'};
+    const cfd=data.cfd||{};
+    p.cfd={configuration:cfd.configuration&&typeof cfd.configuration==='object'?copy(cfd.configuration):null,
+      fieldRef:str(cfd.fieldRef)||null};
+    p.results=Array.isArray(data.results)?data.results.slice(0,200).filter(x=>x&&typeof x==='object').map(x=>({
+      fileRef:str(x.fileRef),source:str(x.source),referenceSpeed:Number.isFinite(x.referenceSpeed)?x.referenceSpeed:null,
+      dimensions:finite3(x.dimensions,[0,0,0])})).filter(x=>x.fileRef):[];
+    const v=data.viewer;
+    const controls=v.controls&&typeof v.controls==='object'?v.controls:{};
+    const names=['quality','precision','flowmode','pointsize','trail','opacity','palette','focus',
+      'speed','layout','lines','tunnel','body','grid','emitterWidth','emitterHeight','emitterOffsetY',
+      'emitterOffsetZ','emitterShow'];
+    p.viewer.controls={};
+    for(const key of names){
+      const value=controls[key];
+      if(typeof value==='string'&&value.length<32||typeof value==='boolean')p.viewer.controls[key]=value;
+    }
+    p.viewer.viewModes=Array.isArray(v.viewModes)?v.viewModes.slice(0,4).filter(x=>['3d','side','top','front','section'].includes(x)):['3d'];
+    p.viewer.section=v.section&&['x','y','z'].includes(v.section.axis)&&Number.isFinite(v.section.value)?
+      {axis:v.section.axis,value:v.section.value,enabled:v.section.enabled===true}:null;
+    return p;
+  }
+  function message(value,problem=false){$('projectMessage').textContent=value;$('projectMessage').style.color=problem?'#ff9b7d':'#aeb1ba';}
+  function showHome(){
+    homeVisible=true;$('projectHome').hidden=false;
+    $('projectHomeButton').setAttribute('aria-expanded','true');refresh();
+  }
+  function showViewer(){
+    homeVisible=false;$('projectHome').hidden=true;
+    $('projectHomeButton').setAttribute('aria-expanded','false');
+    $('projectActiveName').textContent=current?current.name:'Visor sin proyecto';
+    window.dispatchEvent(new Event('resize'));
+  }
+  function cacheProject(project){
+    try{
+      const list=readCache().filter(p=>p.id!==project.id);
+      list.unshift(copy(project));localStorage.setItem(KEY,JSON.stringify(list.slice(0,20)));
+      return true;
+    }catch{return false;}
+  }
+  function refresh(){
+    $('projectActiveName').textContent=current?current.name:'Visor sin proyecto';
+    $('projectName').value=current?current.name:'Proyecto sin título';
+    $('projectSave').disabled=!current;
+    $('projectSaveAs').disabled=!current;
+    $('projectHeaderSave').disabled=!current;
+    const list=$('projectRecent');list.textContent='';
+    const saved=readCache();
+    $('projectRecentCount').textContent=saved.length+' proyectos';
+    if(!saved.length){const div=document.createElement('p');div.className='project-empty';div.textContent='Todavía no hay proyectos guardados en este navegador.';list.append(div);}
+    for(const project of saved){
+      const line=document.createElement('div');line.className='project-recent-item';
+      const title=document.createElement('div');title.className='project-recent-title';
+      const strong=document.createElement('strong');strong.textContent=str(project.name);
+      const small=document.createElement('small');small.textContent=str(project.vehicle?.name)||'Sin vehículo';
+      title.append(strong,small);line.append(title);
+      const open=document.createElement('button');open.type='button';open.textContent='Abrir';
+      open.addEventListener('click',()=>activate(project));
+      line.append(open);list.append(line);
+    }
+    if(!$('projectLibraryPanel').hidden)renderLibrary();
+  }
+  function renderLibrary(){
+    const panel=$('projectLibraryList');panel.textContent='';
+    const projects=current?[current]:readCache();
+    let found=0;
+    for(const project of projects){
+      const results=Array.isArray(project.results)?project.results:[];
+      for(const item of results){
+        if(!item.fileRef)continue;found++;
+        const row=document.createElement('div');row.className='project-recent-item';
+        const details=document.createElement('div');details.className='project-recent-title';
+        const name=document.createElement('strong');name.textContent=str(item.fileRef);
+        const description=document.createElement('small');
+        description.textContent=project.name+' · '+(item.source||'Campo CFD referenciado');
+        details.append(name,description);row.append(details);panel.append(row);
+      }
+    }
+    if(!found){const blank=document.createElement('p');blank.className='project-empty';
+      blank.textContent='No hay resultados CFD referenciados. Se incorporarán al guardar un proyecto con un JSON cargado en el visor.';
+      panel.append(blank);}
+  }
+  function snapshot(){
+    if(!current)return;
+    const state=window.aeroProjectBridge?.snapshot?.();
+    if(!state)return;
+    if(!assetPending||state.vehicle.name!=='Concepto de demostración'){
+      current.vehicle=state.vehicle;current.transformations=state.transformations;assetPending=false;
+    }
+    current.viewer=state.viewer;
+    if(state.cfd.fieldRef){current.cfd={...current.cfd,fieldRef:state.cfd.fieldRef};}
+    for(const result of state.results||[]){
+      if(!current.results.some(x=>x.fileRef===result.fileRef))current.results.push(result);
+    }
+    current.updatedAt=new Date().toISOString();
+  }
+  function filename(name){
+    return (name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,70)||'octos-aero')+'.octosaero';
+  }
+  function download(project){
+    const blob=new Blob([JSON.stringify(project,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=filename(project.name);
+    document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function save(asNew=false){
+    if(!current){message('Crea o abre un proyecto antes de guardarlo.',true);return;}
+    snapshot();
+    if(asNew){
+      const next=window.prompt('Nombre de la nueva copia:',current.name+' (copia)');
+      if(next===null)return;
+      if(!next.trim()){message('El nombre no puede estar vacío.',true);return;}
+      current={...copy(current),id:uniqueId(),name:str(next.trim()),createdAt:new Date().toISOString()};
+    }else{
+      const newName=$('projectName').value.trim();
+      if(homeVisible&&newName)current.name=str(newName);
+    }
+    current.updatedAt=new Date().toISOString();
+    download(current);const stored=cacheProject(current);refresh();
+    message(stored?'Proyecto descargado y registrado en este navegador.':'Proyecto descargado. El navegador no permite guardar la lista de recientes.');
+  }
+  async function activate(source){
+    const project=validated(source);
+    current=project;assetPending=false;
+    try{
+      const result=await window.aeroProjectBridge?.restore?.(project);
+      assetPending=result?.vehicleRestored===false;
+      showViewer();refresh();
+      const notice=assetPending?
+        'Proyecto abierto sin el GLB original: vuelve a importarlo. Los JSON CFD también deben importarse manualmente.':
+        'Proyecto abierto. Si hay resultados CFD referenciados, vuelve a importar sus archivos JSON.';
+      message(notice);
+      $('status').textContent=notice;
+    }catch(err){showHome();message('No se pudo restaurar el proyecto: '+err.message,true);}
+  }
+  async function newProject(){
+    const name=$('projectName').value.trim()||'Proyecto sin título';
+    current=makeProject(name);assetPending=false;
+    try{await window.aeroProjectBridge?.startNew?.();showViewer();refresh();}
+    catch(err){showHome();message('No se pudo crear el proyecto: '+err.message,true);}
+  }
+  async function importFile(e){
+    const file=e.target.files?.[0];if(!file)return;
+    try{
+      if(file.size>3*1024*1024)throw Error('El manifiesto supera 3 MB; los GLB y JSON se conservan aparte.');
+      const project=validated(JSON.parse(await file.text()));
+      await activate(project);
+    }catch(err){showHome();message('No se pudo importar: '+err.message,true);}
+    finally{e.target.value='';}
+  }
+  $('projectNew').addEventListener('click',newProject);
+  $('projectOpen').addEventListener('click',()=>$('projectFile').click());
+  $('projectFile').addEventListener('change',importFile);
+  $('projectEnterViewer').addEventListener('click',showViewer);
+  $('projectHomeButton').addEventListener('click',showHome);
+  $('projectSave').addEventListener('click',()=>save(false));
+  $('projectSaveAs').addEventListener('click',()=>save(true));
+  $('projectHeaderSave').addEventListener('click',()=>save(false));
+  $('projectLibraryButton').addEventListener('click',()=>{
+    const panel=$('projectLibraryPanel');panel.hidden=!panel.hidden;
+    $('projectLibraryButton').setAttribute('aria-expanded',String(!panel.hidden));
+    if(!panel.hidden)renderLibrary();
+  });
+  refresh();
+  return {format:FORMAT,makeProject,validated,goHome:showHome,
+    getCurrent:()=>current?copy(current):null,isHome:()=>homeVisible};
 })();
 </script></html>
