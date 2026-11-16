@@ -276,6 +276,32 @@ const AeroPaths = (() => {
           .055*Math.sin(x*2.1+phase)*wakeZone));
       }
     }
+    // The cinematic wake displaces points after the first collision pass.
+    // Check the FINAL GPU positions once more to prevent a new segment
+    // intersecting a body panel when adjacent samples were shifted.
+    for(let track=0;track<tracks;track++){
+      if(inactive[track])continue;
+      const base=track*steps*3,seedY=paths[base+1],seedZ=paths[base+2];
+      for(let j=1;j<steps;j++){
+        const i=track*steps+j;
+        if(speeds[i]<=0)continue;
+        const k=i*3;
+        const before=[paths[k-3],paths[k-2],paths[k-1]],
+          after=[paths[k],paths[k+1],paths[k+2]];
+        if(!surface.segment(before,after))continue;
+        const corrected=guard.step(before,after,seedY,seedZ);
+        if(corrected){
+          paths.set(corrected,k);surfaceAdjusted++;
+        }else{
+          stalled++;
+          for(let rest=j;rest<steps;rest++){
+            speeds[track*steps+rest]=0;
+            paths.set(before,(track*steps+rest)*3);
+          }
+          break;
+        }
+      }
+    }
     return {paths,speeds,centres,tracks,steps,rawSamples,repaired,stalled,surfaceAdjusted,precision,physical:false};
   }
   return {build,velocity,modes};
