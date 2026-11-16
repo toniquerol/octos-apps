@@ -1,11 +1,20 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const elements=new Map(),axes=['x','y','z'].map(axis=>({dataset:{axis}}));
-function element(id){return {id,value:({length:'4.5',speed:'1',quality:'12000',emitterWidth:'2.6',emitterHeight:'2.0',pointsize:'1.6',trail:'1',opacity:'0.8',palette:'#b8e9ec',flowmode:'both',focus:'all',layout:'1',sectionAxis:'y'})[id]||'',checked:true,style:{},dataset:{},children:[],classList:{toggle(){}},append(e){this.children.push(e)},prepend(){},setAttribute(){},addEventListener(){},setPointerCapture(){},querySelector(){if(!this.select)this.select=element('select');return this.select;},getBoundingClientRect(){return {left:0,top:0,right:1100,bottom:700,width:1100,height:700}},clientWidth:1100,clientHeight:700,textContent:''};}
+function element(id){return {id,value:({length:'4.5',speed:'1',quality:'12000',emitterWidth:'2.6',emitterHeight:'2.0',emitterOffsetY:'0',emitterOffsetZ:'0',pointsize:'1.6',trail:'1',opacity:'0.8',palette:'#b8e9ec',flowmode:'both',focus:'all',layout:'1',sectionAxis:'y'})[id]||'',checked:true,style:{},dataset:{},children:[],classList:{toggle(){}},append(e){this.children.push(e)},prepend(){},setAttribute(){},addEventListener(){},setPointerCapture(){},querySelector(){if(!this.select)this.select=element('select');return this.select;},getBoundingClientRect(){return {left:0,top:0,right:1100,bottom:700,width:1100,height:700}},clientWidth:1100,clientHeight:700,textContent:''};}
 const document={hidden:false,getElementById(id){if(!elements.has(id))elements.set(id,element(id));return elements.get(id)},querySelectorAll(){return axes},createElement:()=>element('new'),addEventListener(){}};
 const context={document,window:{},devicePixelRatio:1,console,ArrayBuffer,DataView,Uint8Array,TextDecoder,TextEncoder,URL,Blob,setTimeout,clearTimeout,performance:{getEntriesByType:()=>[]},ResizeObserver:class{observe(){}},requestAnimationFrame:()=>1};vm.createContext(context);
 let html=fs.readFileSync(__dirname+'/../index.html','utf8'),js=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
 const mock=`THREE.WebGLRenderer=class{constructor(){this.domElement={width:1100,height:700,addEventListener(){},setPointerCapture(){}}}setPixelRatio(p){this.p=p}getPixelRatio(){return this.p}setClearColor(){}setScissorTest(){}setSize(){}setViewport(){}setScissor(){}render(){}};`;
-js=js.replace("(()=>{'use strict';",mock+"(()=>{'use strict';");vm.runInContext(js,context);const $=id=>document.getElementById(id),diag=()=>context.window.aeroDiagnostics();async function checks(){await context.window.aeroReady();assert.equal(diag().particles,12000);assert.deepEqual(Array.from(diag().emitter),[2.6,2]);assert(diag().triangles>0);
+js=js.replace("(()=>{'use strict';",mock+"(()=>{'use strict';");vm.runInContext(js,context);const $=id=>document.getElementById(id),diag=()=>context.window.aeroDiagnostics();async function checks(){await context.window.aeroReady();assert.equal(diag().particles,12000);assert.deepEqual(Array.from(diag().emitter),[2.6,2]);
+assert.deepEqual(Array.from(diag().emitterOffset),[0,0]);
+const fixedEmitterX=diag().emitterX;
+$('emitterSelect').onclick();assert.equal(diag().emitterSelected,true);
+$('emitterOffsetY').value='0.5';$('emitterOffsetY').onchange();await context.window.aeroReady();
+$('emitterOffsetZ').value='0.8';$('emitterOffsetZ').onchange();await context.window.aeroReady();
+assert.deepEqual(Array.from(diag().emitterOffset),[.5,.8]);
+assert.equal(diag().emitterX,fixedEmitterX);
+$('emitterReset').onclick();await context.window.aeroReady();
+assert.deepEqual(Array.from(diag().emitterOffset),[0,0]);assert(diag().triangles>0);
 const originalField=diag().fieldRevision;
 $('emitterWidth').value='1.6';$('emitterWidth').onchange();await context.window.aeroReady();
 assert(diag().fieldRevision>originalField);assert.equal(diag().emitter[0],1.6);
