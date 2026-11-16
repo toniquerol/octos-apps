@@ -271,7 +271,7 @@ const AeroPaths = (() => {
         const wakeZone= wake?Math.exp(-Math.pow(downstream/.85,2))*
                                Math.exp(-Math.pow((paths[k+1]-H*.58)/H,2)-
                                         Math.pow(paths[k+2]/W,2)):0;
-        speeds[track*steps]=Math.max(.12,Math.min(.99,.60+.33*closeRoof*bodyZone-.36*wakeZone+
+        speeds[track*steps+s]=Math.max(.12,Math.min(.99,.60+.33*closeRoof*bodyZone-.36*wakeZone+
           .055*Math.sin(x*2.1+phase)*wakeZone));
       }
     }
