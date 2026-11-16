@@ -13,7 +13,7 @@ const AeroProjects=(()=>{
   function makeProject(name){
     const now=new Date().toISOString();
     return {format:FORMAT,id:uniqueId(),name:str(name.trim())||'Proyecto sin título',
-      createdAt:now,updatedAt:now,vehicle:{name:'Concepto de demostración',fileRef:null,unit:'m'},
+      createdAt:now,updatedAt:now,preview:null,vehicle:{name:'Concepto de demostración',fileRef:null,unit:'m'},
       transformations:{position:[0,0,0],rotation:[0,0,0],scale:[1,1,1],lengthMeters:4.5,coordinateSystem:'X / longitudinal, Y / vertical, Z / transversal'},
       cfd:{configuration:null,fieldRef:null},results:[],viewer:{controls:{},viewModes:['3d'],section:null}};
   }
@@ -27,6 +27,7 @@ const AeroProjects=(()=>{
     const p=makeProject(data.name);
     p.id=str(data.id,140);p.createdAt=str(data.createdAt,40)||p.createdAt;
     p.updatedAt=str(data.updatedAt,40)||p.updatedAt;
+    p.preview=typeof data.preview==='string'&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(data.preview)&&data.preview.length<180000?data.preview:null;
     p.vehicle={name:str(data.vehicle.name)||'Concepto de demostración',
       fileRef:str(data.vehicle.fileRef)||null,unit:'m'};
     const t=data.transformations;
@@ -84,14 +85,25 @@ const AeroProjects=(()=>{
     $('projectRecentCount').textContent=saved.length+' proyectos';
     if(!saved.length){const div=document.createElement('p');div.className='project-empty';div.textContent='Todavía no hay proyectos guardados en este navegador.';list.append(div);}
     for(const project of saved){
-      const line=document.createElement('div');line.className='project-recent-item';
-      const title=document.createElement('div');title.className='project-recent-title';
-      const strong=document.createElement('strong');strong.textContent=str(project.name);
-      const small=document.createElement('small');small.textContent=str(project.vehicle?.name)||'Sin vehículo';
-      title.append(strong,small);line.append(title);
-      const open=document.createElement('button');open.type='button';open.textContent='Abrir';
+      const card=document.createElement('article');card.className='project-card';
+      const open=document.createElement('button');open.type='button';open.className='project-card-open';
+      open.setAttribute('aria-label','Abrir proyecto '+str(project.name));
       open.addEventListener('click',()=>activate(project));
-      line.append(open);list.append(line);
+      const visual=document.createElement('span');visual.className='project-card-visual';
+      if(typeof project.preview==='string'&&/^data:image\/jpeg;base64,/.test(project.preview)&&project.preview.length<180000){
+        const img=document.createElement('img');img.src=project.preview;img.alt='';img.loading='lazy';
+        visual.append(img);
+      }else{
+        const empty=document.createElement('span');empty.className='project-card-placeholder';
+        empty.textContent='OcToS / AERO';visual.append(empty);
+      }
+      const details=document.createElement('span');details.className='project-card-details';
+      const title=document.createElement('strong');title.textContent=str(project.name);
+      const vehicle=document.createElement('small');vehicle.textContent=str(project.vehicle?.name)||'Sin vehículo';
+      const date=document.createElement('small');date.className='project-card-date';
+      const timestamp=Date.parse(project.updatedAt);
+      date.textContent=Number.isFinite(timestamp)?new Intl.DateTimeFormat('es-ES',{day:'2-digit',month:'short',year:'numeric'}).format(timestamp):'Proyecto guardado';
+      details.append(title,vehicle,date);open.append(visual,details);card.append(open);list.append(card);
     }
     if(!$('projectLibraryPanel').hidden)renderLibrary();
   }
@@ -123,20 +135,12 @@ const AeroProjects=(()=>{
       current.vehicle=state.vehicle;current.transformations=state.transformations;assetPending=false;
     }
     current.viewer=state.viewer;
+    if(state.preview)current.preview=state.preview;
     if(state.cfd.fieldRef){current.cfd={...current.cfd,fieldRef:state.cfd.fieldRef};}
     for(const result of state.results||[]){
       if(!current.results.some(x=>x.fileRef===result.fileRef))current.results.push(result);
     }
     current.updatedAt=new Date().toISOString();
-  }
-  function filename(name){
-    return (name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,70)||'octos-aero')+'.octosaero';
-  }
-  function download(project){
-    const blob=new Blob([JSON.stringify(project,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download=filename(project.name);
-    document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   function save(asNew=false){
     if(!current){message('Crea o abre un proyecto antes de guardarlo.',true);return;}
@@ -151,8 +155,8 @@ const AeroProjects=(()=>{
       if(homeVisible&&newName)current.name=str(newName);
     }
     current.updatedAt=new Date().toISOString();
-    download(current);const stored=cacheProject(current);refresh();
-    message(stored?'Proyecto descargado y registrado en este navegador.':'Proyecto descargado. El navegador no permite guardar la lista de recientes.');
+    const stored=cacheProject(current);refresh();
+    message(stored?'Proyecto guardado en este navegador. Ya aparece en Proyectos guardados.':'No se pudo guardar el proyecto: comprueba el espacio y los permisos de almacenamiento del navegador.',!stored);
   }
   async function activate(source){
     const project=validated(source);
