@@ -48,18 +48,21 @@ const AeroCFD = (() => {
     return {dims,origin,spacing,velocity,maxSpeed,displayMaxSpeed:maxSpeed,
       referenceSpeed,bounds,source:String(data.source||'Campo CFD importado').slice(0,100),sample};
   }
-  async function build(field,surface,{L,H,W,extent,precision='balanced',focus='all'},current=()=>true){
+  async function build(field,surface,{L,H,W,extent,precision='balanced',focus='all',emitterWidth=2.6,emitterHeight=2.0},current=()=>true){
     const {tracks,steps}=AeroPaths.modes[precision]||AeroPaths.modes.balanced;
     const paths=new Float32Array(tracks*steps*3),speeds=new Float32Array(tracks*steps);
     const x0=Math.max(-extent,field.bounds[0][0]+field.spacing[0]);
     if(x0>=-L*.5) throw Error('El campo debe incluir el aire aguas arriba del vehículo (−X).');
     const xEnd=Math.min(extent,field.bounds[0][1]-field.spacing[0]);
     if(xEnd<L*.5) throw Error('La rejilla termina antes de la parte posterior del vehículo.');
-    const yMin=Math.max(field.bounds[1][0]+field.spacing[1]*.5,.045);
-    const yMax=Math.min(field.bounds[1][1]-field.spacing[1]*.5,H*1.8);
-    const zMin=Math.max(field.bounds[2][0]+field.spacing[2]*.5,-W*(focus==='center'?.65:1.25));
-    const zMax=Math.min(field.bounds[2][1]-field.spacing[2]*.5,W*(focus==='center'?.65:1.25));
-    if(yMax<=yMin||zMax<=zMin) throw Error('El campo CFD no cubre la región alrededor de la carrocería.');
+    // Intersect the user-defined emitter plane with the existing CFD coverage.
+    // Neither grid origin, spacing, dimensions nor imported velocity values change.
+    const emitter=AeroEmitter.bounds(emitterWidth,emitterHeight,focus);
+    const yMin=Math.max(field.bounds[1][0]+field.spacing[1]*.5,emitter.yMin);
+    const yMax=Math.min(field.bounds[1][1]-field.spacing[1]*.5,emitter.yMax);
+    const zMin=Math.max(field.bounds[2][0]+field.spacing[2]*.5,emitter.zMin);
+    const zMax=Math.min(field.bounds[2][1]-field.spacing[2]*.5,emitter.zMax);
+    if(yMax<=yMin||zMax<=zMin) throw Error('El campo CFD no cubre el plano emisor seleccionado.');
     const dt=(xEnd-x0)/(steps-1)/Math.max(field.referenceSpeed,0.05);
     let seed=173,rawSamples=0,stalled=0;
     const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
