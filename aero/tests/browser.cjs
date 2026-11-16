@@ -49,8 +49,20 @@ async function test(){
   await page.waitForFunction(()=>window.aeroDiagnostics?.().triangles===12,{timeout:120000});
   await page.evaluate(()=>window.aeroReady());
   assert.equal((await page.evaluate(()=>window.aeroDiagnostics())).triangles,12);
+  const velocity=[];
+  for(let i=0;i<11*7*9;i++)velocity.push(12,0,0);
+  const volume={format:'octos-cfd-v1',units:'m/s',origin:[-7,0,-4],spacing:[1.4,.6,1],
+    dimensions:[11,7,9],referenceSpeed:12,displayMaxSpeed:20,source:'Uniform test field',velocity};
+  await page.locator('#cfdfile').setInputFiles({
+    name:'test-cfd.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(volume))});
+  await page.waitForFunction(()=>window.aeroDiagnostics?.().cfd===true,{timeout:120000});
+  await page.evaluate(()=>window.aeroReady());
+  assert.equal((await page.evaluate(()=>window.aeroDiagnostics())).cfdSource,'Uniform test field');
+  await page.locator('#clearCFD').click();
+  await page.evaluate(()=>window.aeroReady());
+  assert.equal((await page.evaluate(()=>window.aeroDiagnostics())).cfd,false);
   if(errors.length)throw Error('Unhandled browser errors: '+errors.join('; '));
-  console.log('PASS: Chromium WebGL2, interactive demo, local tracer zoom without field changes, 1/2/4 views, independent particle density/precision, scale, yaw, GLB import. '+JSON.stringify({initial:start,zoom:afterZoom,precise,scaled,rotated}));
+  console.log('PASS: Chromium WebGL2, interactive demo, local tracer zoom without field changes, 1/2/4 views, independent particle density/precision, scale, yaw, GLB import, CFD JSON loading and clearing. '+JSON.stringify({initial:start,zoom:afterZoom,precise,scaled,rotated}));
   await browser.close();
 }
 test().catch(e=>{console.error(e);process.exitCode=1;});
