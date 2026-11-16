@@ -45,11 +45,14 @@ async function run(){
   assert.deepEqual(Array.from(field.dims),originalDims);
   const moved=await ctx.CFD.build(field,{segment:()=>null},{L:4,H:2,W:2,extent:4,precision:'low',
     emitterWidth:1.1,emitterHeight:.65,emitterOffsetY:.35,emitterOffsetZ:.5});
+  const actualUpstreamX=moved.paths[0];
+  assert(actualUpstreamX>=field.bounds[0][0]+field.spacing[0]-.01,
+    'CFD upstream seed must remain inside the imported velocity grid');
   for(let i=0;i<moved.tracks;i++){
     const k=i*moved.steps*3;
     assert(moved.paths[k+1]>=.385 && moved.paths[k+1]<=1.001,'shifted CFD Y seed');
     assert(moved.paths[k+2]>=-.051 && moved.paths[k+2]<=1.051,'shifted CFD Z seed');
-    assert(Math.abs(moved.paths[k]+3.32)<.01,'fixed CFD upstream X');
+    assert(Math.abs(moved.paths[k]-actualUpstreamX)<.01,'fixed CFD upstream X');
   }
   assert.deepEqual(Array.from(field.velocity.slice(0,15)),velocity.slice(0,15),
     'moving the emitter must not mutate the imported CFD field');
