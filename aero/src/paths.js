@@ -97,7 +97,7 @@ const AeroPaths = (() => {
     const {tracks,steps}=modes[precision]||modes.balanced;
     const emitter=AeroEmitter.bounds(emitterWidth,emitterHeight,focus);
     const paths=new Float32Array(tracks*steps*3),centres=new Float32Array(tracks*3),inactive=new Uint8Array(tracks),validEnds=new Float32Array(tracks);
-    let seed=71,repaired=0,stalled=0,rawSamples=0;
+    let seed=71,repaired=0,stalled=0,rawSamples=0,surfaceAdjusted=0;
     const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
     const cols=Math.round(Math.sqrt(tracks*1.5)),rows=Math.ceil(tracks/cols);
     // Keep a small surface offset (about 3 cm for a 4.6 m vehicle), while retaining segment collision tests.
@@ -236,6 +236,7 @@ const AeroPaths = (() => {
         if(proposed[0]>validEnds[track]+1e-5){stopAt=j;break;}
         const corrected=guard.step(previous,proposed,seedY,seedZ);
         if(!corrected){stopAt=j;stalled++;break;}
+        if(Math.hypot(corrected[0]-proposed[0],corrected[1]-proposed[1],corrected[2]-proposed[2])>1e-5)surfaceAdjusted++;
         paths.set(corrected,k);previous=corrected;
       }
       if(stopAt<steps){
@@ -275,7 +276,7 @@ const AeroPaths = (() => {
           .055*Math.sin(x*2.1+phase)*wakeZone));
       }
     }
-    return {paths,speeds,centres,tracks,steps,rawSamples,repaired,stalled,precision,physical:false};
+    return {paths,speeds,centres,tracks,steps,rawSamples,repaired,stalled,surfaceAdjusted,precision,physical:false};
   }
   return {build,velocity,modes};
 })();
