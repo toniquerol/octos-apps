@@ -8,6 +8,7 @@ const vehicle=new T.Group();scene.add(vehicle);let flow=null,scenery=null;let co
 let L=4.5,H=1.4,W=1.9,extent=8,triangles=0,TRACKS=0,STEPS=0;
 let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0,activeCFD=null;
 let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
+const emitter={width:2.6,height:2.0}; // Independent of the CFD field's physical domain.
 let cameras=[],views=[],orbit=[],frameCount=0,fpsTime=0;
 const ground=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial({color:0x171d25,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.025;scene.add(ground);
 const grid=new T.GridHelper(20,40,0x3c505c,0x23323e);grid.position.y=-.015;scene.add(grid);
@@ -105,7 +106,8 @@ async function performRebuild(geometry=true,reframe=true){
     if(geometry||!surface){normalize();geometry=true;nextSurface=await AeroGeometry.fromObject(vehicle,()=>seq===generation);}
     else nextSurface=surface;
     if(!nextSurface||seq!==generation){if(nextSurface&&nextSurface!==surface)nextSurface.dispose();return;}
-    const options={L,H,W,extent,precision:$('precision').value,focus:$('focus').value};
+    const options={L,H,W,extent,precision:$('precision').value,focus:$('focus').value,
+      emitterWidth:emitter.width,emitterHeight:emitter.height};
     const result=activeCFD?
       await AeroCFD.build(activeCFD,nextSurface,options,()=>seq===generation):
       await AeroPaths.build(nextSurface,options,()=>seq===generation);
@@ -221,6 +223,24 @@ $('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Ⅱ Pausa
 $('reset').onclick=()=>{clock=0;updateParticles();wake();};
 $('quality').onchange=setParticles;
 $('precision').onchange=()=>rebuild(false,false);
+// Change only the particle-seeding rectangle; preserve imported CFD grid and camera state.
+function changeEmitter(){
+  const width=Number($('emitterWidth').value),height=Number($('emitterHeight').value);
+  if(!Number.isFinite(width)||!Number.isFinite(height)||
+      width<.2||height<.2||width>20||height>20){
+    $('emitterWidth').value=emitter.width.toFixed(1);
+    $('emitterHeight').value=emitter.height.toFixed(1);
+    status('El plano emisor debe medir entre 0,2 y 20 m de ancho y alto.',true);
+    return;
+  }
+  if(width===emitter.width&&height===emitter.height)return;
+  emitter.width=width;emitter.height=height;
+  $('emitterWidth').value=width.toFixed(1);
+  $('emitterHeight').value=height.toFixed(1);
+  rebuild(false,false);
+}
+$('emitterWidth').onchange=changeEmitter;
+$('emitterHeight').onchange=changeEmitter;
 for(const id of ['pointsize','trail','opacity','palette','flowmode'])$(id).oninput=configureFlow;
 $('focus').onchange=()=>rebuild(false,false);
 $('tunnel').onchange=()=>{scenery.visible=$('tunnel').checked;wake();};
@@ -272,7 +292,7 @@ new ResizeObserver(wake).observe(stage);document.addEventListener('visibilitycha
 layout();install(demo(),'Concepto de demostración');restoreDefault();
 window.aeroReady=()=>buildPromise;
 window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
-  dimensions:[L,H,W],tracks:TRACKS,steps:STEPS,fieldRevision,precision:pathData?.precision||null,
+  dimensions:[L,H,W],emitter:[emitter.width,emitter.height],tracks:TRACKS,steps:STEPS,fieldRevision,precision:pathData?.precision||null,
   rawSamples:pathData?.rawSamples||0,repaired:pathData?.repaired||0,stalled:pathData?.stalled||0,
   openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,cfd:!!pathData?.physical,cfdSource:activeCFD?.source||null,
   trailVertices:flow?.trails.geometry.attributes.position.count||0,particleSize:flow?.uniforms.size.value||0,
