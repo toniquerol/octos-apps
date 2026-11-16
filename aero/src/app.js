@@ -272,11 +272,12 @@ async function performRebuild(geometry=true,reframe=true){
     pathData=result;paths=result.paths;TRACKS=result.tracks;STEPS=result.steps;triangles=surface.triangles;fieldRevision++;
     releaseFocus();installPathGuides();setParticles();if(geometry)buildScenery();if(reframe)resetCameras();
     const warning=surface.openEdges===null?'topología no verificada':surface.openEdges?'malla con '+surface.openEdges+' bordes abiertos':'malla sin bordes abiertos detectados';
-    $('badge').textContent=result.physical?'TRAYECTORIAS SOBRE CAMPO CFD IMPORTADO · '+activeCFD.source:'ESTELA CINEMÁTICA ILUSTRATIVA · NO CFD';
+    $('badge').textContent=result.physical?'CFD IMPORTADO · TRAYECTORIAS RECTIFICADAS VISUALMENTE · '+activeCFD.source:'ESTELA CINEMÁTICA ILUSTRATIVA · NO CFD';
     $('flowlegend').querySelector('b').textContent=result.physical?'FLUJO / CFD':'FLUJO / VISUAL';
     $('fieldinfo').textContent=result.physical?activeCFD.source+' · 0–'+activeCFD.displayMaxSpeed.toFixed(1)+' m/s · '+activeCFD.dims.join(' × ')+' nodos':'Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.';
     status(triangles.toLocaleString('es')+' triángulos · '+TRACKS+' rutas / '+STEPS+' muestras · '+warning+
-      (result.repaired||result.stalled?' · '+result.repaired+' rutas corregidas, '+result.stalled+' detenidas':'')+
+      (result.repaired||result.stalled?' · '+result.repaired+' rutas reconstruidas, '+result.stalled+' detenidas':'')+
+      (result.surfaceAdjusted?' · '+result.surfaceAdjusted+' pasos separados de la superficie':'')+
       (result.physical?' · CFD externo importado (sin validar)':' · visualización, no CFD'));
   }catch(e){if(seq===generation)status('Error de geometría: '+e.message,true);}
   finally{if(seq===generation){loading=false;wake();}}
@@ -533,7 +534,7 @@ window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.pos
     return o?[Math.cos(o.theta)*Math.sin(o.phi),Math.cos(o.phi),Math.sin(o.theta)*Math.sin(o.phi)]:null;
   })(),viewModes:viewSelects.map(s=>s.value),
   dimensions:[L,H,W],emitter:[emitter.width,emitter.height],tracks:TRACKS,steps:STEPS,fieldRevision,precision:pathData?.precision||null,
-  rawSamples:pathData?.rawSamples||0,repaired:pathData?.repaired||0,stalled:pathData?.stalled||0,
+  rawSamples:pathData?.rawSamples||0,repaired:pathData?.repaired||0,stalled:pathData?.stalled||0,surfaceAdjusted:pathData?.surfaceAdjusted||0,
   openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,cfd:!!pathData?.physical,cfdSource:activeCFD?.source||null,
   trailVertices:flow?.trails.geometry.attributes.position.count||0,particleSize:flow?.uniforms.size.value||0,
   externalResources:performance.getEntriesByType('resource').filter(r=>/^https?:/.test(r.name)).length,vehicleYaw:vehicle.rotation.y});
