@@ -79,7 +79,7 @@ const AeroProjects=(()=>{
     $('projectSave').disabled=!current;
     $('projectSaveAs').disabled=!current;
     $('projectHeaderSave').disabled=!current;
-    const list=$('projectRecent');list.replaceChildren();
+    const list=$('projectRecent');list.textContent='';
     const saved=readCache();
     $('projectRecentCount').textContent=saved.length+' proyectos';
     if(!saved.length){const div=document.createElement('p');div.className='project-empty';div.textContent='Todavía no hay proyectos guardados en este navegador.';list.append(div);}
@@ -96,7 +96,7 @@ const AeroProjects=(()=>{
     if(!$('projectLibraryPanel').hidden)renderLibrary();
   }
   function renderLibrary(){
-    const panel=$('projectLibraryList');panel.replaceChildren();
+    const panel=$('projectLibraryList');panel.textContent='';
     const projects=current?[current]:readCache();
     let found=0;
     for(const project of projects){

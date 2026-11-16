@@ -31,7 +31,7 @@ $('emitterHeight').value='1.2';$('emitterHeight').onchange();await context.windo
 assert(diag().fieldRevision>revised);assert.equal(diag().emitter[1],1.2);
 $('emitterWidth').value='0.1';$('emitterWidth').onchange();
 assert.equal(diag().emitter[0],1.6);
-assert.equal($('emitterWidth').value,'1.6');assert.equal(diag().views,1);
+assert.equal(Number($('emitterWidth').value),1.6);assert.equal(diag().views,1);
 $('layout').value='4';$('layout').onchange();assert.equal(diag().views,4);
 assert.equal(diag().viewModes.length,4);
 assert.equal(diag().sectionAxis,'y');
