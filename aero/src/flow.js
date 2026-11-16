@@ -5,30 +5,42 @@ const AeroFlow = (() => {
   const vertex = `
     uniform sampler2D atlas;
     uniform vec2 atlasSize;
-    uniform float time, size, pixelRatio, trailLength, modelLength, opacity;
+    uniform float time, size, pixelRatio, trailLength, modelLength, opacity, spectrum;
     uniform vec3 tint;
     attribute float track, phase, rate, age;
     varying float alpha;
     varying vec3 color;
-    vec3 samplePath(float t) {
+    varying float speedMetric;
+    vec4 samplePath(float t) {
       float s = clamp(t, 0.0, 1.0) * (atlasSize.x - 1.0);
       float j = floor(s);
       vec2 uv = vec2((j + 0.5) / atlasSize.x, (track + 0.5) / atlasSize.y);
-      vec3 a = texture2D(atlas, uv).xyz;
-      vec3 b = texture2D(atlas, vec2(min(j + 1.5, atlasSize.x - 0.5) / atlasSize.x, uv.y)).xyz;
+      vec4 a = texture2D(atlas, uv);
+      vec4 b = texture2D(atlas, vec2(min(j + 1.5, atlasSize.x - 0.5) / atlasSize.x, uv.y));
       return mix(a, b, fract(s));
+    }
+    vec3 spectrumColor(float v){
+      v=clamp(v,0.0,1.0);
+      vec3 blue=vec3(.035,.16,.76),cyan=vec3(.03,.83,.94),green=vec3(.14,.91,.41);
+      vec3 yellow=vec3(1.0,.79,.15),red=vec3(1.0,.19,.09);
+      if(v<.25)return mix(blue,cyan,smoothstep(0.,.25,v));
+      if(v<.50)return mix(cyan,green,smoothstep(.25,.50,v));
+      if(v<.75)return mix(green,yellow,smoothstep(.50,.75,v));
+      return mix(yellow,red,smoothstep(.75,1.,v));
     }
     void main() {
       float head = fract(phase + time * 0.072 * rate);
       float t = head - age * trailLength;
-      vec3 p = samplePath(t);
-      vec4 mv = modelViewMatrix * vec4(p, 1.0);
+      vec4 data = samplePath(t);
+      vec4 mv = modelViewMatrix * vec4(data.xyz, 1.0);
       gl_Position = projectionMatrix * mv;
       float perspectiveScale = projectionMatrix[3][3] == 0.0 ? clamp(modelLength * 2.0 / max(-mv.z, 0.001), 0.65, 1.25) : 1.0;
       gl_PointSize = clamp(size * pixelRatio * perspectiveScale, 1.0, 3.2 * pixelRatio);
       float fade = smoothstep(0.0, 0.045, t) * (1.0 - smoothstep(0.94, 1.0, t));
-      alpha = fade * pow(1.0 - age, 1.6) * opacity * step(0.0, t);
-      color = mix(tint, vec3(1.0, 0.48, 0.19), step(0.94, fract(track * 0.381966)) * 0.8);
+      speedMetric = data.w;
+      alpha = fade * pow(1.0 - age, 1.6) * opacity * step(0.0, t) * step(0.00001, data.w);
+      vec3 classic=mix(tint, vec3(1.0, 0.48, 0.19), step(0.94, fract(track * 0.381966)) * 0.8);
+      color = mix(classic,spectrumColor(data.w),spectrum);
     }`;
   const pointFragment = `varying float alpha; varying vec3 color;
     void main(){vec2 p=gl_PointCoord*2.0-1.0;float d=dot(p,p);if(d>1.0)discard;
@@ -36,12 +48,15 @@ const AeroFlow = (() => {
   const trailFragment = `varying float alpha; varying vec3 color;
     void main(){gl_FragColor=vec4(color,alpha*0.38);}`;
 
-  function create(paths, tracks, steps, count, length, pixelRatio, selection=null) {
+  function create(paths, tracks, steps, count, length, pixelRatio, selection=null, speeds=null) {
     const rgba = new Float32Array(tracks * steps * 4);
-    for (let i=0; i<tracks*steps; i++) rgba.set(paths.subarray(i*3,i*3+3),i*4);
+    for (let i=0; i<tracks*steps; i++) {
+      rgba.set(paths.subarray(i*3,i*3+3),i*4);
+      rgba[i*4+3]=speeds ? Math.max(0,Math.min(1,speeds[i])) : .65;
+    }
     const atlas = new T.DataTexture(rgba,steps,tracks,T.RGBAFormat,T.FloatType);
     atlas.needsUpdate=true;
-    const uniforms={atlas:{value:atlas},atlasSize:{value:new T.Vector2(steps,tracks)},time:{value:0},size:{value:1.6},pixelRatio:{value:pixelRatio},trailLength:{value:.018},modelLength:{value:length},opacity:{value:.82},tint:{value:new T.Color(0xb8e9ec)}};
+    const uniforms={atlas:{value:atlas},atlasSize:{value:new T.Vector2(steps,tracks)},time:{value:0},size:{value:1.6},pixelRatio:{value:pixelRatio},trailLength:{value:.018},modelLength:{value:length},opacity:{value:.82},spectrum:{value:0},tint:{value:new T.Color(0xb8e9ec)}};
     function geometry(n,trail) {
       const stride=trail?6:1, total=n*stride, g=new T.BufferGeometry();
       const track=new Float32Array(total),phase=new Float32Array(total),rate=new Float32Array(total),age=new Float32Array(total);
@@ -64,7 +79,9 @@ const AeroFlow = (() => {
     return {group,points,trails,uniforms,count,
       setTime(t){uniforms.time.value=t;},
       configure({size,trailLength,opacity,color,mode}){
-        uniforms.size.value=size;uniforms.trailLength.value=trailLength;uniforms.opacity.value=opacity;uniforms.tint.value.set(color);
+        uniforms.size.value=size;uniforms.trailLength.value=trailLength;uniforms.opacity.value=opacity;
+        uniforms.spectrum.value=color==='velocity'?1:0;
+        uniforms.tint.value.set(color==='velocity'?'#b8e9ec':color);
         points.visible=mode!=='trails';trails.visible=mode!=='points';
       },
       dispose(){atlas.dispose();points.geometry.dispose();points.material.dispose();trails.geometry.dispose();trails.material.dispose();}
