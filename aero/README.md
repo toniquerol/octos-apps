@@ -1,8 +1,16 @@
-# OcToS Aero V2.4 — sección X/Y/Z con cámara ortográfica orbital
+# OcToS Aero V2.5 — corrección de flujo próximo a superficies
 
 **Aplicación:** https://toniquerol.github.io/octos-apps/aero/
 
 Visor de estelas GPU con **dos modos**: trayectorias cinemáticas ilustrativas o integración sobre un campo CFD precomputado. OcToS Aero **no ejecuta el solver CFD**: los campos físicos se calculan externamente; solo se representan cuando se importa un fichero de velocidad válido.
+
+## Flujo próximo a la carrocería (V2.5)
+
+- **Diagnóstico corregido:** antes, el campo CFD se integraba hasta detectar una intersección y se detenía, sin rodear el vehículo; algunas mallas abiertas podían dejar entrar trayectorias. En el modo ilustrativo, las velocidades de todos los puntos de una misma ruta se sobrescribían sobre el primer valor del atlas. Además, rutas terminadas mantenían muestras repetidas con velocidad visible.
+- **Evitación geométrica:** ambos modos consultan el BVH de triángulos, anticipan intersecciones, buscan rutas libres por techo o laterales con una separación aproximada de **3,5–9 cm** y comprueban los segmentos antes de enviarlos al atlas. Si no existe una salida geométricamente segura, ocultan el resto de esa trayectoria en lugar de atravesar la carrocería.
+- **Estelas:** tras la modificación visual de las estelas se comprueban de nuevo las colisiones antes de dibujarlas.
+- **CFD importado:** se conservan las velocidades, el origen, el espaciado y las dimensiones del JSON original. **Las trayectorias corregidas son una representación geométrica, no la solución CFD real**: no se debe utilizar la forma corregida para deducir presión, fuerzas, turbulencia ni sustentación. La exactitud física depende del campo CFD y de una malla de carrocería suficientemente cerrada.
+- **Limitación:** las mallas abiertas, superficies inconsistentes o detalles menores que la resolución del campo pueden producir rutas interrumpidas; el sistema no completa automáticamente la geometría ausente.
 
 ## Uso
 
