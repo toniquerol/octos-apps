@@ -26,11 +26,14 @@ jobs:
         run: node aero/tests/flow.test.cjs
       - name: Geometry, segment and precision tests
         run: node aero/tests/geometry.test.cjs
+      - name: Structured CFD interpolation and integration tests
+        run: node aero/tests/cfd.test.cjs
       - name: Verify clean standalone bundle
         run: |
           test -s aero/index.html
           grep -q 'const AeroGeometry' aero/index.html
           grep -q 'const AeroPaths' aero/index.html
+          grep -q 'const AeroCFD' aero/index.html
       - name: Install temporary browser test dependencies
         run: |
           cd aero
