@@ -85,16 +85,17 @@ async function test(){
   await page.locator('#viewTypes select').first().selectOption('front');
   assert.equal((await page.evaluate(()=>window.aeroDiagnostics())).viewModes[0],'front');
   await page.locator('#viewTypes select').first().selectOption('3d');
+  const revisionBeforeZoom=(await page.evaluate(()=>window.aeroDiagnostics())).fieldRevision;
   const b=await page.locator('#stage').boundingBox();
   await page.mouse.move(b.x+b.width*.5,b.y+b.height*.52);
   await page.mouse.wheel(0,-1700);
   await page.waitForTimeout(800);
   const afterZoom=await page.evaluate(()=>window.aeroDiagnostics());
-  assert.equal(afterZoom.fieldRevision,start.fieldRevision,'zoom cannot rebuild the velocity atlas');
+  assert.equal(afterZoom.fieldRevision,revisionBeforeZoom,'zoom cannot rebuild the velocity atlas');
   assert(afterZoom.focused,'zoom should enable more locally concentrated tracers');
   await page.locator('#layout').selectOption('4');
   const four=await page.evaluate(()=>window.aeroDiagnostics());
-  assert.equal(four.views,4);assert.equal(four.fieldRevision,start.fieldRevision);
+  assert.equal(four.views,4);assert.equal(four.fieldRevision,revisionBeforeZoom);
   const viewScroll=await page.locator('#viewDock .dock-scroll').evaluate(el=>{
     el.scrollTop=el.scrollHeight;
     return {client:el.clientHeight,total:el.scrollHeight,position:el.scrollTop};
@@ -108,12 +109,12 @@ async function test(){
   await page.locator('#quality').selectOption('24000');
   const dense=await page.evaluate(()=>window.aeroDiagnostics());
   assert.equal(dense.particles,24000);assert.equal(dense.tracks,start.tracks);
-  assert.equal(dense.fieldRevision,start.fieldRevision,'particle count is independent of precision');
+  assert.equal(dense.fieldRevision,revisionBeforeZoom,'particle count is independent of precision');
   await page.locator('#precision').selectOption('balanced');
   await page.evaluate(()=>window.aeroReady());
   const balanced=await page.evaluate(()=>window.aeroDiagnostics());
   assert.equal(balanced.tracks,360);assert.equal(balanced.steps,288);
-  assert(balanced.fieldRevision>start.fieldRevision);
+  assert(balanced.fieldRevision>revisionBeforeZoom);
   await page.locator('#precision').selectOption('fine');
   await page.evaluate(()=>window.aeroReady());
   const precise=await page.evaluate(()=>window.aeroDiagnostics());

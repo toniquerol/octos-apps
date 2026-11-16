@@ -161,9 +161,11 @@ const AeroProjects=(()=>{
       const result=await window.aeroProjectBridge?.restore?.(project);
       assetPending=result?.vehicleRestored===false;
       showViewer();refresh();
-      message(assetPending?
-        'Proyecto abierto. El archivo GLB original no está disponible: vuelve a importarlo. El JSON CFD también debe importarse manualmente.':
-        'Proyecto abierto. Los campos CFD referenciados requieren importar el JSON original.');
+      const notice=assetPending?
+        'Proyecto abierto sin el GLB original: vuelve a importarlo. Los JSON CFD también deben importarse manualmente.':
+        'Proyecto abierto. Si hay resultados CFD referenciados, vuelve a importar sus archivos JSON.';
+      message(notice);
+      $('status').textContent=notice;
     }catch(err){showHome();message('No se pudo restaurar el proyecto: '+err.message,true);}
   }
   async function newProject(){
