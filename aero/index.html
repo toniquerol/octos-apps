@@ -28,19 +28,29 @@ THE SOFTWARE.
 #speedlegend .ramp{height:8px;border-radius:2px;background:linear-gradient(90deg,#0928bd 0%,#05c8f0 25%,#24e66b 50%,#ffcb26 75%,#ff3216 100%)}
 #speedlabel{font-size:10px;color:#b8c9d0;letter-spacing:.9px}
 @media(max-width:750px){#speedlegend{right:8px;bottom:10px;width:140px;padding:7px}#speedlabel{font-size:8px}}
-#flowlegend{position:absolute;left:20px;bottom:62px;z-index:2;display:flex;gap:14px;align-items:center;color:#94aab8;font:10px system-ui;letter-spacing:1px;pointer-events:none}#flowlegend b{color:#c2dbe1;font-weight:500}#particlecount{padding:5px 8px;border:1px solid #3b505d;border-radius:4px;background:#101820cc}#fieldinfo{padding:9px 10px;border-left:2px solid #ff6a1a;background:#1a1d21}aside{scrollbar-width:thin;scrollbar-color:#39464f #12161b}section{margin-bottom:15px;padding-bottom:15px}#badge{font-size:10px;color:#8296a6;border-color:#2d424e}header{background:#101216}header small{font-size:10px}input[type=range]{height:14px}.view select{max-width:calc(100% - 30px)}.view small{display:none}@media(max-width:750px){#flowlegend{left:10px;gap:8px;font-size:8px}#flowlegend b{display:none}}
-</style><header><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS" style="width:46px;height:46px;object-fit:contain;flex:none"><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V2.2</small><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></header><main><aside><section><h2>01 / VEHÍCULO</h2><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label><input id="presetBMW" type="checkbox" checked> BMW E46 Touring · orientar Y 180° al importar</label><label>Corregir orientación · +90°</label><div class="row"><button data-axis="x">X</button><button data-axis="y">Y</button><button data-axis="z">Z</button></div><p class="hint">Morro hacia −X. La última importación GLB se guarda en este navegador como vehículo inicial. Los giros manuales siguen disponibles.</p><p class="hint">Modelo de referencia: <a style="color:#ff995e" href="https://sketchfab.com/3d-models/bmw-3-series-touring-e46-2001-478330312c3d46fd94999c3133ce0366" target="_blank" rel="noopener noreferrer">BMW 3 Series Touring (E46) 2001</a> · Luquita · CC BY.</p></section><section><h2>02 / FLUJO Y PARTÍCULAS</h2><label for="quality">Densidad de partículas</label><select id="quality"><option value="2000">Ligero · 2.000</option><option value="6000" selected>Equilibrado · 6.000</option><option value="12000">Denso · 12.000</option><option value="24000">Máximo · 24.000</option></select>
+#flowlegend{position:absolute;left:20px;bottom:62px;z-index:2;display:flex;gap:14px;align-items:center;color:#94aab8;font:10px system-ui;letter-spacing:1px;pointer-events:none}#flowlegend b{color:#c2dbe1;font-weight:500}#particlecount{padding:5px 8px;border:1px solid #3b505d;border-radius:4px;background:#101820cc}#fieldinfo{padding:9px 10px;border-left:2px solid #ff6a1a;background:#1a1d21}
+.emitter-controls{margin:14px 0 12px;padding:10px 11px;background:#191c21;border:1px solid #303943;border-radius:5px}
+.emitter-controls h3{margin:0 0 9px;font-size:10px;font-weight:650;letter-spacing:1.1px;color:#ff995e}
+.emitter-controls label{margin:0 0 5px}
+.emitter-controls .hint{margin:7px 0 0}
+.emitter-controls input{font-variant-numeric:tabular-nums}aside{scrollbar-width:thin;scrollbar-color:#39464f #12161b}section{margin-bottom:15px;padding-bottom:15px}#badge{font-size:10px;color:#8296a6;border-color:#2d424e}header{background:#101216}header small{font-size:10px}input[type=range]{height:14px}.view select{max-width:calc(100% - 30px)}.view small{display:none}@media(max-width:750px){#flowlegend{left:10px;gap:8px;font-size:8px}#flowlegend b{display:none}}
+</style><header><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS" style="width:46px;height:46px;object-fit:contain;flex:none"><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V2.2</small><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></header><main><aside><section><h2>01 / VEHÍCULO</h2><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label><input id="presetBMW" type="checkbox" checked> BMW E46 Touring · orientar Y 180° al importar</label><label>Corregir orientación · +90°</label><div class="row"><button data-axis="x">X</button><button data-axis="y">Y</button><button data-axis="z">Z</button></div><p class="hint">Morro hacia −X. La última importación GLB se guarda en este navegador como vehículo inicial. Los giros manuales siguen disponibles.</p><p class="hint">Modelo de referencia: <a style="color:#ff995e" href="https://sketchfab.com/3d-models/bmw-3-series-touring-e46-2001-478330312c3d46fd94999c3133ce0366" target="_blank" rel="noopener noreferrer">BMW 3 Series Touring (E46) 2001</a> · Luquita · CC BY.</p></section><section><h2>02 / FLUJO Y PARTÍCULAS</h2><label for="quality">Densidad de partículas</label><select id="quality"><option value="2000">Ligero · 2.000</option><option value="6000">Equilibrado · 6.000</option><option value="12000" selected>Denso · 12.000</option><option value="24000">Máximo · 24.000</option></select>
 <label for="precision">Precisión geométrica (independiente de partículas)</label><select id="precision"><option value="low">Ligera · 160 trazados</option><option value="balanced" selected>Equilibrada · 360 trazados</option><option value="fine">Detallada · 640 trazados</option></select><label for="flowmode">Representación</label><select id="flowmode"><option value="both">Partículas + estelas</option><option value="trails">Solo estelas</option><option value="points">Solo partículas</option></select>
 <label for="pointsize">Tamaño fino · píxeles</label><input id="pointsize" type="range" min="1" max="4" step="0.1" value="1.9">
 <label for="trail">Longitud de estela</label><input id="trail" type="range" min="0.3" max="3.5" step="0.1" value="1.5">
 <label for="opacity">Intensidad del flujo</label><input id="opacity" type="range" min="0.2" max="1" step="0.05" value="0.8">
 <label for="palette">Color de trazadores</label><select id="palette"><option value="velocity" selected>Espectro de velocidad</option><option value="#b8e9ec">Hielo</option><option value="#e5edf2">Perla</option><option value="#ffb16d">Ámbar</option></select>
+<div class="emitter-controls"><h3>PLANO EMISOR DE PARTÍCULAS</h3>
+<div class="row">
+<div><label for="emitterWidth">Anchura Z · m</label><input id="emitterWidth" type="number" min="0.2" max="20" step="0.1" value="2.6"></div>
+<div><label for="emitterHeight">Altura Y · m</label><input id="emitterHeight" type="number" min="0.2" max="20" step="0.1" value="2.0"></div>
+</div><p class="hint">Emisor delante del vehículo · centrado en Z · desde el suelo hasta la altura indicada. Cambiarlo recalcula las trayectorias, sin alterar el JSON CFD.</p></div>
 <label for="focus">Zona de emisión</label><select id="focus"><option value="all">Anchura completa</option><option value="center">Franja central</option></select><label for="speed">Velocidad de animación <span id="speedval">1×</span></label><input id="speed" type="range" min="0.2" max="2.5" value="1" step="0.1"><label><input id="lines" type="checkbox"> Guías de trayectoria</label><label><input id="tunnel" type="checkbox" checked> Marco del túnel</label><label><input id="body" type="checkbox" checked> Mostrar carrocería</label><label><input id="grid" type="checkbox" checked> Rejilla del suelo</label></section><section><h2>03 / CAMPO CFD</h2>
 <label class="file" for="cfdfile" style="display:block;text-align:center">Importar campo CFD JSON</label><input id="cfdfile" type="file" accept=".json,application/json" style="display:none">
 <button id="clearCFD" style="width:100%;margin-top:9px">Volver a flujo visual</button>
 <p id="fieldinfo" class="hint" aria-live="polite">Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.</p>
 <p class="hint">Formato octos-cfd-v1: rejilla XYZ en metros y velocidad [vx, vy, vz] en m/s. Los datos deben coincidir con la posición y escala del vehículo. No resuelve CFD en el navegador.</p>
-</section><section><h2>04 / VISTAS</h2><label for="layout">Distribución</label><select id="layout"><option value="1">Una vista</option><option value="2">Dos vistas</option><option value="4">Cuatro vistas</option></select><button id="frame" style="width:100%;margin-top:12px">Reencuadrar cámaras</button><button id="clearFocus" style="width:100%;margin-top:8px">Eliminar foco de inspección</button><p class="hint">Arrastrar: orbitar en 3D; desplazar en vistas ortográficas.<br>Mayús + arrastrar: desplazar punto de mira.<br>Doble clic: centrar una zona del modelo.<br>Rueda: zoom y mayor concentración visual local.<br>Las trayectorias globales no cambian por el zoom.</p></section><p class="hint">Colisiones sobre triángulos con aceleración espacial; trazadores ilustrativos, no CFD. Las mallas abiertas, las holguras inferiores a la resolución y los segmentos irresolubles limitan el resultado. Con datos CFD importados, el espectro representa la magnitud relativa de velocidad; en modo ilustrativo no representa magnitudes físicas.</p></aside><div id="stage"><div id="flowlegend"><b>FLUJO / VISUAL</b><span id="particlecount">6.000 TRAZADORES</span><span>−X → +X</span></div><div id="panels"></div><div id="speedlegend"><span id="speedlabel">VELOCIDAD RELATIVA · NO CFD</span><div class="ramp"></div><div style="display:flex;justify-content:space-between;font-size:9px;color:#91a7b3"><span>0</span><span>MÁX</span></div></div><div id="badge">ESTELA CINEMÁTICA ILUSTRATIVA · NO CFD</div></div></main><footer><button id="play" class="primary">Ⅱ Pausar</button><button id="reset">↺ Reiniciar</button><span id="status" role="status">Preparando escena…</span><span id="fps">— FPS</span></footer><script>const THREE=(()=>{/**
+</section><section><h2>04 / VISTAS</h2><label for="layout">Distribución</label><select id="layout"><option value="1">Una vista</option><option value="2">Dos vistas</option><option value="4">Cuatro vistas</option></select><button id="frame" style="width:100%;margin-top:12px">Reencuadrar cámaras</button><button id="clearFocus" style="width:100%;margin-top:8px">Eliminar foco de inspección</button><p class="hint">Arrastrar: orbitar en 3D; desplazar en vistas ortográficas.<br>Mayús + arrastrar: desplazar punto de mira.<br>Doble clic: centrar una zona del modelo.<br>Rueda: zoom y mayor concentración visual local.<br>Las trayectorias globales no cambian por el zoom.</p></section><p class="hint">Colisiones sobre triángulos con aceleración espacial; trazadores ilustrativos, no CFD. Las mallas abiertas, las holguras inferiores a la resolución y los segmentos irresolubles limitan el resultado. Con datos CFD importados, el espectro representa la magnitud relativa de velocidad; en modo ilustrativo no representa magnitudes físicas.</p></aside><div id="stage"><div id="flowlegend"><b>FLUJO / VISUAL</b><span id="particlecount">12.000 TRAZADORES</span><span>−X → +X</span></div><div id="panels"></div><div id="speedlegend"><span id="speedlabel">VELOCIDAD RELATIVA · NO CFD</span><div class="ramp"></div><div style="display:flex;justify-content:space-between;font-size:9px;color:#91a7b3"><span>0</span><span>MÁX</span></div></div><div id="badge">ESTELA CINEMÁTICA ILUSTRATIVA · NO CFD</div></div></main><footer><button id="play" class="primary">Ⅱ Pausar</button><button id="reset">↺ Reiniciar</button><span id="status" role="status">Preparando escena…</span><span id="fps">— FPS</span></footer><script>const THREE=(()=>{/**
  * @license
  * Copyright 2010-2024 Three.js Authors
  * SPDX-License-Identifier: MIT
@@ -60834,6 +60844,20 @@ const AeroGeometry = (() => {
   return {build,fromObject};
 })();
 // Deterministic geometric streamlines. The velocity model is illustrative, not CFD.
+// Shared emitter-plane limits. The emitter constrains only initial tracers, never CFD grid data.
+const AeroEmitter = (() => {
+  function bounds(width=2.6,height=2.0,focus='all') {
+    if(!Number.isFinite(width)||!Number.isFinite(height)||width<.2||height<.2||width>20||height>20)
+      throw Error('El ancho y alto del emisor deben estar entre 0,2 y 20 metros.');
+    const halfWidth=width*.5*(focus==='center'?.65:1);
+    return {yMin:.035,yMax:height,zMin:-halfWidth,zMax:halfWidth};
+  }
+  function includes(b,y,z) {
+    return y>=b.yMin-1e-5 && y<=b.yMax+1e-5 &&
+      z>=b.zMin-1e-5 && z<=b.zMax+1e-5;
+  }
+  return {bounds,includes};
+})();
 const AeroPaths = (() => {
   const modes={low:{tracks:160,steps:192},balanced:{tracks:360,steps:288},fine:{tracks:640,steps:384}};
   const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
@@ -60849,8 +60873,9 @@ const AeroPaths = (() => {
     const multiplier=1.85*strength*strength;
     return {direction:[1,dy/lateral*multiplier,dz/lateral*multiplier],distance:near.distance};
   }
-  async function build(surface,{L,H,W,extent,precision='balanced',focus='all'},current=()=>true){
+  async function build(surface,{L,H,W,extent,precision='balanced',focus='all',emitterWidth=2.6,emitterHeight=2.0},current=()=>true){
     const {tracks,steps}=modes[precision]||modes.balanced;
+    const emitter=AeroEmitter.bounds(emitterWidth,emitterHeight,focus);
     const paths=new Float32Array(tracks*steps*3),centres=new Float32Array(tracks*3);
     let seed=71,repaired=0,stalled=0,rawSamples=0;
     const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
@@ -60860,12 +60885,11 @@ const AeroPaths = (() => {
     const lo=-extent,hi=extent;
     // Surface-attached visual lanes sample real triangles (not the vehicle envelope).
     // They complement rather than alter the free-field illustrative velocity model.
-    function surfaceLane(track){
+    function surfaceLane(track,seedY,seedZ){
       const kind=track%10,roof=kind<4,under=kind===8,side=!roof&&!under;
       const sign=kind<6?-1:1;
-      const u=(track*.61803398875)%1;
-      const laneZ=(u-.5)*W*(roof?1.02:.82);
-      const laneY=.08+u*H*.86;
+      const laneZ=seedZ;
+      const laneY=seedY;
       const offsets=new Array(steps).fill(null);
       for(let s=0;s<steps;s++){
         const x=lo+(hi-lo)*s/(steps-1);
@@ -60888,6 +60912,10 @@ const AeroPaths = (() => {
         previous=s;
       }
       for(let s=previous+1;s<steps;s++)offsets[s]=offsets[previous];
+      // If the surface-guided path begins outside the selected emitter, use the free path.
+      const startY=roof?offsets[0]:under?Math.max(.025,offsets[0]):laneY;
+      const startZ=roof||under?laneZ:offsets[0];
+      if(!AeroEmitter.includes(emitter,startY,startZ))return false;
       for(let s=0;s<steps;s++){
         const x=lo+(hi-lo)*s/(steps-1);
         let pos=roof?[x,offsets[s],laneZ]:under?[x,Math.max(.025,offsets[s]),laneZ]:[x,laneY,offsets[s]];
@@ -60908,18 +60936,20 @@ const AeroPaths = (() => {
     }
     for(let track=0;track<tracks;track++){
       if(!current())return null;
-      // Reserve approximately 55% of routes for roof, sides and underbody clearance.
-      if(track<Math.floor(tracks*.62) && track%10!==9 && surfaceLane(track)){
+      // Every trajectory begins within the plane Y:[0,height], Z:[-width/2,width/2].
+      const col=track%cols,row=Math.floor(track/cols);
+      const seedY=emitter.yMin+(row+random()*.65)/rows*(emitter.yMax-emitter.yMin);
+      const seedZ=emitter.zMin+(col+random()*.65)/cols*(emitter.zMax-emitter.zMin);
+      // Keep surface-attached paths only when their upstream seed fits the emitter.
+      if(track<Math.floor(tracks*.62) && track%10!==9 && surfaceLane(track,seedY,seedZ)){
         rawSamples+=steps;
         const mid=(track*steps+Math.floor(steps/2))*3;
         centres.set([paths[mid],paths[mid+1],paths[mid+2]],track*3);
         if(track%10===0)await pause();
         continue;
       }
-      const col=track%cols,row=Math.floor(track/cols);
-      // Sample the roof, sides and underbody more densely instead of wasting most streams in empty air.
-      const y0=.035+(row+random()*.65)/rows*H*1.42;
-      const z0=((col+random()*.65)/cols-.5)*W*(focus==='center'?.85:1.8);
+      // Free trajectories start from the same emitter, regardless of vehicle dimensions.
+      const y0=seedY,z0=seedZ;
       const preferred=z0<-.05?-1:z0>.05?1:0;
       let here=[lo,y0,z0],raw=[here],iterations=0;
       while(here[0]<hi-1e-8 && iterations++<steps*6){
@@ -61049,18 +61079,21 @@ const AeroCFD = (() => {
     return {dims,origin,spacing,velocity,maxSpeed,displayMaxSpeed:maxSpeed,
       referenceSpeed,bounds,source:String(data.source||'Campo CFD importado').slice(0,100),sample};
   }
-  async function build(field,surface,{L,H,W,extent,precision='balanced',focus='all'},current=()=>true){
+  async function build(field,surface,{L,H,W,extent,precision='balanced',focus='all',emitterWidth=2.6,emitterHeight=2.0},current=()=>true){
     const {tracks,steps}=AeroPaths.modes[precision]||AeroPaths.modes.balanced;
     const paths=new Float32Array(tracks*steps*3),speeds=new Float32Array(tracks*steps);
     const x0=Math.max(-extent,field.bounds[0][0]+field.spacing[0]);
     if(x0>=-L*.5) throw Error('El campo debe incluir el aire aguas arriba del vehículo (−X).');
     const xEnd=Math.min(extent,field.bounds[0][1]-field.spacing[0]);
     if(xEnd<L*.5) throw Error('La rejilla termina antes de la parte posterior del vehículo.');
-    const yMin=Math.max(field.bounds[1][0]+field.spacing[1]*.5,.045);
-    const yMax=Math.min(field.bounds[1][1]-field.spacing[1]*.5,H*1.8);
-    const zMin=Math.max(field.bounds[2][0]+field.spacing[2]*.5,-W*(focus==='center'?.65:1.25));
-    const zMax=Math.min(field.bounds[2][1]-field.spacing[2]*.5,W*(focus==='center'?.65:1.25));
-    if(yMax<=yMin||zMax<=zMin) throw Error('El campo CFD no cubre la región alrededor de la carrocería.');
+    // Intersect the user-defined emitter plane with the existing CFD coverage.
+    // Neither grid origin, spacing, dimensions nor imported velocity values change.
+    const emitter=AeroEmitter.bounds(emitterWidth,emitterHeight,focus);
+    const yMin=Math.max(field.bounds[1][0]+field.spacing[1]*.5,emitter.yMin);
+    const yMax=Math.min(field.bounds[1][1]-field.spacing[1]*.5,emitter.yMax);
+    const zMin=Math.max(field.bounds[2][0]+field.spacing[2]*.5,emitter.zMin);
+    const zMax=Math.min(field.bounds[2][1]-field.spacing[2]*.5,emitter.zMax);
+    if(yMax<=yMin||zMax<=zMin) throw Error('El campo CFD no cubre el plano emisor seleccionado.');
     const dt=(xEnd-x0)/(steps-1)/Math.max(field.referenceSpeed,0.05);
     let seed=173,rawSamples=0,stalled=0;
     const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
@@ -61201,6 +61234,7 @@ const vehicle=new T.Group();scene.add(vehicle);let flow=null,scenery=null;let co
 let L=4.5,H=1.4,W=1.9,extent=8,triangles=0,TRACKS=0,STEPS=0;
 let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0,activeCFD=null;
 let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
+const emitter={width:2.6,height:2.0}; // Independent of the CFD field's physical domain.
 let cameras=[],views=[],orbit=[],frameCount=0,fpsTime=0;
 const ground=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial({color:0x171d25,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.025;scene.add(ground);
 const grid=new T.GridHelper(20,40,0x3c505c,0x23323e);grid.position.y=-.015;scene.add(grid);
@@ -61298,7 +61332,8 @@ async function performRebuild(geometry=true,reframe=true){
     if(geometry||!surface){normalize();geometry=true;nextSurface=await AeroGeometry.fromObject(vehicle,()=>seq===generation);}
     else nextSurface=surface;
     if(!nextSurface||seq!==generation){if(nextSurface&&nextSurface!==surface)nextSurface.dispose();return;}
-    const options={L,H,W,extent,precision:$('precision').value,focus:$('focus').value};
+    const options={L,H,W,extent,precision:$('precision').value,focus:$('focus').value,
+      emitterWidth:emitter.width,emitterHeight:emitter.height};
     const result=activeCFD?
       await AeroCFD.build(activeCFD,nextSurface,options,()=>seq===generation):
       await AeroPaths.build(nextSurface,options,()=>seq===generation);
@@ -61414,6 +61449,24 @@ $('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Ⅱ Pausa
 $('reset').onclick=()=>{clock=0;updateParticles();wake();};
 $('quality').onchange=setParticles;
 $('precision').onchange=()=>rebuild(false,false);
+// Change only the particle-seeding rectangle; preserve imported CFD grid and camera state.
+function changeEmitter(){
+  const width=Number($('emitterWidth').value),height=Number($('emitterHeight').value);
+  if(!Number.isFinite(width)||!Number.isFinite(height)||
+      width<.2||height<.2||width>20||height>20){
+    $('emitterWidth').value=emitter.width.toFixed(1);
+    $('emitterHeight').value=emitter.height.toFixed(1);
+    status('El plano emisor debe medir entre 0,2 y 20 m de ancho y alto.',true);
+    return;
+  }
+  if(width===emitter.width&&height===emitter.height)return;
+  emitter.width=width;emitter.height=height;
+  $('emitterWidth').value=width.toFixed(1);
+  $('emitterHeight').value=height.toFixed(1);
+  rebuild(false,false);
+}
+$('emitterWidth').onchange=changeEmitter;
+$('emitterHeight').onchange=changeEmitter;
 for(const id of ['pointsize','trail','opacity','palette','flowmode'])$(id).oninput=configureFlow;
 $('focus').onchange=()=>rebuild(false,false);
 $('tunnel').onchange=()=>{scenery.visible=$('tunnel').checked;wake();};
@@ -61465,7 +61518,7 @@ new ResizeObserver(wake).observe(stage);document.addEventListener('visibilitycha
 layout();install(demo(),'Concepto de demostración');restoreDefault();
 window.aeroReady=()=>buildPromise;
 window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
-  dimensions:[L,H,W],tracks:TRACKS,steps:STEPS,fieldRevision,precision:pathData?.precision||null,
+  dimensions:[L,H,W],emitter:[emitter.width,emitter.height],tracks:TRACKS,steps:STEPS,fieldRevision,precision:pathData?.precision||null,
   rawSamples:pathData?.rawSamples||0,repaired:pathData?.repaired||0,stalled:pathData?.stalled||0,
   openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,cfd:!!pathData?.physical,cfdSource:activeCFD?.source||null,
   trailVertices:flow?.trails.geometry.attributes.position.count||0,particleSize:flow?.uniforms.size.value||0,
