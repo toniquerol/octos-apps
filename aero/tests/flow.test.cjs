@@ -3,6 +3,7 @@ const html=fs.readFileSync(__dirname+'/../index.html','utf8');
 const js=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
 const context={console};vm.createContext(context);
 vm.runInContext(js.slice(0,js.indexOf("(()=>{'use strict';")),context);
+vm.runInContext('globalThis.THREE=THREE;',context);
 vm.runInContext(`
   const tracks=3,steps=5,p=new Float32Array(tracks*steps*3);
   for(let i=0;i<tracks*steps;i++){p[i*3]=i%steps;p[i*3+1]=1;p[i*3+2]=Math.floor(i/steps);}
@@ -12,11 +13,16 @@ const flow=context.subject,geo=flow.points.geometry;
 assert.equal(geo.attributes.position.count,24000);
 assert.equal(flow.trails.geometry.attributes.position.count,144000);
 const snapshot=Array.from(geo.attributes.phase.array);
-flow.setClip(true,1.15);
-assert.equal(flow.uniforms.cutActive.value,1);
-assert.equal(flow.uniforms.cutX.value,1.15);
-assert(flow.points.material.fragmentShader.includes('worldX<cutX'));
-flow.setClip(false,1.15);
+const normals=[new context.THREE.Vector3(0,-1,0),new context.THREE.Vector3(1,0,0),new context.THREE.Vector3(0,0,-1)];
+for(const n of normals){
+  flow.setClip(true,n,.75);
+  assert.equal(flow.uniforms.cutActive.value,1);
+  assert.deepEqual(Array.from(flow.uniforms.cutNormal.value.toArray()),Array.from(n.toArray()));
+  assert.equal(flow.uniforms.cutOffset.value,.75);
+  assert(flow.points.material.fragmentShader.includes('sectionDistance<0.0'));
+  assert(flow.trails.material.fragmentShader.includes('sectionDistance<0.0'));
+}
+flow.setClip(false,normals[0],.2);
 assert.equal(flow.uniforms.cutActive.value,0);
 flow.setTime(120);
 assert.equal(flow.uniforms.time.value,120);
