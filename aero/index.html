@@ -61341,7 +61341,8 @@ function setSection(x,sourceIndex=0,split=true){
   sectionX=T.MathUtils.clamp(x,-L*.5,L*.5);
   sectionEnabled=true;sectionPick=false;
   if(split&&views.length===1){
-    $('layout').value='2';layout();sectionViewIndex=1;
+    sectionViewIndex=1; // Preserve 3D view 1, reserve new view 2 for the section.
+    $('layout').value='2';layout();
   }else sectionViewIndex=Math.max(0,Math.min(views.length-1,sourceIndex));
   viewSelects[sectionViewIndex].value='section';
   updateSectionMarker();
