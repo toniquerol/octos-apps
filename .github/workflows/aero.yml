@@ -8,6 +8,10 @@ on:
       - 'aero/**'
       - '.github/workflows/aero.yml'
   workflow_dispatch:
+# Only test and package the newest push on each branch.
+concurrency:
+  group: aero-standalone-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
@@ -53,11 +57,35 @@ jobs:
           if-no-files-found: ignore
       - name: Commit generated standalone bundle
         if: github.event_name == 'push'
+        shell: bash
         run: |
-          git add aero/index.html
-          if ! git diff --cached --quiet; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m 'build(aero): update verified standalone HTML'
-            git push
+          branch="${GITHUB_REF#refs/heads/}"
+          git add -- aero/index.html
+          if git diff --cached --quiet; then
+            echo "Standalone bundle is already current."
+            exit 0
           fi
+
+          # Never publish a bundle built from an outdated commit.
+          git fetch --no-tags origin "$branch"
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse FETCH_HEAD)" ]; then
+            echo "::notice::Newer commits exist on $branch. Skipping stale bundle."
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'build(aero): update verified standalone HTML'
+          if git push origin "HEAD:refs/heads/$branch"; then
+            exit 0
+          fi
+
+          # A simultaneous push is expected during rapid editing; its next run
+          # will build the newest code. A real permission/network error must fail.
+          git fetch --no-tags origin "$branch"
+          if [ "$(git rev-parse HEAD^)" != "$(git rev-parse FETCH_HEAD)" ]; then
+            echo "::notice::Another push arrived while publishing; the latest run will rebuild."
+            exit 0
+          fi
+          echo "::error::Standalone bundle push failed without a newer remote commit."
+          exit 1
