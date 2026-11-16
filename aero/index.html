@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><meta charset="utf-8"><meta name="description" content="OcToS Aero V2.1: visualizador 3D de flujo aproximado para carrocerías GLB. Procesamiento local, partículas y múltiples vistas. No CFD."><meta name="viewport" content="width=device-width,initial-scale=1"><!-- Three.js 0.170.0 and example modules.
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="description" content="OcToS Aero V2.2: visualizador de estelas y campos de velocidad CFD importados, con partículas GPU y múltiples vistas."><meta name="viewport" content="width=device-width,initial-scale=1"><!-- Three.js 0.170.0 and example modules.
 The MIT License
 
 Copyright © 2010-2024 three.js authors
@@ -22,16 +22,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 -->
-<title>OcToS Aero · V2.1</title><link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-128.png"><script src="../shared/nav.js" defer></script><style>
+<title>OcToS Aero · V2.2</title><link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon-128.png"><script src="../shared/nav.js" defer></script><style>
 *{box-sizing:border-box}body{margin:0;background:#0e0e10;color:#f1f1ef;font:13px system-ui,Segoe UI,sans-serif}header{height:66px;border-bottom:1px solid #303137;display:flex;align-items:center;padding:0 24px;gap:20px}header b{font-size:24px;letter-spacing:3px}header b span{color:#ff6a1a}header small{color:#95969e;letter-spacing:2px}button,.file{background:#25262b;color:#eee;border:1px solid #3c3e45;border-radius:6px;padding:9px 12px;font:inherit;cursor:pointer}button:hover,.file:hover{border-color:#ff6a1a}.primary{background:#ff6a1a;color:#141414;border-color:#ff6a1a;font-weight:700}header .file{margin-left:auto}main{display:flex;height:calc(100vh - 119px)}aside{width:252px;flex-shrink:0;padding:22px 18px;overflow:auto;border-right:1px solid #303137}h2{font-size:11px;letter-spacing:2px;color:#ff995e;margin:0 0 16px}section{padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid #292b30}label{display:block;color:#c1c3cb;margin:12px 0 6px;font-size:12px}input[type=range]{width:100%;accent-color:#ff6a1a}input[type=number],select{background:#202127;color:#eee;border:1px solid #3b3d46;border-radius:5px;padding:7px;width:100%}input[type=checkbox]{accent-color:#ff6a1a}.row{display:flex;gap:6px}.row>*{flex:1;min-width:0}.hint{font-size:11px;line-height:1.6;color:#9396a1}.stat{font-size:12px;color:#c6c8cf;line-height:1.9}#stage{position:relative;flex:1;min-width:0;overflow:hidden;background:#11151b}canvas{position:absolute;inset:0;width:100%;height:100%}#panels{position:absolute;inset:0;display:grid;pointer-events:none}.view{position:relative;border:1px solid #31384255}.view select{position:absolute;top:14px;left:15px;width:126px;pointer-events:auto;background:#151a22d9;font-size:11px}.view small{position:absolute;right:16px;top:20px;color:#717e90;font-size:10px;letter-spacing:1px}#badge{position:absolute;bottom:18px;left:20px;color:#abb6c5;font-size:11px;background:#11151bca;padding:9px 12px;border:1px solid #313c4b;border-radius:5px;pointer-events:none}footer{height:53px;display:flex;align-items:center;gap:12px;padding:0 20px;border-top:1px solid #303137}#status{flex:1;font-size:12px;color:#b8bec7}#status.error{color:#ffad86}#fps{font:11px monospace;color:#929daa}#filename{overflow-wrap:anywhere;color:#eee;margin-bottom:7px}button:focus-visible,select:focus-visible{outline:2px solid #ff6a1a}#file{display:none}@media(max-width:750px){aside{width:192px;padding:15px 12px}header{padding:0 12px;gap:10px}header small{display:none}#badge{font-size:9px;left:8px}footer{padding:0 10px}#status{font-size:10px}}
-#flowlegend{position:absolute;left:20px;bottom:62px;z-index:2;display:flex;gap:14px;align-items:center;color:#94aab8;font:10px system-ui;letter-spacing:1px;pointer-events:none}#flowlegend b{color:#c2dbe1;font-weight:500}#particlecount{padding:5px 8px;border:1px solid #3b505d;border-radius:4px;background:#101820cc}aside{scrollbar-width:thin;scrollbar-color:#39464f #12161b}section{margin-bottom:15px;padding-bottom:15px}#badge{font-size:10px;color:#8296a6;border-color:#2d424e}header{background:#101216}header small{font-size:10px}input[type=range]{height:14px}.view select{max-width:calc(100% - 30px)}.view small{display:none}@media(max-width:750px){#flowlegend{left:10px;gap:8px;font-size:8px}#flowlegend b{display:none}}
-</style><header><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS" style="width:46px;height:46px;object-fit:contain;flex:none"><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V2.1</small><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></header><main><aside><section><h2>01 / VEHÍCULO</h2><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label><input id="presetBMW" type="checkbox" checked> BMW E46 Touring · orientar Y 180° al importar</label><label>Corregir orientación · +90°</label><div class="row"><button data-axis="x">X</button><button data-axis="y">Y</button><button data-axis="z">Z</button></div><p class="hint">Morro hacia −X. La última importación GLB se guarda en este navegador como vehículo inicial. Los giros manuales siguen disponibles.</p><p class="hint">Modelo de referencia: <a style="color:#ff995e" href="https://sketchfab.com/3d-models/bmw-3-series-touring-e46-2001-478330312c3d46fd94999c3133ce0366" target="_blank" rel="noopener noreferrer">BMW 3 Series Touring (E46) 2001</a> · Luquita · CC BY.</p></section><section><h2>02 / FLUJO VISUAL</h2><label for="quality">Densidad de partículas</label><select id="quality"><option value="2000">Ligero · 2.000</option><option value="6000" selected>Equilibrado · 6.000</option><option value="12000">Denso · 12.000</option><option value="24000">Máximo · 24.000</option></select>
+#flowlegend{position:absolute;left:20px;bottom:62px;z-index:2;display:flex;gap:14px;align-items:center;color:#94aab8;font:10px system-ui;letter-spacing:1px;pointer-events:none}#flowlegend b{color:#c2dbe1;font-weight:500}#particlecount{padding:5px 8px;border:1px solid #3b505d;border-radius:4px;background:#101820cc}#fieldinfo{padding:9px 10px;border-left:2px solid #ff6a1a;background:#1a1d21}aside{scrollbar-width:thin;scrollbar-color:#39464f #12161b}section{margin-bottom:15px;padding-bottom:15px}#badge{font-size:10px;color:#8296a6;border-color:#2d424e}header{background:#101216}header small{font-size:10px}input[type=range]{height:14px}.view select{max-width:calc(100% - 30px)}.view small{display:none}@media(max-width:750px){#flowlegend{left:10px;gap:8px;font-size:8px}#flowlegend b{display:none}}
+</style><header><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS" style="width:46px;height:46px;object-fit:contain;flex:none"><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V2.2</small><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></header><main><aside><section><h2>01 / VEHÍCULO</h2><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label><input id="presetBMW" type="checkbox" checked> BMW E46 Touring · orientar Y 180° al importar</label><label>Corregir orientación · +90°</label><div class="row"><button data-axis="x">X</button><button data-axis="y">Y</button><button data-axis="z">Z</button></div><p class="hint">Morro hacia −X. La última importación GLB se guarda en este navegador como vehículo inicial. Los giros manuales siguen disponibles.</p><p class="hint">Modelo de referencia: <a style="color:#ff995e" href="https://sketchfab.com/3d-models/bmw-3-series-touring-e46-2001-478330312c3d46fd94999c3133ce0366" target="_blank" rel="noopener noreferrer">BMW 3 Series Touring (E46) 2001</a> · Luquita · CC BY.</p></section><section><h2>02 / FLUJO Y PARTÍCULAS</h2><label for="quality">Densidad de partículas</label><select id="quality"><option value="2000">Ligero · 2.000</option><option value="6000" selected>Equilibrado · 6.000</option><option value="12000">Denso · 12.000</option><option value="24000">Máximo · 24.000</option></select>
 <label for="precision">Precisión geométrica (independiente de partículas)</label><select id="precision"><option value="low">Ligera · 160 trazados</option><option value="balanced" selected>Equilibrada · 360 trazados</option><option value="fine">Detallada · 640 trazados</option></select><label for="flowmode">Representación</label><select id="flowmode"><option value="both">Partículas + estelas</option><option value="trails">Solo estelas</option><option value="points">Solo partículas</option></select>
-<label for="pointsize">Tamaño fino · píxeles</label><input id="pointsize" type="range" min="1" max="3" step="0.1" value="1.6">
-<label for="trail">Longitud de estela</label><input id="trail" type="range" min="0.3" max="2.5" step="0.1" value="1">
+<label for="pointsize">Tamaño fino · píxeles</label><input id="pointsize" type="range" min="1" max="4" step="0.1" value="1.9">
+<label for="trail">Longitud de estela</label><input id="trail" type="range" min="0.3" max="3.5" step="0.1" value="1.5">
 <label for="opacity">Intensidad del flujo</label><input id="opacity" type="range" min="0.2" max="1" step="0.05" value="0.8">
-<label for="palette">Color de trazadores</label><select id="palette"><option value="#b8e9ec">Hielo</option><option value="#e5edf2">Perla</option><option value="#ffb16d">Ámbar</option></select>
-<label for="focus">Zona de emisión</label><select id="focus"><option value="all">Anchura completa</option><option value="center">Franja central</option></select><label for="speed">Velocidad de animación <span id="speedval">1×</span></label><input id="speed" type="range" min="0.2" max="2.5" value="1" step="0.1"><label><input id="lines" type="checkbox"> Guías de trayectoria</label><label><input id="tunnel" type="checkbox" checked> Marco del túnel</label><label><input id="body" type="checkbox" checked> Mostrar carrocería</label><label><input id="grid" type="checkbox" checked> Rejilla del suelo</label></section><section><h2>03 / VISTAS</h2><label for="layout">Distribución</label><select id="layout"><option value="1">Una vista</option><option value="2">Dos vistas</option><option value="4">Cuatro vistas</option></select><button id="frame" style="width:100%;margin-top:12px">Reencuadrar cámaras</button><button id="clearFocus" style="width:100%;margin-top:8px">Eliminar foco de inspección</button><p class="hint">Arrastrar: orbitar en 3D; desplazar en vistas ortográficas.<br>Mayús + arrastrar: desplazar punto de mira.<br>Doble clic: centrar una zona del modelo.<br>Rueda: zoom y mayor concentración visual local.<br>Las trayectorias globales no cambian por el zoom.</p></section><p class="hint">Colisiones sobre triángulos con aceleración espacial; trazadores ilustrativos, no CFD. Las mallas abiertas, las holguras inferiores a la resolución y los segmentos irresolubles limitan el resultado. Colores decorativos, nunca magnitudes físicas.</p></aside><div id="stage"><div id="flowlegend"><b>FLUJO / VISUAL</b><span id="particlecount">6.000 TRAZADORES</span><span>−X → +X</span></div><div id="panels"></div><div id="badge">TRAYECTORIAS GEOMÉTRICAS ILUSTRATIVAS · NO CFD</div></div></main><footer><button id="play" class="primary">Ⅱ Pausar</button><button id="reset">↺ Reiniciar</button><span id="status" role="status">Preparando escena…</span><span id="fps">— FPS</span></footer><script>const THREE=(()=>{/**
+<label for="palette">Color de trazadores</label><select id="palette"><option value="velocity" selected>Espectro de velocidad</option><option value="#b8e9ec">Hielo</option><option value="#e5edf2">Perla</option><option value="#ffb16d">Ámbar</option></select>
+<label for="focus">Zona de emisión</label><select id="focus"><option value="all">Anchura completa</option><option value="center">Franja central</option></select><label for="speed">Velocidad de animación <span id="speedval">1×</span></label><input id="speed" type="range" min="0.2" max="2.5" value="1" step="0.1"><label><input id="lines" type="checkbox"> Guías de trayectoria</label><label><input id="tunnel" type="checkbox" checked> Marco del túnel</label><label><input id="body" type="checkbox" checked> Mostrar carrocería</label><label><input id="grid" type="checkbox" checked> Rejilla del suelo</label></section><section><h2>03 / CAMPO CFD</h2>
+<label class="file" for="cfdfile" style="display:block;text-align:center">Importar campo CFD JSON</label><input id="cfdfile" type="file" accept=".json,application/json" style="display:none">
+<button id="clearCFD" style="width:100%;margin-top:9px">Volver a flujo visual</button>
+<p id="fieldinfo" class="hint" aria-live="polite">Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.</p>
+<p class="hint">Formato octos-cfd-v1: rejilla XYZ en metros y velocidad [vx, vy, vz] en m/s. Los datos deben coincidir con la posición y escala del vehículo. No resuelve CFD en el navegador.</p>
+</section><section><h2>04 / VISTAS</h2><label for="layout">Distribución</label><select id="layout"><option value="1">Una vista</option><option value="2">Dos vistas</option><option value="4">Cuatro vistas</option></select><button id="frame" style="width:100%;margin-top:12px">Reencuadrar cámaras</button><button id="clearFocus" style="width:100%;margin-top:8px">Eliminar foco de inspección</button><p class="hint">Arrastrar: orbitar en 3D; desplazar en vistas ortográficas.<br>Mayús + arrastrar: desplazar punto de mira.<br>Doble clic: centrar una zona del modelo.<br>Rueda: zoom y mayor concentración visual local.<br>Las trayectorias globales no cambian por el zoom.</p></section><p class="hint">Colisiones sobre triángulos con aceleración espacial; trazadores ilustrativos, no CFD. Las mallas abiertas, las holguras inferiores a la resolución y los segmentos irresolubles limitan el resultado. Con datos CFD importados, el espectro representa la magnitud relativa de velocidad; en modo ilustrativo no representa magnitudes físicas.</p></aside><div id="stage"><div id="flowlegend"><b>FLUJO / VISUAL</b><span id="particlecount">6.000 TRAZADORES</span><span>−X → +X</span></div><div id="panels"></div><div id="badge">ESTELA CINEMÁTICA ILUSTRATIVA · NO CFD</div></div></main><footer><button id="play" class="primary">Ⅱ Pausar</button><button id="reset">↺ Reiniciar</button><span id="status" role="status">Preparando escena…</span><span id="fps">— FPS</span></footer><script>const THREE=(()=>{/**
  * @license
  * Copyright 2010-2024 Three.js Authors
  * SPDX-License-Identifier: MIT
@@ -60959,9 +60964,137 @@ const AeroPaths = (() => {
       centres.set([paths[mid],paths[mid+1],paths[mid+2]],track*3);
       if(track%10===0)await pause();
     }
-    return {paths,centres,tracks,steps,rawSamples,repaired,stalled,precision};
+    // Procedural near-wake effect. This is a cinematic illustration, NOT a CFD solution.
+    // The original triangle-safe lanes are retained around the body.
+    const speeds=new Float32Array(tracks*steps),rear=L*.5+clearance*2;
+    for(let track=0;track<tracks;track++){
+      const phase=track*2.3999632297,swirl=track%2===0?1:-1;
+      for(let s=0;s<steps;s++){
+        const k=(track*steps+s)*3, x=paths[k], y=paths[k+1], z=paths[k+2];
+        const downstream=Math.max(0,(x-rear)/L),wake=downstream>0&&downstream<2.2;
+        if(wake){
+          const radial=Math.exp(-Math.pow((y-H*.62)/(H*.95),2)-Math.pow(z/(W*.95),2));
+          const envelope=(1-Math.exp(-downstream*8))*Math.exp(-downstream*1.4);
+          const spin=downstream*11+phase;
+          const amp=Math.min(H*.17,W*.15)*radial*envelope;
+          const candidate=[x,Math.max(.026,y+amp*Math.cos(spin)),z+swirl*amp*Math.sin(spin)];
+          const prev=s?[paths[k-3],paths[k-2],paths[k-1]]:candidate;
+          if(!surface.segment(prev,candidate)){paths[k+1]=candidate[1];paths[k+2]=candidate[2];}
+        }
+        const closeRoof= Math.exp(-Math.pow((paths[k+1]-H)/(H*.35),2))*
+                         Math.exp(-Math.pow(paths[k+2]/(W*.7),2));
+        const bodyZone= Math.exp(-Math.pow(x/(L*.72),4));
+        const wakeZone= wake?Math.exp(-Math.pow(downstream/.85,2))*
+                               Math.exp(-Math.pow((paths[k+1]-H*.58)/H,2)-
+                                        Math.pow(paths[k+2]/W,2)):0;
+        speeds[track*steps]=Math.max(.12,Math.min(.99,.60+.33*closeRoof*bodyZone-.36*wakeZone+
+          .055*Math.sin(x*2.1+phase)*wakeZone));
+      }
+    }
+    return {paths,speeds,centres,tracks,steps,rawSamples,repaired,stalled,precision,physical:false};
   }
   return {build,velocity,modes};
+})();
+// Structured CFD velocity volumes; imported data are never computed by this viewer.
+// OCTOS-CFD-V1: uniform Cartesian grid in scene metres, velocities in m/s.
+// Index: (((z * ny) + y) * nx + x) * 3; X varies fastest.
+const AeroCFD = (() => {
+  const pause = () => new Promise(resolve => setTimeout(resolve, 0));
+  function parse(input) {
+    const data = typeof input === 'string' ? JSON.parse(input) : input;
+    if (!data || data.format !== 'octos-cfd-v1') throw Error('Formato incorrecto: se requiere octos-cfd-v1.');
+    const dims = data.dimensions, origin = data.origin, spacing = data.spacing;
+    if (![dims,origin,spacing].every(Array.isArray) ||
+        dims.length !== 3 || origin.length !== 3 || spacing.length !== 3)
+      throw Error('El campo necesita dimensions, origin y spacing [x,y,z].');
+    if (!dims.every(v=>Number.isInteger(v)&&v>=2&&v<=512) ||
+        dims[0]*dims[1]*dims[2]>2000000)
+      throw Error('Dimensiones de rejilla no válidas o superiores a 2 millones de celdas.');
+    if (![...origin,...spacing].every(Number.isFinite) || !spacing.every(v=>v>0))
+      throw Error('Origen o separación de rejilla no válidos.');
+    if (data.units !== 'm/s') throw Error('Las velocidades CFD deben expresarse en m/s.');
+    const expected = dims[0]*dims[1]*dims[2]*3;
+    if (!Array.isArray(data.velocity) || data.velocity.length !== expected)
+      throw Error('velocity debe contener tres componentes por nodo (orden X, Y, Z).');
+    const velocity = Float32Array.from(data.velocity);
+    let max=0;
+    for (let i=0;i<velocity.length;i+=3) {
+      const x=velocity[i],y=velocity[i+1],z=velocity[i+2];
+      if (![x,y,z].every(Number.isFinite)) throw Error('El campo contiene velocidades no finitas.');
+      max=Math.max(max,Math.hypot(x,y,z));
+    }
+    if (max<1e-5) throw Error('El campo CFD no contiene velocidades distintas de cero.');
+    const maxSpeed = data.displayMaxSpeed === undefined ? max : Number(data.displayMaxSpeed);
+    if (!Number.isFinite(maxSpeed) || maxSpeed <= 0) throw Error('displayMaxSpeed debe ser positivo.');
+    const referenceSpeed = data.referenceSpeed === undefined ? max*.65 : Number(data.referenceSpeed);
+    if (!Number.isFinite(referenceSpeed) || referenceSpeed <= 0) throw Error('referenceSpeed debe ser positivo.');
+    function sample(p) {
+      const f=p.map((v,i)=>(v-origin[i])/spacing[i]);
+      if (f.some((v,i)=>v<0||v>dims[i]-1)) return null;
+      const lo=f.map((v,i)=>Math.min(dims[i]-2,Math.floor(v)));
+      const t=f.map((v,i)=>v-lo[i]);
+      const out=[0,0,0], nx=dims[0],ny=dims[1];
+      for(let dz=0;dz<=1;dz++)for(let dy=0;dy<=1;dy++)for(let dx=0;dx<=1;dx++){
+        const w=(dx?t[0]:1-t[0])*(dy?t[1]:1-t[1])*(dz?t[2]:1-t[2]);
+        const k=(((lo[2]+dz)*ny+(lo[1]+dy))*nx+lo[0]+dx)*3;
+        for(let c=0;c<3;c++)out[c]+=velocity[k+c]*w;
+      }
+      return out;
+    }
+    const bounds=origin.map((v,i)=>[v,v+(dims[i]-1)*spacing[i]]);
+    return {dims,origin,spacing,velocity,maxSpeed,displayMaxSpeed:maxSpeed,
+      referenceSpeed,bounds,source:String(data.source||'Campo CFD importado').slice(0,100),sample};
+  }
+  async function build(field,surface,{L,H,W,extent,precision='balanced',focus='all'},current=()=>true){
+    const {tracks,steps}=AeroPaths.modes[precision]||AeroPaths.modes.balanced;
+    const paths=new Float32Array(tracks*steps*3),speeds=new Float32Array(tracks*steps);
+    const x0=Math.max(-extent,field.bounds[0][0]+field.spacing[0]);
+    if(x0>=-L*.5) throw Error('El campo debe incluir el aire aguas arriba del vehículo (−X).');
+    const xEnd=Math.min(extent,field.bounds[0][1]-field.spacing[0]);
+    if(xEnd<L*.5) throw Error('La rejilla termina antes de la parte posterior del vehículo.');
+    const yMin=Math.max(field.bounds[1][0]+field.spacing[1]*.5,.045);
+    const yMax=Math.min(field.bounds[1][1]-field.spacing[1]*.5,H*1.8);
+    const zMin=Math.max(field.bounds[2][0]+field.spacing[2]*.5,-W*(focus==='center'?.65:1.25));
+    const zMax=Math.min(field.bounds[2][1]-field.spacing[2]*.5,W*(focus==='center'?.65:1.25));
+    if(yMax<=yMin||zMax<=zMin) throw Error('El campo CFD no cubre la región alrededor de la carrocería.');
+    const dt=(xEnd-x0)/(steps-1)/Math.max(field.referenceSpeed,0.05);
+    let seed=173,rawSamples=0,stalled=0;
+    const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+    const cols=Math.max(1,Math.round(Math.sqrt(tracks*1.3))),rows=Math.ceil(tracks/cols);
+    const add=(p,v,m)=>[p[0]+v[0]*m,p[1]+v[1]*m,p[2]+v[2]*m];
+    for(let i=0;i<tracks;i++){
+      if(!current()) return null;
+      const col=i%cols,row=Math.floor(i/cols);
+      const z=zMin+(col+.12+random()*.76)/cols*(zMax-zMin);
+      const y=yMin+(row+.12+random()*.76)/rows*(yMax-yMin);
+      let p=[x0,y,z],active=true;
+      for(let s=0;s<steps;s++){
+        const idx=i*steps+s,k=idx*3;
+        paths.set(p,k);
+        if(!active){speeds[idx]=0;continue;}
+        const a=field.sample(p);
+        if(!a){speeds[idx]=0;active=false;stalled++;continue;}
+        const mag=Math.hypot(...a);
+        speeds[idx]=Math.min(1,mag/field.displayMaxSpeed);
+        rawSamples++;
+        if(s===steps-1||mag<.01){active=false;continue;}
+        // RK4 temporal advection on the measured/interpolated velocity field.
+        const b=field.sample(add(p,a,dt*.5));
+        const c=b&&field.sample(add(p,b,dt*.5));
+        const d=c&&field.sample(add(p,c,dt));
+        if(!b||!c||!d){active=false;continue;}
+        const q=p.map((v,j)=>v+dt*(a[j]+2*b[j]+2*c[j]+d[j])/6);
+        if(q.some(v=>!Number.isFinite(v))||surface.segment(p,q)){
+          active=false;stalled++;continue;
+        }
+        p=q;
+      }
+      if(i%12===0)await pause();
+    }
+    return {paths,speeds,tracks,steps,precision,rawSamples,repaired:0,stalled,physical:true,
+      displayMaxSpeed:field.displayMaxSpeed};
+  }
+  return {parse,build};
 })();
 // GPU tracers: immutable path atlas, small soft sprites and tapered line trails.
 // This is a visual transport renderer, not a fluid solver.
@@ -60970,30 +61103,42 @@ const AeroFlow = (() => {
   const vertex = `
     uniform sampler2D atlas;
     uniform vec2 atlasSize;
-    uniform float time, size, pixelRatio, trailLength, modelLength, opacity;
+    uniform float time, size, pixelRatio, trailLength, modelLength, opacity, spectrum;
     uniform vec3 tint;
     attribute float track, phase, rate, age;
     varying float alpha;
     varying vec3 color;
-    vec3 samplePath(float t) {
+    varying float speedMetric;
+    vec4 samplePath(float t) {
       float s = clamp(t, 0.0, 1.0) * (atlasSize.x - 1.0);
       float j = floor(s);
       vec2 uv = vec2((j + 0.5) / atlasSize.x, (track + 0.5) / atlasSize.y);
-      vec3 a = texture2D(atlas, uv).xyz;
-      vec3 b = texture2D(atlas, vec2(min(j + 1.5, atlasSize.x - 0.5) / atlasSize.x, uv.y)).xyz;
+      vec4 a = texture2D(atlas, uv);
+      vec4 b = texture2D(atlas, vec2(min(j + 1.5, atlasSize.x - 0.5) / atlasSize.x, uv.y));
       return mix(a, b, fract(s));
+    }
+    vec3 spectrumColor(float v){
+      v=clamp(v,0.0,1.0);
+      vec3 blue=vec3(.035,.16,.76),cyan=vec3(.03,.83,.94),green=vec3(.14,.91,.41);
+      vec3 yellow=vec3(1.0,.79,.15),red=vec3(1.0,.19,.09);
+      if(v<.25)return mix(blue,cyan,smoothstep(0.,.25,v));
+      if(v<.50)return mix(cyan,green,smoothstep(.25,.50,v));
+      if(v<.75)return mix(green,yellow,smoothstep(.50,.75,v));
+      return mix(yellow,red,smoothstep(.75,1.,v));
     }
     void main() {
       float head = fract(phase + time * 0.072 * rate);
       float t = head - age * trailLength;
-      vec3 p = samplePath(t);
-      vec4 mv = modelViewMatrix * vec4(p, 1.0);
+      vec4 data = samplePath(t);
+      vec4 mv = modelViewMatrix * vec4(data.xyz, 1.0);
       gl_Position = projectionMatrix * mv;
       float perspectiveScale = projectionMatrix[3][3] == 0.0 ? clamp(modelLength * 2.0 / max(-mv.z, 0.001), 0.65, 1.25) : 1.0;
       gl_PointSize = clamp(size * pixelRatio * perspectiveScale, 1.0, 3.2 * pixelRatio);
       float fade = smoothstep(0.0, 0.045, t) * (1.0 - smoothstep(0.94, 1.0, t));
-      alpha = fade * pow(1.0 - age, 1.6) * opacity * step(0.0, t);
-      color = mix(tint, vec3(1.0, 0.48, 0.19), step(0.94, fract(track * 0.381966)) * 0.8);
+      speedMetric = data.w;
+      alpha = fade * pow(1.0 - age, 1.6) * opacity * step(0.0, t) * step(0.00001, data.w);
+      vec3 classic=mix(tint, vec3(1.0, 0.48, 0.19), step(0.94, fract(track * 0.381966)) * 0.8);
+      color = mix(classic,spectrumColor(data.w),spectrum);
     }`;
   const pointFragment = `varying float alpha; varying vec3 color;
     void main(){vec2 p=gl_PointCoord*2.0-1.0;float d=dot(p,p);if(d>1.0)discard;
@@ -61001,12 +61146,15 @@ const AeroFlow = (() => {
   const trailFragment = `varying float alpha; varying vec3 color;
     void main(){gl_FragColor=vec4(color,alpha*0.38);}`;
 
-  function create(paths, tracks, steps, count, length, pixelRatio, selection=null) {
+  function create(paths, tracks, steps, count, length, pixelRatio, selection=null, speeds=null) {
     const rgba = new Float32Array(tracks * steps * 4);
-    for (let i=0; i<tracks*steps; i++) rgba.set(paths.subarray(i*3,i*3+3),i*4);
+    for (let i=0; i<tracks*steps; i++) {
+      rgba.set(paths.subarray(i*3,i*3+3),i*4);
+      rgba[i*4+3]=speeds ? Math.max(0,Math.min(1,speeds[i])) : .65;
+    }
     const atlas = new T.DataTexture(rgba,steps,tracks,T.RGBAFormat,T.FloatType);
     atlas.needsUpdate=true;
-    const uniforms={atlas:{value:atlas},atlasSize:{value:new T.Vector2(steps,tracks)},time:{value:0},size:{value:1.6},pixelRatio:{value:pixelRatio},trailLength:{value:.018},modelLength:{value:length},opacity:{value:.82},tint:{value:new T.Color(0xb8e9ec)}};
+    const uniforms={atlas:{value:atlas},atlasSize:{value:new T.Vector2(steps,tracks)},time:{value:0},size:{value:1.6},pixelRatio:{value:pixelRatio},trailLength:{value:.018},modelLength:{value:length},opacity:{value:.82},spectrum:{value:0},tint:{value:new T.Color(0xb8e9ec)}};
     function geometry(n,trail) {
       const stride=trail?6:1, total=n*stride, g=new T.BufferGeometry();
       const track=new Float32Array(total),phase=new Float32Array(total),rate=new Float32Array(total),age=new Float32Array(total);
@@ -61029,7 +61177,9 @@ const AeroFlow = (() => {
     return {group,points,trails,uniforms,count,
       setTime(t){uniforms.time.value=t;},
       configure({size,trailLength,opacity,color,mode}){
-        uniforms.size.value=size;uniforms.trailLength.value=trailLength;uniforms.opacity.value=opacity;uniforms.tint.value.set(color);
+        uniforms.size.value=size;uniforms.trailLength.value=trailLength;uniforms.opacity.value=opacity;
+        uniforms.spectrum.value=color==='velocity'?1:0;
+        uniforms.tint.value.set(color==='velocity'?'#b8e9ec':color);
         points.visible=mode!=='trails';trails.visible=mode!=='points';
       },
       dispose(){atlas.dispose();points.geometry.dispose();points.material.dispose();trails.geometry.dispose();trails.material.dispose();}
@@ -61045,7 +61195,7 @@ const scene=new T.Scene();scene.add(new T.HemisphereLight(0xd9eaff,0x46414b,2.5)
 const fill=new T.DirectionalLight(0x9acbde,1.4);fill.position.set(4,3,-5);scene.add(fill);
 const vehicle=new T.Group();scene.add(vehicle);let flow=null,scenery=null;let content=null,paths=null,points=null,lineMesh=null,playing=true,clock=0,last=0,dirty=true,raf=0,loading=false,token=0;
 let L=4.5,H=1.4,W=1.9,extent=8,triangles=0,TRACKS=0,STEPS=0;
-let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0;
+let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0,activeCFD=null;
 let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
 let cameras=[],views=[],orbit=[],frameCount=0,fpsTime=0;
 const ground=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial({color:0x171d25,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.025;scene.add(ground);
@@ -61091,19 +61241,19 @@ function updateFocus(force=false,i=0){
   if(retiredFocus){scene.remove(retiredFocus.group);retiredFocus.dispose();retiredFocus=null;}
   retiredFocus=focusFlow;retiredFade=focusFade;
   const selected=focusSelection(target);
-  focusFlow=AeroFlow.create(paths,TRACKS,STEPS,Math.max(400,Math.floor(+$('quality').value*.45)),L,renderer.getPixelRatio(),selected);
+  focusFlow=AeroFlow.create(paths,TRACKS,STEPS,Math.max(400,Math.floor(+$('quality').value*.45)),L,renderer.getPixelRatio(),selected,pathData?.speeds);
   scene.add(focusFlow.group);focusFade=0;focusLocation=target.clone();
   configureFlow();wake();
 }
 function setParticles(){
   if(flow){scene.remove(flow.group);flow.dispose();}
   releaseFocus();
-  flow=AeroFlow.create(paths,TRACKS,STEPS,+$('quality').value,L,renderer.getPixelRatio());
+  flow=AeroFlow.create(paths,TRACKS,STEPS,+$('quality').value,L,renderer.getPixelRatio(),null,pathData?.speeds);
   points=flow.points;scene.add(flow.group);configureFlow();updateParticles();updateFocus(true);wake();
 }
 function configureFlow(){
   if(!flow)return;
-  const cfg={size:+$('pointsize').value,trailLength:+$('trail').value*.018,
+  const cfg={size:+$('pointsize').value,trailLength:+$('trail').value*.025,
     opacity:+$('opacity').value,color:$('palette').value,mode:$('flowmode').value};
   flow.configure(cfg);
   if(focusFlow)focusFlow.configure({...cfg,opacity:cfg.opacity*focusFade*.75});
@@ -61142,21 +61292,31 @@ async function performRebuild(geometry=true,reframe=true){
     if(geometry||!surface){normalize();geometry=true;nextSurface=await AeroGeometry.fromObject(vehicle,()=>seq===generation);}
     else nextSurface=surface;
     if(!nextSurface||seq!==generation){if(nextSurface&&nextSurface!==surface)nextSurface.dispose();return;}
-    const result=await AeroPaths.build(nextSurface,{L,H,W,extent,precision:$('precision').value,focus:$('focus').value},()=>seq===generation);
+    const options={L,H,W,extent,precision:$('precision').value,focus:$('focus').value};
+    const result=activeCFD?
+      await AeroCFD.build(activeCFD,nextSurface,options,()=>seq===generation):
+      await AeroPaths.build(nextSurface,options,()=>seq===generation);
     if(!result||seq!==generation){if(nextSurface!==surface)nextSurface.dispose();return;}
     if(nextSurface!==surface){if(surface)surface.dispose();surface=nextSurface;}
     pathData=result;paths=result.paths;TRACKS=result.tracks;STEPS=result.steps;triangles=surface.triangles;fieldRevision++;
     releaseFocus();installPathGuides();setParticles();if(geometry)buildScenery();if(reframe)resetCameras();
     const warning=surface.openEdges===null?'topología no verificada':surface.openEdges?'malla con '+surface.openEdges+' bordes abiertos':'malla sin bordes abiertos detectados';
+    $('badge').textContent=result.physical?'TRAYECTORIAS SOBRE CAMPO CFD IMPORTADO · '+activeCFD.source:'ESTELA CINEMÁTICA ILUSTRATIVA · NO CFD';
+    $('flowlegend').querySelector('b').textContent=result.physical?'FLUJO / CFD':'FLUJO / VISUAL';
+    $('fieldinfo').textContent=result.physical?activeCFD.source+' · 0–'+activeCFD.displayMaxSpeed.toFixed(1)+' m/s · '+activeCFD.dims.join(' × ')+' nodos':'Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.';
     status(triangles.toLocaleString('es')+' triángulos · '+TRACKS+' rutas / '+STEPS+' muestras · '+warning+
       (result.repaired||result.stalled?' · '+result.repaired+' rutas corregidas, '+result.stalled+' detenidas':'')+
-      ' · visualización, no CFD');
+      (result.physical?' · CFD externo importado (sin validar)':' · visualización, no CFD'));
   }catch(e){if(seq===generation)status('Error de geometría: '+e.message,true);}
   finally{if(seq===generation){loading=false;wake();}}
 }
 function rebuild(geometry=true,reframe=true){buildPromise=performRebuild(geometry,reframe);return buildPromise;}
+function resetField(){
+  activeCFD=null;
+  $('fieldinfo').textContent='Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.';
+}
 function install(obj,name,yaw=0){
-  generation++;releaseFocus();
+  generation++;releaseFocus();resetField();
   if(content){vehicle.remove(content);dispose(content);}
   vehicle.rotation.set(0,yaw,0);vehicle.scale.setScalar(1);
   content=obj;vehicle.add(obj);vehicle.visible=$('body').checked;
@@ -61258,9 +61418,31 @@ $('clearFocus').onclick=clearInspection;
 $('lines').onchange=()=>{if(lineMesh)lineMesh.visible=$('lines').checked;wake();};
 $('body').onchange=()=>{vehicle.visible=$('body').checked;wake();};
 $('grid').onchange=()=>{grid.visible=$('grid').checked;wake();};
-$('scale').onclick=()=>{const v=+$('length').value;if(!Number.isFinite(v)||v<.1||v>100){status('Introduce una longitud entre 0,1 y 100 metros.',true);return;}vehicle.scale.multiplyScalar(v/L);rebuild(true,true);};
-document.querySelectorAll('[data-axis]').forEach(b=>b.onclick=()=>{vehicle.rotation[b.dataset.axis]+=Math.PI/2;rebuild(true,true);});
+$('scale').onclick=()=>{const v=+$('length').value;if(!Number.isFinite(v)||v<.1||v>100){status('Introduce una longitud entre 0,1 y 100 metros.',true);return;}vehicle.scale.multiplyScalar(v/L);resetField();rebuild(true,true);};
+document.querySelectorAll('[data-axis]').forEach(b=>b.onclick=()=>{vehicle.rotation[b.dataset.axis]+=Math.PI/2;resetField();rebuild(true,true);});
 $('demo').onclick=()=>{token++;loading=false;install(demo(),'Concepto de demostración');};
+$('clearCFD').onclick=()=>{resetField();rebuild(false,false);};
+$('cfdfile').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  const requested=++token,previous=activeCFD;
+  try{
+    if(f.size>110*1024*1024)throw Error('El archivo supera el máximo de 110 MB.');
+    status('Leyendo campo de velocidades CFD…');
+    const field=AeroCFD.parse(await f.text());
+    if(requested!==token)return;
+    activeCFD=field;
+    $('palette').value='velocity';
+    await rebuild(false,false);
+    if(requested!==token)return;
+    if(!pathData?.physical)throw Error('El campo no pudo generar trayectorias.');
+  }catch(err){
+    if(requested===token){
+      activeCFD=previous;
+      await rebuild(false,false);
+      status('Error al importar CFD: '+err.message,true);
+    }
+  }finally{e.target.value='';}
+};
 // Validate embedded-only GLB before parsing; external network URLs are rejected.
 function validateGLB(buffer){const v=new DataView(buffer);if(v.byteLength<20||v.getUint32(0,true)!==0x46546c67||v.getUint32(4,true)!==2||v.getUint32(8,true)!==v.byteLength)throw Error('No es un GLB 2.0 válido.');let json;for(let p=12;p+8<=v.byteLength;){const n=v.getUint32(p,true),type=v.getUint32(p+4,true);if(p+8+n>v.byteLength)throw Error('GLB incompleto.');if(type===0x4e4f534a)json=JSON.parse(new TextDecoder().decode(new Uint8Array(buffer,p+8,n)));p+=8+n;}if(!json)throw Error('Falta la descripción del modelo.');for(const item of [...json.buffers||[],...json.images||[]])if(item.uri&&!item.uri.startsWith('data:'))throw Error('El GLB contiene recursos externos. Exporta con todo incrustado.');for(const x of json.extensionsUsed||[])if(/draco|meshopt|basisu/i.test(x))throw Error('Exporta sin compresión DRACO, Meshopt o KTX2 para este prototipo.');if(json.skins?.length||json.nodes?.some(n=>n.extensions?.EXT_mesh_gpu_instancing))throw Error('Exporta una malla estática sin esqueletos ni instancias GPU.');}
 // The imported model can be kept locally and restored on the next visit.
@@ -61279,7 +61461,7 @@ window.aeroReady=()=>buildPromise;
 window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
   dimensions:[L,H,W],tracks:TRACKS,steps:STEPS,fieldRevision,precision:pathData?.precision||null,
   rawSamples:pathData?.rawSamples||0,repaired:pathData?.repaired||0,stalled:pathData?.stalled||0,
-  openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,
+  openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,cfd:!!pathData?.physical,cfdSource:activeCFD?.source||null,
   trailVertices:flow?.trails.geometry.attributes.position.count||0,particleSize:flow?.uniforms.size.value||0,
   externalResources:performance.getEntriesByType('resource').filter(r=>/^https?:/.test(r.name)).length,vehicleYaw:vehicle.rotation.y});
 })();
