@@ -6,7 +6,7 @@ const scene=new T.Scene();scene.add(new T.HemisphereLight(0xd9eaff,0x46414b,2.5)
 const fill=new T.DirectionalLight(0x9acbde,1.4);fill.position.set(4,3,-5);scene.add(fill);
 const vehicle=new T.Group();scene.add(vehicle);let flow=null,scenery=null;let content=null,paths=null,points=null,lineMesh=null,playing=true,clock=0,last=0,dirty=true,raf=0,loading=false,token=0;
 let L=4.5,H=1.4,W=1.9,extent=8,triangles=0,TRACKS=0,STEPS=0;
-let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0;
+let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0,activeCFD=null;
 let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
 let cameras=[],views=[],orbit=[],frameCount=0,fpsTime=0;
 const ground=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial({color:0x171d25,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.025;scene.add(ground);
@@ -52,19 +52,19 @@ function updateFocus(force=false,i=0){
   if(retiredFocus){scene.remove(retiredFocus.group);retiredFocus.dispose();retiredFocus=null;}
   retiredFocus=focusFlow;retiredFade=focusFade;
   const selected=focusSelection(target);
-  focusFlow=AeroFlow.create(paths,TRACKS,STEPS,Math.max(400,Math.floor(+$('quality').value*.45)),L,renderer.getPixelRatio(),selected);
+  focusFlow=AeroFlow.create(paths,TRACKS,STEPS,Math.max(400,Math.floor(+$('quality').value*.45)),L,renderer.getPixelRatio(),selected,pathData?.speeds);
   scene.add(focusFlow.group);focusFade=0;focusLocation=target.clone();
   configureFlow();wake();
 }
 function setParticles(){
   if(flow){scene.remove(flow.group);flow.dispose();}
   releaseFocus();
-  flow=AeroFlow.create(paths,TRACKS,STEPS,+$('quality').value,L,renderer.getPixelRatio());
+  flow=AeroFlow.create(paths,TRACKS,STEPS,+$('quality').value,L,renderer.getPixelRatio(),null,pathData?.speeds);
   points=flow.points;scene.add(flow.group);configureFlow();updateParticles();updateFocus(true);wake();
 }
 function configureFlow(){
   if(!flow)return;
-  const cfg={size:+$('pointsize').value,trailLength:+$('trail').value*.018,
+  const cfg={size:+$('pointsize').value,trailLength:+$('trail').value*.025,
     opacity:+$('opacity').value,color:$('palette').value,mode:$('flowmode').value};
   flow.configure(cfg);
   if(focusFlow)focusFlow.configure({...cfg,opacity:cfg.opacity*focusFade*.75});
@@ -103,21 +103,31 @@ async function performRebuild(geometry=true,reframe=true){
     if(geometry||!surface){normalize();geometry=true;nextSurface=await AeroGeometry.fromObject(vehicle,()=>seq===generation);}
     else nextSurface=surface;
     if(!nextSurface||seq!==generation){if(nextSurface&&nextSurface!==surface)nextSurface.dispose();return;}
-    const result=await AeroPaths.build(nextSurface,{L,H,W,extent,precision:$('precision').value,focus:$('focus').value},()=>seq===generation);
+    const options={L,H,W,extent,precision:$('precision').value,focus:$('focus').value};
+    const result=activeCFD?
+      await AeroCFD.build(activeCFD,nextSurface,options,()=>seq===generation):
+      await AeroPaths.build(nextSurface,options,()=>seq===generation);
     if(!result||seq!==generation){if(nextSurface!==surface)nextSurface.dispose();return;}
     if(nextSurface!==surface){if(surface)surface.dispose();surface=nextSurface;}
     pathData=result;paths=result.paths;TRACKS=result.tracks;STEPS=result.steps;triangles=surface.triangles;fieldRevision++;
     releaseFocus();installPathGuides();setParticles();if(geometry)buildScenery();if(reframe)resetCameras();
     const warning=surface.openEdges===null?'topología no verificada':surface.openEdges?'malla con '+surface.openEdges+' bordes abiertos':'malla sin bordes abiertos detectados';
+    $('badge').textContent=result.physical?'TRAYECTORIAS SOBRE CAMPO CFD IMPORTADO · '+activeCFD.source:'ESTELA CINEMÁTICA ILUSTRATIVA · NO CFD';
+    $('flowlegend').querySelector('b').textContent=result.physical?'FLUJO / CFD':'FLUJO / VISUAL';
+    $('fieldinfo').textContent=result.physical?activeCFD.source+' · 0–'+activeCFD.displayMaxSpeed.toFixed(1)+' m/s · '+activeCFD.dims.join(' × ')+' nodos':'Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.';
     status(triangles.toLocaleString('es')+' triángulos · '+TRACKS+' rutas / '+STEPS+' muestras · '+warning+
       (result.repaired||result.stalled?' · '+result.repaired+' rutas corregidas, '+result.stalled+' detenidas':'')+
-      ' · visualización, no CFD');
+      (result.physical?' · CFD externo importado (sin validar)':' · visualización, no CFD'));
   }catch(e){if(seq===generation)status('Error de geometría: '+e.message,true);}
   finally{if(seq===generation){loading=false;wake();}}
 }
 function rebuild(geometry=true,reframe=true){buildPromise=performRebuild(geometry,reframe);return buildPromise;}
+function resetField(){
+  activeCFD=null;
+  $('fieldinfo').textContent='Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.';
+}
 function install(obj,name,yaw=0){
-  generation++;releaseFocus();
+  generation++;releaseFocus();resetField();
   if(content){vehicle.remove(content);dispose(content);}
   vehicle.rotation.set(0,yaw,0);vehicle.scale.setScalar(1);
   content=obj;vehicle.add(obj);vehicle.visible=$('body').checked;
@@ -219,9 +229,31 @@ $('clearFocus').onclick=clearInspection;
 $('lines').onchange=()=>{if(lineMesh)lineMesh.visible=$('lines').checked;wake();};
 $('body').onchange=()=>{vehicle.visible=$('body').checked;wake();};
 $('grid').onchange=()=>{grid.visible=$('grid').checked;wake();};
-$('scale').onclick=()=>{const v=+$('length').value;if(!Number.isFinite(v)||v<.1||v>100){status('Introduce una longitud entre 0,1 y 100 metros.',true);return;}vehicle.scale.multiplyScalar(v/L);rebuild(true,true);};
-document.querySelectorAll('[data-axis]').forEach(b=>b.onclick=()=>{vehicle.rotation[b.dataset.axis]+=Math.PI/2;rebuild(true,true);});
+$('scale').onclick=()=>{const v=+$('length').value;if(!Number.isFinite(v)||v<.1||v>100){status('Introduce una longitud entre 0,1 y 100 metros.',true);return;}vehicle.scale.multiplyScalar(v/L);resetField();rebuild(true,true);};
+document.querySelectorAll('[data-axis]').forEach(b=>b.onclick=()=>{vehicle.rotation[b.dataset.axis]+=Math.PI/2;resetField();rebuild(true,true);});
 $('demo').onclick=()=>{token++;loading=false;install(demo(),'Concepto de demostración');};
+$('clearCFD').onclick=()=>{resetField();rebuild(false,false);};
+$('cfdfile').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  const requested=++token,previous=activeCFD;
+  try{
+    if(f.size>110*1024*1024)throw Error('El archivo supera el máximo de 110 MB.');
+    status('Leyendo campo de velocidades CFD…');
+    const field=AeroCFD.parse(await f.text());
+    if(requested!==token)return;
+    activeCFD=field;
+    $('palette').value='velocity';
+    await rebuild(false,false);
+    if(requested!==token)return;
+    if(!pathData?.physical)throw Error('El campo no pudo generar trayectorias.');
+  }catch(err){
+    if(requested===token){
+      activeCFD=previous;
+      await rebuild(false,false);
+      status('Error al importar CFD: '+err.message,true);
+    }
+  }finally{e.target.value='';}
+};
 // Validate embedded-only GLB before parsing; external network URLs are rejected.
 function validateGLB(buffer){const v=new DataView(buffer);if(v.byteLength<20||v.getUint32(0,true)!==0x46546c67||v.getUint32(4,true)!==2||v.getUint32(8,true)!==v.byteLength)throw Error('No es un GLB 2.0 válido.');let json;for(let p=12;p+8<=v.byteLength;){const n=v.getUint32(p,true),type=v.getUint32(p+4,true);if(p+8+n>v.byteLength)throw Error('GLB incompleto.');if(type===0x4e4f534a)json=JSON.parse(new TextDecoder().decode(new Uint8Array(buffer,p+8,n)));p+=8+n;}if(!json)throw Error('Falta la descripción del modelo.');for(const item of [...json.buffers||[],...json.images||[]])if(item.uri&&!item.uri.startsWith('data:'))throw Error('El GLB contiene recursos externos. Exporta con todo incrustado.');for(const x of json.extensionsUsed||[])if(/draco|meshopt|basisu/i.test(x))throw Error('Exporta sin compresión DRACO, Meshopt o KTX2 para este prototipo.');if(json.skins?.length||json.nodes?.some(n=>n.extensions?.EXT_mesh_gpu_instancing))throw Error('Exporta una malla estática sin esqueletos ni instancias GPU.');}
 // The imported model can be kept locally and restored on the next visit.
@@ -240,7 +272,7 @@ window.aeroReady=()=>buildPromise;
 window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
   dimensions:[L,H,W],tracks:TRACKS,steps:STEPS,fieldRevision,precision:pathData?.precision||null,
   rawSamples:pathData?.rawSamples||0,repaired:pathData?.repaired||0,stalled:pathData?.stalled||0,
-  openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,
+  openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,cfd:!!pathData?.physical,cfdSource:activeCFD?.source||null,
   trailVertices:flow?.trails.geometry.attributes.position.count||0,particleSize:flow?.uniforms.size.value||0,
   externalResources:performance.getEntriesByType('resource').filter(r=>/^https?:/.test(r.name)).length,vehicleYaw:vehicle.rotation.y});
 })();
