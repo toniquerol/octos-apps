@@ -137,11 +137,15 @@ async function test(){
   assert(Math.abs((await page.evaluate(()=>window.aeroDiagnostics())).sectionValue-.4)<.011);
   const sectionViewport=await page.evaluate(()=>{
     const r=document.querySelectorAll('#panels .view')[1].getBoundingClientRect();
-    return {x:r.left+r.width*.48,y:r.top+r.height*.56};
+    // The resized right dock covers the middle of this viewport.
+    // Start the orbit over the exposed canvas, not over floating controls.
+    const x=r.left+r.width*.18,y=r.top+r.height*.56;
+    return {x,y,hit:document.elementFromPoint(x,y)?.tagName.toLowerCase()};
   });
+  assert.equal(sectionViewport.hit,'canvas','orbit gesture must start on the exposed WebGL canvas');
   await page.mouse.move(sectionViewport.x,sectionViewport.y);
   await page.mouse.down();
-  await page.mouse.move(sectionViewport.x+90,sectionViewport.y+55,{steps:7});
+  await page.mouse.move(sectionViewport.x+65,sectionViewport.y+55,{steps:7});
   await page.mouse.up();
   assert((await page.evaluate(()=>window.aeroDiagnostics())).sectionCameraDirection[1]<.98,
     'dragging section viewport must orbit its camera');
