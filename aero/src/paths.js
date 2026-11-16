@@ -1,17 +1,26 @@
 // Deterministic geometric streamlines. The velocity model is illustrative, not CFD.
 // Shared emitter-plane limits. The emitter constrains only initial tracers, never CFD grid data.
 const AeroEmitter = (() => {
-  function bounds(width=2.6,height=2.0,focus='all') {
+  function bounds(width=2.6,height=2.0,focus='all',offsetY=0,offsetZ=0) {
     if(!Number.isFinite(width)||!Number.isFinite(height)||width<.2||height<.2||width>20||height>20)
       throw Error('El ancho y alto del emisor deben estar entre 0,2 y 20 metros.');
+    if(!Number.isFinite(offsetY)||!Number.isFinite(offsetZ))
+      throw Error('La posición Y/Z del emisor debe ser finita.');
     const halfWidth=width*.5*(focus==='center'?.65:1);
-    return {yMin:.035,yMax:height,zMin:-halfWidth,zMax:halfWidth};
+    return {yMin:.035+offsetY,yMax:height+offsetY,
+      zMin:offsetZ-halfWidth,zMax:offsetZ+halfWidth};
   }
   function includes(b,y,z) {
     return y>=b.yMin-1e-5 && y<=b.yMax+1e-5 &&
       z>=b.zMin-1e-5 && z<=b.zMax+1e-5;
   }
-  return {bounds,includes};
+  // Position is set ahead of the car and stays fixed while moving the object
+  // in the plane perpendicular to the +X flow direction.
+  function originX(L,extent,field=null){
+    const upstream=Math.max(-extent,-L*.5-Math.max(.85,L*.33));
+    return field?Math.max(upstream,field.bounds[0][0]+field.spacing[0]):upstream;
+  }
+  return {bounds,includes,originX};
 })();
 // Conservative visual surface constraint. Keeps displayed paths outside real triangle
 // surfaces; does not modify the supplied CFD velocities or assert a new CFD solution.
@@ -93,16 +102,16 @@ const AeroPaths = (() => {
     const multiplier=1.85*strength*strength;
     return {direction:[1,dy/lateral*multiplier,dz/lateral*multiplier],distance:near.distance};
   }
-  async function build(surface,{L,H,W,extent,precision='balanced',focus='all',emitterWidth=2.6,emitterHeight=2.0},current=()=>true){
+  async function build(surface,{L,H,W,extent,precision='balanced',focus='all',emitterWidth=2.6,emitterHeight=2.0,emitterOffsetY=0,emitterOffsetZ=0},current=()=>true){
     const {tracks,steps}=modes[precision]||modes.balanced;
-    const emitter=AeroEmitter.bounds(emitterWidth,emitterHeight,focus);
+    const emitter=AeroEmitter.bounds(emitterWidth,emitterHeight,focus,emitterOffsetY,emitterOffsetZ);
     const paths=new Float32Array(tracks*steps*3),centres=new Float32Array(tracks*3),inactive=new Uint8Array(tracks),validEnds=new Float32Array(tracks);
     let seed=71,repaired=0,stalled=0,rawSamples=0,surfaceAdjusted=0;
     const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
     const cols=Math.round(Math.sqrt(tracks*1.5)),rows=Math.ceil(tracks/cols);
     // Keep a small surface offset (about 3 cm for a 4.6 m vehicle), while retaining segment collision tests.
     const clearance=Math.max(L*.006,H*.018);
-    const lo=-extent,hi=extent;
+    const lo=AeroEmitter.originX(L,extent),hi=extent;
     const guard=AeroSurfaceGuard.create(surface,{L,H,W,extent});
     validEnds.fill(hi);
     // Surface-attached visual lanes sample real triangles (not the vehicle envelope).
