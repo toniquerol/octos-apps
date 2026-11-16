@@ -31,6 +31,19 @@ async function run(){
   assert(Array.from(result.paths).every(Number.isFinite));
   assert(Array.from(result.speeds).every(v=>Number.isFinite(v)&&v>=0&&v<=1));
   assert(result.rawSamples>160*100);
-  console.log('PASS: CFD uniform grid validation, trilinear samples, finite RK4 trajectories and speed atlas.');
+  // Changing emitter dimensions changes *seeds*, not the imported CFD grid.
+  const originalSpacing=Array.from(field.spacing),originalDims=Array.from(field.dims);
+  const narrower=await ctx.CFD.build(field,{segment:()=>null},{
+    L:4,H:2,W:2,extent:4,precision:'low',emitterWidth:1.2,emitterHeight:.9});
+  assert.notEqual(narrower.paths[1],result.paths[1]);
+  for(let i=0;i<narrower.tracks;i++){
+    const k=i*narrower.steps*3;
+    assert(narrower.paths[k+1]>=.034&&narrower.paths[k+1]<=.901,'seed Y outside emitter');
+    assert(Math.abs(narrower.paths[k+2])<=.601,'seed Z outside emitter');
+  }
+  assert.deepEqual(Array.from(field.spacing),originalSpacing);
+  assert.deepEqual(Array.from(field.dims),originalDims);
+  assert.throws(()=>ctx.CFD.parse({...make(),spacing:[0,1,1]}));
+  console.log('PASS: CFD uniform grid validation, trilinear samples, finite RK4 trajectories, preserved CFD grid and bounded emitter seeds.');
 }
 run().catch(e=>{console.error(e);process.exitCode=1;});
