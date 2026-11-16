@@ -49,6 +49,7 @@ jobs:
           path: |
             aero/tests/aero-four-views.png
             aero/tests/aero-detail.png
+            aero/tests/aero-section.png
           if-no-files-found: ignore
       - name: Commit generated standalone bundle
         if: github.event_name == 'push'
