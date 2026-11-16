@@ -55,6 +55,7 @@ body.editing #editorPanel{display:block}body.editing #nav,body.editing #actions{
 #badge{max-width:365px}
 @media(max-width:840px){
  #app{height:calc(100dvh - 62px)}
+ #view{height:calc(100dvh - 62px)!important}
  #sidebar{max-width:none}
  #modeBar{padding:7px 10px}
  body.editing #sidebar{height:min(62dvh,480px);max-height:calc(100dvh - 105px)}
@@ -294,9 +295,9 @@ function selectEditPart(id){
  const g=editGroups.get(id);
  if(id==='cubierta')setRoofs(true);
  if(id==='fachada'||id==='pared-derecha')setCut(false);
- if(editControls)editControls.attach(g);
+ if(editControls){if(document.body.classList.contains('editing'))editControls.attach(g);else editControls.detach()}
  if(editBox){scene.remove(editBox);editBox.geometry.dispose();editBox.material.dispose()}
- editBox=new THREE.BoxHelper(g,0xff6a1a);scene.add(editBox);
+ editBox=new THREE.BoxHelper(g,0xff6a1a);editBox.visible=document.body.classList.contains('editing');scene.add(editBox);
  showEditFields();
 }
 function applyEditorFields(){
