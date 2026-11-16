@@ -1,4 +1,4 @@
-# OcToS Aero V2.2 — estelas GPU e importación CFD
+# OcToS Aero V2.3 — paneles flotantes y sección vertical
 
 **Aplicación:** https://toniquerol.github.io/octos-apps/aero/
 
@@ -11,7 +11,9 @@ Visor de estelas GPU con **dos modos**: trayectorias cinemáticas ilustrativas o
 3. Calibrar la longitud real en **metros**. La escala y la rotación reconstruyen las coordenadas del BVH y el atlas.
 4. Elegir **precisión geométrica** por separado de **partículas**: ligera (160 rutas / 192 puntos GPU), equilibrada (360 / 288) o detallada (640 / 384). La integración intermedia usa **pasos adaptativos** y valida los segmentos interpolados.
 5. Ajustar el **plano emisor** independientemente del campo CFD: anchura Z predeterminada **2,6 m**, altura Y **2,0 m**, con **12.000 partículas GPU** de inicio. Está situado aguas arriba del vehículo y centrado transversalmente en Z; sus semillas quedan entre el suelo y la altura indicada. Al cambiar ancho o alto se reconstruyen las trayectorias pero no se modifican el origen, espaciado, dimensiones ni velocidades del JSON importado. El selector «Zona de emisión» puede concentrarlas todavía más en una franja central.
-6. En cualquiera de las vistas: doble clic en una superficie para centrarla. Mayús+arrastrar desplaza el punto de mira; en vistas ortográficas se desplaza arrastrando. La rueda acerca y, a distancias cortas, concentra un segundo grupo de trazadores alrededor del foco. «Eliminar foco» restablece la inspección global.
+6. **Paneles flotantes:** «Vehículo · importación» (derecha superior) contiene el modelo GLB, dimensiones y giros; «Campo CFD · flujo» (derecha inferior) contiene el importador JSON y todos los ajustes de partículas; «Vistas del simulador» (izquierda superior) centraliza la distribución y el tipo de cámara de cada ventana; reproducción, pausa y reinicio aparecen centrados abajo. Los paneles se pliegan mediante su cabecera.
+7. **Sección vertical YZ:** desde el panel de vistas, pulsar «Crear sección» y hacer clic sobre una parte del vehículo o sobre el suelo. Con una sola vista activa se abren dos vistas: perspectiva 3D y corte frontal-oblicuo ortográfico. El plano de corte es perpendicular al eje X; se conserva el tramo aguas abajo (+X). El deslizador «Corte longitudinal X» permite desplazarlo sin recalcular el CFD; «Eliminar» retira el corte. El plano aparece sobre la escena general y la sección recorta tanto la carrocería como las partículas de la vista de corte.
+8. En cualquiera de las vistas: doble clic en una superficie para centrarla. Mayús+arrastrar desplaza el punto de mira; en vistas ortográficas se desplaza arrastrando. La rueda acerca y, a distancias cortas, concentra un segundo grupo de trazadores alrededor del foco. «Eliminar foco» restablece la inspección global.
 
 ## Método y límites
 
@@ -23,6 +25,7 @@ Visor de estelas GPU con **dos modos**: trayectorias cinemáticas ilustrativas o
 - Los huecos y elementos asimétricos se consultan como triángulos independientes; un hueco realmente libre permanece abierto si las muestras lo alcanzan. **No garantiza** capturar ranuras inferiores a la distancia entre semillas/rutas o a la escala de integración. Un hueco muy pequeño puede quedarse sin trazadores aunque esté geométricamente abierto.
 - Los bordes abiertos se identifican heurísticamente con un recuento de aristas para mallas hasta 90.000 triángulos; mallas mayores indican «topología no verificada». Bordes duplicados, caras invertidas, superficies internas, agujeros y autointersecciones impiden atribuir un interior sólido fiable. Los avisos no impiden inspeccionar.
 - El campo de velocidades ilustrativo está aislado en `src/paths.js` (`velocity()`), el lector CFD en `src/cfd.js`; los materiales y el atlas GPU están en `src/flow.js`. Zoom y pan **no** cambian ni reconstruyen el atlas subyacente: únicamente añaden trazadores de inspección que reutilizan sus rutas. El modo ilustrativo añade una estela oscilante y colores calculados heurísticamente (sin magnitudes físicas); el modo CFD colorea según la velocidad importada, normalizada por \`displayMaxSpeed\`.
+- Las vistas de sección comparten las trayectorias existentes; el recorte YZ afecta solo a la presentación gráfica de esa ventana, sin modificar posiciones GPU ni datos CFD. La sección es una **visualización de corte**, no un nuevo análisis CFD ni una medición física específica de la sección.
 - Cada vista comparte el mismo estado de trayectorias. Las cámaras 3D y ortográficas pueden moverse de forma independiente. La animación GPU no actualiza miles de posiciones de partículas en la CPU.
 - Construcción de triángulos, BVH y rutas en lotes asíncronos con cesiones al evento de navegador. Nuevas importaciones/transformaciones cancelan cálculos pendientes; el BVH y los recursos GPU previos se liberan. En mallas extremas, las consultas de geometría aún pueden requerir tiempo apreciable.
 
