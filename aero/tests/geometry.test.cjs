@@ -46,6 +46,19 @@ async function run(){
     }
   }
   assert(closeRoof+closeSides>=5,'car needs near-surface tracers on roof or sides');
+  // Regression: writing a velocity repeatedly to the first atlas sample
+  // made most particles invisible or stationary in the BMW visual flow.
+  const visibleCount=closePaths.speeds.filter(v=>v>.01).length;
+  assert(visibleCount>closePaths.tracks*closePaths.steps*.65,
+    'speed atlas must contain visible values along complete trajectories');
+  for(let track=0;track<closePaths.tracks;track++)for(let s=1;s<closePaths.steps;s++){
+    const i=track*closePaths.steps+s,k=i*3;
+    if(closePaths.speeds[i]<=0)continue;
+    const point=[...closePaths.paths.slice(k,k+3)];
+    assert(!(Math.abs(point[0])<2.19&&point[1]>.12&&point[1]<1.519&&Math.abs(point[2])<.924),
+      'visible tracer must stay outside closed vehicle body');
+  }
+
   assert(closePaths.stalled<closePaths.tracks*.3,'reducing offset must not stall most trajectories');
   const narrowPaths=await planner.build(carSurface,{L:4.4,H:1.52,W:1.85,extent:7.3,
     precision:'low',emitterWidth:1.2,emitterHeight:.85});
