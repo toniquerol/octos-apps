@@ -10,9 +10,18 @@ async function test(){
   await page.waitForFunction(()=>window.aeroDiagnostics?.().particles>0,{timeout:120000});
   await page.evaluate(()=>window.aeroReady());
   const start=await page.evaluate(()=>window.aeroDiagnostics());
-  assert(start.triangles>0 && start.tracks===360 && start.steps===288);
+  assert(start.triangles>0 && start.tracks===640 && start.steps===384);
   assert.equal(start.particles,12000);
-  assert.deepEqual(start.emitter,[2.6,2.0]);
+  assert.deepEqual(start.emitter,[0.2,2.0]);
+  const defaultInputs={
+    quality:'12000',precision:'fine',flowmode:'trails',
+    pointsize:'1.6',trail:'1.6',opacity:'0.6',palette:'#ffb16d',
+    emitterWidth:'0.2',emitterHeight:'2.0',focus:'center',speed:'1.5'
+  };
+  for(const [id,value] of Object.entries(defaultInputs))
+    assert.equal(await page.locator('#'+id).inputValue(),value,'default '+id);
+  assert.equal(await page.locator('#tunnel').isChecked(),false);
+  assert.equal(await page.locator('#speedval').textContent(),'1,5×');
   assert.deepEqual(start.emitterOffset,[0,0]);
   assert(start.emitterVisible);
   const fixedX=start.emitterX;
@@ -31,6 +40,7 @@ async function test(){
   await page.locator('#emitterReset').click();
   await page.evaluate(()=>window.aeroReady());
   assert.deepEqual((await page.evaluate(()=>window.aeroDiagnostics())).emitterOffset,[0,0]);
+  assert.deepEqual((await page.evaluate(()=>window.aeroDiagnostics())).emitter,[0.2,2.0]);
   // Floating control docks must keep a usable internal scrollbar, rotation buttons and resize grips.
   assert(await page.locator('#vehicleDock .rotate-tools [data-axis="x"]').isVisible());
   assert.equal(await page.locator('#vehicleDock [data-axis]').count(),3);
@@ -92,11 +102,16 @@ async function test(){
   const dense=await page.evaluate(()=>window.aeroDiagnostics());
   assert.equal(dense.particles,24000);assert.equal(dense.tracks,start.tracks);
   assert.equal(dense.fieldRevision,start.fieldRevision,'particle count is independent of precision');
+  await page.locator('#precision').selectOption('balanced');
+  await page.evaluate(()=>window.aeroReady());
+  const balanced=await page.evaluate(()=>window.aeroDiagnostics());
+  assert.equal(balanced.tracks,360);assert.equal(balanced.steps,288);
+  assert(balanced.fieldRevision>start.fieldRevision);
   await page.locator('#precision').selectOption('fine');
   await page.evaluate(()=>window.aeroReady());
   const precise=await page.evaluate(()=>window.aeroDiagnostics());
   assert.equal(precise.tracks,640);assert.equal(precise.steps,384);
-  assert(precise.fieldRevision>start.fieldRevision);
+  assert(precise.fieldRevision>balanced.fieldRevision);
   await page.locator('#length').fill('6');
   await page.locator('#scale').click();await page.evaluate(()=>window.aeroReady());
   const scaled=await page.evaluate(()=>window.aeroDiagnostics());
