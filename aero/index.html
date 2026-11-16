@@ -73,7 +73,35 @@ THE SOFTWARE.
 #stage.section-pick canvas{cursor:crosshair}
 @media(max-width:900px){.right-docks{width:216px;right:8px}.view-float{left:8px;width:min(290px,calc(100% - 234px))}.transport-float button{min-width:72px}}
 @media(max-width:620px){.right-docks{width:43%;bottom:84px}.view-float{width:50%;max-height:50vh}.transport-float{bottom:9px;padding:5px;gap:3px}.transport-float button{min-width:0;font-size:11px;padding:8px 7px}.float-panel summary{font-size:9px;letter-spacing:.5px;padding-left:8px}.float-panel .dock-scroll{padding:8px}#flowlegend{bottom:67px}}
-</style><header><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS" style="width:46px;height:46px;object-fit:contain;flex:none"><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V2.2</small></header><main><aside id="controlShelf"><section id="vehiclePanelContent"><h2>01 / VEHÍCULO</h2><div class="row"><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></div><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label><input id="presetBMW" type="checkbox" checked> BMW E46 Touring · orientar Y 180° al importar</label><label>Corregir orientación · +90°</label><div class="row"><button data-axis="x">X</button><button data-axis="y">Y</button><button data-axis="z">Z</button></div><p class="hint">Morro hacia −X. La última importación GLB se guarda en este navegador como vehículo inicial. Los giros manuales siguen disponibles.</p><p class="hint">Modelo de referencia: <a style="color:#ff995e" href="https://sketchfab.com/3d-models/bmw-3-series-touring-e46-2001-478330312c3d46fd94999c3133ce0366" target="_blank" rel="noopener noreferrer">BMW 3 Series Touring (E46) 2001</a> · Luquita · CC BY.</p></section><section id="flowPanelContent"><h2>02 / FLUJO Y PARTÍCULAS</h2><label for="quality">Densidad de partículas</label><select id="quality"><option value="2000">Ligero · 2.000</option><option value="6000">Equilibrado · 6.000</option><option value="12000" selected>Denso · 12.000</option><option value="24000">Máximo · 24.000</option></select>
+
+/* Dock fix: explicit heights, independent vertical scrolling and side-width grab handles. */
+.float-panel{display:block;overflow:hidden;min-width:0;min-height:0}
+.float-panel summary{height:42px;min-height:42px;box-sizing:border-box;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.float-panel[open] .dock-scroll{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;touch-action:pan-y;scrollbar-width:auto;scrollbar-color:#67727e #181d24}
+.float-panel .dock-scroll::-webkit-scrollbar{width:9px}
+.float-panel .dock-scroll::-webkit-scrollbar-track{background:#181d24}
+.float-panel .dock-scroll::-webkit-scrollbar-thumb{background:#576371;border-radius:8px;border:2px solid #181d24}
+.float-panel:not([open]){height:42px;min-height:42px;flex:0 0 42px}
+.view-float[open]{height:min(65vh,580px);max-height:calc(100% - 95px);width:340px;max-width:calc(100% - 280px)}
+.view-float:not([open]){height:42px}
+.right-docks{width:282px;min-width:210px}
+.right-docks>.vehicle-float[open]{flex:0 0 46%;height:46%;min-height:100px}
+.right-docks>.flow-float[open]{flex:1 1 0;height:0;min-height:100px}
+.right-docks>.float-panel:not([open]){flex:0 0 42px;min-height:42px}
+.right-docks>.float-panel{width:100%}
+.right-width-handle{position:absolute;top:0;bottom:0;left:-9px;width:14px;z-index:25;pointer-events:auto;cursor:ew-resize;background:transparent;touch-action:none}
+.right-width-handle::before{content:'';position:absolute;top:40%;height:50px;left:5px;width:3px;background:#ff6a1a99;border-radius:4px}
+.view-width-handle{position:absolute;top:0;right:0;width:17px;height:100%;cursor:ew-resize;touch-action:none;pointer-events:auto;z-index:5}
+.view-width-handle::before{content:'';position:absolute;top:8px;bottom:8px;right:5px;width:3px;background:#ff6a1ab0;border-radius:3px}
+.view-width-handle:focus-visible,.right-width-handle:focus-visible{outline:2px solid #ff6a1a}
+.rotate-tools{margin:11px 0 12px;padding:9px;background:#1a1d22;border:1px solid #3d4249;border-radius:6px}
+.rotate-title{font-size:10px;letter-spacing:1px;color:#ff985b;margin:0 0 8px}
+.rotate-tools .row button{padding:9px 5px;font-weight:600}
+#vehiclePanelContent,#flowPanelContent,#cfdPanelContent,#viewPanelContent{min-width:0}
+#vehiclePanelContent .row,#flowPanelContent .row,#viewPanelContent .row{min-width:0}
+@media(max-width:900px){.right-docks{width:250px}.view-float[open]{width:290px;max-width:calc(100% - 255px)}}
+@media(max-width:620px){.right-docks{width:43%;min-width:142px}.view-float[open]{width:49%;max-width:50%}.float-panel summary{height:42px}.float-panel:not([open]){height:42px}}
+</style><header><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS" style="width:46px;height:46px;object-fit:contain;flex:none"><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V2.2</small></header><main><aside id="controlShelf"><section id="vehiclePanelContent"><h2>01 / VEHÍCULO</h2><div class="row"><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></div><div class="rotate-tools"><div class="rotate-title">GIRAR MODELO · +90°</div><div class="row"><button type="button" data-axis="x" title="Girar 90° en X">X ↻</button><button type="button" data-axis="y" title="Girar 90° en Y">Y ↻</button><button type="button" data-axis="z" title="Girar 90° en Z">Z ↻</button></div></div><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label><input id="presetBMW" type="checkbox" checked> BMW E46 Touring · orientar Y 180° al importar</label><p class="hint">Morro hacia −X. La última importación GLB se guarda en este navegador como vehículo inicial. Los giros manuales siguen disponibles.</p><p class="hint">Modelo de referencia: <a style="color:#ff995e" href="https://sketchfab.com/3d-models/bmw-3-series-touring-e46-2001-478330312c3d46fd94999c3133ce0366" target="_blank" rel="noopener noreferrer">BMW 3 Series Touring (E46) 2001</a> · Luquita · CC BY.</p></section><section id="flowPanelContent"><h2>02 / FLUJO Y PARTÍCULAS</h2><label for="quality">Densidad de partículas</label><select id="quality"><option value="2000">Ligero · 2.000</option><option value="6000">Equilibrado · 6.000</option><option value="12000" selected>Denso · 12.000</option><option value="24000">Máximo · 24.000</option></select>
 <label for="precision">Precisión geométrica (independiente de partículas)</label><select id="precision"><option value="low">Ligera · 160 trazados</option><option value="balanced" selected>Equilibrada · 360 trazados</option><option value="fine">Detallada · 640 trazados</option></select><label for="flowmode">Representación</label><select id="flowmode"><option value="both">Partículas + estelas</option><option value="trails">Solo estelas</option><option value="points">Solo partículas</option></select>
 <label for="pointsize">Tamaño fino · píxeles</label><input id="pointsize" type="range" min="1" max="4" step="0.1" value="1.9">
 <label for="trail">Longitud de estela</label><input id="trail" type="range" min="0.3" max="3.5" step="0.1" value="1.5">
@@ -90,14 +118,14 @@ THE SOFTWARE.
 <p id="fieldinfo" class="hint" aria-live="polite">Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.</p>
 <p class="hint">Formato octos-cfd-v1: rejilla XYZ en metros y velocidad [vx, vy, vz] en m/s. Los datos deben coincidir con la posición y escala del vehículo. No resuelve CFD en el navegador.</p>
 </section><section id="viewPanelContent"><h2>04 / VISTAS</h2><label for="layout">Distribución</label><select id="layout"><option value="1">Una vista</option><option value="2">Dos vistas</option><option value="4">Cuatro vistas</option></select><div id="viewTypes" class="view-types"></div><button id="frame" style="width:100%;margin-top:12px">Reencuadrar cámaras</button><button id="clearFocus" style="width:100%;margin-top:8px">Eliminar foco de inspección</button><p class="hint">Arrastrar: orbitar en 3D; desplazar en vistas ortográficas.<br>Mayús + arrastrar: desplazar punto de mira.<br>Doble clic: centrar una zona del modelo.<br>Rueda: zoom y mayor concentración visual local.<br>Las trayectorias globales no cambian por el zoom.</p></section><p class="hint">Colisiones sobre triángulos con aceleración espacial; trazadores ilustrativos, no CFD. Las mallas abiertas, las holguras inferiores a la resolución y los segmentos irresolubles limitan el resultado. Con datos CFD importados, el espectro representa la magnitud relativa de velocidad; en modo ilustrativo no representa magnitudes físicas.</p></aside><div id="stage">
-<details class="float-panel view-float" id="viewDock" open><summary>VISTAS DEL SIMULADOR</summary><div class="dock-scroll"><div id="viewDockBody"></div>
+<details class="float-panel view-float" id="viewDock" open><summary>VISTAS DEL SIMULADOR <span id="viewResizeHandle" class="view-width-handle" role="separator" tabindex="0" aria-label="Ajustar anchura del panel de vistas" aria-orientation="vertical" title="Arrastrar para ajustar la anchura"></span></summary><div class="dock-scroll"><div id="viewDockBody"></div>
 <div class="section-tools">
 <h3>SECCIÓN VERTICAL</h3><div class="row"><button id="section" type="button" class="section-action">Crear sección</button><button id="clearSection" type="button">Eliminar</button></div>
 <label for="sectionPosition">Corte longitudinal X: <output id="sectionValue">0,00 m</output></label>
 <input id="sectionPosition" type="range" min="-2.25" max="2.25" value="0" step="0.01">
 <p class="hint" id="sectionHint">Pulsa «Crear sección» y haz clic sobre el vehículo o el suelo. Se abrirá una vista ortográfica frontal-oblicua del corte YZ.</p>
 </div></div></details>
-<div class="right-docks">
+<div class="right-docks" id="rightDocks"><div id="rightResizeHandle" class="right-width-handle" role="separator" tabindex="0" aria-label="Ajustar anchura de paneles de vehículo y flujo" aria-orientation="vertical" title="Arrastrar para ajustar la anchura"></div>
 <details class="float-panel vehicle-float" id="vehicleDock" open><summary>VEHÍCULO · IMPORTACIÓN</summary><div class="dock-scroll" id="vehicleDockBody"></div></details>
 <details class="float-panel flow-float" id="flowDock" open><summary>CAMPO CFD · FLUJO</summary><div class="dock-scroll" id="flowDockBody"></div></details>
 </div>
@@ -61303,6 +61331,63 @@ let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=
 const emitter={width:2.6,height:2.0}; // Independent of the CFD field's physical domain.
 let cameras=[],views=[],viewSelects=[],orbit=[],frameCount=0,fpsTime=0;
 let sectionEnabled=false,sectionPick=false,sectionX=0,sectionViewIndex=0;
+/* Floating panels: each has its own scroll viewport and an independently adjustable width. */
+function syncDockScroll(){
+  for(const id of ['vehicleDock','flowDock','viewDock']){
+    const dock=$(id),scroll=dock.querySelector('.dock-scroll');
+    if(!dock.open||!scroll)return;
+    const available=Math.floor(dock.getBoundingClientRect().height-42);
+    if(available>0){scroll.style.height=available+'px';scroll.style.maxHeight=available+'px';}
+  }
+}
+function setDockWidth(which,width){
+  const target=which==='view'?$('viewDock'):$('rightDocks');
+  const other=which==='view'?$('rightDocks'):$('viewDock');
+  const stageWidth=stage.getBoundingClientRect().width||stage.clientWidth;
+  const maximum=Math.min(580,stageWidth-other.getBoundingClientRect().width-44);
+  const minimum=Math.min(which==='view'?210:200,Math.max(145,maximum));
+  const clamped=Math.max(minimum,Math.min(Math.max(minimum,maximum),width));
+  target.style.width=Math.round(clamped)+'px';
+  syncDockScroll();wake();
+}
+function enableDockResize(id,which){
+  const handle=$(id);let start=null;
+  handle.addEventListener('pointerdown',e=>{
+    if(e.button!==0)return;
+    e.preventDefault();e.stopPropagation();
+    start={x:e.clientX,width:(which==='view'?$('viewDock'):$('rightDocks')).getBoundingClientRect().width};
+    handle.setPointerCapture(e.pointerId);
+  });
+  handle.addEventListener('pointermove',e=>{
+    if(!start)return;
+    const delta=(e.clientX-start.x)*(which==='view'?1:-1);
+    setDockWidth(which,start.width+delta);
+  });
+  const finish=()=>{start=null;};
+  handle.addEventListener('pointerup',finish);
+  handle.addEventListener('pointercancel',finish);
+  handle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
+  handle.addEventListener('keydown',e=>{
+    if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+    e.preventDefault();e.stopPropagation();
+    const target=which==='view'?$('viewDock'):$('rightDocks');
+    const delta=(e.key==='ArrowRight'?20:-20)*(which==='view'?1:-1);
+    setDockWidth(which,target.getBoundingClientRect().width+delta);
+  });
+}
+function initDockLayout(){
+  enableDockResize('viewResizeHandle','view');
+  enableDockResize('rightResizeHandle','right');
+  for(const id of ['vehicleDock','flowDock','viewDock']){
+    const dock=$(id);
+    new ResizeObserver(syncDockScroll).observe(dock);
+    dock.addEventListener('toggle',()=>requestAnimationFrame(syncDockScroll));
+    const scroll=dock.querySelector('.dock-scroll');
+    scroll?.addEventListener('wheel',e=>e.stopPropagation(),{passive:true});
+  }
+  syncDockScroll();
+}
+
 const ground=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial({color:0x171d25,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.025;scene.add(ground);
 const grid=new T.GridHelper(20,40,0x3c505c,0x23323e);grid.position.y=-.015;scene.add(grid);
 const arrow=new T.ArrowHelper(new T.Vector3(1,0,0),new T.Vector3(-6,.06,-2.4),2,0xff6a1a,.3,.17);scene.add(arrow);
@@ -61694,7 +61779,7 @@ if(t!==token)return;if(!saved){status('Demo activa · Importa el GLB BMW E46 una
 loading=true;status('Cargando vehículo predeterminado…');try{const model=await parseVehicle(saved.buffer);if(t!==token){dispose(model);return;}await install(model,saved.name,saved.yaw||0);status('Modelo predeterminado cargado · orientación aplicada.');}catch(e){if(t===token)status('No se pudo cargar el modelo predeterminado: '+e.message,true);}finally{if(t===token)loading=false;wake();}}
 $('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=++token;loading=true;status('Leyendo GLB local…');await new Promise(r=>setTimeout(r,30));try{const buf=await f.arrayBuffer(),model=await parseVehicle(buf);if(t!==token){dispose(model);return;}const yaw=$('presetBMW').checked?Math.PI:0;await install(model,f.name,yaw);status('GLB cargado · comprueba la longitud real.');try{const saved=await saveDefault(buf,f.name,yaw);if(t===token)status(saved?'GLB cargado y guardado como predeterminado · orientación aplicada.':'GLB cargado · no se pudo guardar en este navegador.');}catch(e){if(t===token)status('GLB cargado · no se pudo guardar para futuros accesos.',true);}}catch(err){if(t===token)status('No se pudo cargar: '+err.message,true);}finally{if(t===token)loading=false;e.target.value='';wake();}};
 new ResizeObserver(wake).observe(stage);document.addEventListener('visibilitychange',()=>{last=0;if(!document.hidden)wake();});renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();playing=false;status('Contexto gráfico perdido. Recarga el archivo.',true);});
-layout();updateSectionUI();playback(true);install(demo(),'Concepto de demostración');restoreDefault();
+initDockLayout();layout();updateSectionUI();playback(true);install(demo(),'Concepto de demostración');restoreDefault();
 window.aeroReady=()=>buildPromise;
 window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
   sectionEnabled,sectionPick,sectionX,sectionViewIndex,viewModes:viewSelects.map(s=>s.value),
