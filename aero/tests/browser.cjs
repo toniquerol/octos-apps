@@ -7,6 +7,9 @@ async function test(){
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const file='file://'+path.resolve(__dirname,'../index.html');
   await page.goto(file,{waitUntil:'domcontentloaded',timeout:60000});
+  assert(await page.locator('#projectHome').isVisible(),'Home screen should open first');
+  await page.locator('#projectEnterViewer').click();
+  assert(!(await page.locator('#projectHome').isVisible()),'Viewer should remain accessible');
   await page.waitForFunction(()=>window.aeroDiagnostics?.().particles>0,{timeout:120000});
   await page.evaluate(()=>window.aeroReady());
   const start=await page.evaluate(()=>window.aeroDiagnostics());

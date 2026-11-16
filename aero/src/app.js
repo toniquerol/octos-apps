@@ -13,6 +13,7 @@ const vehicle=new T.Group();scene.add(vehicle);let flow=null,scenery=null;let co
 let L=4.5,H=1.4,W=1.9,extent=8,triangles=0,TRACKS=0,STEPS=0;
 let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0,activeCFD=null;
 let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
+let currentCFDFile=null;
 const emitter={width:0.2,height:2.0,offsetY:0,offsetZ:0,visible:true};
 let emitterSelected=false,emitterDrag=null,emitterTimer=null; // XY fixed: translation in YZ only.
 let cameras=[],views=[],viewSelects=[],orbit=[],frameCount=0,fpsTime=0;
@@ -382,7 +383,7 @@ async function performRebuild(geometry=true,reframe=true){
 }
 function rebuild(geometry=true,reframe=true){buildPromise=performRebuild(geometry,reframe);return buildPromise;}
 function resetField(){
-  activeCFD=null;
+  activeCFD=null;currentCFDFile=null;
   $('fieldinfo').textContent='Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.';
 }
 function install(obj,name,yaw=0){
@@ -620,6 +621,7 @@ $('cfdfile').onchange=async e=>{
     await rebuild(false,false);
     if(requested!==token)return;
     if(!pathData?.physical)throw Error('El campo no pudo generar trayectorias.');
+    currentCFDFile=f.name;
   }catch(err){
     if(requested===token){
       activeCFD=previous;
@@ -642,6 +644,99 @@ loading=true;status('Cargando vehículo predeterminado…');try{const model=awai
 $('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=++token;loading=true;status('Leyendo GLB local…');await new Promise(r=>setTimeout(r,30));try{const buf=await f.arrayBuffer(),model=await parseVehicle(buf);if(t!==token){dispose(model);return;}const yaw=$('presetBMW').checked?Math.PI:0;await install(model,f.name,yaw);status('GLB cargado · comprueba la longitud real.');try{const saved=await saveDefault(buf,f.name,yaw);if(t===token)status(saved?'GLB cargado y guardado como predeterminado · orientación aplicada.':'GLB cargado · no se pudo guardar en este navegador.');}catch(e){if(t===token)status('GLB cargado · no se pudo guardar para futuros accesos.',true);}}catch(err){if(t===token)status('No se pudo cargar: '+err.message,true);}finally{if(t===token)loading=false;e.target.value='';wake();}};
 new ResizeObserver(wake).observe(stage);document.addEventListener('visibilitychange',()=>{last=0;if(!document.hidden)wake();});renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();playing=false;status('Contexto gráfico perdido. Recarga el archivo.',true);});
 initDockLayout();layout();updateSectionUI();updateEmitterVisual();playback(true);install(demo(),'Concepto de demostración');restoreDefault();
+
+/* Project bridge: capture and restore viewer state without changing the BVH/CFD engines. */
+const projectControls=['quality','precision','flowmode','pointsize','trail','opacity',
+ 'palette','focus','speed','layout','lines','tunnel','body','grid',
+ 'emitterWidth','emitterHeight','emitterOffsetY','emitterOffsetZ','emitterShow'];
+const booleanControls=new Set(['lines','tunnel','body','grid','emitterShow']);
+const validChoices={quality:['2000','6000','12000','24000'],precision:['low','balanced','fine'],
+ flowmode:['both','trails','points'],palette:['velocity','#b8e9ec','#e5edf2','#ffb16d'],
+ focus:['all','center'],layout:['1','2','4']};
+const validRanges={pointsize:[1,4],trail:[.3,3.5],opacity:[.2,1],speed:[.2,2.5],
+ emitterWidth:[.2,20],emitterHeight:[.2,20],emitterOffsetY:[0,20],emitterOffsetZ:[-20,20]};
+function projectSnapshot(){
+ const controls={};
+ for(const id of projectControls)controls[id]=booleanControls.has(id)?$(id).checked:$(id).value;
+ const name=$('filename').textContent;
+ return {
+  vehicle:{name,fileRef:name.endsWith('.glb')?name:null,unit:'m'},
+  transformations:{position:vehicle.position.toArray(),rotation:[vehicle.rotation.x,vehicle.rotation.y,vehicle.rotation.z],
+    scale:vehicle.scale.toArray(),lengthMeters:L,coordinateSystem:'X / longitudinal, Y / vertical, Z / transversal'},
+  cfd:{fieldRef:currentCFDFile},
+  results:currentCFDFile&&activeCFD?[{fileRef:currentCFDFile,source:activeCFD.source||'',
+    referenceSpeed:activeCFD.referenceSpeed||null,dimensions:activeCFD.dims?.slice()||[0,0,0]}]:[],
+  viewer:{controls,viewModes:viewSelects.map(s=>s.value),section:{
+    axis:sectionAxis,value:sectionValue,enabled:sectionEnabled}}
+ };
+}
+async function projectRestore(project){
+ token++; // Cancel a pending asynchronous default GLB restoration.
+ const wanted=project.vehicle?.name||'Concepto de demostración';
+ let matching=wanted===$('filename').textContent;
+ if(!matching){
+   let saved=null;
+   try{saved=await readDefault();}catch(e){/* Local model storage optional. */}
+   if(saved?.name===wanted&&saved.buffer){
+     const obj=await parseVehicle(saved.buffer);
+     await install(obj,saved.name,saved.yaw||0);matching=true;
+   }else await install(demo(),'Concepto de demostración');
+ }
+ resetField(); // CFD references alone cannot restore the physical velocity buffer.
+ const controls=project.viewer?.controls||{};
+ for(const id of projectControls){
+   const el=$(id),value=controls[id];
+   if(booleanControls.has(id)){if(typeof value==='boolean')el.checked=value;continue;}
+   if(value===undefined)continue;
+   const s=String(value);
+   if(validChoices[id]&&!validChoices[id].includes(s))continue;
+   if(validRanges[id]){
+     const n=Number(s),[min,max]=validRanges[id];
+     if(!Number.isFinite(n)||n<min||n>max)continue;
+   }
+   el.value=s;
+ }
+ Object.assign(emitter,{
+  width:Number($('emitterWidth').value),height:Number($('emitterHeight').value),
+  offsetY:Number($('emitterOffsetY').value),offsetZ:Number($('emitterOffsetZ').value),
+  visible:$('emitterShow').checked
+ });
+ if(matching){
+   const t=project.transformations||{};
+   if(Array.isArray(t.rotation)&&t.rotation.length===3&&t.rotation.every(Number.isFinite))
+     vehicle.rotation.set(...t.rotation);
+   if(Array.isArray(t.scale)&&t.scale.length===3&&t.scale.every(n=>Number.isFinite(n)&&n>0&&n<=10000))
+     vehicle.scale.set(...t.scale);
+ }
+ $('speedval').textContent=$('speed').value.replace('.',',')+'×';
+ $('layout').value=validChoices.layout.includes(String(controls.layout))?String(controls.layout):'1';
+ layout();
+ if(Array.isArray(project.viewer?.viewModes))
+   for(let i=0;i<viewSelects.length;i++)
+     if(['3d','side','top','front'].includes(project.viewer.viewModes[i]))
+       viewSelects[i].value=project.viewer.viewModes[i];
+ sectionAxis=['x','y','z'].includes(project.viewer?.section?.axis)?project.viewer.section.axis:'y';
+ $('sectionAxis').value=sectionAxis;
+ clearSection();
+ await rebuild(matching,true);
+ if(project.viewer?.section?.enabled===true&&Number.isFinite(project.viewer.section.value))
+   setSection(project.viewer.section.value,0,true);
+ setParticles();configureFlow();
+ grid.visible=$('grid').checked;vehicle.visible=$('body').checked;
+ if(scenery)scenery.visible=$('tunnel').checked;
+ if(lineMesh)lineMesh.visible=$('lines').checked;
+ updateEmitterVisual();wake();
+ return {vehicleRestored:matching};
+}
+window.aeroProjectBridge={
+ snapshot:projectSnapshot,
+ restore:projectRestore,
+ startNew:async()=>{
+   token++;resetField();currentCFDFile=null;
+   await install(demo(),'Concepto de demostración');
+ }
+};
+
 window.aeroReady=()=>buildPromise;
 window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
   sectionEnabled,sectionPick,sectionAxis,sectionValue,sectionViewIndex,
