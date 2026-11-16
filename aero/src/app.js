@@ -615,6 +615,10 @@ $('cfdfile').onchange=async e=>{
     if(f.size>110*1024*1024)throw Error('El archivo supera el máximo de 110 MB.');
     status('Leyendo campo de velocidades CFD…');
     const field=AeroCFD.parse(await f.text());
+    const requestedFile=field.caseInfo?.vehicleFile;
+    const currentFile=$('filename').textContent;
+    if(requestedFile&&currentFile&&requestedFile!==currentFile)
+      throw Error('El CFD pertenece a '+requestedFile+', pero el visor muestra '+currentFile+'. Importa el GLB correspondiente.');
     if(requested!==token)return;
     activeCFD=field;
     $('palette').value='velocity';
