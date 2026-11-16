@@ -67,6 +67,15 @@ async function run(){
     assert(narrowPaths.paths[k+1]>=.034&&narrowPaths.paths[k+1]<=.851,'illustrative seed Y outside emitter');
     assert(Math.abs(narrowPaths.paths[k+2])<=.601,'illustrative seed Z outside emitter');
   }
+  // The editable Y/Z emitter translates the seed rectangle without moving X.
+  const shifted=await planner.build(carSurface,{L:4.4,H:1.52,W:1.85,extent:7.3,
+    precision:'low',emitterWidth:.95,emitterHeight:.65,emitterOffsetY:.44,emitterOffsetZ:1.15});
+  for(let track=0;track<shifted.tracks;track++){
+    const k=track*shifted.steps*3;
+    assert(shifted.paths[k+1]>=.474 && shifted.paths[k+1]<=1.091,'seed Y outside translated volume');
+    assert(shifted.paths[k+2]>=.674 && shifted.paths[k+2]<=1.626,'seed Z outside translated volume');
+    assert(Math.abs(shifted.paths[k]+3.652)<.01,'X emitter plane should be fixed upstream');
+  }
   console.log('PROXIMITY: roof='+closeRoof+' side='+closeSides+' stalled='+closePaths.stalled+'/'+closePaths.tracks);
   carSurface.dispose();
   const t0=Date.now();
