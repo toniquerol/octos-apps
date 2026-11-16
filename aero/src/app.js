@@ -660,6 +660,26 @@ const validChoices={quality:['2000','6000','12000','24000'],precision:['low','ba
  focus:['all','center'],layout:['1','2','4']};
 const validRanges={pointsize:[1,4],trail:[.3,3.5],opacity:[.2,1],speed:[.2,2.5],
  emitterWidth:[.2,20],emitterHeight:[.2,20],emitterOffsetY:[0,20],emitterOffsetZ:[-20,20]};
+function projectPreview(){
+ if(!content||!views.length)return null;
+ try{
+  // Capture the loaded model, not the floating controls, into a compact preview.
+  render();
+  const i=Math.max(0,viewSelects.findIndex(select=>select.value==='3d'));
+  const view=views[i].getBoundingClientRect(),area=stage.getBoundingClientRect();
+  const source=renderer.domElement;
+  if(view.width<1||view.height<1||area.width<1||area.height<1)return null;
+  const scaleX=source.width/area.width,scaleY=source.height/area.height;
+  const sw=view.width*scaleX,sh=view.height*scaleY;
+  const target=document.createElement('canvas');target.width=320;target.height=180;
+  const ctx=target.getContext('2d');if(!ctx)return null;
+  ctx.fillStyle='#101820';ctx.fillRect(0,0,320,180);
+  const scale=Math.max(320/sw,180/sh);
+  ctx.drawImage(source,(view.left-area.left)*scaleX,(view.top-area.top)*scaleY,sw,sh,
+    (320-sw*scale)/2,(180-sh*scale)/2,sw*scale,sh*scale);
+  return target.toDataURL('image/jpeg',.65);
+ }catch{return null;}
+}
 function projectSnapshot(){
  const controls={};
  for(const id of projectControls)controls[id]=booleanControls.has(id)?$(id).checked:$(id).value;
@@ -672,7 +692,8 @@ function projectSnapshot(){
   results:currentCFDFile&&activeCFD?[{fileRef:currentCFDFile,source:activeCFD.source||'',
     referenceSpeed:activeCFD.referenceSpeed||null,dimensions:activeCFD.dims?.slice()||[0,0,0]}]:[],
   viewer:{controls,viewModes:viewSelects.map(s=>s.value),section:{
-    axis:sectionAxis,value:sectionValue,enabled:sectionEnabled}}
+    axis:sectionAxis,value:sectionValue,enabled:sectionEnabled}},
+  preview:projectPreview()
  };
 }
 async function projectRestore(project){
