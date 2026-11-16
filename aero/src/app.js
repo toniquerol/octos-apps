@@ -13,7 +13,7 @@ const vehicle=new T.Group();scene.add(vehicle);let flow=null,scenery=null;let co
 let L=4.5,H=1.4,W=1.9,extent=8,triangles=0,TRACKS=0,STEPS=0;
 let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0,activeCFD=null;
 let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
-const emitter={width:2.6,height:2.0,offsetY:0,offsetZ:0,visible:true};
+const emitter={width:0.2,height:2.0,offsetY:0,offsetZ:0,visible:true};
 let emitterSelected=false,emitterDrag=null,emitterTimer=null; // XY fixed: translation in YZ only.
 let cameras=[],views=[],viewSelects=[],orbit=[],frameCount=0,fpsTime=0;
 let sectionEnabled=false,sectionPick=false,sectionAxis='y',sectionValue=H*.5,sectionViewIndex=0;
@@ -590,7 +590,7 @@ $('emitterShow').onchange=()=>{
   updateEmitterVisual();
 };
 $('emitterReset').onclick=()=>{
-  Object.assign(emitter,{width:2.6,height:2,offsetY:0,offsetZ:0,visible:true});
+  Object.assign(emitter,{width:0.2,height:2,offsetY:0,offsetZ:0,visible:true});
   emitterSelected=true;updateEmitterVisual();queueEmitterRebuild(true);
 };
 for(const id of ['pointsize','trail','opacity','palette','flowmode'])$(id).oninput=configureFlow;
