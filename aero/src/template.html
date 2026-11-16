@@ -66,6 +66,9 @@ THE SOFTWARE.
 .section-tools label{margin:10px 0 3px}
 .section-tools input{accent-color:#ff6a1a}
 .section-tools .hint{margin-bottom:0}
+.section-tools #sectionAxis{width:100%;min-width:0}
+.section-tools #sectionPositionLabel{font-weight:600}
+.section-tools .row button{min-width:0}
 .section-action[aria-pressed="true"]{background:#ff6a1a;color:#111;border-color:#ff6a1a}
 .transport-float{position:absolute;left:50%;bottom:17px;transform:translateX(-50%);display:flex;gap:8px;align-items:center;justify-content:center;padding:8px 10px;border:1px solid #3d454d;border-radius:8px;background:#101419ed;z-index:17;pointer-events:auto;white-space:nowrap}
 .transport-float button{min-width:92px}
@@ -120,10 +123,17 @@ THE SOFTWARE.
 </section><section id="viewPanelContent"><h2>04 / VISTAS</h2><label for="layout">Distribución</label><select id="layout"><option value="1">Una vista</option><option value="2">Dos vistas</option><option value="4">Cuatro vistas</option></select><div id="viewTypes" class="view-types"></div><button id="frame" style="width:100%;margin-top:12px">Reencuadrar cámaras</button><button id="clearFocus" style="width:100%;margin-top:8px">Eliminar foco de inspección</button><p class="hint">Arrastrar: orbitar en 3D; desplazar en vistas ortográficas.<br>Mayús + arrastrar: desplazar punto de mira.<br>Doble clic: centrar una zona del modelo.<br>Rueda: zoom y mayor concentración visual local.<br>Las trayectorias globales no cambian por el zoom.</p></section><p class="hint">Colisiones sobre triángulos con aceleración espacial; trazadores ilustrativos, no CFD. Las mallas abiertas, las holguras inferiores a la resolución y los segmentos irresolubles limitan el resultado. Con datos CFD importados, el espectro representa la magnitud relativa de velocidad; en modo ilustrativo no representa magnitudes físicas.</p></aside><div id="stage">
 <details class="float-panel view-float" id="viewDock" open><summary>VISTAS DEL SIMULADOR <span id="viewResizeHandle" class="view-width-handle" role="separator" tabindex="0" aria-label="Ajustar anchura del panel de vistas" aria-orientation="vertical" title="Arrastrar para ajustar la anchura"></span></summary><div class="dock-scroll"><div id="viewDockBody"></div>
 <div class="section-tools">
-<h3>SECCIÓN VERTICAL</h3><div class="row"><button id="section" type="button" class="section-action">Crear sección</button><button id="clearSection" type="button">Eliminar</button></div>
-<label for="sectionPosition">Corte longitudinal X: <output id="sectionValue">0,00 m</output></label>
+<h3>SECCIÓN POR EJE</h3>
+<label for="sectionAxis">Eje perpendicular al plano de corte</label>
+<select id="sectionAxis" aria-label="Eje de la sección">
+<option value="y" selected>Y · Horizontal (plano XZ)</option>
+<option value="x">X · Transversal (plano YZ)</option>
+<option value="z">Z · Longitudinal (plano XY)</option>
+</select>
+<div class="row"><button id="section" type="button" class="section-action">Crear sección</button><button id="clearSection" type="button">Eliminar</button></div>
+<label for="sectionPosition"><span id="sectionPositionLabel">Posición Y</span>: <output id="sectionValue">0,00 m</output></label>
 <input id="sectionPosition" type="range" min="-2.25" max="2.25" value="0" step="0.01">
-<p class="hint" id="sectionHint">Pulsa «Crear sección» y haz clic sobre el vehículo o el suelo. Se abrirá una vista ortográfica frontal-oblicua del corte YZ.</p>
+<p class="hint" id="sectionHint">Selecciona X, Y o Z, pulsa «Crear sección» y haz clic sobre el vehículo. La nueva cámara mostrará el plano de corte de frente; después podrás orbitarla.</p>
 </div></div></details>
 <div class="right-docks" id="rightDocks"><div id="rightResizeHandle" class="right-width-handle" role="separator" tabindex="0" aria-label="Ajustar anchura de paneles de vehículo y flujo" aria-orientation="vertical" title="Arrastrar para ajustar la anchura"></div>
 <details class="float-panel vehicle-float" id="vehicleDock" open><summary>VEHÍCULO · IMPORTACIÓN</summary><div class="dock-scroll" id="vehicleDockBody"></div></details>
