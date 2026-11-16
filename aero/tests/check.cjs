@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const elements=new Map(),axes=['x','y','z'].map(axis=>({dataset:{axis}}));
-function element(id){return {id,value:({length:'4.5',speed:'1',quality:'12000',emitterWidth:'2.6',emitterHeight:'2.0',pointsize:'1.6',trail:'1',opacity:'0.8',palette:'#b8e9ec',flowmode:'both',focus:'all',layout:'1'})[id]||'',checked:true,style:{},dataset:{},children:[],classList:{toggle(){}},append(e){this.children.push(e)},prepend(){},setAttribute(){},addEventListener(){},setPointerCapture(){},querySelector(){if(!this.select)this.select=element('select');return this.select;},getBoundingClientRect(){return {left:0,top:0,right:1100,bottom:700,width:1100,height:700}},clientWidth:1100,clientHeight:700,textContent:''};}
+function element(id){return {id,value:({length:'4.5',speed:'1',quality:'12000',emitterWidth:'2.6',emitterHeight:'2.0',pointsize:'1.6',trail:'1',opacity:'0.8',palette:'#b8e9ec',flowmode:'both',focus:'all',layout:'1',sectionAxis:'y'})[id]||'',checked:true,style:{},dataset:{},children:[],classList:{toggle(){}},append(e){this.children.push(e)},prepend(){},setAttribute(){},addEventListener(){},setPointerCapture(){},querySelector(){if(!this.select)this.select=element('select');return this.select;},getBoundingClientRect(){return {left:0,top:0,right:1100,bottom:700,width:1100,height:700}},clientWidth:1100,clientHeight:700,textContent:''};}
 const document={hidden:false,getElementById(id){if(!elements.has(id))elements.set(id,element(id));return elements.get(id)},querySelectorAll(){return axes},createElement:()=>element('new'),addEventListener(){}};
 const context={document,window:{},devicePixelRatio:1,console,ArrayBuffer,DataView,Uint8Array,TextDecoder,TextEncoder,URL,Blob,setTimeout,clearTimeout,performance:{getEntriesByType:()=>[]},ResizeObserver:class{observe(){}},requestAnimationFrame:()=>1};vm.createContext(context);
 let html=fs.readFileSync(__dirname+'/../index.html','utf8'),js=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
@@ -17,11 +17,24 @@ assert.equal(diag().emitter[0],1.6);
 assert.equal($('emitterWidth').value,'1.6');assert.equal(diag().views,1);
 $('layout').value='4';$('layout').onchange();assert.equal(diag().views,4);
 assert.equal(diag().viewModes.length,4);
+assert.equal(diag().sectionAxis,'y');
+assert.deepEqual(Array.from(diag().sectionNormal),[0,-1,0]);
 $('section').onclick();assert.equal(diag().sectionPick,true);
 $('sectionPosition').value='0.4';$('sectionPosition').oninput();
 assert.equal(diag().sectionEnabled,true);
-assert(Math.abs(diag().sectionX-.4)<1e-5);
+assert(Math.abs(diag().sectionValue-.4)<1e-5);
 assert(diag().viewModes.includes('section'));
+assert(diag().sectionCameraDirection[1]>.999,'Y view faces its plane');
+$('sectionAxis').value='x';$('sectionAxis').onchange();
+assert.equal(diag().sectionAxis,'x');
+assert.deepEqual(Array.from(diag().sectionNormal),[1,0,0]);
+assert(diag().sectionCameraDirection[0]<-.999,'X view faces its plane');
+$('sectionPosition').value='0.2';$('sectionPosition').oninput();
+assert(Math.abs(diag().sectionValue-.2)<1e-5);
+$('sectionAxis').value='z';$('sectionAxis').onchange();
+assert.equal(diag().sectionAxis,'z');
+assert.deepEqual(Array.from(diag().sectionNormal),[0,0,-1]);
+assert(diag().sectionCameraDirection[2]>.999,'Z view faces its plane');
 $('clearSection').onclick();assert.equal(diag().sectionEnabled,false);
 assert(!diag().viewModes.includes('section'));$('quality').value='24000';$('quality').onchange();assert.equal(diag().particles,24000);$('pause').onclick();assert.equal(diag().playing,false);$('play').onclick();assert.equal(diag().playing,true);$('reset').onclick();$('length').value='6';$('scale').onclick();await context.window.aeroReady();assert(Math.abs(diag().dimensions[0]-6)<1e-6);axes[1].onclick();await context.window.aeroReady();assert(diag().dimensions.every(Number.isFinite));$('length').value='-1';$('scale').onclick();assert($('status').textContent.includes('0,1'));$('demo').onclick();await context.window.aeroReady();assert(diag().dimensions[0]<6);
 } async function invalid(){await $('file').onchange({target:{files:[{name:'bad.glb',arrayBuffer:async()=>new ArrayBuffer(24)}],value:'x'}});assert($('status').textContent.startsWith('No se pudo cargar:'));
