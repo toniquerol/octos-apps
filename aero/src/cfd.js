@@ -48,17 +48,17 @@ const AeroCFD = (() => {
     return {dims,origin,spacing,velocity,maxSpeed,displayMaxSpeed:maxSpeed,
       referenceSpeed,bounds,source:String(data.source||'Campo CFD importado').slice(0,100),sample};
   }
-  async function build(field,surface,{L,H,W,extent,precision='balanced',focus='all',emitterWidth=2.6,emitterHeight=2.0},current=()=>true){
+  async function build(field,surface,{L,H,W,extent,precision='balanced',focus='all',emitterWidth=2.6,emitterHeight=2.0,emitterOffsetY=0,emitterOffsetZ=0},current=()=>true){
     const {tracks,steps}=AeroPaths.modes[precision]||AeroPaths.modes.balanced;
     const paths=new Float32Array(tracks*steps*3),speeds=new Float32Array(tracks*steps);
     const guard=AeroSurfaceGuard.create(surface,{L,H,W,extent});
-    const x0=Math.max(-extent,field.bounds[0][0]+field.spacing[0]);
+    const x0=AeroEmitter.originX(L,extent,field);
     if(x0>=-L*.5) throw Error('El campo debe incluir el aire aguas arriba del vehículo (−X).');
     const xEnd=Math.min(extent,field.bounds[0][1]-field.spacing[0]);
     if(xEnd<L*.5) throw Error('La rejilla termina antes de la parte posterior del vehículo.');
     // Intersect the user-defined emitter plane with the existing CFD coverage.
     // Neither grid origin, spacing, dimensions nor imported velocity values change.
-    const emitter=AeroEmitter.bounds(emitterWidth,emitterHeight,focus);
+    const emitter=AeroEmitter.bounds(emitterWidth,emitterHeight,focus,emitterOffsetY,emitterOffsetZ);
     const yMin=Math.max(field.bounds[1][0]+field.spacing[1]*.5,emitter.yMin);
     const yMax=Math.min(field.bounds[1][1]-field.spacing[1]*.5,emitter.yMax);
     const zMin=Math.max(field.bounds[2][0]+field.spacing[2]*.5,emitter.zMin);
