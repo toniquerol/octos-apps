@@ -136,7 +136,18 @@ THE SOFTWARE.
 .project-divider{height:1px;background:#33343a;margin:24px 0 19px}
 .project-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .project-section-head small{color:#a3a4aa}
-#projectRecent{margin:11px 0 0;max-height:200px;overflow:auto}
+#projectRecent{margin:14px 0 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-height:455px;overflow:auto;align-items:start}
+.project-card{min-width:0;background:#141519;border:1px solid #34363d;border-radius:9px;overflow:hidden}
+.project-card:hover{border-color:#ff6a1a}
+#projectHome .project-card-open{display:block;width:100%;padding:0;border:0;border-radius:0;text-align:left!important;background:transparent}
+.project-card-visual{display:block;aspect-ratio:16/9;background:linear-gradient(135deg,#1a2932,#10151a);overflow:hidden}
+.project-card-visual img{display:block;width:100%;height:100%;object-fit:cover}
+.project-card-placeholder{display:flex;width:100%;height:100%;align-items:center;justify-content:center;color:#778b98;font:600 12px Manrope,system-ui,sans-serif;letter-spacing:.18em}
+.project-card-details{display:flex;flex-direction:column;gap:5px;padding:11px 12px 13px;min-width:0}
+.project-card-details strong{color:#f1f1ef;font:600 12px Manrope,system-ui,sans-serif;overflow-wrap:anywhere}
+.project-card-details small{color:#a0a5ae;font-size:11px;overflow-wrap:anywhere}
+.project-card-details .project-card-date{color:#77838d;font-size:10px}
+@media(max-width:640px){#projectRecent{grid-template-columns:1fr;max-height:500px}}
 .project-recent-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #35363c}
 .project-recent-title{min-width:0;display:flex;flex-direction:column;gap:4px;overflow-wrap:anywhere}
 .project-recent-title strong{font-size:12px;font-weight:600}
@@ -159,16 +170,16 @@ THE SOFTWARE.
 <div class="project-shell">
 <div class="project-intro"><div class="project-kicker">LABORATORIO AERODINÁMICO</div><h1>Proyectos y análisis de flujo.</h1>
 <p>Gestiona vehículos, configuraciones y referencias a campos CFD externos. El visor conserva su funcionamiento y las trayectorias ilustrativas no sustituyen una simulación física.</p>
-<div class="project-meta">OcToS 3D Studio / Aero · Fase 1<br>Formato portátil JSON · Cálculo CFD externo</div></div>
+<div class="project-meta">OcToS 3D Studio / Aero · Fase 1<br>Guardado en este navegador · Cálculo CFD externo</div></div>
 <div class="project-panel"><h2>Gestión de proyectos</h2><label for="projectName">NOMBRE DEL PROYECTO</label><input id="projectName" type="text" maxlength="140" value="Proyecto sin título" autocomplete="off">
-<div class="project-actions"><button id="projectNew" type="button" class="primary">Nuevo proyecto</button><button id="projectOpen" type="button">Abrir proyecto (.octosaero)</button>
+<div class="project-actions"><button id="projectNew" type="button" class="primary">Nuevo proyecto</button><button id="projectOpen" type="button">Importar proyecto (.octosaero)</button>
 <button id="projectSave" type="button">Guardar proyecto</button><button id="projectSaveAs" type="button">Guardar como…</button>
 <button id="projectLibraryButton" type="button" aria-expanded="false">Biblioteca de simulaciones</button><button id="projectEnterViewer" type="button">Acceder al visor</button></div>
 <input id="projectFile" type="file" accept=".octosaero,.json,application/json" hidden>
 <div id="projectLibraryPanel" hidden><h2>Biblioteca CFD · referencias</h2><p>Listado inicial de campos JSON asociados al proyecto. Para visualizar sus datos, importa el JSON desde el panel CFD del visor.</p><div id="projectLibraryList"></div></div>
 <div class="project-divider"></div>
-<div class="project-section-head"><h2>Proyectos recientes</h2><small id="projectRecentCount">0 proyectos</small></div>
-<div id="projectRecent" aria-live="polite"></div><output id="projectMessage" role="status">Los proyectos se descargan como archivos locales; GitHub Pages no permite guardarlos en el servidor.</output>
+<div class="project-section-head"><h2>Proyectos guardados</h2><small id="projectRecentCount">0 proyectos</small></div>
+<div id="projectRecent" aria-live="polite"></div><output id="projectMessage" role="status">Los proyectos y sus vistas previas se guardan en este navegador. Los archivos GLB y CFD deben conservarse por separado.</output>
 </div></div></div><header><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS" style="width:46px;height:46px;object-fit:contain;flex:none"><b>OcToS<span> / </span>AERO</b><small>LABORATORIO DE FLUJO · V2.6</small><div class="aero-header-controls"><span id="projectActiveName">Visor sin proyecto</span><button id="projectHomeButton" type="button" aria-expanded="true">Inicio / proyectos</button><button id="projectHeaderSave" type="button" disabled>Guardar</button></div></header><main><aside id="controlShelf"><section id="vehiclePanelContent"><h2>01 / VEHÍCULO</h2><div class="row"><label class="file primary" for="file">Abrir vehículo GLB ↗</label><input id="file" type="file" accept=".glb"><button id="demo">Demo</button></div><div class="rotate-tools"><div class="rotate-title">GIRAR MODELO · +90°</div><div class="row"><button type="button" data-axis="x" title="Girar 90° en X">X ↻</button><button type="button" data-axis="y" title="Girar 90° en Y">Y ↻</button><button type="button" data-axis="z" title="Girar 90° en Z">Z ↻</button></div></div><div id="filename">Concepto de demostración</div><div id="dimensions" class="stat"></div><label for="length">Longitud real · metros</label><div class="row"><input id="length" type="number" min="0.1" max="100" value="4.5" step="0.1"><button id="scale">Aplicar</button></div><label><input id="presetBMW" type="checkbox" checked> BMW E46 Touring · orientar Y 180° al importar</label><p class="hint">Morro hacia −X. La última importación GLB se guarda en este navegador como vehículo inicial. Los giros manuales siguen disponibles.</p><p class="hint">Modelo de referencia: <a style="color:#ff995e" href="https://sketchfab.com/3d-models/bmw-3-series-touring-e46-2001-478330312c3d46fd94999c3133ce0366" target="_blank" rel="noopener noreferrer">BMW 3 Series Touring (E46) 2001</a> · Luquita · CC BY.</p></section><section id="flowPanelContent"><h2>02 / FLUJO Y PARTÍCULAS</h2><label for="quality">Densidad de partículas</label><select id="quality"><option value="2000">Ligero · 2.000</option><option value="6000">Equilibrado · 6.000</option><option value="12000" selected>Denso · 12.000</option><option value="24000">Máximo · 24.000</option></select>
 <label for="precision">Precisión geométrica (independiente de partículas)</label><select id="precision"><option value="low">Ligera · 160 trazados</option><option value="balanced">Equilibrada · 360 trazados</option><option value="fine" selected>Detallada · 640 trazados</option></select><label for="flowmode">Representación</label><select id="flowmode"><option value="both">Partículas + estelas</option><option value="trails" selected>Solo estelas</option><option value="points">Solo partículas</option></select>
 <label for="pointsize">Tamaño fino · píxeles</label><input id="pointsize" type="range" min="1" max="4" step="0.1" value="1.6">
