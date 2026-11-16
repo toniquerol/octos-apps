@@ -133,7 +133,34 @@ const AeroPaths = (() => {
       centres.set([paths[mid],paths[mid+1],paths[mid+2]],track*3);
       if(track%10===0)await pause();
     }
-    return {paths,centres,tracks,steps,rawSamples,repaired,stalled,precision};
+    // Procedural near-wake effect. This is a cinematic illustration, NOT a CFD solution.
+    // The original triangle-safe lanes are retained around the body.
+    const speeds=new Float32Array(tracks*steps),rear=L*.5+clearance*2;
+    for(let track=0;track<tracks;track++){
+      const phase=track*2.3999632297,swirl=track%2===0?1:-1;
+      for(let s=0;s<steps;s++){
+        const k=(track*steps+s)*3, x=paths[k], y=paths[k+1], z=paths[k+2];
+        const downstream=Math.max(0,(x-rear)/L),wake=downstream>0&&downstream<2.2;
+        if(wake){
+          const radial=Math.exp(-Math.pow((y-H*.62)/(H*.95),2)-Math.pow(z/(W*.95),2));
+          const envelope=(1-Math.exp(-downstream*8))*Math.exp(-downstream*1.4);
+          const spin=downstream*11+phase;
+          const amp=Math.min(H*.17,W*.15)*radial*envelope;
+          const candidate=[x,Math.max(.026,y+amp*Math.cos(spin)),z+swirl*amp*Math.sin(spin)];
+          const prev=s?[paths[k-3],paths[k-2],paths[k-1]]:candidate;
+          if(!surface.segment(prev,candidate)){paths[k+1]=candidate[1];paths[k+2]=candidate[2];}
+        }
+        const closeRoof= Math.exp(-Math.pow((paths[k+1]-H)/(H*.35),2))*
+                         Math.exp(-Math.pow(paths[k+2]/(W*.7),2));
+        const bodyZone= Math.exp(-Math.pow(x/(L*.72),4));
+        const wakeZone= wake?Math.exp(-Math.pow(downstream/.85,2))*
+                               Math.exp(-Math.pow((paths[k+1]-H*.58)/H,2)-
+                                        Math.pow(paths[k+2]/W,2)):0;
+        speeds[track*steps]=Math.max(.12,Math.min(.99,.60+.33*closeRoof*bodyZone-.36*wakeZone+
+          .055*Math.sin(x*2.1+phase)*wakeZone));
+      }
+    }
+    return {paths,speeds,centres,tracks,steps,rawSamples,repaired,stalled,precision,physical:false};
   }
   return {build,velocity,modes};
 })();
