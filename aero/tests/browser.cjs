@@ -13,6 +13,24 @@ async function test(){
   assert(start.triangles>0 && start.tracks===360 && start.steps===288);
   assert.equal(start.particles,12000);
   assert.deepEqual(start.emitter,[2.6,2.0]);
+  assert.deepEqual(start.emitterOffset,[0,0]);
+  assert(start.emitterVisible);
+  const fixedX=start.emitterX;
+  assert(await page.locator('#emitterSelect').isVisible());
+  await page.locator('#emitterSelect').click();
+  assert((await page.evaluate(()=>window.aeroDiagnostics())).emitterSelected);
+  await page.locator('#emitterOffsetY').fill('0.4');
+  await page.locator('#emitterOffsetY').dispatchEvent('change');
+  await page.evaluate(()=>window.aeroReady());
+  await page.locator('#emitterOffsetZ').fill('0.65');
+  await page.locator('#emitterOffsetZ').dispatchEvent('change');
+  await page.evaluate(()=>window.aeroReady());
+  const movedEmitter=await page.evaluate(()=>window.aeroDiagnostics());
+  assert.deepEqual(movedEmitter.emitterOffset,[0.4,0.65]);
+  assert.equal(movedEmitter.emitterX,fixedX,'moving the emitter cannot change X');
+  await page.locator('#emitterReset').click();
+  await page.evaluate(()=>window.aeroReady());
+  assert.deepEqual((await page.evaluate(()=>window.aeroDiagnostics())).emitterOffset,[0,0]);
   // Floating control docks must keep a usable internal scrollbar, rotation buttons and resize grips.
   assert(await page.locator('#vehicleDock .rotate-tools [data-axis="x"]').isVisible());
   assert.equal(await page.locator('#vehicleDock [data-axis]').count(),3);
@@ -115,6 +133,7 @@ async function test(){
   assert(afterEmitter.cfd,'emitter editing must preserve imported CFD');
   assert.equal(afterEmitter.cfdSource,beforeEmitter.cfdSource);
   assert.deepEqual(afterEmitter.emitter,[1.4,1.1]);
+  assert(afterEmitter.cfd,'resizing emitter must not clear CFD');
   assert(afterEmitter.fieldRevision>beforeEmitter.fieldRevision);
   assert.equal(afterEmitter.particles,24000);
   await page.locator('#clearCFD').click();
