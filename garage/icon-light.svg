@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+<title id="title">OcToS Garage</title><desc id="desc">Taller de automóviles, nave industrial en perspectiva con portón y elevador naranja</desc>
+<g fill="none" stroke="#F1F1EF" stroke-linejoin="round" stroke-linecap="round" stroke-width="7">
+<path d="M20 63 77 27l63 36v71H20V63Z"/><path d="m20 63 57 20 63-20M77 83v51"/><path d="M32 81v43h35V81z"/>
+<path d="M40 113h19M40 101h19M40 89h19"/><path d="M91 117h37"/>
+</g><path d="M95 81h32v8H95zm4 8h4v35h-4zm20 0h4v35h-4z" fill="#FF6A1A"/>
+<path d="M87 117h46v7H87z" fill="#FF6A1A"/>
+</svg>
