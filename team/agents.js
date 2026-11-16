@@ -18,7 +18,7 @@
  const openaiKey=document.getElementById("agents-openai-key");
  const firstUse=document.getElementById("agents-first-use");
  const storeKey="octos-team-agent-endpoint-v1";
- const three=["chief","agent-3","agent-4"];
+ const three=["jarvis","agent-7"];
  let busy=false;
 
  // Dictado opcional del navegador: solo escribe; nunca envía la petición.
@@ -173,7 +173,7 @@
  function processEvent(event){
   if(event.type==="state") {
    if(three.includes(event.agent))state(event.agent,event.state);
-   line(({"chief":"Dirección","agent-3":"A03 · Cartografía","agent-4":"A04 · Integración"}[event.agent]||event.agent)+": "+event.state);
+   line(({"jarvis":"Jarvis · Coordinador","agent-7":"A07 · Investigación"}[event.agent]||event.agent)+": "+event.state);
   }else if(event.type==="report"){
    line("\n"+event.label+" — informe:\n"+event.text+"\n");
   }else if(event.type==="done"){
@@ -192,7 +192,7 @@
   try{base=baseUrl();auth=serviceToken()}catch(e){notice.textContent=e.message;return}
   const question=task.value.trim();
   if(question.length<8||question.length>2500){notice.textContent="La petición debe tener entre 8 y 2500 caracteres.";return}
-  setBusy(true);begin("API REAL · Piloto Dirección + A03 + A04; Controlador y Jarvis aún no conectados");
+  setBusy(true);begin("API REAL · Piloto Jarvis + A07 Investigación");
   try{
    const response=await fetch(base+"/run",{method:"POST",
     headers:{"Content-Type":"application/json","Authorization":"Bearer "+auth},
