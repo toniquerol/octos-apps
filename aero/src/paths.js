@@ -1,4 +1,18 @@
 // Deterministic geometric streamlines. The velocity model is illustrative, not CFD.
+// Shared emitter-plane limits. The emitter constrains only initial tracers, never CFD grid data.
+const AeroEmitter = (() => {
+  function bounds(width=2.6,height=2.0,focus='all') {
+    if(!Number.isFinite(width)||!Number.isFinite(height)||width<.2||height<.2||width>20||height>20)
+      throw Error('El ancho y alto del emisor deben estar entre 0,2 y 20 metros.');
+    const halfWidth=width*.5*(focus==='center'?.65:1);
+    return {yMin:.035,yMax:height,zMin:-halfWidth,zMax:halfWidth};
+  }
+  function includes(b,y,z) {
+    return y>=b.yMin-1e-5 && y<=b.yMax+1e-5 &&
+      z>=b.zMin-1e-5 && z<=b.zMax+1e-5;
+  }
+  return {bounds,includes};
+})();
 const AeroPaths = (() => {
   const modes={low:{tracks:160,steps:192},balanced:{tracks:360,steps:288},fine:{tracks:640,steps:384}};
   const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
@@ -14,8 +28,9 @@ const AeroPaths = (() => {
     const multiplier=1.85*strength*strength;
     return {direction:[1,dy/lateral*multiplier,dz/lateral*multiplier],distance:near.distance};
   }
-  async function build(surface,{L,H,W,extent,precision='balanced',focus='all'},current=()=>true){
+  async function build(surface,{L,H,W,extent,precision='balanced',focus='all',emitterWidth=2.6,emitterHeight=2.0},current=()=>true){
     const {tracks,steps}=modes[precision]||modes.balanced;
+    const emitter=AeroEmitter.bounds(emitterWidth,emitterHeight,focus);
     const paths=new Float32Array(tracks*steps*3),centres=new Float32Array(tracks*3);
     let seed=71,repaired=0,stalled=0,rawSamples=0;
     const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};
@@ -25,12 +40,11 @@ const AeroPaths = (() => {
     const lo=-extent,hi=extent;
     // Surface-attached visual lanes sample real triangles (not the vehicle envelope).
     // They complement rather than alter the free-field illustrative velocity model.
-    function surfaceLane(track){
+    function surfaceLane(track,seedY,seedZ){
       const kind=track%10,roof=kind<4,under=kind===8,side=!roof&&!under;
       const sign=kind<6?-1:1;
-      const u=(track*.61803398875)%1;
-      const laneZ=(u-.5)*W*(roof?1.02:.82);
-      const laneY=.08+u*H*.86;
+      const laneZ=seedZ;
+      const laneY=seedY;
       const offsets=new Array(steps).fill(null);
       for(let s=0;s<steps;s++){
         const x=lo+(hi-lo)*s/(steps-1);
@@ -53,6 +67,10 @@ const AeroPaths = (() => {
         previous=s;
       }
       for(let s=previous+1;s<steps;s++)offsets[s]=offsets[previous];
+      // If the surface-guided path begins outside the selected emitter, use the free path.
+      const startY=roof?offsets[0]:under?Math.max(.025,offsets[0]):laneY;
+      const startZ=roof||under?laneZ:offsets[0];
+      if(!AeroEmitter.includes(emitter,startY,startZ))return false;
       for(let s=0;s<steps;s++){
         const x=lo+(hi-lo)*s/(steps-1);
         let pos=roof?[x,offsets[s],laneZ]:under?[x,Math.max(.025,offsets[s]),laneZ]:[x,laneY,offsets[s]];
@@ -73,18 +91,20 @@ const AeroPaths = (() => {
     }
     for(let track=0;track<tracks;track++){
       if(!current())return null;
-      // Reserve approximately 55% of routes for roof, sides and underbody clearance.
-      if(track<Math.floor(tracks*.62) && track%10!==9 && surfaceLane(track)){
+      // Every trajectory begins within the plane Y:[0,height], Z:[-width/2,width/2].
+      const col=track%cols,row=Math.floor(track/cols);
+      const seedY=emitter.yMin+(row+random()*.65)/rows*(emitter.yMax-emitter.yMin);
+      const seedZ=emitter.zMin+(col+random()*.65)/cols*(emitter.zMax-emitter.zMin);
+      // Keep surface-attached paths only when their upstream seed fits the emitter.
+      if(track<Math.floor(tracks*.62) && track%10!==9 && surfaceLane(track,seedY,seedZ)){
         rawSamples+=steps;
         const mid=(track*steps+Math.floor(steps/2))*3;
         centres.set([paths[mid],paths[mid+1],paths[mid+2]],track*3);
         if(track%10===0)await pause();
         continue;
       }
-      const col=track%cols,row=Math.floor(track/cols);
-      // Sample the roof, sides and underbody more densely instead of wasting most streams in empty air.
-      const y0=.035+(row+random()*.65)/rows*H*1.42;
-      const z0=((col+random()*.65)/cols-.5)*W*(focus==='center'?.85:1.8);
+      // Free trajectories start from the same emitter, regardless of vehicle dimensions.
+      const y0=seedY,z0=seedZ;
       const preferred=z0<-.05?-1:z0>.05?1:0;
       let here=[lo,y0,z0],raw=[here],iterations=0;
       while(here[0]<hi-1e-8 && iterations++<steps*6){
