@@ -1,4 +1,4 @@
-# OcToS Aero V2.5 — corrección de flujo próximo a superficies
+# OcToS Aero V2.6 — emisor volumétrico editable en el visor 3D
 
 **Aplicación:** https://toniquerol.github.io/octos-apps/aero/
 
@@ -11,6 +11,17 @@ Visor de estelas GPU con **dos modos**: trayectorias cinemáticas ilustrativas o
 - **Estelas:** tras la modificación visual de las estelas se comprueban de nuevo las colisiones antes de dibujarlas.
 - **CFD importado:** se conservan las velocidades, el origen, el espaciado y las dimensiones del JSON original. **Las trayectorias corregidas son una representación geométrica, no la solución CFD real**: no se debe utilizar la forma corregida para deducir presión, fuerzas, turbulencia ni sustentación. La exactitud física depende del campo CFD y de una malla de carrocería suficientemente cerrada.
 - **Limitación:** las mallas abiertas, superficies inconsistentes o detalles menores que la resolución del campo pueden producir rutas interrumpidas; el sistema no completa automáticamente la geometría ausente.
+
+## Emisor volumétrico editable
+
+- El emisor es un **prisma translúcido de pequeño espesor**, orientado perpendicularmente al flujo **+X**, situado aguas arriba de la carrocería.
+- Se selecciona haciendo clic sobre el volumen turquesa del visor o pulsando **Seleccionar en 3D** en el panel **Campo CFD · flujo**.
+- Con el emisor seleccionado aparecen tres tiradores: **blanco** para mover el centro en **Y/Z**, **cian** para cambiar la anchura **Z** y **naranja** para cambiar la altura **Y**. Los gestos funcionan mediante eventos pointer para ratón y pantalla táctil.
+- **La coordenada X permanece bloqueada**, incluso durante el arrastre; la posición X se fija automáticamente aguas arriba y puede depender del límite inicial del dominio CFD importado. La anchura, la altura y los desplazamientos Y/Z también pueden editarse numéricamente en el panel lateral.
+- El volumen se actualiza visualmente durante el arrastre. La reconstrucción de trayectorias se programa tras una pausa breve y se confirma al soltar; el campo CFD JSON **no se altera**.
+- Las semillas de ambos modos parten ahora del plano del volumen (mismo X) y quedan dentro de su extensión Y/Z, salvo los recortes impuestos por el dominio CFD importado.
+- El botón **Restablecer** recupera 2,6 m de anchura, 2,0 m de altura y desplazamientos cero. La casilla **Mostrar volumen y tiradores** permite ocultar el emisor sin desactivar el flujo.
+- El emisor se oculta durante la representación de una vista de sección para no tapar el corte; sigue visible en las demás vistas.
 
 ## Uso
 
