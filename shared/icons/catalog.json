@@ -99,6 +99,15 @@
       "designState": "Actualizado según instrucciones"
     },
     {
+      "id": "garage",
+      "name": "OcToS Garage",
+      "description": "Visualización y edición del taller MRM Performance en 3D",
+      "concept": "Nave-taller en perspectiva con puerta y elevador naranja",
+      "svg": "garage/icon.svg",
+      "lightSvg": "garage/icon-light.svg",
+      "designState": "V1 nueva aplicación; SVG canónico y variante clara"
+    },
+    {
       "id": "roads",
       "name": "OcToS Roads",
       "description": "Diseño y geometría de trazados viarios",
