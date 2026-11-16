@@ -51,6 +51,7 @@ const AeroCFD = (() => {
   async function build(field,surface,{L,H,W,extent,precision='balanced',focus='all',emitterWidth=2.6,emitterHeight=2.0},current=()=>true){
     const {tracks,steps}=AeroPaths.modes[precision]||AeroPaths.modes.balanced;
     const paths=new Float32Array(tracks*steps*3),speeds=new Float32Array(tracks*steps);
+    const guard=AeroSurfaceGuard.create(surface,{L,H,W,extent});
     const x0=Math.max(-extent,field.bounds[0][0]+field.spacing[0]);
     if(x0>=-L*.5) throw Error('El campo debe incluir el aire aguas arriba del vehículo (−X).');
     const xEnd=Math.min(extent,field.bounds[0][1]-field.spacing[0]);
@@ -64,7 +65,7 @@ const AeroCFD = (() => {
     const zMax=Math.min(field.bounds[2][1]-field.spacing[2]*.5,emitter.zMax);
     if(yMax<=yMin||zMax<=zMin) throw Error('El campo CFD no cubre el plano emisor seleccionado.');
     const dt=(xEnd-x0)/(steps-1)/Math.max(field.referenceSpeed,0.05);
-    let seed=173,rawSamples=0,stalled=0;
+    let seed=173,rawSamples=0,stalled=0,surfaceAdjusted=0;
     const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
     const cols=Math.max(1,Math.round(Math.sqrt(tracks*1.3))),rows=Math.ceil(tracks/cols);
     const add=(p,v,m)=>[p[0]+v[0]*m,p[1]+v[1]*m,p[2]+v[2]*m];
@@ -90,15 +91,20 @@ const AeroCFD = (() => {
         const d=c&&field.sample(add(p,c,dt));
         if(!b||!c||!d){active=false;continue;}
         const q=p.map((v,j)=>v+dt*(a[j]+2*b[j]+2*c[j]+d[j])/6);
-        if(q.some(v=>!Number.isFinite(v))||surface.segment(p,q)){
-          active=false;stalled++;continue;
-        }
-        p=q;
+        if(q.some(v=>!Number.isFinite(v))){active=false;stalled++;continue;}
+        // The imported CFD field is immutable. Reroute the DISPLAY path along
+        // the triangle skin when its vector would enter the vehicle. Unsafe
+        // steps are stopped rather than drawn through the model.
+        const safe=guard.step(p,q,y,z);
+        if(!safe){active=false;stalled++;continue;}
+        if(Math.hypot(safe[0]-q[0],safe[1]-q[1],safe[2]-q[2])>1e-5)
+          surfaceAdjusted++;
+        p=safe;
       }
       if(i%12===0)await pause();
     }
     return {paths,speeds,tracks,steps,precision,rawSamples,repaired:0,stalled,physical:true,
-      displayMaxSpeed:field.displayMaxSpeed};
+      displayMaxSpeed:field.displayMaxSpeed,surfaceAdjusted};
   }
   return {parse,build};
 })();
