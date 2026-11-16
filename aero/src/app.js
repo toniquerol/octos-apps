@@ -70,6 +70,8 @@ function configureFlow(){
   if(focusFlow)focusFlow.configure({...cfg,opacity:cfg.opacity*focusFade*.75});
   if(retiredFocus)retiredFocus.configure({...cfg,opacity:cfg.opacity*retiredFade*.75});
   $('particlecount').textContent=flow.count.toLocaleString('es')+' TRAZADORES · '+TRACKS+' TRAYECTORIAS';
+  $('speedlegend').style.display=cfg.color==='velocity'?'flex':'none';
+  $('speedlabel').textContent=pathData?.physical&&activeCFD?'0 – '+activeCFD.displayMaxSpeed.toFixed(1)+' m/s':'VELOCIDAD RELATIVA · NO CFD';
   wake();
 }
 function updateParticles(){if(flow)flow.setTime(clock);if(focusFlow)focusFlow.setTime(clock);if(retiredFocus)retiredFocus.setTime(clock);}
