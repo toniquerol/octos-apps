@@ -12,6 +12,31 @@ async function test(){
   assert(start.triangles>0 && start.tracks===360 && start.steps===288);
   assert.equal(start.particles,12000);
   assert.deepEqual(start.emitter,[2.6,2.0]);
+  // Floating control docks must keep a usable internal scrollbar, rotation buttons and resize grips.
+  assert(await page.locator('#vehicleDock .rotate-tools [data-axis="x"]').isVisible());
+  assert.equal(await page.locator('#vehicleDock [data-axis]').count(),3);
+  for(const id of ['vehicleDock','flowDock']){
+    const sc=await page.locator('#'+id+' .dock-scroll').evaluate(el=>{
+      el.scrollTop=el.scrollHeight;
+      return {client:el.clientHeight,total:el.scrollHeight,position:el.scrollTop,
+        overflow:getComputedStyle(el).overflowY};
+    });
+    assert(sc.client>80&&sc.total>sc.client+15&&sc.position>0,
+      id+' should support independent vertical scrolling: '+JSON.stringify(sc));
+  }
+  const leftBefore=(await page.locator('#viewDock').boundingBox()).width;
+  const leftGrip=await page.locator('#viewResizeHandle').boundingBox();
+  await page.mouse.move(leftGrip.x+leftGrip.width/2,leftGrip.y+leftGrip.height/2);
+  await page.mouse.down();await page.mouse.move(leftGrip.x+leftGrip.width/2+62,leftGrip.y+leftGrip.height/2,{steps:6});await page.mouse.up();
+  assert((await page.locator('#viewDock').boundingBox()).width>leftBefore+40,
+    'left camera panel width must be draggable');
+  const rightBefore=(await page.locator('#rightDocks').boundingBox()).width;
+  const rightGrip=await page.locator('#rightResizeHandle').boundingBox();
+  await page.mouse.move(rightGrip.x+rightGrip.width/2,rightGrip.y+rightGrip.height/2);
+  await page.mouse.down();await page.mouse.move(rightGrip.x+rightGrip.width/2-65,rightGrip.y+rightGrip.height/2,{steps:6});await page.mouse.up();
+  assert((await page.locator('#rightDocks').boundingBox()).width>rightBefore+40,
+    'right control panel width must be draggable');
+
   assert(await page.locator('#vehicleDock').evaluate(el=>el.open));
   await page.locator('#vehicleDock summary').click();
   assert(!(await page.locator('#vehicleDock').evaluate(el=>el.open)),'vehicle dock collapses');
@@ -34,6 +59,12 @@ async function test(){
   await page.locator('#layout').selectOption('4');
   const four=await page.evaluate(()=>window.aeroDiagnostics());
   assert.equal(four.views,4);assert.equal(four.fieldRevision,start.fieldRevision);
+  const viewScroll=await page.locator('#viewDock .dock-scroll').evaluate(el=>{
+    el.scrollTop=el.scrollHeight;
+    return {client:el.clientHeight,total:el.scrollHeight,position:el.scrollTop};
+  });
+  assert(viewScroll.position>0,'four-view controls must scroll vertically');
+
   await page.screenshot({path:path.resolve(__dirname,'aero-four-views.png')});
   await page.locator('#layout').selectOption('2');
   assert.equal((await page.evaluate(()=>window.aeroDiagnostics())).views,2);
