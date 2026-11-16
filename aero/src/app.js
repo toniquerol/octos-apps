@@ -1,5 +1,10 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id), T=THREE, stage=$('stage');
+// Relocate the existing controls into their floating docks without duplicating IDs or handlers.
+$('vehicleDockBody').append($('vehiclePanelContent'));
+$('flowDockBody').append($('cfdPanelContent'));
+$('flowDockBody').append($('flowPanelContent'));
+$('viewDockBody').append($('viewPanelContent'));
 let renderer;try{renderer=new T.WebGLRenderer({antialias:true,powerPreference:'default'});}catch(e){$('status').textContent='WebGL2 no disponible. Abre el archivo en Chrome o Edge con aceleración gráfica.';return;}
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));renderer.setClearColor(0x101820);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1;stage.prepend(renderer.domElement);
 const scene=new T.Scene();scene.add(new T.HemisphereLight(0xd9eaff,0x46414b,2.5));const light=new T.DirectionalLight(0xffffff,3);light.position.set(-3,7,4);scene.add(light);
@@ -9,10 +14,63 @@ let L=4.5,H=1.4,W=1.9,extent=8,triangles=0,TRACKS=0,STEPS=0;
 let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0,activeCFD=null;
 let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
 const emitter={width:2.6,height:2.0}; // Independent of the CFD field's physical domain.
-let cameras=[],views=[],orbit=[],frameCount=0,fpsTime=0;
+let cameras=[],views=[],viewSelects=[],orbit=[],frameCount=0,fpsTime=0;
+let sectionEnabled=false,sectionPick=false,sectionX=0,sectionViewIndex=0;
 const ground=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial({color:0x171d25,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.025;scene.add(ground);
 const grid=new T.GridHelper(20,40,0x3c505c,0x23323e);grid.position.y=-.015;scene.add(grid);
 const arrow=new T.ArrowHelper(new T.Vector3(1,0,0),new T.Vector3(-6,.06,-2.4),2,0xff6a1a,.3,.17);scene.add(arrow);
+// Vertical YZ slicing plane, normal +X: in section view only the downstream half is visible.
+const sectionPlane=new T.Plane(new T.Vector3(1,0,0),0);
+const sectionMarker=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshBasicMaterial({
+  color:0xff6a1a,transparent:true,opacity:.17,depthWrite:false,side:T.DoubleSide}));
+sectionMarker.rotation.y=Math.PI/2;sectionMarker.visible=false;scene.add(sectionMarker);
+function updateSectionUI(){
+  $('section').setAttribute('aria-pressed',sectionPick?'true':'false');
+  $('section').textContent=sectionPick?'Clic en el modelo…':'Crear sección';
+  $('sectionHint').textContent=sectionPick?
+    'Selecciona una posición sobre el vehículo o el suelo; se abrirá el corte en vista frontal-oblicua.':
+    sectionEnabled?'Sección YZ activa. Ajusta el corte X o elimínalo para recuperar la vista.':
+      'Pulsa «Crear sección» y haz clic sobre el vehículo o el suelo.';
+  stage.classList.toggle('section-pick',sectionPick);
+}
+function updateSectionMarker(){
+  sectionX=T.MathUtils.clamp(sectionX,-L*.5,L*.5);
+  sectionPlane.constant=-sectionX;
+  sectionMarker.position.set(sectionX,H*.58,0);
+  sectionMarker.scale.set(Math.max(W*1.6,1.8),Math.max(H*1.32,1.6),1);
+  sectionMarker.visible=sectionEnabled;
+  $('sectionPosition').min=(-L*.5).toFixed(2);
+  $('sectionPosition').max=(L*.5).toFixed(2);
+  $('sectionPosition').value=sectionX.toFixed(2);
+  $('sectionValue').textContent=sectionX.toFixed(2).replace('.',',')+' m';
+  updateSectionUI();wake();
+}
+function clearSection(){
+  sectionEnabled=false;sectionPick=false;
+  for(const select of viewSelects)if(select.value==='section')select.value='3d';
+  sectionMarker.visible=false;updateSectionUI();wake();
+}
+function setSection(x,sourceIndex=0,split=true){
+  sectionX=T.MathUtils.clamp(x,-L*.5,L*.5);
+  sectionEnabled=true;sectionPick=false;
+  if(split&&views.length===1){
+    $('layout').value='2';layout();sectionViewIndex=1;
+  }else sectionViewIndex=Math.max(0,Math.min(views.length-1,sourceIndex));
+  viewSelects[sectionViewIndex].value='section';
+  updateSectionMarker();
+}
+function pickSection(e,i){
+  if(!content)return;
+  // Use the camera under the pointer. Fall back to the ground plane for clicks beside the car.
+  const bounds=views[i].getBoundingClientRect(),type=viewSelects[i].value;
+  const cam=cameras[i][type==='3d'?'persp':'ortho'],ray=new T.Raycaster();
+  ray.setFromCamera({x:(e.clientX-bounds.left)/bounds.width*2-1,y:-(e.clientY-bounds.top)/bounds.height*2+1},cam);
+  const hits=ray.intersectObject(content,true);
+  const groundHit=ray.ray.intersectPlane(new T.Plane(new T.Vector3(0,1,0),0),new T.Vector3());
+  const chosen=hits.length?hits[0].point:groundHit;
+  if(!chosen){status('No se pudo situar el corte. Haz clic sobre el vehículo o el suelo.',true);return;}
+  setSection(chosen.x,i,true);
+}
 function status(s,error=false){$('status').textContent=s;$('status').classList.toggle('error',error);}
 function wake(){dirty=true;if(!raf)raf=requestAnimationFrame(tick);}
 function dispose(obj){const gs=new Set(),ms=new Set(),ts=new Set();obj.traverse(o=>{if(o.geometry)gs.add(o.geometry);for(const m of (Array.isArray(o.material)?o.material:[o.material]))if(m){ms.add(m);for(const v of Object.values(m))if(v?.isTexture)ts.add(v);}});gs.forEach(g=>g.dispose());ms.forEach(m=>m.dispose());ts.forEach(t=>{t.dispose();if(t.source?.data?.close)t.source.data.close();});}
@@ -21,7 +79,7 @@ const shape=new T.Shape();shape.moveTo(-2.25,.28);shape.lineTo(-2.2,.65);shape.l
 const geom=new T.ExtrudeGeometry(shape,{depth:1.62,bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:.07,bevelThickness:.08});geom.translate(0,0,-.81);g.add(new T.Mesh(geom,mat));
 for(const z of [-.9,.9]){const win=new T.Mesh(new T.BoxGeometry(1.1,.38,.02),glass);win.position.set(.02,1.1,z*.96);g.add(win);for(const x of [-1.42,1.45]){const wheel=new T.Mesh(new T.CylinderGeometry(.34,.34,.22,24),new T.MeshStandardMaterial({color:0x16171b,roughness:.95}));wheel.rotation.x=Math.PI/2;wheel.position.set(x,.34,z);g.add(wheel);const hub=new T.Mesh(new T.CylinderGeometry(.18,.18,.23,16),mat);hub.rotation.x=Math.PI/2;hub.position.copy(wheel.position);g.add(hub);}}
 return g;}
-function normalize(){vehicle.position.set(0,0,0);vehicle.updateMatrixWorld(true);let b=new T.Box3().setFromObject(vehicle);if(b.isEmpty())throw Error('No hay geometría visible.');const center=b.getCenter(new T.Vector3());vehicle.position.set(-center.x,-b.min.y,-center.z);vehicle.updateMatrixWorld(true);b=new T.Box3().setFromObject(vehicle);const s=b.getSize(new T.Vector3());L=s.x;H=s.y;W=s.z;if(!Number.isFinite(L+H+W)||Math.min(L,H,W)<1e-7)throw Error('Dimensiones no válidas.');extent=Math.max(L*1.65,H*2,W*2);ground.scale.set(extent*2,extent*1.3,1);grid.scale.setScalar(extent/10);arrow.position.set(-extent*.85,.06,-W*.9);arrow.setLength(L*.5,L*.08,L*.04);$('length').value=L.toFixed(2);$('dimensions').textContent=`${L.toFixed(2)} × ${H.toFixed(2)} × ${W.toFixed(2)} m`;}
+function normalize(){vehicle.position.set(0,0,0);vehicle.updateMatrixWorld(true);let b=new T.Box3().setFromObject(vehicle);if(b.isEmpty())throw Error('No hay geometría visible.');const center=b.getCenter(new T.Vector3());vehicle.position.set(-center.x,-b.min.y,-center.z);vehicle.updateMatrixWorld(true);b=new T.Box3().setFromObject(vehicle);const s=b.getSize(new T.Vector3());L=s.x;H=s.y;W=s.z;if(!Number.isFinite(L+H+W)||Math.min(L,H,W)<1e-7)throw Error('Dimensiones no válidas.');extent=Math.max(L*1.65,H*2,W*2);sectionX=T.MathUtils.clamp(sectionX,-L*.5,L*.5);updateSectionMarker();ground.scale.set(extent*2,extent*1.3,1);grid.scale.setScalar(extent/10);arrow.position.set(-extent*.85,.06,-W*.9);arrow.setLength(L*.5,L*.08,L*.04);$('length').value=L.toFixed(2);$('dimensions').textContent=`${L.toFixed(2)} × ${H.toFixed(2)} × ${W.toFixed(2)} m`;}
 function releaseFocus(){
   for(const extra of [focusFlow,retiredFocus])if(extra){scene.remove(extra.group);extra.dispose();}
   focusFlow=retiredFocus=null;focusFade=retiredFade=0;focusLocation=null;
@@ -131,7 +189,7 @@ function resetField(){
   $('fieldinfo').textContent='Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.';
 }
 function install(obj,name,yaw=0){
-  generation++;releaseFocus();resetField();
+  generation++;releaseFocus();resetField();clearSection();sectionX=0;
   if(content){vehicle.remove(content);dispose(content);}
   vehicle.rotation.set(0,yaw,0);vehicle.scale.setScalar(1);
   content=obj;vehicle.add(obj);vehicle.visible=$('body').checked;
@@ -142,14 +200,45 @@ function resetCameras(){
   orbit=views.map(()=>({theta:2.35,phi:1.13,r:extent*1.12,zoom:1,target:new T.Vector3(0,H*.55,0)}));
   if(focusFlow)releaseFocus();wake();
 }
-function layout(){const count=+$('layout').value;$('panels').innerHTML='';$('panels').style.gridTemplateColumns=count===1?'1fr':'1fr 1fr';$('panels').style.gridTemplateRows=count===4?'1fr 1fr':'1fr';views=[];cameras=[];for(let i=0;i<count;i++){const div=document.createElement('div');div.className='view';div.innerHTML=`<select aria-label="Cámara ${i+1}"><option value="3d">Perspectiva 3D</option><option value="side">Lateral</option><option value="top">Superior</option><option value="front">Frontal</option></select><small>0${i+1} / VISTA</small>`;$('panels').append(div);div.querySelector('select').value=['3d','side','top','front'][i];div.querySelector('select').onchange=wake;views.push(div);cameras.push({persp:new T.PerspectiveCamera(42,1,.01,10000),ortho:new T.OrthographicCamera(-1,1,1,-1,.01,10000)});}resetCameras();}
+function layout(){
+  const count=+$('layout').value,prior=viewSelects.map(select=>select.value);
+  $('panels').innerHTML='';$('viewTypes').innerHTML='';
+  $('panels').style.gridTemplateColumns=count===1?'1fr':'1fr 1fr';
+  $('panels').style.gridTemplateRows=count===4?'1fr 1fr':'1fr';
+  views=[];viewSelects=[];cameras=[];
+  for(let i=0;i<count;i++){
+    const div=document.createElement('div');div.className='view';
+    div.innerHTML='<small>0'+(i+1)+' / VISTA</small>';$('panels').append(div);
+    const group=document.createElement('div');group.className='view-picker';
+    const label=document.createElement('label');label.textContent='Vista '+(i+1);
+    const select=document.createElement('select');
+    select.setAttribute('aria-label','Tipo de vista '+(i+1));
+    select.innerHTML='<option value="3d">Perspectiva 3D</option><option value="side">Lateral</option><option value="top">Superior</option><option value="front">Frontal</option><option value="section">Sección vertical YZ</option>';
+    select.value=prior[i]||['3d','side','top','front'][i];
+    select.onchange=()=>{
+      if(select.value==='section')setSection(sectionX,i,false);
+      else if(sectionViewIndex===i&&!viewSelects.some(v=>v.value==='section'))clearSection();
+      wake();
+    };
+    group.append(label);group.append(select);$('viewTypes').append(group);
+    views.push(div);viewSelects.push(select);
+    cameras.push({persp:new T.PerspectiveCamera(42,1,.01,10000),
+      ortho:new T.OrthographicCamera(-1,1,1,-1,.01,10000)});
+  }
+  if(sectionEnabled&&!viewSelects.some(select=>select.value==='section')){
+    sectionViewIndex=Math.min(sectionViewIndex,count-1);
+    viewSelects[sectionViewIndex].value='section';
+  }
+  resetCameras();
+}
 function render(){
   const width=stage.clientWidth,height=stage.clientHeight;
   if(renderer.domElement.width!==Math.round(width*renderer.getPixelRatio())||renderer.domElement.height!==Math.round(height*renderer.getPixelRatio()))renderer.setSize(width,height,false);
   renderer.setScissorTest(true);const sr=stage.getBoundingClientRect();
   views.forEach((v,i)=>{
     const rect=v.getBoundingClientRect(),x=rect.left-sr.left,y=height-(rect.bottom-sr.top);
-    const aspect=rect.width/Math.max(rect.height,1),type=v.querySelector('select').value,o=orbit[i],target=o.target;
+    const aspect=rect.width/Math.max(rect.height,1),type=viewSelects[i].value,o=orbit[i];
+    const target=type==='section'?new T.Vector3(sectionX+L*.23,H*.56,0):o.target;
     let cam;
     if(type==='3d'){
       cam=cameras[i].persp;cam.aspect=aspect;
@@ -157,15 +246,25 @@ function render(){
         target.y+Math.cos(o.phi)*o.r,target.z+Math.sin(o.theta)*Math.sin(o.phi)*o.r);
       cam.up.set(0,1,0);
     }else{
-      cam=cameras[i].ortho;const size=extent*.58/o.zoom;
+      cam=cameras[i].ortho;const size=(type==='section'?Math.max(W*.85,H*1.1,1.2):extent*.58)/o.zoom;
       cam.left=-size*aspect;cam.right=size*aspect;cam.top=size;cam.bottom=-size;cam.up.set(0,1,0);
       if(type==='side')cam.position.set(target.x,target.y,target.z+extent*3);
       if(type==='front')cam.position.set(target.x-extent*3,target.y,target.z);
       if(type==='top'){cam.position.set(target.x,target.y+extent*3,target.z);cam.up.set(1,0,0);}
+      if(type==='section')cam.position.set(sectionX-extent*2,H+extent*.53,extent*.43);
     }
     cam.lookAt(target);cam.updateProjectionMatrix();cam.updateMatrixWorld(true);
-    renderer.setViewport(x,y,rect.width,rect.height);renderer.setScissor(x,y,rect.width,rect.height);renderer.render(scene,cam);
-  });dirty=false;
+    const sliced=type==='section'&&sectionEnabled;
+    renderer.clippingPlanes=sliced?[sectionPlane]:[];
+    sectionMarker.visible=sectionEnabled&&!sliced;
+    for(const group of [flow,focusFlow,retiredFocus])if(group?.setClip)group.setClip(sliced,sectionX);
+    renderer.setViewport(x,y,rect.width,rect.height);
+    renderer.setScissor(x,y,rect.width,rect.height);
+    renderer.render(scene,cam);
+  });
+  renderer.clippingPlanes=[];
+  for(const group of [flow,focusFlow,retiredFocus])if(group?.setClip)group.setClip(false,sectionX);
+  sectionMarker.visible=sectionEnabled;dirty=false;
 }
 const focusMarker=new T.Mesh(new T.SphereGeometry(.032,10,8),new T.MeshBasicMaterial({color:0xff6a1a,depthTest:false}));
 focusMarker.visible=false;scene.add(focusMarker);
@@ -183,13 +282,15 @@ function tick(t){
 let drag=null;
 function viewAt(e){return views.findIndex(v=>{const r=v.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom;});}
 renderer.domElement.addEventListener('pointerdown',e=>{const i=viewAt(e);if(i<0)return;
-  drag={i,x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button===2||views[i].querySelector('select').value!=='3d'};
+  if(sectionPick&&e.button===0){pickSection(e,i);return;}
+  drag={i,x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button===2||viewSelects[i].value!=='3d'};
   renderer.domElement.setPointerCapture(e.pointerId);});
 renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
 renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;
   const o=orbit[drag.i],dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(viewSelects[drag.i].value==='section')return;
   if(drag.pan||e.shiftKey){
-    const type=views[drag.i].querySelector('select').value,cam=cameras[drag.i][type==='3d'?'persp':'ortho'];
+    const type=viewSelects[drag.i].value,cam=cameras[drag.i][type==='3d'?'persp':'ortho'];
     const right=new T.Vector3().setFromMatrixColumn(cam.matrixWorld,0);
     const up=new T.Vector3().setFromMatrixColumn(cam.matrixWorld,1);
     const unit=type==='3d'?o.r/500:extent/(Math.max(o.zoom,.1)*300);
@@ -209,8 +310,8 @@ renderer.domElement.addEventListener('wheel',e=>{
   updateFocus(false,i);wake();
 },{passive:false});
 renderer.domElement.addEventListener('dblclick',e=>{
-  const i=viewAt(e);if(i<0||!content)return;
-  render();const bounds=views[i].getBoundingClientRect(),type=views[i].querySelector('select').value;
+  const i=viewAt(e);if(i<0||!content||sectionPick)return;
+  render();const bounds=views[i].getBoundingClientRect(),type=viewSelects[i].value;
   const cam=cameras[i][type==='3d'?'persp':'ortho'],ray=new T.Raycaster();
   ray.setFromCamera({x:(e.clientX-bounds.left)/bounds.width*2-1,y:-(e.clientY-bounds.top)/bounds.height*2+1},cam);
   const hits=ray.intersectObject(content,true);if(!hits.length)return;
@@ -219,7 +320,23 @@ renderer.domElement.addEventListener('dblclick',e=>{
   focusMarker.position.copy(inspectionPoint);focusMarker.scale.setScalar(Math.max(L*.35,.1));focusMarker.visible=true;
   updateFocus(true,i);wake();
 });
-$('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Ⅱ Pausar':'▶ Reproducir';$('fps').textContent=playing?'— FPS':'PAUSA';last=0;wake();};
+function playback(on){
+  playing=on;
+  $('play').classList.toggle('primary',on);
+  $('pause').classList.toggle('primary',!on);
+  $('play').setAttribute('aria-pressed',on?'true':'false');
+  $('pause').setAttribute('aria-pressed',on?'false':'true');
+  $('fps').textContent=on?'— FPS':'PAUSA';last=0;wake();
+}
+$('play').onclick=()=>playback(true);
+$('pause').onclick=()=>playback(false);
+$('section').onclick=()=>{sectionPick=!sectionPick;updateSectionUI();wake();};
+$('clearSection').onclick=clearSection;
+$('sectionPosition').oninput=()=>{
+  sectionX=Number($('sectionPosition').value);
+  if(!sectionEnabled)setSection(sectionX,0,false);
+  updateSectionMarker();
+};
 $('reset').onclick=()=>{clock=0;updateParticles();wake();};
 $('quality').onchange=setParticles;
 $('precision').onchange=()=>rebuild(false,false);
@@ -289,9 +406,10 @@ if(t!==token)return;if(!saved){status('Demo activa · Importa el GLB BMW E46 una
 loading=true;status('Cargando vehículo predeterminado…');try{const model=await parseVehicle(saved.buffer);if(t!==token){dispose(model);return;}await install(model,saved.name,saved.yaw||0);status('Modelo predeterminado cargado · orientación aplicada.');}catch(e){if(t===token)status('No se pudo cargar el modelo predeterminado: '+e.message,true);}finally{if(t===token)loading=false;wake();}}
 $('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=++token;loading=true;status('Leyendo GLB local…');await new Promise(r=>setTimeout(r,30));try{const buf=await f.arrayBuffer(),model=await parseVehicle(buf);if(t!==token){dispose(model);return;}const yaw=$('presetBMW').checked?Math.PI:0;await install(model,f.name,yaw);status('GLB cargado · comprueba la longitud real.');try{const saved=await saveDefault(buf,f.name,yaw);if(t===token)status(saved?'GLB cargado y guardado como predeterminado · orientación aplicada.':'GLB cargado · no se pudo guardar en este navegador.');}catch(e){if(t===token)status('GLB cargado · no se pudo guardar para futuros accesos.',true);}}catch(err){if(t===token)status('No se pudo cargar: '+err.message,true);}finally{if(t===token)loading=false;e.target.value='';wake();}};
 new ResizeObserver(wake).observe(stage);document.addEventListener('visibilitychange',()=>{last=0;if(!document.hidden)wake();});renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();playing=false;status('Contexto gráfico perdido. Recarga el archivo.',true);});
-layout();install(demo(),'Concepto de demostración');restoreDefault();
+layout();updateSectionUI();playback(true);install(demo(),'Concepto de demostración');restoreDefault();
 window.aeroReady=()=>buildPromise;
 window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
+  sectionEnabled,sectionPick,sectionX,sectionViewIndex,viewModes:viewSelects.map(s=>s.value),
   dimensions:[L,H,W],emitter:[emitter.width,emitter.height],tracks:TRACKS,steps:STEPS,fieldRevision,precision:pathData?.precision||null,
   rawSamples:pathData?.rawSamples||0,repaired:pathData?.repaired||0,stalled:pathData?.stalled||0,
   openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,cfd:!!pathData?.physical,cfdSource:activeCFD?.source||null,
