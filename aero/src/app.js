@@ -13,7 +13,8 @@ const vehicle=new T.Group();scene.add(vehicle);let flow=null,scenery=null;let co
 let L=4.5,H=1.4,W=1.9,extent=8,triangles=0,TRACKS=0,STEPS=0;
 let surface=null,pathData=null,focusFlow=null,retiredFocus=null,focusFade=0,retiredFade=0,activeCFD=null;
 let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=null,focusLocation=null;
-const emitter={width:2.6,height:2.0}; // Independent of the CFD field's physical domain.
+const emitter={width:2.6,height:2.0,offsetY:0,offsetZ:0,visible:true};
+let emitterSelected=false,emitterDrag=null,emitterTimer=null; // XY fixed: translation in YZ only.
 let cameras=[],views=[],viewSelects=[],orbit=[],frameCount=0,fpsTime=0;
 let sectionEnabled=false,sectionPick=false,sectionAxis='y',sectionValue=H*.5,sectionViewIndex=0;
 const sectionFocus=new T.Vector3(0,H*.5,0);
@@ -79,6 +80,102 @@ const grid=new T.GridHelper(20,40,0x3c505c,0x23323e);grid.position.y=-.015;scene
 const arrow=new T.ArrowHelper(new T.Vector3(1,0,0),new T.Vector3(-6,.06,-2.4),2,0xff6a1a,.3,.17);scene.add(arrow);
 // Section plane: default horizontal XZ (Y axis), with selectable X/Y/Z normal.
 // Keep the opposite half-space to the viewing camera so the cut face is visible.
+// Editable thin emission volume, perpendicular to the +X flow.
+const emitterGroup=new T.Group();scene.add(emitterGroup);
+const emitterBody=new T.Mesh(new T.BoxGeometry(1,1,1),
+  new T.MeshBasicMaterial({color:0x27c5d8,transparent:true,opacity:.16,side:T.DoubleSide,
+    depthWrite:false,depthTest:false}));
+emitterBody.userData.emitterPart='move';emitterGroup.add(emitterBody);
+const emitterEdges=new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(1,1,1)),
+  new T.LineBasicMaterial({color:0x73e2ec,transparent:true,opacity:.78,depthTest:false}));
+emitterGroup.add(emitterEdges);
+function emitterHandle(part,color){
+  const mesh=new T.Mesh(new T.SphereGeometry(.12,14,10),
+    new T.MeshBasicMaterial({color,depthTest:false,depthWrite:false}));
+  mesh.userData.emitterPart=part;emitterGroup.add(mesh);return mesh;
+}
+const emitterMove=emitterHandle('move',0xffffff);
+const emitterWidthGrip=emitterHandle('width',0x65deed);
+const emitterHeightGrip=emitterHandle('height',0xffa344);
+const emitterTargets=[emitterMove,emitterWidthGrip,emitterHeightGrip,emitterBody];
+function emitterX(){return AeroEmitter.originX(L,extent,activeCFD);}
+function emitterCoordinates(){return AeroEmitter.bounds(emitter.width,emitter.height,
+  $('focus').value,emitter.offsetY,emitter.offsetZ);}
+function updateEmitterVisual(){
+  const y=.035+emitter.offsetY+(emitter.height-.035)*.5;
+  emitterGroup.position.set(emitterX(),y,emitter.offsetZ);
+  emitterBody.scale.set(.065,Math.max(.02,emitter.height-.035),emitter.width);
+  emitterEdges.scale.copy(emitterBody.scale);
+  emitterMove.position.set(-.13,0,0);
+  emitterWidthGrip.position.set(-.13,0,emitter.width*.5);
+  emitterHeightGrip.position.set(-.13,(emitter.height-.035)*.5,0);
+  const handles=emitterSelected&&emitter.visible;
+  for(const h of [emitterMove,emitterWidthGrip,emitterHeightGrip])h.visible=handles;
+  emitterGroup.visible=emitter.visible;
+  emitterBody.material.opacity=emitterSelected?.29:.14;
+  emitterEdges.material.opacity=emitterSelected?1:.72;
+  $('emitterWidth').value=emitter.width.toFixed(2);
+  $('emitterHeight').value=emitter.height.toFixed(2);
+  $('emitterOffsetY').value=emitter.offsetY.toFixed(2);
+  $('emitterOffsetZ').value=emitter.offsetZ.toFixed(2);
+  $('emitterShow').checked=emitter.visible;
+  $('emitterSelect').setAttribute('aria-pressed',emitterSelected?'true':'false');
+  $('emitterSelect').textContent=emitterSelected?'Emisor seleccionado':'Seleccionar en 3D';
+  $('emitterStatus').textContent='X fijo: '+emitterX().toFixed(2)+' m · Arrastra el centro blanco para mover Y/Z, el punto cian para anchura y el naranja para altura. Partículas regeneradas al terminar.';
+  wake();
+}
+function queueEmitterRebuild(immediate=false){
+  if(emitterTimer!==null){clearTimeout(emitterTimer);emitterTimer=null;}
+  if(immediate){rebuild(false,false);return;}
+  emitterTimer=setTimeout(()=>{emitterTimer=null;rebuild(false,false);},320);
+}
+function emitterRay(e,i){
+  const bounds=views[i].getBoundingClientRect(),type=viewSelects[i].value;
+  const cam=cameras[i][type==='3d'?'persp':'ortho'],ray=new T.Raycaster();
+  ray.setFromCamera({x:(e.clientX-bounds.left)/bounds.width*2-1,
+    y:-(e.clientY-bounds.top)/bounds.height*2+1},cam);
+  return ray;
+}
+function emitterPlaneHit(ray){
+  return ray.ray.intersectPlane(new T.Plane(new T.Vector3(1,0,0),-emitterX()),new T.Vector3());
+}
+function emitterPointerDown(e,i){
+  if(!emitter.visible||viewSelects[i].value==='section')return false;
+  // Use the real camera of the clicked viewport (all views share one canvas).
+  render();
+  const ray=emitterRay(e,i),hits=ray.intersectObjects(emitterTargets.filter(t=>t.visible),false);
+  if(!hits.length)return false;
+  const point=emitterPlaneHit(ray);
+  if(!point){status('Selecciona el emisor desde una vista frontal o 3D.',true);return true;}
+  emitterSelected=true;
+  emitterDrag={i,pointerId:e.pointerId,part:hits[0].object.userData.emitterPart,
+    start:point.clone(),offsetY:emitter.offsetY,offsetZ:emitter.offsetZ,
+    width:emitter.width,height:emitter.height};
+  updateEmitterVisual();
+  renderer.domElement.setPointerCapture(e.pointerId);
+  e.preventDefault();return true;
+}
+function emitterPointerMove(e){
+  if(!emitterDrag||e.pointerId!==emitterDrag.pointerId)return false;
+  const point=emitterPlaneHit(emitterRay(e,emitterDrag.i));
+  if(!point)return true;
+  const d=emitterDrag;
+  if(d.part==='move'){
+    emitter.offsetY=T.MathUtils.clamp(d.offsetY+point.y-d.start.y,0,Math.max(0,extent*1.8));
+    emitter.offsetZ=T.MathUtils.clamp(d.offsetZ+point.z-d.start.z,-extent*2,extent*2);
+  }else if(d.part==='width'){
+    emitter.width=T.MathUtils.clamp(2*Math.abs(point.z-emitter.offsetZ),.2,20);
+  }else if(d.part==='height'){
+    emitter.height=T.MathUtils.clamp(point.y-emitter.offsetY,.2,20);
+  }
+  updateEmitterVisual();
+  queueEmitterRebuild();
+  e.preventDefault();return true;
+}
+function emitterPointerEnd(e){
+  if(!emitterDrag||e.pointerId!==emitterDrag.pointerId)return false;
+  emitterDrag=null;queueEmitterRebuild(true);updateEmitterVisual();return true;
+}
 const sectionPlane=new T.Plane(new T.Vector3(0,-1,0),0);
 const sectionMarker=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshBasicMaterial({
   color:0xff6a1a,transparent:true,opacity:.17,depthWrite:false,side:T.DoubleSide}));
@@ -177,7 +274,7 @@ const shape=new T.Shape();shape.moveTo(-2.25,.28);shape.lineTo(-2.2,.65);shape.l
 const geom=new T.ExtrudeGeometry(shape,{depth:1.62,bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:.07,bevelThickness:.08});geom.translate(0,0,-.81);g.add(new T.Mesh(geom,mat));
 for(const z of [-.9,.9]){const win=new T.Mesh(new T.BoxGeometry(1.1,.38,.02),glass);win.position.set(.02,1.1,z*.96);g.add(win);for(const x of [-1.42,1.45]){const wheel=new T.Mesh(new T.CylinderGeometry(.34,.34,.22,24),new T.MeshStandardMaterial({color:0x16171b,roughness:.95}));wheel.rotation.x=Math.PI/2;wheel.position.set(x,.34,z);g.add(wheel);const hub=new T.Mesh(new T.CylinderGeometry(.18,.18,.23,16),mat);hub.rotation.x=Math.PI/2;hub.position.copy(wheel.position);g.add(hub);}}
 return g;}
-function normalize(){vehicle.position.set(0,0,0);vehicle.updateMatrixWorld(true);let b=new T.Box3().setFromObject(vehicle);if(b.isEmpty())throw Error('No hay geometría visible.');const center=b.getCenter(new T.Vector3());vehicle.position.set(-center.x,-b.min.y,-center.z);vehicle.updateMatrixWorld(true);b=new T.Box3().setFromObject(vehicle);const s=b.getSize(new T.Vector3());L=s.x;H=s.y;W=s.z;if(!Number.isFinite(L+H+W)||Math.min(L,H,W)<1e-7)throw Error('Dimensiones no válidas.');extent=Math.max(L*1.65,H*2,W*2);if(!sectionEnabled){sectionFocus.set(0,H*.5,0);sectionValue=sectionFocus[sectionAxis];}updateSectionMarker();ground.scale.set(extent*2,extent*1.3,1);grid.scale.setScalar(extent/10);arrow.position.set(-extent*.85,.06,-W*.9);arrow.setLength(L*.5,L*.08,L*.04);$('length').value=L.toFixed(2);$('dimensions').textContent=`${L.toFixed(2)} × ${H.toFixed(2)} × ${W.toFixed(2)} m`;}
+function normalize(){vehicle.position.set(0,0,0);vehicle.updateMatrixWorld(true);let b=new T.Box3().setFromObject(vehicle);if(b.isEmpty())throw Error('No hay geometría visible.');const center=b.getCenter(new T.Vector3());vehicle.position.set(-center.x,-b.min.y,-center.z);vehicle.updateMatrixWorld(true);b=new T.Box3().setFromObject(vehicle);const s=b.getSize(new T.Vector3());L=s.x;H=s.y;W=s.z;if(!Number.isFinite(L+H+W)||Math.min(L,H,W)<1e-7)throw Error('Dimensiones no válidas.');extent=Math.max(L*1.65,H*2,W*2);if(!sectionEnabled){sectionFocus.set(0,H*.5,0);sectionValue=sectionFocus[sectionAxis];}updateSectionMarker();updateEmitterVisual();ground.scale.set(extent*2,extent*1.3,1);grid.scale.setScalar(extent/10);arrow.position.set(-extent*.85,.06,-W*.9);arrow.setLength(L*.5,L*.08,L*.04);$('length').value=L.toFixed(2);$('dimensions').textContent=`${L.toFixed(2)} × ${H.toFixed(2)} × ${W.toFixed(2)} m`;}
 function releaseFocus(){
   for(const extra of [focusFlow,retiredFocus])if(extra){scene.remove(extra.group);extra.dispose();}
   focusFlow=retiredFocus=null;focusFade=retiredFade=0;focusLocation=null;
@@ -256,14 +353,15 @@ function buildScenery(){
 }
 async function performRebuild(geometry=true,reframe=true){
   const seq=++generation;
-  loading=true;status(geometry?'Analizando triángulos del modelo…':'Refinando trayectorias…');
+  loading=true;updateEmitterVisual();status(geometry?'Analizando triángulos del modelo…':'Refinando trayectorias…');
   let nextSurface=null;
   try{
     if(geometry||!surface){normalize();geometry=true;nextSurface=await AeroGeometry.fromObject(vehicle,()=>seq===generation);}
     else nextSurface=surface;
     if(!nextSurface||seq!==generation){if(nextSurface&&nextSurface!==surface)nextSurface.dispose();return;}
     const options={L,H,W,extent,precision:$('precision').value,focus:$('focus').value,
-      emitterWidth:emitter.width,emitterHeight:emitter.height};
+      emitterWidth:emitter.width,emitterHeight:emitter.height,
+      emitterOffsetY:emitter.offsetY,emitterOffsetZ:emitter.offsetZ};
     const result=activeCFD?
       await AeroCFD.build(activeCFD,nextSurface,options,()=>seq===generation):
       await AeroPaths.build(nextSurface,options,()=>seq===generation);
@@ -368,6 +466,7 @@ function render(){
     const sliced=type==='section'&&sectionEnabled;
     renderer.clippingPlanes=sliced?[sectionPlane]:[];
     sectionMarker.visible=sectionEnabled&&!sliced;
+    emitterGroup.visible=emitter.visible&&!sliced;
     for(const group of [flow,focusFlow,retiredFocus])if(group?.setClip)group.setClip(sliced,sectionPlane.normal,sectionPlane.constant);
     renderer.setViewport(x,y,rect.width,rect.height);
     renderer.setScissor(x,y,rect.width,rect.height);
@@ -375,7 +474,7 @@ function render(){
   });
   renderer.clippingPlanes=[];
   for(const group of [flow,focusFlow,retiredFocus])if(group?.setClip)group.setClip(false,sectionPlane.normal,sectionPlane.constant);
-  sectionMarker.visible=sectionEnabled;dirty=false;
+  sectionMarker.visible=sectionEnabled;emitterGroup.visible=emitter.visible;dirty=false;
 }
 const focusMarker=new T.Mesh(new T.SphereGeometry(.032,10,8),new T.MeshBasicMaterial({color:0xff6a1a,depthTest:false}));
 focusMarker.visible=false;scene.add(focusMarker);
@@ -394,10 +493,12 @@ let drag=null;
 function viewAt(e){return views.findIndex(v=>{const r=v.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom;});}
 renderer.domElement.addEventListener('pointerdown',e=>{const i=viewAt(e);if(i<0)return;
   if(sectionPick&&e.button===0){pickSection(e,i);return;}
+  if(e.button===0&&emitterPointerDown(e,i))return;
+  if(emitterSelected&&e.button===0){emitterSelected=false;updateEmitterVisual();}
   drag={i,x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button===2||!['3d','section'].includes(viewSelects[i].value)};
   renderer.domElement.setPointerCapture(e.pointerId);});
 renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
-renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;
+renderer.domElement.addEventListener('pointermove',e=>{if(emitterPointerMove(e))return;if(!drag)return;
   const o=orbit[drag.i],dx=e.clientX-drag.x,dy=e.clientY-drag.y;
   if(drag.pan||e.shiftKey){
     const type=viewSelects[drag.i].value,cam=cameras[drag.i][type==='3d'?'persp':'ortho'];
@@ -410,8 +511,14 @@ renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;
   }
   drag.x=e.clientX;drag.y=e.clientY;wake();
 });
-renderer.domElement.addEventListener('pointerup',()=>{if(drag)updateFocus(false,drag.i);drag=null;});
-renderer.domElement.addEventListener('pointercancel',()=>drag=null);
+renderer.domElement.addEventListener('pointerup',e=>{
+  if(emitterPointerEnd(e))return;
+  if(drag)updateFocus(false,drag.i);drag=null;
+});
+renderer.domElement.addEventListener('pointercancel',e=>{
+  if(emitterDrag&&e.pointerId===emitterDrag.pointerId)emitterPointerEnd(e);
+  drag=null;
+});
 renderer.domElement.addEventListener('wheel',e=>{
   e.preventDefault();const i=viewAt(e);if(i<0)return;
   const factor=Math.exp(e.deltaY*.001),o=orbit[i];
@@ -457,24 +564,35 @@ $('sectionPosition').oninput=()=>{
 $('reset').onclick=()=>{clock=0;updateParticles();wake();};
 $('quality').onchange=setParticles;
 $('precision').onchange=()=>rebuild(false,false);
-// Change only the particle-seeding rectangle; preserve imported CFD grid and camera state.
+// Independent 3D emitter volume: Y/Z translation, Y/Z scale; X cannot move.
 function changeEmitter(){
-  const width=Number($('emitterWidth').value),height=Number($('emitterHeight').value);
-  if(!Number.isFinite(width)||!Number.isFinite(height)||
-      width<.2||height<.2||width>20||height>20){
-    $('emitterWidth').value=emitter.width.toFixed(1);
-    $('emitterHeight').value=emitter.height.toFixed(1);
-    status('El plano emisor debe medir entre 0,2 y 20 m de ancho y alto.',true);
-    return;
+  const width=Number($('emitterWidth').value),height=Number($('emitterHeight').value),
+    offsetY=Number($('emitterOffsetY').value),offsetZ=Number($('emitterOffsetZ').value);
+  if(![width,height,offsetY,offsetZ].every(Number.isFinite)||
+      width<.2||height<.2||width>20||height>20||
+      offsetY<0||offsetY>20||Math.abs(offsetZ)>20){
+    status('Anchura y altura: 0,2–20 m; Y: 0–20 m; Z: ±20 m.',true);
+    updateEmitterVisual();return;
   }
-  if(width===emitter.width&&height===emitter.height)return;
-  emitter.width=width;emitter.height=height;
-  $('emitterWidth').value=width.toFixed(1);
-  $('emitterHeight').value=height.toFixed(1);
-  rebuild(false,false);
+  if(width===emitter.width&&height===emitter.height&&
+    offsetY===emitter.offsetY&&offsetZ===emitter.offsetZ)return;
+  Object.assign(emitter,{width,height,offsetY,offsetZ});
+  updateEmitterVisual();queueEmitterRebuild(true);
 }
-$('emitterWidth').onchange=changeEmitter;
-$('emitterHeight').onchange=changeEmitter;
+for(const id of ['emitterWidth','emitterHeight','emitterOffsetY','emitterOffsetZ'])
+  $(id).onchange=changeEmitter;
+$('emitterSelect').onclick=()=>{
+  emitterSelected=!emitterSelected;emitter.visible=true;updateEmitterVisual();
+};
+$('emitterShow').onchange=()=>{
+  emitter.visible=$('emitterShow').checked;
+  if(!emitter.visible)emitterSelected=false;
+  updateEmitterVisual();
+};
+$('emitterReset').onclick=()=>{
+  Object.assign(emitter,{width:2.6,height:2,offsetY:0,offsetZ:0,visible:true});
+  emitterSelected=true;updateEmitterVisual();queueEmitterRebuild(true);
+};
 for(const id of ['pointsize','trail','opacity','palette','flowmode'])$(id).oninput=configureFlow;
 $('focus').onchange=()=>rebuild(false,false);
 $('tunnel').onchange=()=>{scenery.visible=$('tunnel').checked;wake();};
@@ -523,7 +641,7 @@ if(t!==token)return;if(!saved){status('Demo activa · Importa el GLB BMW E46 una
 loading=true;status('Cargando vehículo predeterminado…');try{const model=await parseVehicle(saved.buffer);if(t!==token){dispose(model);return;}await install(model,saved.name,saved.yaw||0);status('Modelo predeterminado cargado · orientación aplicada.');}catch(e){if(t===token)status('No se pudo cargar el modelo predeterminado: '+e.message,true);}finally{if(t===token)loading=false;wake();}}
 $('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=++token;loading=true;status('Leyendo GLB local…');await new Promise(r=>setTimeout(r,30));try{const buf=await f.arrayBuffer(),model=await parseVehicle(buf);if(t!==token){dispose(model);return;}const yaw=$('presetBMW').checked?Math.PI:0;await install(model,f.name,yaw);status('GLB cargado · comprueba la longitud real.');try{const saved=await saveDefault(buf,f.name,yaw);if(t===token)status(saved?'GLB cargado y guardado como predeterminado · orientación aplicada.':'GLB cargado · no se pudo guardar en este navegador.');}catch(e){if(t===token)status('GLB cargado · no se pudo guardar para futuros accesos.',true);}}catch(err){if(t===token)status('No se pudo cargar: '+err.message,true);}finally{if(t===token)loading=false;e.target.value='';wake();}};
 new ResizeObserver(wake).observe(stage);document.addEventListener('visibilitychange',()=>{last=0;if(!document.hidden)wake();});renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();playing=false;status('Contexto gráfico perdido. Recarga el archivo.',true);});
-initDockLayout();layout();updateSectionUI();playback(true);install(demo(),'Concepto de demostración');restoreDefault();
+initDockLayout();layout();updateSectionUI();updateEmitterVisual();playback(true);install(demo(),'Concepto de demostración');restoreDefault();
 window.aeroReady=()=>buildPromise;
 window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
   sectionEnabled,sectionPick,sectionAxis,sectionValue,sectionViewIndex,
@@ -533,7 +651,7 @@ window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.pos
     const o=orbit[sectionViewIndex];
     return o?[Math.cos(o.theta)*Math.sin(o.phi),Math.cos(o.phi),Math.sin(o.theta)*Math.sin(o.phi)]:null;
   })(),viewModes:viewSelects.map(s=>s.value),
-  dimensions:[L,H,W],emitter:[emitter.width,emitter.height],tracks:TRACKS,steps:STEPS,fieldRevision,precision:pathData?.precision||null,
+  dimensions:[L,H,W],emitter:[emitter.width,emitter.height],emitterOffset:[emitter.offsetY,emitter.offsetZ],emitterX:emitterX(),emitterSelected,emitterVisible:emitter.visible,tracks:TRACKS,steps:STEPS,fieldRevision,precision:pathData?.precision||null,
   rawSamples:pathData?.rawSamples||0,repaired:pathData?.repaired||0,stalled:pathData?.stalled||0,surfaceAdjusted:pathData?.surfaceAdjusted||0,
   openEdges:surface?.openEdges??null,gpuAnimation:true,focused:!!focusFlow,cfd:!!pathData?.physical,cfdSource:activeCFD?.source||null,
   trailVertices:flow?.trails.geometry.attributes.position.count||0,particleSize:flow?.uniforms.size.value||0,
