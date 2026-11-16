@@ -1,11 +1,19 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const elements=new Map(),axes=['x','y','z'].map(axis=>({dataset:{axis}}));
-function element(id){return {id,value:({length:'4.5',speed:'1',quality:'12000',emitterWidth:'2.6',emitterHeight:'2.0',emitterOffsetY:'0',emitterOffsetZ:'0',pointsize:'1.6',trail:'1',opacity:'0.8',palette:'#b8e9ec',flowmode:'both',focus:'all',layout:'1',sectionAxis:'y'})[id]||'',checked:true,style:{},dataset:{},children:[],classList:{toggle(){}},append(e){this.children.push(e)},prepend(){},setAttribute(){},addEventListener(){},setPointerCapture(){},querySelector(){if(!this.select)this.select=element('select');return this.select;},getBoundingClientRect(){return {left:0,top:0,right:1100,bottom:700,width:1100,height:700}},clientWidth:1100,clientHeight:700,textContent:''};}
+function element(id){return {id,value:({length:'4.5',speed:'1.5',quality:'12000',emitterWidth:'0.2',emitterHeight:'2.0',emitterOffsetY:'0',emitterOffsetZ:'0',pointsize:'1.6',trail:'1.6',opacity:'0.6',palette:'#ffb16d',flowmode:'trails',focus:'center',precision:'fine',layout:'1',sectionAxis:'y'})[id]||'',checked:true,style:{},dataset:{},children:[],classList:{toggle(){}},append(e){this.children.push(e)},prepend(){},setAttribute(){},addEventListener(){},setPointerCapture(){},querySelector(){if(!this.select)this.select=element('select');return this.select;},getBoundingClientRect(){return {left:0,top:0,right:1100,bottom:700,width:1100,height:700}},clientWidth:1100,clientHeight:700,textContent:''};}
 const document={hidden:false,getElementById(id){if(!elements.has(id))elements.set(id,element(id));return elements.get(id)},querySelectorAll(){return axes},createElement:()=>element('new'),addEventListener(){}};
 const context={document,window:{},devicePixelRatio:1,console,ArrayBuffer,DataView,Uint8Array,TextDecoder,TextEncoder,URL,Blob,setTimeout,clearTimeout,performance:{getEntriesByType:()=>[]},ResizeObserver:class{observe(){}},requestAnimationFrame:()=>1};vm.createContext(context);
 let html=fs.readFileSync(__dirname+'/../index.html','utf8'),js=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
 const mock=`THREE.WebGLRenderer=class{constructor(){this.domElement={width:1100,height:700,addEventListener(){},setPointerCapture(){}}}setPixelRatio(p){this.p=p}getPixelRatio(){return this.p}setClearColor(){}setScissorTest(){}setSize(){}setViewport(){}setScissor(){}render(){}};`;
-js=js.replace("(()=>{'use strict';",mock+"(()=>{'use strict';");vm.runInContext(js,context);const $=id=>document.getElementById(id),diag=()=>context.window.aeroDiagnostics();async function checks(){await context.window.aeroReady();assert.equal(diag().particles,12000);assert.deepEqual(Array.from(diag().emitter),[2.6,2]);
+js=js.replace("(()=>{'use strict';",mock+"(()=>{'use strict';");vm.runInContext(js,context);const $=id=>document.getElementById(id),diag=()=>context.window.aeroDiagnostics();async function checks(){await context.window.aeroReady();assert.equal(diag().particles,12000);assert.deepEqual(Array.from(diag().emitter),[0.2,2]);
+assert.equal(diag().tracks,640);assert.equal(diag().steps,384);
+assert.equal($('quality').value,'12000');assert.equal($('precision').value,'fine');
+assert.equal($('flowmode').value,'trails');
+assert.equal($('pointsize').value,'1.6');
+assert.equal($('trail').value,'1.6');
+assert.equal($('opacity').value,'0.6');
+assert.equal($('palette').value,'#ffb16d');
+assert.equal($('focus').value,'center');assert.equal($('speed').value,'1.5');
 assert.deepEqual(Array.from(diag().emitterOffset),[0,0]);
 const fixedEmitterX=diag().emitterX;
 $('emitterSelect').onclick();assert.equal(diag().emitterSelected,true);
@@ -14,7 +22,7 @@ $('emitterOffsetZ').value='0.8';$('emitterOffsetZ').onchange();await context.win
 assert.deepEqual(Array.from(diag().emitterOffset),[.5,.8]);
 assert.equal(diag().emitterX,fixedEmitterX);
 $('emitterReset').onclick();await context.window.aeroReady();
-assert.deepEqual(Array.from(diag().emitterOffset),[0,0]);assert(diag().triangles>0);
+assert.deepEqual(Array.from(diag().emitterOffset),[0,0]);assert.equal(diag().emitter[0],0.2);assert(diag().triangles>0);
 const originalField=diag().fieldRevision;
 $('emitterWidth').value='1.6';$('emitterWidth').onchange();await context.window.aeroReady();
 assert(diag().fieldRevision>originalField);assert.equal(diag().emitter[0],1.6);
@@ -49,4 +57,4 @@ assert(!diag().viewModes.includes('section'));$('quality').value='24000';$('qual
 } async function invalid(){await $('file').onchange({target:{files:[{name:'bad.glb',arrayBuffer:async()=>new ArrayBuffer(24)}],value:'x'}});assert($('status').textContent.startsWith('No se pudo cargar:'));
 vm.runInContext('globalThis.testGeometry = new THREE.BoxGeometry(4, 1, 2).toNonIndexed().attributes.position.array;',context);
 const data=Buffer.from(context.testGeometry.buffer),description={asset:{version:'2.0'},buffers:[{byteLength:data.length}],bufferViews:[{buffer:0,byteOffset:0,byteLength:data.length}],accessors:[{bufferView:0,componentType:5126,count:context.testGeometry.length/3,type:'VEC3',min:[-2,-.5,-1],max:[2,.5,1]}],meshes:[{primitives:[{attributes:{POSITION:0}}]}],nodes:[{mesh:0}],scenes:[{nodes:[0]}],scene:0};let json=Buffer.from(JSON.stringify(description));json=Buffer.concat([json,Buffer.alloc((4-json.length%4)%4,32)]);const result=Buffer.alloc(28+json.length+data.length);result.writeUInt32LE(0x46546c67,0);result.writeUInt32LE(2,4);result.writeUInt32LE(result.length,8);result.writeUInt32LE(json.length,12);result.writeUInt32LE(0x4e4f534a,16);json.copy(result,20);result.writeUInt32LE(data.length,20+json.length);result.writeUInt32LE(0x004e4942,24+json.length);data.copy(result,28+json.length);fs.writeFileSync(__dirname+'/prueba_caja.glb',result);
-await $('file').onchange({target:{files:[{name:'prueba_caja.glb',arrayBuffer:async()=>result.buffer.slice(result.byteOffset,result.byteOffset+result.byteLength)}],value:'x'}});await context.window.aeroReady();assert.equal($('filename').textContent,'prueba_caja.glb');assert.equal(diag().triangles,12);assert.equal(diag().dimensions[0],4);console.log('PASS: emisor 2.6x2.0 y 12.000 partículas, reconstrucción independiente de campo, geometría real de Three.js, 4 vistas, cantidad, pausa, reinicio, escala, giro, rechazo de escala y GLB inválidos, carga GLB binario válido (caja de 12 triángulos). Renderizador simulado; no constituye prueba visual.');}checks().then(invalid).catch(e=>{console.error(document.getElementById("status").textContent,e);process.exitCode=1});
+await $('file').onchange({target:{files:[{name:'prueba_caja.glb',arrayBuffer:async()=>result.buffer.slice(result.byteOffset,result.byteOffset+result.byteLength)}],value:'x'}});await context.window.aeroReady();assert.equal($('filename').textContent,'prueba_caja.glb');assert.equal(diag().triangles,12);assert.equal(diag().dimensions[0],4);console.log('PASS: parámetros de inicio personalizados (emisor 0.2x2.0, fine, solo estelas, ámbar, 1.5x), reconstrucción independiente de campo, geometría real de Three.js, 4 vistas, cantidad, pausa, reinicio, escala, giro, rechazo de escala y GLB inválidos, carga GLB binario válido (caja de 12 triángulos). Renderizador simulado; no constituye prueba visual.');}checks().then(invalid).catch(e=>{console.error(document.getElementById("status").textContent,e);process.exitCode=1});
