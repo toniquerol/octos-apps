@@ -16,6 +16,63 @@ let generation=0,fieldRevision=0,buildPromise=Promise.resolve(),inspectionPoint=
 const emitter={width:2.6,height:2.0}; // Independent of the CFD field's physical domain.
 let cameras=[],views=[],viewSelects=[],orbit=[],frameCount=0,fpsTime=0;
 let sectionEnabled=false,sectionPick=false,sectionX=0,sectionViewIndex=0;
+/* Floating panels: each has its own scroll viewport and an independently adjustable width. */
+function syncDockScroll(){
+  for(const id of ['vehicleDock','flowDock','viewDock']){
+    const dock=$(id),scroll=dock.querySelector('.dock-scroll');
+    if(!dock.open||!scroll)return;
+    const available=Math.floor(dock.getBoundingClientRect().height-42);
+    if(available>0){scroll.style.height=available+'px';scroll.style.maxHeight=available+'px';}
+  }
+}
+function setDockWidth(which,width){
+  const target=which==='view'?$('viewDock'):$('rightDocks');
+  const other=which==='view'?$('rightDocks'):$('viewDock');
+  const stageWidth=stage.getBoundingClientRect().width||stage.clientWidth;
+  const maximum=Math.min(580,stageWidth-other.getBoundingClientRect().width-44);
+  const minimum=Math.min(which==='view'?210:200,Math.max(145,maximum));
+  const clamped=Math.max(minimum,Math.min(Math.max(minimum,maximum),width));
+  target.style.width=Math.round(clamped)+'px';
+  syncDockScroll();wake();
+}
+function enableDockResize(id,which){
+  const handle=$(id);let start=null;
+  handle.addEventListener('pointerdown',e=>{
+    if(e.button!==0)return;
+    e.preventDefault();e.stopPropagation();
+    start={x:e.clientX,width:(which==='view'?$('viewDock'):$('rightDocks')).getBoundingClientRect().width};
+    handle.setPointerCapture(e.pointerId);
+  });
+  handle.addEventListener('pointermove',e=>{
+    if(!start)return;
+    const delta=(e.clientX-start.x)*(which==='view'?1:-1);
+    setDockWidth(which,start.width+delta);
+  });
+  const finish=()=>{start=null;};
+  handle.addEventListener('pointerup',finish);
+  handle.addEventListener('pointercancel',finish);
+  handle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
+  handle.addEventListener('keydown',e=>{
+    if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+    e.preventDefault();e.stopPropagation();
+    const target=which==='view'?$('viewDock'):$('rightDocks');
+    const delta=(e.key==='ArrowRight'?20:-20)*(which==='view'?1:-1);
+    setDockWidth(which,target.getBoundingClientRect().width+delta);
+  });
+}
+function initDockLayout(){
+  enableDockResize('viewResizeHandle','view');
+  enableDockResize('rightResizeHandle','right');
+  for(const id of ['vehicleDock','flowDock','viewDock']){
+    const dock=$(id);
+    new ResizeObserver(syncDockScroll).observe(dock);
+    dock.addEventListener('toggle',()=>requestAnimationFrame(syncDockScroll));
+    const scroll=dock.querySelector('.dock-scroll');
+    scroll?.addEventListener('wheel',e=>e.stopPropagation(),{passive:true});
+  }
+  syncDockScroll();
+}
+
 const ground=new T.Mesh(new T.PlaneGeometry(1,1),new T.MeshStandardMaterial({color:0x171d25,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.025;scene.add(ground);
 const grid=new T.GridHelper(20,40,0x3c505c,0x23323e);grid.position.y=-.015;scene.add(grid);
 const arrow=new T.ArrowHelper(new T.Vector3(1,0,0),new T.Vector3(-6,.06,-2.4),2,0xff6a1a,.3,.17);scene.add(arrow);
@@ -407,7 +464,7 @@ if(t!==token)return;if(!saved){status('Demo activa · Importa el GLB BMW E46 una
 loading=true;status('Cargando vehículo predeterminado…');try{const model=await parseVehicle(saved.buffer);if(t!==token){dispose(model);return;}await install(model,saved.name,saved.yaw||0);status('Modelo predeterminado cargado · orientación aplicada.');}catch(e){if(t===token)status('No se pudo cargar el modelo predeterminado: '+e.message,true);}finally{if(t===token)loading=false;wake();}}
 $('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const t=++token;loading=true;status('Leyendo GLB local…');await new Promise(r=>setTimeout(r,30));try{const buf=await f.arrayBuffer(),model=await parseVehicle(buf);if(t!==token){dispose(model);return;}const yaw=$('presetBMW').checked?Math.PI:0;await install(model,f.name,yaw);status('GLB cargado · comprueba la longitud real.');try{const saved=await saveDefault(buf,f.name,yaw);if(t===token)status(saved?'GLB cargado y guardado como predeterminado · orientación aplicada.':'GLB cargado · no se pudo guardar en este navegador.');}catch(e){if(t===token)status('GLB cargado · no se pudo guardar para futuros accesos.',true);}}catch(err){if(t===token)status('No se pudo cargar: '+err.message,true);}finally{if(t===token)loading=false;e.target.value='';wake();}};
 new ResizeObserver(wake).observe(stage);document.addEventListener('visibilitychange',()=>{last=0;if(!document.hidden)wake();});renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();playing=false;status('Contexto gráfico perdido. Recarga el archivo.',true);});
-layout();updateSectionUI();playback(true);install(demo(),'Concepto de demostración');restoreDefault();
+initDockLayout();layout();updateSectionUI();playback(true);install(demo(),'Concepto de demostración');restoreDefault();
 window.aeroReady=()=>buildPromise;
 window.aeroDiagnostics=()=>({triangles,particles:points?.geometry.attributes.position.count||0,views:views.length,playing,
   sectionEnabled,sectionPick,sectionX,sectionViewIndex,viewModes:viewSelects.map(s=>s.value),
