@@ -58,12 +58,15 @@ export function stepDriving(car,input,elapsed) {
       const excessForce=Math.max(0,demandForce-tractionForce);
       wheelSlipTarget=clamp(excessForce/tractionForce*1.12,0,1);
       const aeroAndRollingDrag=180+.48*car.speed*car.speed;
-      car.speed+=Math.max(0,deliveredForce-aeroAndRollingDrag)/DYNAMICS.mass*dt;
+      car.speed=Math.max(0,car.speed+(deliveredForce-aeroAndRollingDrag)/DYNAMICS.mass*dt);
     }
   } else if(reverse){
     car.speed-=dt*(car.speed>0?VEHICLE.changeDirectionBrake:VEHICLE.reverseAcceleration)*reverse;
   } else {
-    car.speed*=Math.exp(-dt*(.44+Math.abs(car.speed)*.009));
+    // Inercia real: al levantar el acelerador no pierde 30 km/h en un segundo.
+    const speedAbs=Math.abs(car.speed);
+    const rollingAndDrag=.25+.0011*speedAbs*speedAbs;
+    car.speed-=Math.sign(car.speed)*Math.min(speedAbs,rollingAndDrag*dt);
     if(Math.abs(car.speed)<.012)car.speed=0;
   }
   car.speed=clamp(car.speed,VEHICLE.reverseMax,VEHICLE.maxSpeed);
