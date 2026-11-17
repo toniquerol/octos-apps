@@ -4,14 +4,15 @@
    No usa datos ni código propietario de Assetto Corsa. */
 export const VEHICLE = Object.freeze({
   wheelbase: 2.715, wheelRadius: .324,
-  acceleration: 4.5, reverseAcceleration: 2.82, changeDirectionBrake: 14,
-  reverseMax: -12, maxSpeed: 37, steeringSmoothing: 7.5,
+  powerCV: 300, drivetrainEfficiency: .85, peakDriveForce: 14500,
+  reverseAcceleration: 2.82, changeDirectionBrake: 14,
+  reverseMax: -12, maxSpeed: 63, steeringSmoothing: 7.5,
   steeringFullHoldSeconds: .85,
   rearLockDeceleration: 1.1,
   rearLockGrip: .16
 });
 const DYNAMICS=Object.freeze({
-  mass:1600, yawInertia:3250,
+  mass:1600, yawInertia:3250, rearDriveGripForce: 9300,
   frontArm:1.33, rearArm:VEHICLE.wheelbase-1.33,
   frontCornering:49000, rearCornering:53000,
   frontPeakForce:7800, rearPeakForce:7700,
@@ -21,7 +22,7 @@ const DYNAMICS=Object.freeze({
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 export const initialDriving=()=>({
   speed:0,steer:0,spin:0,rearSpin:0,rearLocked:false,
-  slip:0,yawRate:0,rearGripLoss:0,driftActive:false,steerHold:0,steerDirection:0
+  slip:0,yawRate:0,rearGripLoss:0,wheelSlip:0,driftActive:false,steerHold:0,steerDirection:0
 });
 /* Al pisar Space, la inercia del coche continúa hacia delante mientras
    se bloquea la rotación de ruedas traseras y baja su adherencia lateral.
@@ -32,22 +33,46 @@ export function stepDriving(car,input,elapsed) {
   const dt=clamp(elapsed,0,.05);
   const before=car.speed;
   const handbrake=Boolean(input.handbrake);
+  const throttle=clamp(Number(input.forward)||0,0,1);
+  const reverse=clamp(Number(input.reverse)||0,0,1);
+  let wheelSlipTarget=0;
   if(handbrake){
-    // Freno de mano solo trasero: no anular de golpe la velocidad del chasis.
-    // BMW de tracción trasera: con ruedas bloqueadas no hay impulso motriz.
+    // Freno de mano solo trasero: bloqueo y ausencia de impulso.
     const deceleration=Math.min(Math.abs(car.speed),VEHICLE.rearLockDeceleration*dt);
     car.speed-=Math.sign(car.speed)*deceleration;
-  } else if(input.forward) car.speed+=dt*
-    (car.speed<0?VEHICLE.changeDirectionBrake:VEHICLE.acceleration)*
-    clamp(Number(input.forward)||0,0,1);
-  else if(input.reverse) car.speed-=dt*
-    (car.speed>0?VEHICLE.changeDirectionBrake:VEHICLE.reverseAcceleration)*
-    clamp(Number(input.reverse)||0,0,1);
-  else {
+  } else if(throttle){
+    if(car.speed<0){
+      car.speed+=VEHICLE.changeDirectionBrake*throttle*dt;
+    }else{
+      // 300 CV al cigüeñal, pérdidas de transmisión y fuerza limitada por
+      // potencia a velocidad alta: F = P / v. El par domina la salida.
+      const powerWatts=VEHICLE.powerCV*735.5*VEHICLE.drivetrainEfficiency;
+      const demandForce=throttle*Math.min(
+        VEHICLE.peakDriveForce,powerWatts/Math.max(car.speed,8)
+      );
+      // Solo las ruedas traseras transmiten la fuerza al suelo.
+      // Al girar hay menos agarre longitudinal disponible.
+      const cornerLoad=clamp(Math.abs(car.steer)/.45,0,1);
+      const tractionForce=DYNAMICS.rearDriveGripForce*(1-.29*cornerLoad);
+      const deliveredForce=Math.min(demandForce,tractionForce);
+      const excessForce=Math.max(0,demandForce-tractionForce);
+      wheelSlipTarget=clamp(excessForce/tractionForce*1.12,0,1);
+      const aeroAndRollingDrag=180+.48*car.speed*car.speed;
+      car.speed+=Math.max(0,deliveredForce-aeroAndRollingDrag)/DYNAMICS.mass*dt;
+    }
+  } else if(reverse){
+    car.speed-=dt*(car.speed>0?VEHICLE.changeDirectionBrake:VEHICLE.reverseAcceleration)*reverse;
+  } else {
     car.speed*=Math.exp(-dt*(.44+Math.abs(car.speed)*.009));
     if(Math.abs(car.speed)<.012)car.speed=0;
   }
   car.speed=clamp(car.speed,VEHICLE.reverseMax,VEHICLE.maxSpeed);
+  // Inercia de las ruedas motrices: patinan al pisar fuerte R2/W, y recuperan
+  // adherencia al levantar el pie. No se aplica a las ruedas delanteras.
+  car.wheelSlip??=0;
+  car.wheelSlip+=(wheelSlipTarget-car.wheelSlip)*
+    (1-Math.exp(-dt*(wheelSlipTarget>car.wheelSlip?11:4.5)));
+  car.wheelSlip=clamp(car.wheelSlip,0,1);
   // Teclado y joystick comparten la misma dirección progresiva (~0,85 s).
   // El joystick conserva todo su recorrido analógico y su sensibilidad:
   // el desplazamiento controla la magnitud; el tiempo limita su entrada.
@@ -70,13 +95,14 @@ export function stepDriving(car,input,elapsed) {
   car.rearLocked=handbrake;
   car.rearGripLoss??=0;
   car.yawRate??=car.speed/VEHICLE.wheelbase*Math.tan(car.steer);
-  // Entrada en bloqueo ~0,3 s; recuperar agarre lleva aproximadamente 1 s.
-  const target=handbrake?1:0;
-  car.rearGripLoss+=(target-car.rearGripLoss)*(1-Math.exp(-dt*(handbrake?9:2.7)));
+  // El bloqueo del freno de mano y el exceso de gas reducen agarre trasero.
+  // Un patinaje longitudinal real también disminuye la fuerza lateral.
+  const target=handbrake?1:clamp(car.wheelSlip*.78,0,.78);
+  car.rearGripLoss+=(target-car.rearGripLoss)*
+    (1-Math.exp(-dt*(target>car.rearGripLoss?9:2.7)));
   car.rearGripLoss=clamp(car.rearGripLoss,0,1);
-  // El modo dinámico solo arranca al perder agarre trasero. En una
-  // conducción normal la cinemática V1 se mantiene sin variación.
-  if(car.rearGripLoss>.012)car.driftActive=true;
+  // Derrape por potencia sin necesidad de tocar el freno de mano.
+  if(car.rearGripLoss>.025)car.driftActive=true;
   const v=car.speed;
   const idealYaw=v/VEHICLE.wheelbase*Math.tan(car.steer);
 
@@ -88,7 +114,7 @@ export function stepDriving(car,input,elapsed) {
     // Durante un derrape y a muy baja velocidad se recupera estabilidad.
     car.yawRate+=(idealYaw-car.yawRate)*(1-Math.exp(-dt*5.5));
     car.slip*=Math.exp(-dt*5.5);
-    if(!handbrake)car.driftActive=false;
+    if(!handbrake&&car.rearGripLoss<.025)car.driftActive=false;
   } else if(car.rearGripLoss<.015 && Math.abs(car.slip)<.11 &&
             Math.abs(car.yawRate-idealYaw)<.11) {
     // Recuperación terminada: volver al comportamiento validado sin salto.
@@ -132,8 +158,12 @@ export function stepDriving(car,input,elapsed) {
   }
   const distance=v*dt;
   car.spin-=distance/VEHICLE.wheelRadius;
-  // Las ruedas delanteras ruedan; las traseras no giran mientras bloqueadas.
-  if(!car.rearLocked)car.rearSpin-=distance/VEHICLE.wheelRadius;
+  // El eje delantero acompaña la marcha; el trasero gira más deprisa
+  // cuando pierde tracción. En bloqueo por freno de mano permanece parado.
+  if(!car.rearLocked) {
+    const tireSpinDistance=car.wheelSlip*18*dt;
+    car.rearSpin-=(distance+tireSpinDistance)/VEHICLE.wheelRadius;
+  }
   return {
     distance,slipDistance:car.slip*dt,headingDelta:car.yawRate*dt,
     slipAngle:Math.atan2(car.slip,Math.max(Math.abs(v),.1)),
