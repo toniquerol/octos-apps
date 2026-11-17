@@ -25,7 +25,13 @@ small,.soft{font-size:11px;color:var(--muted)}.group{display:grid;gap:10px;margi
 input[type=color]{width:48px;height:32px;background:#111217;border:1px solid var(--edge);border-radius:7px;padding:2px;cursor:pointer}input[type=checkbox]{accent-color:var(--orange);width:16px;height:16px;vertical-align:middle}.floor-controls{margin:8px 0 14px}.floor-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:11px}.floor-row label{font-size:12px;color:#dce0e5}.floor-row input{flex:none}input[type=text],input[type=search],select{width:100%;min-width:0;border:1px solid var(--edge);background:#111217;color:var(--text);border-radius:7px;padding:10px}
 select{cursor:pointer}.split{display:flex;gap:8px}.split>*{flex:1;min-width:0}
 .asset-list{display:grid;gap:9px;margin-top:12px}.asset{display:grid;grid-template-columns:72px minmax(0,1fr);text-align:left;gap:11px;padding:7px;width:100%;border-radius:10px;background:#212329}
-.asset.active{outline:1px solid var(--orange);background:#342921}.thumb{height:66px;border-radius:6px;object-fit:cover;width:72px;background:#30343b}
+.asset.active{outline:1px solid var(--orange);background:#342921}
+.asset{grid-template-columns:minmax(0,1fr) 29px;align-items:center;gap:4px}
+.asset-open{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;gap:9px;min-width:0;text-align:left;width:100%;background:transparent;border:0;padding:2px}
+.asset-open:hover{border-color:transparent}
+.asset-actions{display:flex;flex-direction:column;gap:5px}
+.asset-action{width:28px;min-width:28px;height:28px;padding:0;border:1px solid #4b5058;border-radius:6px;background:#2b2e35;font-size:17px;line-height:1}
+.asset-action.danger:hover{background:#4b2626;border-color:#eb7a7a}.thumb{height:66px;border-radius:6px;object-fit:cover;width:72px;background:#30343b}
 .asset-title{font-size:12px;font-weight:700;display:block;overflow-wrap:anywhere}.asset-sub{color:var(--muted);font-size:10px;display:block;margin-top:5px}
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.chip{font-size:10px;padding:2px 6px;border-radius:9px;background:#3a3d46;color:#e4e4e8}
 .stage{position:relative;min-width:0;background:radial-gradient(ellipse at center,#343c4c 0%,#1b232e 58%,#11151b 100%);overflow:hidden}
@@ -95,6 +101,6 @@ select{cursor:pointer}.split{display:flex;gap:8px}.split>*{flex:1;min-width:0}
 </main>
 <input id="file" type="file" accept=".glb,.html,.htm,model/gltf-binary,text/html">
 <input id="restoreFile" type="file" accept=".json,application/json" hidden>
-<script type="module" src="./app.js?v=20261117-floor10"></script>
+<script type="module" src="./app.js?v=20261117-library-preview-v2"></script>
 </body>
 </html>
