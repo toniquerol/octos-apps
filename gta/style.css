@@ -153,3 +153,9 @@ body.editing #map .maplibregl-canvas:active{cursor:grabbing}
 .gta-road-tuning .gta-layer-option{font-size:10px;min-height:29px}
 .gta-layer-road-color{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 3px;color:#bec2ca;font-size:10px}
 .gta-layer-road-color input[type=color]{width:50px;height:31px;padding:3px;background:#121317;border:1px solid #585b61;border-radius:6px;cursor:pointer}
+
+/* Controles compactos de color y transparencia por grupo en el editor GTA. */
+.gta-layer-tuning{border-left:1px solid #565962;margin:1px 0 10px 8px;padding:3px 4px 5px 9px}
+.gta-layer-tuning .gta-layer-option{min-height:29px;font-size:10px}
+.gta-layer-tuning .gta-layer-subfield{margin:6px 2px 8px}
+.gta-layer-tuning .gta-layer-road-color{padding:5px 3px}
