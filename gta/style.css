@@ -391,3 +391,12 @@ body.editing #stage>.daytime-controls{
 .camera-reset:hover{border-color:#ff6a1a}
 .selecting #cameras-button,.selecting .cameras-panel{display:none!important}
 @media(max-width:800px){#cameras-button,.cameras-panel{display:none!important}}
+
+/* Entrada cinematográfica: fundido casi negro y apertura al descenso cenital. */
+.gta-scene-entry-fade{
+  position:fixed;inset:0;z-index:100;background:#020305;
+  opacity:0;pointer-events:auto;transition:opacity 550ms ease;
+}
+@media(prefers-reduced-motion:reduce){
+  .gta-scene-entry-fade{transition:opacity 150ms linear}
+}
