@@ -296,13 +296,21 @@ export function mountGamepadSettings({controller,container}){
   paint();
   let frame=null,disposed=false;
   function loop(){
-    if(disposed)return;
-    if(panel.open)show();
+    if(disposed||!panel.open){frame=null;return;}
+    show();
     frame=requestAnimationFrame(loop);
   }
-  frame=requestAnimationFrame(loop);
+  function onToggle(){
+    if(panel.open&&frame===null)frame=requestAnimationFrame(loop);
+    else if(!panel.open&&frame!==null){
+      cancelAnimationFrame(frame);frame=null;
+    }
+  }
+  panel.addEventListener('toggle',onToggle);
+  onToggle();
   return {panel,destroy(){
-    disposed=true;if(frame!=null)cancelAnimationFrame(frame);
+    disposed=true;if(frame!==null)cancelAnimationFrame(frame);
+    panel.removeEventListener('toggle',onToggle);
     controller.onChange=prevChange;panel.remove();
   }};
 }
