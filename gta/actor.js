@@ -102,6 +102,8 @@ export async function createActor(world, start, report) {
           .scale(new T.Vector3(scale,-scale,scale));
         camera.projectionMatrix = new T.Matrix4().fromArray(matrix).multiply(transform);
         character.visible = state.mode === 'walk';
+        // Salto visual por acción del mando/teclado, sin modificar el terreno.
+        character.position.z=Math.max(0,Number(state.jumpHeight)||0);
         shadow.visible=character.visible;
         shadow.scale.set(.42,.42,1);
         character.rotation.z = -state.heading * Math.PI / 180;
