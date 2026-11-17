@@ -153,6 +153,8 @@ export function mountLayerPanel(world, {report, setSettings}) {
         render();
       }
     },
+    getPreferences() { return {...prefs}; },
+    savePreferences() { save(); },
     syncSettings({buildings,terrain,dem} = {}) {
       if (typeof buildings === 'boolean') prefs.buildings = buildings;
       if (typeof terrain === 'boolean') prefs.terrain = terrain;
