@@ -14,3 +14,23 @@
 @media(max-width:800px){.edition{display:none}.topbar{height:60px;padding:7px 10px}.header-buttons button{padding:7px 8px;font-size:10px}#stage{height:calc(100dvh - 87px)}.location-chip{top:12px;left:10px;max-width:53vw}.status{top:12px;right:10px;max-width:42vw;font-size:9px}#game-hud{bottom:57px;left:10px;width:183px;padding:9px}.keys-hint{bottom:23px;left:10px;font-size:9px;max-width:calc(100vw - 20px)}.panel{right:9px;top:50px}.welcome-card{padding:22px}.welcome h1{font-size:35px}}
 @media(max-width:450px){.header-buttons button{padding:7px}.location-chip{max-width:50vw}.status{max-width:44vw}.keys-hint{white-space:normal;line-height:1.6}.credits{font-size:8px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important}}
+
+/* OcToS GTA V1.1 · Selección geográfica previa al mundo 3D */
+.selecting #game-hud,.selecting .crosshair,.selecting .keys-hint,.selecting .location-chip{display:none}
+.selecting #status{top:82px;right:18px;max-width:260px;pointer-events:none}
+.welcome{display:flex;align-items:center;justify-content:flex-start;pointer-events:none;background:linear-gradient(90deg,#08090cc2 0%,#090a0c88 32%,transparent 66%);backdrop-filter:none;padding:20px 28px}
+.welcome-card{pointer-events:auto;max-height:calc(100% - 12px);overflow-y:auto;width:min(370px,100%);padding:25px;border-radius:12px;background:#191a1ef0;box-shadow:0 16px 55px #0009}
+.welcome h1{font-size:34px;margin:6px 0 10px}
+.welcome p{font-size:12px;margin:10px 0}
+.welcome .instructions{padding:10px;margin:12px 0;font-size:11px}
+.start-label{display:block;color:#bbc0c7;font-size:11px;margin:14px 0 6px}
+.start-preset{display:block;width:100%;min-height:40px;border:1px solid #5e6067;border-radius:7px;background:#121317;color:#f1f1ef;padding:8px 10px}
+.start-point{margin-top:14px;padding:11px 12px;border:1px solid #494b52;border-radius:8px;background:#111216;display:flex;flex-direction:column;gap:3px}
+.start-point>span{font-size:9px;letter-spacing:.09em;color:#a4a7ae}
+.start-point strong{color:#ffb18a;font-size:14px}
+.start-point output{font-variant-numeric:tabular-nums;font-size:12px;color:#d6d7da}
+.pick-center{display:block;width:100%;background:transparent;color:#e7e7e8;border:1px solid #64656a;border-radius:7px;margin-top:9px;padding:9px}
+.pick-center:hover{border-color:#ff6a1a}
+.selecting #map .maplibregl-canvas{cursor:crosshair}
+.selecting #map .maplibregl-canvas:active{cursor:grabbing}
+@media(max-width:800px){.welcome{padding:10px;align-items:flex-end;background:linear-gradient(0deg,#08090ce5 0%,#0b0c0e99 45%,transparent 83%)}.welcome-card{width:min(420px,100%);padding:14px 18px;margin:0 auto;max-height:60%}.welcome h1{font-size:27px}.welcome p{margin:5px 0}.welcome .instructions{margin:6px 0}.selecting #status{top:70px;right:10px;font-size:9px;max-width:200px}.start-point{margin-top:8px;padding:7px 10px}.start-label{margin:7px 0 4px}.play{margin-top:7px}.pick-center{margin-top:6px}}
