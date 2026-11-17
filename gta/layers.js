@@ -39,6 +39,44 @@ function load() {
   } catch {return defaults;}
 }
 
+
+// Curva visual Catmull-Rom/Hermite: interpola entre vértices existentes sin
+// alterar las coordenadas, los ejes originales ni el trazado para conducción.
+function smoothRoadGeometry(points) {
+  if (!Array.isArray(points) || points.length < 3) return points;
+  const clean=[];
+  for (const p of points) {
+    if (!Array.isArray(p) || !Number.isFinite(p[0]) || !Number.isFinite(p[1])) continue;
+    if (!clean.length || Math.hypot(p[0]-clean.at(-1)[0],p[1]-clean.at(-1)[1])>1e-10)
+      clean.push(p);
+  }
+  if (clean.length<3) return clean;
+  const cos=Math.max(.087,Math.cos(clean[0][1]*Math.PI/180));
+  const dist=(a,b)=>Math.hypot((b[0]-a[0])*111320*cos,(b[1]-a[1])*111320);
+  const curve=[clean[0]];
+  for (let i=0;i<clean.length-1;i++) {
+    const p0=clean[Math.max(0,i-1)],p1=clean[i],p2=clean[i+1];
+    const p3=clean[Math.min(clean.length-1,i+2)];
+    const length=dist(p1,p2);
+    if (length<.01) {curve.push(p2);continue;}
+    const before=dist(p0,p1),after=dist(p2,p3);
+    const m1=length/Math.max(.01,before+length);
+    const m2=length/Math.max(.01,length+after);
+    const steps=Math.max(3,Math.min(10,Math.ceil(length/5)));
+    for (let j=1;j<=steps;j++) {
+      if(j===steps){curve.push(p2);continue;}
+      const t=j/steps,t2=t*t,t3=t2*t;
+      const h00=2*t3-3*t2+1,h10=t3-2*t2+t;
+      const h01=-2*t3+3*t2,h11=t3-t2;
+      curve.push([0,1].map(axis=>
+        h00*p1[axis]+h10*(p2[axis]-p0[axis])*m1+
+        h01*p2[axis]+h11*(p3[axis]-p1[axis])*m2
+      ));
+    }
+  }
+  return curve;
+}
+
 export function mountLayerPanel(world,{report,setSettings}={}) {
   const map=world.map;
   const panel=document.getElementById('gta-catalog-tree');
@@ -49,6 +87,7 @@ export function mountLayerPanel(world,{report,setSettings}={}) {
   let records=[],location=null;
   let ready=false;
   let renderStyleRoads=()=>{};
+  let removeRoadSmoothingListeners=()=>{};
 
   function save() {
     try {localStorage.setItem(STORE,JSON.stringify(prefs));} catch {}
@@ -219,6 +258,7 @@ export function mountLayerPanel(world,{report,setSettings}={}) {
   }
   // Conserva las carreteras de dos carriles del juego sin recuperar el editor antiguo.
   function installRoadAppearance() {
+    removeRoadSmoothingListeners();
     const roads=map.getStyle().layers.filter(l=>l.type==='line' &&
       /^(highway_(?!name)|road_(?!oneway))/i.test(l.id) &&
       !/(?:casing|outline|border|name|foot|path|cycle|track|rail|steps|construction)/i.test(l.id)
@@ -255,6 +295,76 @@ export function mountLayerPanel(world,{report,setSettings}={}) {
         styles.push({id,suffix});
       }
     }
+    // Capa GeoJSON exclusivamente visual para suavizar los vértices de
+    // los ejes; las carreteras originales permanecen inalteradas.
+    const curvedId='gta-road-centers-curved';
+    const empty={type:'FeatureCollection',features:[]};
+    if(roads.length && !map.getSource(curvedId))
+      map.addSource(curvedId,{type:'geojson',data:empty});
+    if(roads.length && !map.getLayer(curvedId)){
+      const firstSymbol=map.getStyle().layers.find(l=>l.type==='symbol')?.id;
+      map.addLayer({
+        id:curvedId,type:'line',source:curvedId,minzoom:14,
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':'#f2f2ea','line-width':width(.6,map.getCenter().lat),
+          'line-dasharray':[7,10],'line-opacity':.92}
+      },firstSymbol);
+    }
+    const baseCenterIds=styles.filter(x=>x.suffix==='centro').map(x=>x.id);
+    const setFallback=visible=>{
+      for(const id of baseCenterIds)
+        if(map.getLayer(id))map.setLayoutProperty(id,'visibility',visible?'visible':'none');
+    };
+    let lastUpdate=0,lastCenter=null,lastZoom=null,timer=null;
+    const rebuildCurves=()=>{
+      timer=null;
+      const source=map.getSource(curvedId);
+      if(!source||!map.isStyleLoaded())return;
+      const position=map.getCenter(),zoom=map.getZoom(),now=performance.now();
+      const moved=lastCenter?Math.hypot(
+        (position.lng-lastCenter.lng)*111320*Math.cos(position.lat*Math.PI/180),
+        (position.lat-lastCenter.lat)*111320):Infinity;
+      // Evitar recalcular las curvas con cada fotograma del seguimiento 3D.
+      if(now-lastUpdate<650 || moved<18 && Math.abs(zoom-lastZoom)<.4 && now-lastUpdate<2200)return;
+      lastUpdate=now;lastCenter=position;lastZoom=zoom;
+      if(zoom<14){source.setData(empty);setFallback(true);return;}
+      let rendered;
+      try{rendered=map.queryRenderedFeatures({layers:roads.map(x=>x.id)});}
+      catch(error){console.warn('OcToS GTA · curvas de carretera:',error);return;}
+      const seen=new Set(),features=[];
+      for(const feature of rendered.slice(0,1600)){
+        const geom=feature.geometry;
+        if(!geom || !['LineString','MultiLineString'].includes(geom.type))continue;
+        const lines=geom.type==='LineString'?[geom.coordinates]:geom.coordinates;
+        for(const line of lines){
+          if(!Array.isArray(line)||line.length<2)continue;
+          const key=line.length+':'+line[0].join(',')+':'+line.at(-1).join(',');
+          if(seen.has(key))continue;
+          seen.add(key);
+          const smoothed=smoothRoadGeometry(line);
+          if(smoothed.length>=2)features.push({
+            type:'Feature',properties:{},geometry:{type:'LineString',coordinates:smoothed}
+          });
+        }
+      }
+      source.setData({type:'FeatureCollection',features});
+      setFallback(features.length===0);
+    };
+    const queueCurves=()=>{
+      if(timer!==null)return;
+      timer=setTimeout(rebuildCurves,220);
+    };
+    const onSourceData=event=>{
+      if(roads.some(x=>x.source===event.sourceId))queueCurves();
+    };
+    map.on('sourcedata',onSourceData);
+    map.on('moveend',queueCurves);
+    removeRoadSmoothingListeners=()=>{
+      map.off('sourcedata',onSourceData);
+      map.off('moveend',queueCurves);
+      if(timer!==null)clearTimeout(timer);
+      timer=null;
+    };
     const draw=()=>{
       const lat=map.getCenter()?.lat??0;
       if(!Number.isFinite(lat))return;
@@ -266,9 +376,11 @@ export function mountLayerPanel(world,{report,setSettings}={}) {
       }
       for(const {id,suffix} of styles)if(map.getLayer(id))
         map.setPaintProperty(id,'line-width',width(suffix==='asfalto'?13.8:.6,lat));
+      if(map.getLayer(curvedId))map.setPaintProperty(curvedId,'line-width',width(.6,lat));
     };
     renderStyleRoads=draw;
     draw();
+    queueCurves();
   }
   map.on('moveend',()=>{
     const lat=map.getCenter()?.lat;
