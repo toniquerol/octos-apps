@@ -29,8 +29,19 @@ function safeName(str){return String(str||'modelo').replace(/[\\/:*?"<>|]+/g,'-'
 function esc(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function tagsFromInput(){return [...new Set($('modelTags').value.split(',').map(v=>v.trim()).filter(Boolean))].slice(0,30)}
 function uid(){return crypto.randomUUID ? crypto.randomUUID() : Date.now()+'-'+Math.random().toString(36).slice(2)}
-function setBusy(value){busy=value;for(const id of ['save','export','getGLB','remove','optimize','import']){const el=$(id);el.disabled=value||(!active&&id!=='import')||(id==='remove'&&!active?.id)} $('renderStatus').textContent=value?'Procesando…':'Listo'}
-function updateButtons(){if(!busy){for(const id of ['save','export','getGLB','remove','optimize'])$(id).disabled=!active;$('import').disabled=false;$('remove').disabled=!active?.id}}
+function setBusy(value){
+ busy=value;updateButtons();
+ $('renderStatus').textContent=value?'Procesando…':'Listo';
+}
+function updateButtons(){
+ const has=!!active,hasGeometry=!!active?.file;
+ for(const id of ['save','export'])$(id).disabled=busy||!has;
+ for(const id of ['getGLB','optimize'])$(id).disabled=busy||!hasGeometry;
+ $('remove').disabled=busy||!active?.id;
+ $('import').disabled=busy;
+ $('fit').disabled=busy||!hasGeometry;
+ $('rotate').disabled=busy||!hasGeometry;
+}
 async function db(){
  if(dbPromise)return dbPromise;
  dbPromise=new Promise((resolve,reject)=>{
@@ -73,6 +84,7 @@ async function gltfLoader(){
  }catch(e){/* Los GLB sin meshopt siguen siendo compatibles. */}
  return loader;
 }
+function clearHTML(){const frame=$('htmlViewer');frame.hidden=true;frame.removeAttribute('srcdoc');$('canvas').hidden=false;$('viewHint').innerHTML='Arrastrar · Orbitar &nbsp; | &nbsp; Rueda · Zoom'}
 function clearModel(){
  if(shown){shown.traverse(o=>{if(o.geometry)o.geometry.dispose();const mats=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of mats){for(const v of Object.values(m)){if(v&&v.isTexture)v.dispose()}m.dispose()}});scene.remove(shown);shown=null}
  mixer=null;
@@ -94,7 +106,7 @@ async function preview(blob){
  const loader=await gltfLoader();
  const gltf=await loader.parseAsync(bytes,'');
  if(!gltf.scene)throw new Error('El modelo no contiene una escena visible.');
- clearModel();
+ clearHTML();clearModel();
  shown=gltf.scene;scene.add(shown);
  if(gltf.animations&&gltf.animations.length){
   mixer=new THREE.AnimationMixer(shown);
@@ -118,25 +130,38 @@ async function preview(blob){
  $('renderStatus').textContent=integer(triangles)+' triángulos';
  return {triangles,meshes};
 }
+async function previewHTML(blob){
+ const html=await blob.text();
+ if(!/<!doctype\s+html|<html\b|<head\b|<body\b|<canvas\b|<script\b/i.test(html))throw new Error('El archivo no contiene HTML reconocible.');
+ clearModel();
+ $('htmlViewer').srcdoc=html;
+ $('htmlViewer').hidden=false;
+ $('canvas').hidden=true;
+ $('emptyStage').hidden=true;
+ $('viewHint').textContent='Vista previa HTML aislada · Los controles dependen del archivo';
+ $('triangles').textContent='—';$('meshes').textContent='—';$('size').textContent=fmt(blob.size);
+ $('renderStatus').textContent='HTML';
+}
 async function choose(model){
  if(busy)return;
  setBusy(true);
  try{
   const item=await getOne(model.id);
-  if(!item)throw new Error('No se encuentra el modelo guardado.');
-  await preview(item.file);
+  if(!item)throw new Error('No se encuentra el objeto guardado.');
+  if(item.file)await preview(item.file);
+  else if(item.html)await previewHTML(item.html);
+  else throw new Error('La ficha no contiene un archivo.');
   active=item;dirty=false;
-  syncInspector();
-  status('Modelo cargado desde la biblioteca.');
-  drawLibrary();
- }catch(e){status('No se pudo abrir el modelo: '+e.message,true)}
+  syncInspector();status('Objeto abierto desde la biblioteca.');drawLibrary();
+ }catch(e){status('No se pudo abrir el objeto: '+e.message,true)}
  finally{setBusy(false);updateButtons()}
 }
 function syncInspector(){
  $('modelName').value=active?active.name:'';
  $('modelTags').value=active?(active.tags||[]).join(', '):'';
  $('stageTitle').textContent=active?active.name:'Visor 3D · Sin modelo';
- $('origin').textContent=active?(active.id?'Biblioteca local':'Nuevo modelo'):'—';
+ $('origin').textContent=active?((active.id?'Biblioteca local · ':'Importado · ')+(active.sourceKind==='html'?'HTML':active.sourceKind==='glb-html'?'HTML con GLB':'GLB')):'—';
+ $('sizeLabel').textContent=active?.file?'Archivo GLB':'Archivo HTML';
  updateButtons();
 }
 function markDirty(){
@@ -158,7 +183,7 @@ function drawLibrary(){
   const img=document.createElement('img');img.className='thumb';img.alt='';img.src=model.thumbnail||'./icon.svg';
   const body=document.createElement('span'),title=document.createElement('span'),sub=document.createElement('span'),chips=document.createElement('span');
   title.className='asset-title';title.textContent=model.name;
-  sub.className='asset-sub';sub.textContent=fmt(model.size)+' · '+new Date(model.updated).toLocaleDateString('es-ES');
+  sub.className='asset-sub';sub.textContent=(model.sourceKind==='html'?'HTML · ':'GLB · ')+fmt(model.size)+' · '+new Date(model.updated).toLocaleDateString('es-ES');
   chips.className='chips';
   (model.tags||[]).slice(0,3).forEach(label=>{const c=document.createElement('span');c.className='chip';c.textContent=label;chips.append(c)});
   body.append(title,sub,chips);button.append(img,body);
@@ -168,7 +193,7 @@ function drawLibrary(){
 }
 async function refresh(){
  const all=await getAll();
- models=all.map(m=>({id:m.id,name:m.name,tags:m.tags,size:m.file.size,thumbnail:m.thumbnail,updated:m.updatedAt}));
+ models=all.map(m=>({id:m.id,name:m.name,tags:m.tags,size:m.file?.size??m.html?.size??0,sourceKind:m.sourceKind||'glb',thumbnail:m.thumbnail,updated:m.updatedAt}));
  const tags=[...new Set(models.flatMap(m=>m.tags||[]))].sort((a,b)=>a.localeCompare(b,'es'));
  const selected=$('tagFilter').value,sel=$('tagFilter');
  sel.replaceChildren(new Option('Todas las etiquetas',''));
@@ -176,22 +201,55 @@ async function refresh(){
  if(tags.includes(selected))sel.value=selected;
  drawLibrary();
 }
-async function importFiles(files){
- const items=[...files].filter(f=>/\.glb$/i.test(f.name));
- if(!items.length){status('Formato admitido: .GLB. GML es un formato distinto.',true);return}
- if(items.length>1){status('Importa un modelo GLB cada vez para poder asignar su ficha y etiquetas.',true);return}
- for(const file of items){
-  if(file.size>250*1048576){status(file.name+': límite de importación de 250 MB.',true);continue}
-  setBusy(true);
-  try{
-   const result=await preview(file);
-   active={id:null,name:file.name.replace(/\.glb$/i,''),tags:[],file:new Blob([file],{type:'model/gltf-binary'}),filename:file.name,createdAt:Date.now(),updatedAt:Date.now(),thumbnail:null,triangles:result.triangles,meshes:result.meshes,html:null};
-   dirty=true;syncInspector();
-   status('Importado '+file.name+'. Revisa la ficha y pulsa Guardar objeto.');
-  }catch(e){status(file.name+': '+e.message,true)}
-  finally{setBusy(false);updateButtons()}
+async function recoverGLB(file){
+ const html=await file.text();
+ const doc=new DOMParser().parseFromString(html,'text/html');
+ const payload=doc.getElementById('payload');
+ if(!payload || !payload.hasAttribute('data-gzip'))return null;
+ const encoded=payload.textContent.trim();
+ if(!encoded || encoded.length>350000000)throw new Error('Paquete 3D integrado inválido.');
+ const decoded=await base64ToBytes(encoded);
+ let buffer=decoded.buffer;
+ if(payload.getAttribute('data-gzip')==='1'){
+  if(typeof DecompressionStream==='undefined')throw new Error('El navegador no admite descompresión GZIP.');
+  buffer=await new Response(new Blob([decoded]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
  }
- drawLibrary();
+ validateGLB(buffer,buffer.byteLength);
+ return new Blob([buffer],{type:'model/gltf-binary'});
+}
+async function importFiles(files){
+ if(busy)return;
+ const items=[...files].filter(f=>/\.(glb|html|htm)$/i.test(f.name));
+ if(items.length!==1){status(items.length?'Importa un archivo cada vez.':'Formatos admitidos: .GLB, .HTML y .HTM.',true);return}
+ const file=items[0],isHTML=/\.html?$/i.test(file.name);
+ if(file.size>250*1048576){status('Límite de importación: 250 MB.',true);return}
+ setBusy(true);
+ try{
+  const name=file.name.replace(/\.(glb|html|htm)$/i,'');
+  let record;
+  if(isHTML){
+   const original=new Blob([file],{type:'text/html;charset=utf-8'});
+   let recovered=null;
+   try{recovered=await recoverGLB(file)}catch(e){status('No se pudo extraer GLB: '+e.message+'. Se conservará el HTML original.')}
+   if(recovered){
+    const stats=await preview(recovered);
+    record={sourceKind:'glb-html',file:recovered,html:original,triangles:stats.triangles,meshes:stats.meshes};
+   }else{
+    await previewHTML(original);
+    record={sourceKind:'html',file:null,html:original,triangles:null,meshes:null};
+   }
+  }else{
+   const stats=await preview(file);
+   record={sourceKind:'glb',file:new Blob([file],{type:'model/gltf-binary'}),html:null,triangles:stats.triangles,meshes:stats.meshes};
+  }
+  active={id:null,name,tags:[],filename:file.name,createdAt:Date.now(),updatedAt:Date.now(),thumbnail:null,...record};
+  dirty=true;syncInspector();
+  status(isHTML
+   ? (record.file?'HTML importado. GLB recuperado y disponible para optimizar.':'HTML importado para visualizar y guardar. Sin GLB extraíble, no se puede optimizar geometría.')
+   : 'GLB importado. Revisa la ficha y pulsa Guardar objeto.');
+  drawLibrary();
+ }catch(e){status(file.name+': '+e.message,true)}
+ finally{setBusy(false);updateButtons()}
 }
 function bytesToBase64(bytes){
  let data='';
@@ -254,9 +312,10 @@ async function save(){
  if(!active)return;
  setBusy(true);
  try{
-  const html=await makeHTML(active.file,active.name);
+  const html=active.html || (active.file?await makeHTML(active.file,active.name):null);
+  if(!html)throw new Error('El objeto no contiene HTML para guardar.');
   const record={...active,id:active.id||uid(),name:$('modelName').value.trim()||active.name,tags:tagsFromInput(),updatedAt:Date.now(),html};
-  if(!record.thumbnail)record.thumbnail=await capture();
+  if(!record.thumbnail && record.file)record.thumbnail=await capture();
   await put(record);active=record;dirty=false;
   await refresh();syncInspector();
   status('Objeto guardado en la biblioteca: '+record.name+'. HTML independiente generado.');
@@ -267,14 +326,15 @@ async function exportHTML(){
  if(!active)return;setBusy(true);
  try{
   const record=active;
-  const html=!dirty&&record.html?record.html:await makeHTML(record.file,$('modelName').value.trim()||record.name);
+  const html=record.html || (record.file?await makeHTML(record.file,$('modelName').value.trim()||record.name):null);
+  if(!html)throw new Error('No hay contenido HTML para exportar.');
   download(html,safeName(record.name)+'.html');
-  status('HTML generado. Contiene el modelo integrado; necesita conexión para Three.js.');
+  status(record.sourceKind==='html'?'HTML original exportado.':'HTML exportado. Los motores 3D externos pueden requerir conexión.');
  }catch(e){status('Error al exportar: '+e.message,true)}
  finally{setBusy(false);updateButtons()}
 }
 async function optimize(){
- if(!active)return;
+ if(!active?.file)return;
  setBusy(true);status('Analizando geometría; el modelo original permanece guardado hasta confirmar.');
  try{
   const ratio=Number($('quality').value);
@@ -299,7 +359,7 @@ async function optimize(){
    const originalTriangles=$('triangles').textContent;
    try{
     const stats=await preview(optimized);
-    active.file=optimized;active.triangles=stats.triangles;active.meshes=stats.meshes;active.html=null;active.thumbnail=null;dirty=true;
+    active.file=optimized;active.triangles=stats.triangles;active.meshes=stats.meshes;active.html=null;active.sourceKind='glb';active.thumbnail=null;dirty=true;
     status('Optimización aplicada sin guardar. '+fmt(old.size)+' → '+fmt(optimized.size)+'; triángulos '+originalTriangles+' → '+integer(stats.triangles)+'.');
    }catch(e){await preview(old);throw new Error('Resultado incompatible, se conserva el original. '+e.message)}
   }
@@ -311,7 +371,7 @@ async function remove(){
  if(!confirm('¿Eliminar "'+active.name+'" de la biblioteca local?'))return;
  setBusy(true);
  try{
-  await del(active.id);active=null;clearModel();$('emptyStage').hidden=false;
+  await del(active.id);active=null;clearModel();clearHTML();$('emptyStage').hidden=false;
   $('triangles').textContent='—';$('meshes').textContent='—';$('size').textContent='—';
   syncInspector();await refresh();status('Modelo eliminado de la biblioteca.');
  }catch(e){status('Error al eliminar: '+e.message,true)}
@@ -320,14 +380,15 @@ async function remove(){
 async function backup(){
  setBusy(true);
  try{
-  const records=await getAll();
-  const out=[];
+  const records=await getAll(),out=[];
   for(const x of records){
-   out.push({id:x.id,name:x.name,tags:x.tags,filename:x.filename,createdAt:x.createdAt,updatedAt:x.updatedAt,thumbnail:x.thumbnail,
-    file:bytesToBase64(new Uint8Array(await x.file.arrayBuffer()))});
+   out.push({id:x.id,name:x.name,tags:x.tags,filename:x.filename,createdAt:x.createdAt,updatedAt:x.updatedAt,
+    thumbnail:x.thumbnail,sourceKind:x.sourceKind||'glb',
+    file:x.file?bytesToBase64(new Uint8Array(await x.file.arrayBuffer())):null,
+    html:x.html && (x.sourceKind==='html'||x.sourceKind==='glb-html')
+      ?bytesToBase64(new Uint8Array(await x.html.arrayBuffer())):null});
   }
-  const blob=new Blob([JSON.stringify({format:'octos-3d-assets-backup',version:1,models:out})],{type:'application/json'});
-  download(blob,'ocToS-3D-assets-backup.json');
+  download(new Blob([JSON.stringify({format:'octos-3d-assets-backup',version:1,models:out})],{type:'application/json'}),'ocToS-3D-assets-backup.json');
   status('Copia de seguridad creada: '+records.length+' objetos.');
  }catch(e){status('Error al crear copia: '+e.message,true)}
  finally{setBusy(false);updateButtons()}
@@ -340,17 +401,23 @@ async function restore(file){
   if(obj.models.length>300)throw new Error('La copia excede el límite de 300 objetos.');
   let count=0;
   for(const row of obj.models){
-   if(typeof row.file!=='string'||row.file.length>350000000)throw new Error('Modelo inválido o demasiado grande.');
-   const bytes=await base64ToBytes(row.file);validateGLB(bytes.buffer,bytes.byteLength);
-   const binary=new Blob([bytes],{type:'model/gltf-binary'});
+   if(row.file!=null&&(typeof row.file!=='string'||row.file.length>350000000))throw new Error('Modelo GLB inválido.');
+   if(row.html!=null&&(typeof row.html!=='string'||row.html.length>350000000))throw new Error('HTML inválido.');
+   let binary=null,html=null;
+   if(row.file){
+    const bytes=await base64ToBytes(row.file);validateGLB(bytes.buffer,bytes.byteLength);
+    binary=new Blob([bytes],{type:'model/gltf-binary'});
+   }
+   if(row.html)html=new Blob([await base64ToBytes(row.html)],{type:'text/html;charset=utf-8'});
+   if(!html && binary)html=await makeHTML(binary,String(row.name||'Modelo'));
+   if(!html && !binary)throw new Error('Objeto sin archivo válido.');
    const name=String(row.name||'Modelo').slice(0,120);
-   const html=await makeHTML(binary,name);
-   await put({id:uid(),name,tags:Array.isArray(row.tags)?row.tags.slice(0,30).map(String):[],filename:String(row.filename||name+'.glb'),
+   await put({id:uid(),name,tags:Array.isArray(row.tags)?row.tags.slice(0,30).map(String):[],
+    filename:String(row.filename||name+(binary?'.glb':'.html')),sourceKind:row.sourceKind||(binary?'glb':'html'),
     file:binary,html,thumbnail:row.thumbnail||null,createdAt:Date.now(),updatedAt:Date.now()});
    count++;
   }
-  await refresh();
-  status('Copia restaurada: '+count+' modelos añadidos.');
+  await refresh();status('Copia restaurada: '+count+' objetos añadidos.');
  }catch(e){status('No se pudo restaurar la copia: '+e.message,true)}
  finally{setBusy(false);updateButtons()}
 }
@@ -390,4 +457,4 @@ stage.addEventListener('dragover',e=>e.preventDefault());
 stage.addEventListener('dragleave',e=>{e.preventDefault();dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)$('drop').classList.remove('show')});
 stage.addEventListener('drop',e=>{e.preventDefault();dragDepth=0;$('drop').classList.remove('show');importFiles(e.dataTransfer.files)});
 window.addEventListener('beforeunload',e=>{if(dirty&&active){e.preventDefault();e.returnValue=''}});
-refresh().then(()=>status('Biblioteca local lista para importar GLB.')).catch(e=>status('IndexedDB no disponible: '+e.message,true));
+refresh().then(()=>status('Biblioteca local lista para importar GLB o HTML.')).catch(e=>status('IndexedDB no disponible: '+e.message,true));
