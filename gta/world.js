@@ -115,7 +115,7 @@ export async function createWorld(start, report, {selection = false} = {}) {
 
   function setBuildingAppearance(color, opacity) {
     if (typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color)) buildingColor = color;
-    if (Number.isFinite(opacity)) buildingOpacity = Math.max(0.15, Math.min(1, opacity));
+    if (Number.isFinite(opacity)) buildingOpacity = Math.max(0, Math.min(1, opacity));
     if (buildingsId && map.getLayer(buildingsId)) {
       map.setPaintProperty(buildingsId, 'fill-extrusion-color', buildingColor);
       map.setPaintProperty(buildingsId, 'fill-extrusion-opacity', buildingOpacity);
