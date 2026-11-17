@@ -60,19 +60,6 @@ export async function createActor(world, start, report) {
   const vehicle=await loadBMW(T);
   const car=vehicle.group;
   scene.add(character,car);
-  const shadow = new T.Mesh(
-    new T.CircleGeometry(1.3,16),
-    new T.MeshBasicMaterial({color:0x101010,transparent:true,opacity:.34,depthWrite:false})
-  );
-  shadow.position.z=.06;
-  scene.add(shadow);
-  const carShadow=new T.Mesh(
-    new T.CircleGeometry(1,24),
-    new T.MeshBasicMaterial({color:0x101010,transparent:true,opacity:.28,depthWrite:false})
-  );
-  carShadow.scale.set(1.25,2.35,1);
-  carShadow.position.z=.018;
-  scene.add(carShadow);
   let state = {...start};
   let renderer = null;
   let disabled = false;
@@ -104,11 +91,9 @@ export async function createActor(world, start, report) {
         character.visible = state.mode === 'walk';
         // Salto visual por acción del mando/teclado, sin modificar el terreno.
         character.position.z=Math.max(0,Number(state.jumpHeight)||0);
-        shadow.visible=character.visible;
-        shadow.scale.set(.42,.42,1);
         character.rotation.z = -state.heading * Math.PI / 180;
         const vehicleLocation=state.vehicle;
-        car.visible=carShadow.visible=!!vehicleLocation;
+        car.visible=!!vehicleLocation;
         if (vehicleLocation) {
           const carHeight=world.elevation(vehicleLocation.lon,vehicleLocation.lat) ?? z;
           const vp=window.maplibregl.MercatorCoordinate.fromLngLat(
@@ -116,7 +101,6 @@ export async function createActor(world, start, report) {
           );
           car.position.set((vp.x-p.x)/scale,-(vp.y-p.y)/scale,(vp.z-p.z)/scale);
           car.rotation.z=-vehicleLocation.heading*Math.PI/180;
-          carShadow.position.set(car.position.x,car.position.y,car.position.z+.018);
           vehicle.update(state.drive?.steer||0,state.drive?.spin||0,state.drive?.rearSpin??state.drive?.spin??0);
         }
         renderer.resetState();
@@ -142,6 +126,7 @@ export async function createActor(world, start, report) {
   return {
     update(next) {
       state = {...next};
+      world.setRenderCenter(next.lon, next.lat);
       replacement?.update(next);
       if (!disabled) map.triggerRepaint();
     },
