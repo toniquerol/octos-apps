@@ -1,5 +1,5 @@
 import {createWorld} from './world.js?v=4';
-import {Game, readSave} from './game.js?v=2';
+import {Game, readSave} from './game.js?v=3';
 import {createActor} from './actor.js?v=2';
 
 const $ = id => document.getElementById(id);
