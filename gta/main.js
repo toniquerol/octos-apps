@@ -1,4 +1,4 @@
-import {createWorld} from './world.js';
+import {createWorld} from './world.js?v=2';
 import {Game, readSave} from './game.js';
 import {createActor} from './actor.js';
 
