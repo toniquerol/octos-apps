@@ -103,7 +103,7 @@ export function mountDriveHud({report}={}) {
     try {
       mini=new window.maplibregl.Map({
         container:gps,style:GPS_STYLE,
-        center:[state.lon,state.lat],zoom:16.2,bearing:state.heading||0,
+        center:[state.lon,state.lat],zoom:15.3,bearing:state.heading||0,
         pitch:0,minZoom:14,maxZoom:18,
         interactive:false,attributionControl:false,
         antialias:false,renderWorldCopies:false,fadeDuration:0,
