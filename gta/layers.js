@@ -209,7 +209,7 @@ export function mountLayerPanel(world, {report, setSettings}) {
         console.warn('OcToS GTA · aspecto carretera:',id,error);
       }
     }
-    const asphaltWidth=metricLineWidth(Math.max(0.2,width-1.3),latitude);
+    const asphaltWidth=metricLineWidth(Math.max(0.2,width-2.2),latitude);
     const centerWidth=metricLineWidth(Math.min(0.6,width*0.045),latitude);
     for(const id of roadOverlayIds) {
       if(!map.getLayer(id))continue;
