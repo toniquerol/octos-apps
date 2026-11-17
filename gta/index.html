@@ -8,10 +8,10 @@
 <title>OcToS GTA · V1</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=3">
+<link rel="stylesheet" href="./style.css?v=4">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="../shared/nav.js?v=20261117-gta" defer></script>
-<script type="module" src="./main.js?v=3"></script>
+<script type="module" src="./main.js?v=4"></script>
 </head>
 <body class="selecting">
 <header class="topbar">
@@ -34,7 +34,7 @@
     <div class="hud-row"><span>ALTURA MDT</span><strong id="altitude">—</strong></div>
   </section>
   <div id="status" class="status" role="status" aria-live="polite">Cargando cartografía…</div>
-  <div class="keys-hint">W A S D <span>·</span> Mayús correr <span>·</span> Espacio vehículo <span>·</span> V cámara</div>
+  <div class="keys-hint">W A S D <span>·</span> Mayús correr <span>·</span> Espacio vehículo <span>·</span> V distancia <span>·</span> Rueda zoom</div>
   <aside id="settings-panel" class="panel" hidden>
     <div class="panel-head"><h2>Mundo y rendimiento</h2><button type="button" id="close-settings" aria-label="Cerrar ajustes">×</button></div>
     <label class="field">Calidad de imagen
@@ -88,7 +88,7 @@
     <h2>Controles · OcToS GTA V1</h2>
     <p><strong>A pie:</strong> W/S avanzar o retroceder, A/D desplazamiento lateral, Q/E cambiar rumbo, Mayús correr.</p>
     <p><strong>Vehículo:</strong> W acelerar, S frenar y marcha atrás, A/D girar, Espacio subir o bajar.</p>
-    <p><strong>Cámara:</strong> V alterna seguimiento y vista cenital. Rueda del ratón acerca o aleja la escena.</p>
+    <p><strong>Cámara:</strong> permanece detrás del personaje y gira con su rumbo. V alterna la distancia; la rueda del ratón acerca y aleja.</p>
     <p><strong>Entorno:</strong> relieve y edificios procedentes de datos geográficos reales; el vehículo y el personaje son modelos simplificados. Sin colisiones ni reglas de circulación en V1.</p>
     <button type="button" id="close-help" class="action">Cerrar</button>
   </dialog>
