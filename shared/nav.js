@@ -16,7 +16,7 @@
     {id:'templates',name:'Templates',category:'Sistema visual',path:'templates/',icon:'templates/icon-light.svg'},
     {id:'aero',name:'Aero',category:'Simulación 3D',path:'aero/',icon:'aero/icon-light.svg'},
     {id:'garage',name:'Garage',category:'Taller 3D',path:'garage/',icon:'garage/icon-light.svg'},
-    {id:'gta',name:'GTA',category:'Videojuego geográfico',path:'gta/',icon:'gta/icon-light.svg'},
+    {id:'gta',name:'GTA',category:'Mundo abierto',path:'gta/',icon:'gta/icon-light.svg'},
     {id:'roads',name:'Roads',category:'Infraestructuras',path:'roads/index.html?open=editor',icon:'roads/icon-light.svg'},
     {id:'team',name:'Team · Sala',category:'Organización',path:'team/',icon:'team/icon-light.svg'},
     {id:'kitchen',name:'Kitchen',category:'Diseño de cocinas',path:'kitchen/',icon:'kitchen/icon-light.svg'}
@@ -33,7 +33,7 @@
     templates:['TEMPLATES','SISTEMA VISUAL'],
     aero:['AERO','LABORATORIO 3D'],
     garage:['GARAGE','TALLER VIRTUAL 3D'],
-    gta:['GTA','MUNDO ABIERTO GEOGRÁFICO · V1'],
+    gta:['GTA','MUNDO ABIERTO'],
     roads:['ROADS','INFRAESTRUCTURAS'],
     kitchen:['KITCHEN','DISEÑO MODULAR 2D · 3D']
   };
