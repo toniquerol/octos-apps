@@ -1,4 +1,5 @@
-/* OcToS GTA V1 · Controles y física cinemática ligera (sin colisiones). */
+/* OcToS GTA · personaje y primer vehículo independiente. */
+import {stepDriving,initialDriving} from './vehicle.js?v=1';
 const STORAGE_KEY = 'octos-gta-v1-save';
 const DEFAULT = {lat: 41.3874, lon: 2.1701, heading: 0, mode: 'walk', place: 'Barcelona'};
 const RAD = Math.PI / 180;
@@ -27,6 +28,13 @@ export class Game {
     this.onUpdate = onUpdate;
     this.onFrame = onFrame;
     this.state = readSave();
+    const savedVehicle=this.state.vehicle;
+    delete this.state.vehicle;
+    this.vehicle = savedVehicle && Number.isFinite(savedVehicle.lat) && Number.isFinite(savedVehicle.lon)
+      ? {...savedVehicle, heading:Number(savedVehicle.heading)||0}
+      : null;
+    this.driving = initialDriving();
+    this.cameraMode = 0;
     this.keys = new Set();
     this.speed = 0; // m/s, con signo si el vehículo circula marcha atrás
     // Las dos vistas permanecen detrás del personaje; V solo varía la distancia.
@@ -42,12 +50,18 @@ export class Game {
     this.onKeyDown = event => {
       if (!this.active || document.body.classList.contains('editing')) return;
       if (event.target?.closest?.('input,select,textarea,button,[contenteditable="true"]')) return;
-      if (['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ShiftLeft','ShiftRight',
+      if (['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','KeyC','ShiftLeft','ShiftRight',
         'Space','KeyV','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code)) event.preventDefault();
-      if (event.repeat && ['Space','KeyV'].includes(event.code)) return;
-      if (event.code === 'Space') this.toggleVehicle();
-      else if (event.code === 'KeyV') this.toggleView();
-      else this.keys.add(event.code);
+      if (event.repeat && ['KeyE','KeyC','KeyV'].includes(event.code)) return;
+      if (event.code === 'KeyE' && (this.state.mode === 'car' || this.nearVehicle())) {
+        if (!event.repeat) this.toggleVehicle();
+      } else if (event.code === 'KeyC' && this.state.mode === 'car') {
+        if (!event.repeat) this.cycleCamera();
+      } else if (event.code === 'KeyV') {
+        if (!event.repeat) this.toggleView();
+      } else if (event.code !== 'Space' || this.state.mode === 'car') {
+        this.keys.add(event.code);
+      }
     };
     this.onKeyUp = event => this.keys.delete(event.code);
     this.onWheel = event => {
@@ -59,7 +73,7 @@ export class Game {
       this.cameraZoom[mode] = clamp(this.cameraZoom[mode] - Math.sign(event.deltaY) * amount, 20.5, 24);
       this.updateCamera();
     };
-    this.onBlur = () => { this.keys.clear(); this.speed = 0; this.emit(true); };
+    this.onBlur = () => { this.keys.clear(); this.speed = 0; this.driving.speed=0; this.driving.slip=0; this.emit(true); };
     document.addEventListener('keydown', this.onKeyDown);
     document.addEventListener('keyup', this.onKeyUp);
     document.addEventListener('wheel', this.onWheel, {passive: false});
@@ -74,6 +88,7 @@ export class Game {
     this.active = true;
     this.lastTime = performance.now();
     this.timer = setInterval(() => this.tick(), Math.round(1000 / this.fps));
+    if (!this.vehicle) this.parkNearPlayer();
     this.updateCamera();
     this.emit(true);
   }
@@ -85,6 +100,7 @@ export class Game {
     this.timer = null;
     this.keys.clear();
     this.speed = 0;
+    this.driving.speed=0; this.driving.slip=0;
     this.emit(true);
   }
 
@@ -125,18 +141,15 @@ export class Game {
       this.speed = input || horizontal ? pace : 0;
       this.state.heading = (this.state.heading + turn * 115 * dt + 360) % 360;
     } else {
-      if (input > 0) this.speed += 8 * dt;
-      if (input < 0) this.speed -= (this.speed > 0 ? 13 : 4) * dt;
-      if (input === 0) {
-        const drag = 3.8 * dt;
-        this.speed = Math.abs(this.speed) < drag ? 0 : this.speed - Math.sign(this.speed) * drag;
-      }
-      this.speed = clamp(this.speed, -5, 23);
-      const steering = horizontal * Math.min(56, 23 + 440 / (8 + Math.abs(this.speed)));
-      if (Math.abs(this.speed) > 0.15) {
-        this.state.heading = (this.state.heading + steering * Math.sign(this.speed) * dt + 360) % 360;
-      }
-      forward = this.speed * dt;
+      const result=stepDriving(this.driving,{
+        forward:input>0, reverse:input<0,
+        left:horizontal<0, right:horizontal>0,
+        handbrake:this.keys.has('Space')
+      },dt);
+      this.speed=this.driving.speed;
+      this.state.heading=((this.state.heading-result.headingDelta/RAD)%360+360)%360;
+      forward=result.distance;
+      sideways=result.slipDistance;
     }
 
     const moved = Math.abs(forward) + Math.abs(sideways) > 0.000001;
@@ -151,8 +164,11 @@ export class Game {
       this.state.lon = ((this.state.lon + 180) % 360 + 360) % 360 - 180;
     }
     if (moved || rotated) {
+      if (this.state.mode === 'car') Object.assign(this.vehicle,{
+        lat:this.state.lat,lon:this.state.lon,heading:this.state.heading
+      });
       this.updateCamera();
-      this.onFrame(this.state);
+      this.onFrame({...this.state,vehicle:this.vehicle,drive:this.driving});
       this.emit(now - this.lastHud >= 140);
       if (now - this.lastSave > 5000) this.save();
     } else if (Math.abs(this.speed - oldSpeed) > 0.001 || this.speed !== 0) {
@@ -164,9 +180,11 @@ export class Game {
     const isCar = this.state.mode === 'car';
     const height = this.map.getContainer?.().clientHeight || 720;
     // El personaje queda en el tercio inferior; el mapa muestra la calle por delante.
-    const zoom = clamp(this.cameraZoom[this.state.mode] - (this.view === 'wide' ? .75 : 0), 20, 24);
+    const zoom = isCar
+      ? [this.cameraZoom.car, this.cameraZoom.car-.75, 20.65][this.cameraMode]
+      : clamp(this.cameraZoom.walk - (this.view === 'wide' ? .75 : 0), 20, 24);
     let center = [this.state.lon, this.state.lat];
-    let topPadding = Math.round(height * (isCar ? .26 : .34));
+    let topPadding = Math.round(height * (isCar ? (this.cameraMode===2?0:.26) : .34));
     if (!isCar) {
       // Rig geográfico detrás del cuello: pivote a 1,5 m en dirección al rumbo.
       // MapLibre 4 limita la cámara mediante zoom; el offset físico es aproximado.
@@ -186,21 +204,60 @@ export class Game {
       center,
       bearing: this.state.heading,
       zoom,
-      pitch: isCar ? 75 : 69,
+      pitch: isCar ? (this.cameraMode===2 ? 0 : 75) : 69,
       padding: {top: topPadding, bottom: 0, left: 0, right: 0}
     });
   }
 
+  parkNearPlayer() {
+    const heading=this.state.heading*RAD;
+    const east=Math.sin(heading)*4.3+Math.cos(heading)*1.5;
+    const north=Math.cos(heading)*4.3-Math.sin(heading)*1.5;
+    const lat=clamp(this.state.lat+north/111320,-85,85);
+    const lon=this.state.lon+east/(111320*Math.max(.087,Math.cos(lat*RAD)));
+    this.vehicle={lat,lon,heading:this.state.heading};
+  }
+
+  nearVehicle() {
+    if (!this.vehicle) return false;
+    const latScale=111320;
+    const east=(this.vehicle.lon-this.state.lon)*latScale*Math.max(.087,Math.cos(this.state.lat*RAD));
+    const north=(this.vehicle.lat-this.state.lat)*latScale;
+    return Math.hypot(east,north)<=5.5;
+  }
+
   toggleVehicle() {
-    this.state.mode = this.state.mode === 'car' ? 'walk' : 'car';
-    this.speed = 0;
+    if (this.state.mode==='walk') {
+      if (!this.nearVehicle()) return;
+      this.state.mode='car';
+      Object.assign(this.state,{lat:this.vehicle.lat,lon:this.vehicle.lon,heading:this.vehicle.heading});
+      this.cameraMode=0;
+    } else {
+      if (Math.abs(this.driving.speed)>1.2) return; // salir solo a baja velocidad
+      const h=this.state.heading*RAD;
+      const east=-Math.cos(h)*2.1, north=Math.sin(h)*2.1;
+      this.state.mode='walk';
+      this.state.lat=clamp(this.vehicle.lat+north/111320,-85,85);
+      this.state.lon=this.vehicle.lon+east/(111320*Math.max(.087,Math.cos(this.state.lat*RAD)));
+    }
+    this.driving=initialDriving();
+    this.speed=0;
+    this.keys.clear();
     this.updateCamera();
+    this.onFrame({...this.state,vehicle:this.vehicle,drive:this.driving});
     this.emit(true);
     this.save();
   }
 
+  cycleCamera() {
+    this.cameraMode=(this.cameraMode+1)%3;
+    this.updateCamera();
+    this.emit(true);
+  }
+
   toggleView() {
-    this.view = this.view === 'follow' ? 'wide' : 'follow';
+    if (this.state.mode==='car') this.cameraMode=(this.cameraMode+1)%3;
+    else this.view=this.view==='follow'?'wide':'follow';
     this.updateCamera();
     this.emit(true);
   }
@@ -212,9 +269,12 @@ export class Game {
     this.state.lon = lon;
     this.state.place = String(place).slice(0, 80);
     this.speed = 0;
+    this.driving=initialDriving();
     this.keys.clear();
+    if (this.state.mode==='car') this.vehicle={lat,lon,heading:this.state.heading};
+    else this.parkNearPlayer();
     this.updateCamera();
-    this.onFrame(this.state);
+    this.onFrame({...this.state,vehicle:this.vehicle,drive:this.driving});
     this.emit(true);
     this.save();
   }
@@ -223,13 +283,13 @@ export class Game {
     if (!force) return;
     this.lastHud = performance.now();
     const elevation = this.world.elevation(this.state.lon, this.state.lat);
-    this.onUpdate({...this.state, speed: Math.abs(this.speed) * 3.6,
-      altitude: elevation, view: this.view});
+    this.onUpdate({...this.state, vehicle:this.vehicle, drive:this.driving, cameraMode:this.cameraMode,
+      speed: Math.abs(this.speed) * 3.6, altitude: elevation, view: this.view});
   }
 
   save() {
     this.lastSave = performance.now();
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state)); return true; }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({...this.state,vehicle:this.vehicle})); return true; }
     catch { return false; }
   }
 

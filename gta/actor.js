@@ -1,4 +1,5 @@
-/* OcToS GTA V1 · Modelos 3D ligeros; degradación a marcador si falla Three.js. */
+/* OcToS GTA · personaje y BMW E46 independientes sobre la misma capa 3D. */
+import {loadBMW} from './vehicle.js?v=1';
 function fallback(map, state, report) {
   const element = document.createElement('div');
   element.className = 'entity-fallback';
@@ -40,34 +41,6 @@ function buildCharacter(T) {
   return group;
 }
 
-function buildCar(T) {
-  const group = new T.Group();
-  const body = new T.MeshLambertMaterial({color: 0xf1f1ef});
-  const windows = new T.MeshLambertMaterial({color: 0x35495a});
-  const tires = new T.MeshLambertMaterial({color: 0x151515});
-  const headlamp = new T.MeshBasicMaterial({color: 0xffdc9c});
-  const rear = new T.MeshBasicMaterial({color: 0xb52f2b});
-  function cube(w,l,h,x,y,z,material) {
-    const part = new T.Mesh(new T.BoxGeometry(w,l,h),material);
-    part.position.set(x,y,z);group.add(part);
-  }
-  cube(1.78,4.10,.56,0,0,.64,body);
-  cube(1.55,2.1,.60,0,-.17,1.16,windows);
-  cube(1.55,1.15,.16,0,-.24,1.5,body);
-  cube(1.42,.35,.14,0,1.66,.94,body);
-  for (const x of [-.92,.92]) for (const y of [-1.27,1.25]) {
-    const wheel = new T.Mesh(new T.CylinderGeometry(.35,.35,.2,12),tires);
-    wheel.rotation.z = Math.PI/2;
-    wheel.position.set(x,y,.36);
-    group.add(wheel);
-  }
-  for (const x of [-.56,.56]) {
-    cube(.35,.08,.18,x,2.07,.62,headlamp);
-    cube(.37,.08,.18,x,-2.07,.62,rear);
-  }
-  return group;
-}
-
 export async function createActor(world, start, report) {
   const map = world.map;
   let T;
@@ -83,7 +56,9 @@ export async function createActor(world, start, report) {
   sun.position.set(-15,-10,35);
   scene.add(sun, new T.AmbientLight(0xffffff, 1.35));
   const character = buildCharacter(T);
-  const car = buildCar(T);
+  // La geometría exacta del prototipo se carga sin crear otro renderizador.
+  const vehicle=await loadBMW(T);
+  const car=vehicle.group;
   scene.add(character,car);
   const shadow = new T.Mesh(
     new T.CircleGeometry(1.3,16),
@@ -91,6 +66,13 @@ export async function createActor(world, start, report) {
   );
   shadow.position.z=.06;
   scene.add(shadow);
+  const carShadow=new T.Mesh(
+    new T.CircleGeometry(1,24),
+    new T.MeshBasicMaterial({color:0x101010,transparent:true,opacity:.28,depthWrite:false})
+  );
+  carShadow.scale.set(1.25,2.35,1);
+  carShadow.position.z=.018;
+  scene.add(carShadow);
   let state = {...start};
   let renderer = null;
   let disabled = false;
@@ -115,10 +97,21 @@ export async function createActor(world, start, report) {
           .scale(new T.Vector3(scale,-scale,scale));
         camera.projectionMatrix = new T.Matrix4().fromArray(matrix).multiply(transform);
         character.visible = state.mode === 'walk';
-        car.visible = state.mode === 'car';
-        shadow.scale.set(state.mode === 'car' ? 1.3 : .42,state.mode === 'car' ? 2 : .42,1);
+        shadow.visible=character.visible;
+        shadow.scale.set(.42,.42,1);
         character.rotation.z = -state.heading * Math.PI / 180;
-        car.rotation.z = -state.heading * Math.PI / 180;
+        const vehicleLocation=state.vehicle;
+        car.visible=carShadow.visible=!!vehicleLocation;
+        if (vehicleLocation) {
+          const carHeight=world.elevation(vehicleLocation.lon,vehicleLocation.lat) ?? z;
+          const vp=window.maplibregl.MercatorCoordinate.fromLngLat(
+            [vehicleLocation.lon,vehicleLocation.lat],carHeight+.06
+          );
+          car.position.set((vp.x-p.x)/scale,-(vp.y-p.y)/scale,(vp.z-p.z)/scale);
+          car.rotation.z=-vehicleLocation.heading*Math.PI/180;
+          carShadow.position.set(car.position.x,car.position.y,car.position.z+.018);
+          vehicle.update(state.drive?.steer||0,state.drive?.spin||0);
+        }
         renderer.resetState();
         renderer.render(scene,camera);
         renderer.resetState();
@@ -149,6 +142,7 @@ export async function createActor(world, start, report) {
       replacement?.destroy();
       try { if (map.getLayer(layer.id)) map.removeLayer(layer.id); } catch {}
       try { renderer?.dispose(); } catch {}
+      vehicle.dispose();
     }
   };
 }
