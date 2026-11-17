@@ -142,6 +142,8 @@ export function mountMapEditor({world, game, layerControls, report}) {
   pitch.addEventListener('input', camera);
   map.on('moveend', () => {
     if (!document.body.classList.contains('editing')) return;
+    const center = map.getCenter();
+    layerControls?.updateLocation(center.lng, center.lat);
     zoom.value = String(clamp(map.getZoom(), 5, 19));
     if (view.value === '3d') pitch.value = String(clamp(map.getPitch(), 0, 70));
     updateLabels();
