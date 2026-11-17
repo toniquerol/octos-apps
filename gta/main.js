@@ -1,5 +1,6 @@
 import {createWorld} from './world.js?v=5';
-import {Game, readSave} from './game.js?v=4';
+import {Game, readSave} from './game.js?v=5';
+import {mountLayerPanel} from './layers.js?v=1';
 import {createActor} from './actor.js?v=2';
 
 const $ = id => document.getElementById(id);
@@ -9,6 +10,7 @@ const play = $('play');
 let world = null;
 let game = null;
 let actor = null;
+let layerControls = null;
 let showStatusTimer = 0;
 let selection = null;
 let selectionMarker = null;
@@ -31,6 +33,7 @@ function updateHud(state) {
   $('altitude').textContent = state.altitude == null ? 'Sin datos' : Math.round(state.altitude) + ' m';
   $('place-name').textContent = (state.place || 'Coordenadas') + ' · Mundo real';
   actor?.update(state);
+  layerControls?.updateLocation(state.lon,state.lat);
   world?.refreshShadows(state.lon, state.lat);
 }
 function showPanel(visible) {
@@ -102,16 +105,23 @@ $('save-position').addEventListener('click',() => {
     'El navegador no permite guardar datos locales.','ok');
 });
 $('terrain').addEventListener('change',event => {
-  if (world && game) world.updateTerrain(event.target.checked,$('terrain-provider').value);
+  if (world && game) {
+    world.updateTerrain(event.target.checked,$('terrain-provider').value);
+    layerControls?.syncSettings({terrain:event.target.checked});
+  }
 });
 $('terrain-provider').addEventListener('change',event => {
   if (world && game) {
     world.updateTerrain($('terrain').checked,event.target.value);
+    layerControls?.syncSettings({dem:event.target.value});
     report('Proveedor de elevaciones: ' + event.target.selectedOptions[0].textContent,'ok');
   }
 });
 $('buildings').addEventListener('change',event => {
-  if (world && game) world.updateBuildings(event.target.checked);
+  if (world && game) {
+    world.updateBuildings(event.target.checked);
+    layerControls?.syncSettings({buildings:event.target.checked});
+  }
 });
 $('quality').addEventListener('change',event => {
   if (!game) return;
@@ -119,9 +129,11 @@ $('quality').addEventListener('change',event => {
   if (event.target.value === 'low') {
     $('terrain').checked = false;
     world.updateTerrain(false,$('terrain-provider').value);
+    layerControls?.syncSettings({terrain:false});
   } else if (event.target.value === 'high') {
     $('terrain').checked = true;
     world.updateTerrain(true,$('terrain-provider').value);
+    layerControls?.syncSettings({terrain:true});
   }
   try {localStorage.setItem('octos-gta-quality',event.target.value);} catch {}
   report('Calidad gráfica: '+event.target.selectedOptions[0].textContent,'ok');
@@ -150,8 +162,22 @@ async function launchScene() {
     const start = {...selection};
     const quality = $('quality').value;
     const terrainEnabled = $('terrain').checked && quality !== 'low';
-    world.updateBuildings($('buildings').checked);
-    world.updateTerrain(terrainEnabled,$('terrain-provider').value);
+    // El panel recupera la última combinación; sin modificar el estilo base.
+    layerControls = mountLayerPanel(world,{
+      report,
+      setSettings: prefs => {
+        $('buildings').checked = prefs.buildings;
+        $('terrain').checked = prefs.terrain;
+        $('terrain-provider').value = prefs.dem;
+      }
+    });
+    layerControls.initialize(start.lon,start.lat);
+    if (quality === 'low' && terrainEnabled === false && $('terrain').checked) {
+      // La calidad baja no activa relieve automáticamente.
+      $('terrain').checked = false;
+      world.updateTerrain(false,$('terrain-provider').value);
+      layerControls.syncSettings({terrain:false});
+    }
     actor = await createActor(world,start,report);
     game = new Game(world,updateHud,state => actor?.update(state));
     game.setQuality(quality);
