@@ -13,7 +13,7 @@ const TERRAIN = {
   }
 };
 
-export async function createWorld(start, report) {
+export async function createWorld(start, report, {selection = false} = {}) {
   const lib = window.maplibregl;
   if (!lib || typeof lib.Map !== 'function') {
     throw new Error('No se ha cargado MapLibre GL JS. Revisa la conexión.');
@@ -24,9 +24,9 @@ export async function createWorld(start, report) {
   }
   const map = new lib.Map({
     container: 'map', style: MAP_STYLE,
-    center: [start.lon, start.lat], zoom: 17.2, pitch: 68, bearing: 0,
+    center: [start.lon, start.lat], zoom: selection ? 13 : 17.2, pitch: selection ? 0 : 68, bearing: 0,
     maxPitch: 80, minZoom: 4, maxZoom: 19,
-    antialias: false, dragPan: false, dragRotate: false,
+    antialias: false, dragPan: selection, dragRotate: false,
     touchZoomRotate: false, attributionControl: false,
     fadeDuration: 0, renderWorldCopies: false
   });
@@ -130,5 +130,12 @@ export async function createWorld(start, report) {
     return low ? 20 : level === 'high' ? 45 : 30;
   }
 
-  return {map, updateBuildings, updateTerrain, elevation, quality};
+  function enterGame() {
+    map.dragPan.disable();
+    map.scrollZoom.disable();
+    map.doubleClickZoom.disable();
+    map.touchZoomRotate.disable();
+    map.dragRotate.disable();
+  }
+  return {map, updateBuildings, updateTerrain, elevation, quality, enterGame};
 }
