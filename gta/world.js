@@ -37,6 +37,8 @@ export async function createWorld(start, report, {selection = false} = {}) {
   let buildingsActive = false;
   let provider = 'mapterhorn';
   let buildingsId = null;
+  let buildingColor = '#707783';
+  let buildingOpacity = 0.84;
   const daylight = createDaylight(map);
   let tileErrorReported = false;
 
@@ -91,13 +93,13 @@ export async function createWorld(start, report, {selection = false} = {}) {
         id: buildingsId, type: 'fill-extrusion', source: vectorId, 'source-layer': 'building',
         minzoom: 14, layout: {visibility: 'visible'},
         paint: {
-          'fill-extrusion-color': '#707783',
+          'fill-extrusion-color': buildingColor,
           'fill-extrusion-height': [
             'max', 2,
             ['to-number', ['get', 'render_height'], ['*', ['to-number', ['get', 'building:levels'], 3], 3]]
           ],
           'fill-extrusion-base': ['to-number', ['get', 'render_min_height'], 0],
-          'fill-extrusion-opacity': 0.84
+          'fill-extrusion-opacity': buildingOpacity
         }
       }, firstSymbol?.id);
       daylight.setBuildings(vectorId, buildingsId, true);
@@ -109,6 +111,16 @@ export async function createWorld(start, report, {selection = false} = {}) {
       console.warn('OcToS GTA · edificios:', error);
       return false;
     }
+  }
+
+  function setBuildingAppearance(color, opacity) {
+    if (typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color)) buildingColor = color;
+    if (Number.isFinite(opacity)) buildingOpacity = Math.max(0.15, Math.min(1, opacity));
+    if (buildingsId && map.getLayer(buildingsId)) {
+      map.setPaintProperty(buildingsId, 'fill-extrusion-color', buildingColor);
+      map.setPaintProperty(buildingsId, 'fill-extrusion-opacity', buildingOpacity);
+    }
+    return {color:buildingColor, opacity:buildingOpacity};
   }
 
   function updateTerrain(enabled, nextProvider = provider) {
@@ -146,6 +158,15 @@ export async function createWorld(start, report, {selection = false} = {}) {
     return low ? 20 : level === 'high' ? 45 : 30;
   }
 
+  function enterEditor() {
+    map.setMaxZoom(20);
+    map.dragPan.enable();
+    map.scrollZoom.enable();
+    map.doubleClickZoom.enable();
+    map.touchZoomRotate.enable();
+    map.dragRotate.enable();
+  }
+
   function enterGame() {
     // Se amplía solo al entrar al juego; el selector geográfico conserva su zoom.
     map.setMaxZoom(24);
@@ -156,7 +177,8 @@ export async function createWorld(start, report, {selection = false} = {}) {
     map.dragRotate.disable();
   }
   return {
-    map, updateBuildings, updateTerrain, elevation, quality, enterGame,
+    map, updateBuildings, updateTerrain, setBuildingAppearance,
+    elevation, quality, enterGame, enterEditor,
     setTime: daylight.setTime, refreshShadows: daylight.refreshShadows
   };
 }
