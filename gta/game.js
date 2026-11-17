@@ -21,14 +21,17 @@ export function readSave() {
 }
 
 export class Game {
-  constructor(world, onUpdate) {
+  constructor(world, onUpdate, onFrame = () => {}) {
     this.world = world;
     this.map = world.map;
     this.onUpdate = onUpdate;
+    this.onFrame = onFrame;
     this.state = readSave();
     this.keys = new Set();
     this.speed = 0; // m/s, con signo si el vehículo circula marcha atrás
+    // Las dos vistas permanecen detrás del personaje; V solo varía la distancia.
     this.view = 'follow';
+    this.cameraZoom = {walk: 23.45, car: 22.2};
     this.active = false;
     this.timer = null;
     this.lastTime = performance.now();
@@ -45,9 +48,19 @@ export class Game {
       else this.keys.add(event.code);
     };
     this.onKeyUp = event => this.keys.delete(event.code);
+    this.onWheel = event => {
+      if (!this.active || !event.target?.closest?.('#map')) return;
+      event.preventDefault();
+      if (!event.deltaY) return;
+      const amount = Math.min(1, Math.max(.25, Math.abs(event.deltaY) / 120)) * .27;
+      const mode = this.state.mode;
+      this.cameraZoom[mode] = clamp(this.cameraZoom[mode] - Math.sign(event.deltaY) * amount, 20.5, 23.85);
+      this.updateCamera();
+    };
     this.onBlur = () => { this.keys.clear(); this.speed = 0; this.emit(true); };
     document.addEventListener('keydown', this.onKeyDown);
     document.addEventListener('keyup', this.onKeyUp);
+    document.addEventListener('wheel', this.onWheel, {passive: false});
     window.addEventListener('blur', this.onBlur);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) this.onBlur();
@@ -123,6 +136,7 @@ export class Game {
     }
     if (moved || rotated) {
       this.updateCamera();
+      this.onFrame(this.state);
       this.emit(now - this.lastHud >= 140);
       if (now - this.lastSave > 5000) this.save();
     } else if (Math.abs(this.speed - oldSpeed) > 0.001 || this.speed !== 0) {
@@ -132,12 +146,16 @@ export class Game {
 
   updateCamera() {
     const isCar = this.state.mode === 'car';
-    const overhead = this.view === 'overhead';
+    const height = this.map.getContainer?.().clientHeight || 720;
+    // El personaje queda en el tercio inferior; el mapa muestra la calle por delante.
+    const topPadding = Math.round(height * (isCar ? .26 : .34));
+    const zoom = clamp(this.cameraZoom[this.state.mode] - (this.view === 'wide' ? .75 : 0), 20, 23.85);
     this.map.jumpTo({
       center: [this.state.lon, this.state.lat],
-      bearing: overhead ? 0 : this.state.heading,
-      zoom: overhead ? 17.5 : isCar ? 17.5 : 18.1,
-      pitch: overhead ? 12 : isCar ? 70 : 73
+      bearing: this.state.heading,
+      zoom,
+      pitch: isCar ? 65 : 69,
+      padding: {top: topPadding, bottom: 0, left: 0, right: 0}
     });
   }
 
@@ -150,7 +168,7 @@ export class Game {
   }
 
   toggleView() {
-    this.view = this.view === 'follow' ? 'overhead' : 'follow';
+    this.view = this.view === 'follow' ? 'wide' : 'follow';
     this.updateCamera();
     this.emit(true);
   }
@@ -164,6 +182,7 @@ export class Game {
     this.speed = 0;
     this.keys.clear();
     this.updateCamera();
+    this.onFrame(this.state);
     this.emit(true);
     this.save();
   }
@@ -186,6 +205,7 @@ export class Game {
     clearInterval(this.timer);
     document.removeEventListener('keydown', this.onKeyDown);
     document.removeEventListener('keyup', this.onKeyUp);
+    document.removeEventListener('wheel', this.onWheel);
     window.removeEventListener('blur', this.onBlur);
   }
 }
