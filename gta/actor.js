@@ -1,5 +1,5 @@
 /* OcToS GTA · personaje y BMW E46 independientes sobre la misma capa 3D. */
-import {loadBMW} from './vehicle.js?v=1';
+import {loadBMW} from './vehicle.js?v=2';
 function fallback(map, state, report) {
   const element = document.createElement('div');
   element.className = 'entity-fallback';
@@ -83,8 +83,13 @@ export async function createActor(world, start, report) {
     type: 'custom',
     renderingMode: '3d',
     onAdd(_map, gl) {
+      renderer?.dispose();
       renderer = new T.WebGLRenderer({canvas: map.getCanvas(), context:gl, antialias:false});
       renderer.autoClear = false;
+    },
+    onRemove() {
+      renderer?.dispose();
+      renderer = null;
     },
     render(gl, matrix) {
       if (disabled || !renderer) return;
@@ -137,6 +142,12 @@ export async function createActor(world, start, report) {
       state = {...next};
       replacement?.update(next);
       if (!disabled) map.triggerRepaint();
+    },
+    rebind() {
+      // La geometría y la misma instancia Three.js sobreviven al cambio de estilo.
+      if (disabled || map.getLayer(layer.id)) return;
+      try { map.addLayer(layer); map.triggerRepaint(); }
+      catch (error) { console.warn('OcToS GTA · restaurar jugador 3D:',error); }
     },
     destroy() {
       replacement?.destroy();
