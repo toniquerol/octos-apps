@@ -8,11 +8,11 @@
 <title>OcToS GTA · V1</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=16">
+<link rel="stylesheet" href="./style.css?v=17">
 <link rel="stylesheet" href="../shared/gamepad-controller.css?v=2">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="../shared/nav.js?v=20261117-gta-map-editor" defer></script>
-<script type="module" src="./main.js?v=30"></script>
+<script type="module" src="./main.js?v=31"></script>
 </head>
 <body class="selecting">
 <header class="topbar">
@@ -27,6 +27,7 @@
   </details>
   <div class="header-buttons">
     <button type="button" id="controls-button" aria-controls="controls-panel" aria-expanded="false">Controles</button>
+    <button type="button" id="cameras-button" aria-controls="cameras-panel" aria-expanded="false">Cámaras</button>
     <button type="button" id="settings-button" aria-expanded="false" aria-controls="settings-panel">Ajustes</button>
     <span class="header-separator" aria-hidden="true"></span>
     <button type="button" id="map-mode-button" disabled aria-pressed="false">Editar mapa</button>
@@ -99,6 +100,12 @@
       <button type="button" id="close-controls" aria-label="Cerrar controles">×</button>
     </div>
     <div id="controls-content"></div>
+  </aside>
+  <aside id="cameras-panel" class="panel cameras-panel" hidden aria-label="Ajustes de las tres cámaras del vehículo">
+    <div class="panel-head"><h2>Cámaras · vehículo</h2>
+      <button type="button" id="close-cameras" aria-label="Cerrar cámaras">×</button>
+    </div>
+    <div id="cameras-content"></div>
   </aside>
   <aside id="settings-panel" class="panel" hidden>
     <div class="panel-head"><h2>Mundo y rendimiento</h2><button type="button" id="close-settings" aria-label="Cerrar ajustes">×</button></div>
@@ -182,7 +189,7 @@
     <h2>Información y controles</h2>
     <p><strong>A pie:</strong> W/S avanzar o retroceder, A/D desplazamiento lateral, Q girar a la izquierda y E girar a la derecha cuando el coche esté lejos; E entrar al BMW al acercarse, Mayús correr.</p>
     <p><strong>Vehículo BMW E46:</strong> E entrar o salir junto al coche y a baja velocidad; W/S acelerar, frenar o retroceder; A/D dirección; Espacio freno de mano y derrape; C alternar seguimiento, lejana y cenital.</p>
-    <p><strong>Cámara:</strong> permanece detrás del personaje y gira con su rumbo. V alterna la distancia; la rueda del ratón acerca y aleja.</p>
+    <p><strong>Cámara:</strong> a pie sigue al personaje y V cambia la distancia. En el BMW, C o V alternan las tres cámaras configurables en «Cámaras»; la rueda ajusta la escala.</p>
     <p><strong>Entorno:</strong> relieve y edificios proceden de datos geográficos reales. El BMW utiliza la carrocería exterior original del prototipo aprobado. Sin colisiones con edificios ni reglas de circulación en V1.</p>
     <button type="button" id="close-help" class="action">Cerrar</button>
   </dialog>
