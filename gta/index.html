@@ -8,16 +8,25 @@
 <title>OcToS GTA · V1</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=14">
+<link rel="stylesheet" href="./style.css?v=15">
 <link rel="stylesheet" href="../shared/gamepad-controller.css?v=2">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="../shared/nav.js?v=20261117-gta-map-editor" defer></script>
-<script type="module" src="./main.js?v=28"></script>
+<script type="module" src="./main.js?v=29"></script>
 </head>
 <body class="selecting">
 <header class="topbar">
   <div class="edition"><span class="version">V1</span></div>
+  <button type="button" id="teleport-open" class="teleport-open">Teleport</button>
+  <details id="layers-panel" class="gta-layers-panel gta-layers-menu">
+    <summary>Capas <span id="gta-catalog-count">46</span></summary>
+    <div class="gta-layers-body">
+      <p id="gta-catalog-status" class="gta-layer-note" role="status">Cargando catálogo OcToS Layers…</p>
+      <div id="gta-catalog-tree" class="gta-catalog-tree"></div>
+    </div>
+  </details>
   <div class="header-buttons">
+    <button type="button" id="controls-button" aria-controls="controls-panel" aria-expanded="false">Controles</button>
     <button type="button" id="settings-button" aria-expanded="false" aria-controls="settings-panel">Ajustes</button>
     <span class="header-separator" aria-hidden="true"></span>
     <button type="button" id="map-mode-button" disabled aria-pressed="false">Editar mapa</button>
@@ -25,7 +34,6 @@
 </header>
 <main id="stage">
   <div id="map" role="application" aria-label="Mapa interactivo para elegir dónde comenzar"></div>
-  <button type="button" id="teleport-open" class="teleport-open">Teleport</button>
   <button type="button" id="info-button" class="info-button" aria-label="Información y controles" title="Información y controles">i</button>
   <form id="daytime-controls" class="daytime-controls" aria-label="Control de hora del día">
     <label for="daytime-hour">HORA DEL DÍA</label>
@@ -61,9 +69,14 @@
         <span id="gta-gps-coords">—</span>
       </div>
     </section>
-    <section id="gta-dials" class="gta-dials" aria-label="Velocímetro, revoluciones estimadas y aceleración">
-      <div id="gta-auxiliary" class="gta-auxiliary" aria-label="Indicador de aceleración estimada"></div>
-      <div id="gta-tachometer" class="gta-tachometer" aria-label="Revoluciones estimadas y velocidad real del vehículo"></div>
+    <section id="gta-dials" class="gta-dials" aria-label="Velocidad, gasolina, turbo y revoluciones">
+      <div id="gta-speedometer" class="gta-dial gta-speedometer" aria-label="Velocidad analógica"></div>
+      <div id="gta-fuel" class="gta-dial gta-small-dial gta-fuel" aria-label="Gasolina, sin sensor de nivel"></div>
+      <div class="gta-digital-speed" aria-label="Velocidad digital">
+        <strong id="gta-speed-digital">0</strong><span>KM/H</span>
+      </div>
+      <div id="gta-turbo" class="gta-dial gta-small-dial gta-turbo" aria-label="Turbo estimado"></div>
+      <div id="gta-tachometer" class="gta-dial gta-tachometer" aria-label="Revoluciones estimadas"></div>
     </section>
   </div>
   <div id="status" class="status" role="status" aria-live="polite">Cargando cartografía…</div>
@@ -81,6 +94,12 @@
       <span>EQUIPO</span><strong>—</strong>
     </div>
   </section>
+  <aside id="controls-panel" class="panel controls-panel" hidden aria-label="Asignación de controles de mando">
+    <div class="panel-head"><h2>Controles del mando</h2>
+      <button type="button" id="close-controls" aria-label="Cerrar controles">×</button>
+    </div>
+    <div id="controls-content"></div>
+  </aside>
   <aside id="settings-panel" class="panel" hidden>
     <div class="panel-head"><h2>Mundo y rendimiento</h2><button type="button" id="close-settings" aria-label="Cerrar ajustes">×</button></div>
     <label class="field">Calidad de imagen
@@ -127,13 +146,7 @@
     <label class="map-editor-field">Inclinación <output id="editor-pitch-value">0°</output>
       <input id="editor-pitch" type="range" min="0" max="70" step="5" value="45">
     </label>
-  <details id="layers-panel" class="gta-layers-panel" open>
-    <summary>CATÁLOGO DE CAPAS <span id="gta-catalog-count">46 ENTRADAS</span></summary>
-    <div class="gta-layers-body">
-      <p id="gta-catalog-status" class="gta-layer-note" role="status">Cargando catálogo OcToS Layers…</p>
-      <div id="gta-catalog-tree" class="gta-catalog-tree"></div>
-    </div>
-  </details>
+
     <button type="button" id="editor-save" class="editor-save">Guardar mapa</button>
     <output id="editor-save-status" class="editor-save-status" aria-live="polite"></output>
   </aside>
