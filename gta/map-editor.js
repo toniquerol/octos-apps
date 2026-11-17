@@ -17,7 +17,7 @@ function readConfig() {
       zoom: Number.isFinite(data.zoom) ? clamp(data.zoom, 5, 19) : 16,
       pitch: Number.isFinite(data.pitch) ? clamp(data.pitch, 0, 70) : 45,
       color: typeof data.color === 'string' && /^#[0-9a-f]{6}$/i.test(data.color) ? data.color : '#707783',
-      opacity: Number.isFinite(data.opacity) ? clamp(data.opacity, 15, 100) : 84,
+      opacity: Number.isFinite(data.opacity) ? clamp(data.opacity, 0, 100) : 84,
       center: Array.isArray(data.center) && data.center.length === 2 &&
         Number.isFinite(data.center[0]) && Number.isFinite(data.center[1]) &&
         Math.abs(data.center[0]) <= 180 && Math.abs(data.center[1]) <= 85 ?
@@ -51,7 +51,7 @@ export function mountMapEditor({world, game, actor, layerControls, report}) {
   pitch.value = String(saved.pitch);
   color.value = saved.color;
   opacity.value = String(saved.opacity);
-  world.setBuildingAppearance(saved.color, saved.opacity);
+  world.setBuildingAppearance(saved.color, saved.opacity / 100);
 
   function updateLabels() {
     $('editor-zoom-value').textContent = Number(zoom.value).toFixed(1);
