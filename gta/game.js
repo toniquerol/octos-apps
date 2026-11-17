@@ -5,11 +5,14 @@ const DEFAULT = {lat: 41.3874, lon: 2.1701, heading: 0, mode: 'walk', place: 'Ba
 const RAD = Math.PI / 180;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const cameraAngleDelta=(from,to)=>((to-from+540)%360+360)%360-180;
+// Posiciones de cámara relativas al centro del coche (metros).
+const CAR_CAMERAS=Object.freeze([
+  Object.freeze({behind:2,above:2}),
+  Object.freeze({behind:5,above:4})
+]);
 const CAR_CAMERA=Object.freeze({
-  pitch:66, topScreenFraction:.29,
-  forwardMeters:2.8, forwardSpeedFactor:.11, maxForwardExtra:3.6,
-  positionSmooth:5.2, bearingSmooth:4.6, zoomSmooth:4.0,
-  pitchSmooth:4.4, recenterDelayMs:900, recenterSmooth:2.0
+  bearingSmooth:4.6, distanceSmooth:4.2,
+  recenterDelayMs:900, recenterSmooth:2.0
 });
 
 export function readSave() {
@@ -278,77 +281,54 @@ export class Game {
   }
 
   updateCamera(dt=0) {
-    const isCar=this.state.mode==='car';
-    const height=this.map.getContainer?.().clientHeight||720;
-    const zoom=isCar
-      ? clamp([this.cameraZoom.car,this.cameraZoom.car-.75,this.cameraZoom.car-1.36][this.cameraMode],20,24)
-      : clamp(this.cameraZoom.walk-(this.view==='wide'?.75:0),20,24);
-
-    if(!isCar){
-      // Se conserva la cámara de personaje aprobada.
+    const origin=[this.state.lon,this.state.lat]; // Única referencia visual.
+    if(this.state.mode!=='car'){
+      // El personaje ocupa el centro real de la pantalla.
       this.carCamera=null;
-      const neckOffsetM=1.5,neckHeightM=1.5,heading=this.state.heading*RAD;
-      const lat=clamp(this.state.lat+Math.cos(heading)*neckOffsetM/111320,-85,85);
-      const scaleLongitude=Math.max(.087,Math.cos(this.state.lat*RAD));
-      const lon=this.state.lon+Math.sin(heading)*neckOffsetM/(111320*scaleLongitude);
-      const center=[((lon+180)%360+360)%360-180,lat];
-      const metersPerPixel=156543.03392*scaleLongitude/(2**zoom);
-      const neckPixels=Math.min(height*.075,neckHeightM/metersPerPixel*Math.cos(69*RAD));
       this.map.jumpTo({
-        center,bearing:this.state.heading+this.cameraOffset.yaw,zoom,
+        center:origin,
+        bearing:this.state.heading+this.cameraOffset.yaw,
+        zoom:clamp(this.cameraZoom.walk-(this.view==='wide'?.75:0),20,24),
         pitch:clamp(69+this.cameraOffset.pitch,0,80),
-        padding:{top:Math.round(height*.34)+Math.round(neckPixels),
-          bottom:0,left:0,right:0}
+        padding:{top:0,bottom:0,left:0,right:0}
       });
       return;
     }
 
-    // Cámara detrás del coche, dirigida hacia el rumbo de circulación.
-    // El encuadre adelanta su centro sobre la carretera y deja el coche abajo.
-    const overhead=this.cameraMode===2;
-    const ahead=overhead?0:CAR_CAMERA.forwardMeters+
-      Math.min(CAR_CAMERA.maxForwardExtra,Math.abs(this.speed)*CAR_CAMERA.forwardSpeedFactor);
-    const heading=this.state.heading*RAD;
-    const latScale=Math.max(.087,Math.cos(this.state.lat*RAD));
-    const desired={
-      lat:clamp(this.state.lat+Math.cos(heading)*ahead/111320,-85,85),
-      lon:((this.state.lon+Math.sin(heading)*ahead/(111320*latScale)+180)%360+360)%360-180,
-      bearing:this.state.heading+this.cameraOffset.yaw,
-      zoom,pitch:clamp((overhead?0:CAR_CAMERA.pitch)+this.cameraOffset.pitch,0,80),
-      top:Math.round(height*(overhead?0:CAR_CAMERA.topScreenFraction))
-    };
-
-    const rig=this.carCamera;
-    const before=rig?{...rig}:null;
-    if(!rig||!dt){
-      // Teletransporte e inicio: colocación inmediata, sin vuelo entre lugares.
-      this.carCamera={...desired};
+    // Los desplazamientos se calculan desde el coche, nunca desde el mapa.
+    const preset=CAR_CAMERAS[this.cameraMode]||CAR_CAMERAS[0];
+    // La rueda del ratón sigue ajustando el acercamiento mediante escala.
+    const distanceScale=2**(21.55-this.cameraZoom.car);
+    const desiredBearing=this.state.heading+this.cameraOffset.yaw;
+    let rig=this.carCamera;
+    if(!rig||dt<=0){
+      rig={bearing:desiredBearing,behind:preset.behind*distanceScale,
+        above:preset.above*distanceScale};
+      this.carCamera=rig;
     }else{
-      const position=1-Math.exp(-dt*CAR_CAMERA.positionSmooth);
       const rotation=1-Math.exp(-dt*CAR_CAMERA.bearingSmooth);
-      const optics=1-Math.exp(-dt*CAR_CAMERA.zoomSmooth);
-      const tilt=1-Math.exp(-dt*CAR_CAMERA.pitchSmooth);
-      const lonDelta=((desired.lon-rig.lon+540)%360+360)%360-180;
-      rig.lon=((rig.lon+lonDelta*position+180)%360+360)%360-180;
-      rig.lat+=(desired.lat-rig.lat)*position;
-      rig.bearing+=cameraAngleDelta(rig.bearing,desired.bearing)*rotation;
-      rig.zoom+=(desired.zoom-rig.zoom)*optics;
-      rig.pitch+=(desired.pitch-rig.pitch)*tilt;
-      rig.top+=(desired.top-rig.top)*tilt;
+      const distance=1-Math.exp(-dt*CAR_CAMERA.distanceSmooth);
+      rig.bearing+=cameraAngleDelta(rig.bearing,desiredBearing)*rotation;
+      rig.behind+=(preset.behind*distanceScale-rig.behind)*distance;
+      rig.above+=(preset.above*distanceScale-rig.above)*distance;
     }
-    const current=this.carCamera;
-    // Evitar renderizados adicionales cuando ya se haya estabilizado.
-    if(before&&dt &&
-      Math.abs(cameraAngleDelta(before.lon,current.lon))<1e-8 &&
-      Math.abs(current.lat-before.lat)<1e-8 &&
-      Math.abs(cameraAngleDelta(before.bearing,current.bearing))<.008 &&
-      Math.abs(current.zoom-before.zoom)<.00015 &&
-      Math.abs(current.pitch-before.pitch)<.008 &&
-      Math.abs(current.top-before.top)<.1)return;
+
+    const heading=rig.bearing*RAD;
+    const cosLat=Math.max(.087,Math.cos(this.state.lat*RAD));
+    const cameraLat=clamp(this.state.lat-Math.cos(heading)*rig.behind/111320,-85,85);
+    const cameraLon=((this.state.lon-Math.sin(heading)*rig.behind/(111320*cosLat)+180)%360+360)%360-180;
+    const terrain=this.world.elevation(this.state.lon,this.state.lat)??0;
+    // MapLibre v4 convierte una posición 3D real en zoom y cabeceo.
+    const options=this.map.calculateCameraOptionsFromTo(
+      [cameraLon,cameraLat],terrain+rig.above,origin,terrain
+    );
+    // Al mirar al centro, el cabeceo sale de la geometría: 45° y ~51,3°.
     this.map.jumpTo({
-      center:[current.lon,current.lat],bearing:current.bearing,
-      zoom:current.zoom,pitch:current.pitch,
-      padding:{top:Math.round(current.top),bottom:0,left:0,right:0}
+      center:origin,
+      zoom:options.zoom,
+      bearing:rig.bearing,
+      pitch:clamp(options.pitch+this.cameraOffset.pitch,0,80),
+      padding:{top:0,bottom:0,left:0,right:0}
     });
   }
 
@@ -396,13 +376,13 @@ export class Game {
   }
 
   cycleCamera() {
-    this.cameraMode=(this.cameraMode+1)%3;
+    this.cameraMode=(this.cameraMode+1)%CAR_CAMERAS.length;
     this.updateCamera(1/30);
     this.emit(true);
   }
 
   toggleView() {
-    if (this.state.mode==='car') this.cameraMode=(this.cameraMode+1)%3;
+    if (this.state.mode==='car') this.cameraMode=(this.cameraMode+1)%CAR_CAMERAS.length;
     else this.view=this.view==='follow'?'wide':'follow';
     this.updateCamera(this.state.mode==='car'?1/30:0);
     this.emit(true);
