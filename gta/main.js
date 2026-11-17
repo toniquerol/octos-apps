@@ -1,6 +1,6 @@
-import {createWorld} from './world.js?v=3';
-import {Game, readSave} from './game.js';
-import {createActor} from './actor.js';
+import {createWorld} from './world.js?v=4';
+import {Game, readSave} from './game.js?v=2';
+import {createActor} from './actor.js?v=2';
 
 const $ = id => document.getElementById(id);
 const status = $('status');
@@ -137,11 +137,11 @@ async function launchScene() {
     world.updateBuildings($('buildings').checked);
     world.updateTerrain(terrainEnabled,$('terrain-provider').value);
     actor = await createActor(world,start,report);
-    game = new Game(world,updateHud);
+    game = new Game(world,updateHud,state => actor?.update(state));
     game.setQuality(quality);
+    world.enterGame();
     game.teleport(start.lat,start.lon,start.place);
     if (mapClickHandler) world.map.off('click',mapClickHandler);
-    world.enterGame();
     selectionMarker?.remove();
     selectionMarker = null;
     document.body.classList.remove('selecting');
