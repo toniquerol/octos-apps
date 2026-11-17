@@ -318,6 +318,7 @@ async function launchScene() {
     if (mapClickHandler) world.map.off('click',mapClickHandler);
     selectionMarker?.remove();
     selectionMarker = null;
+    document.body.classList.add('entering-scene');
     const map=world.map;
     map.stop();
     // Zoom de aproximación desde satélite al punto real elegido.
@@ -343,6 +344,7 @@ async function launchScene() {
     map.stop();
     game.updateCamera();
     world.setRenderRadiusSuspended(false);
+    document.body.classList.remove('entering-scene');
     game.start();
     // El HUD se monta únicamente al entrar en el mundo, después del selector 2D.
     try {
@@ -362,6 +364,7 @@ async function launchScene() {
     play.textContent = 'Reintentar cargar escenario';
     play.disabled = false;
   } finally {
+    document.body.classList.remove('entering-scene');
     if(world)world.setRenderRadiusSuspended(false);
     finishEntryFade(veil);
     choosing = false;
