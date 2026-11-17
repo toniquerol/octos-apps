@@ -34,3 +34,14 @@
 .selecting #map .maplibregl-canvas{cursor:crosshair}
 .selecting #map .maplibregl-canvas:active{cursor:grabbing}
 @media(max-width:800px){.welcome{padding:10px;align-items:flex-end;background:linear-gradient(0deg,#08090ce5 0%,#0b0c0e99 45%,transparent 83%)}.welcome-card{width:min(420px,100%);padding:14px 18px;margin:0 auto;max-height:60%}.welcome h1{font-size:27px}.welcome p{margin:5px 0}.welcome .instructions{margin:6px 0}.selecting #status{top:70px;right:10px;font-size:9px;max-width:200px}.start-point{margin-top:8px;padding:7px 10px}.start-label{margin:7px 0 4px}.play{margin-top:7px}.pick-center{margin-top:6px}}
+
+
+/* Hora solar flotante · bajo coste gráfico */
+.daytime-controls{position:absolute;z-index:13;top:15px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:7px 9px;background:#151619e9;border:1px solid #55565c;border-radius:9px;box-shadow:0 8px 24px #0008;white-space:nowrap}
+.daytime-controls label{font-size:9px;font-weight:750;color:#b9bbc1;letter-spacing:.06em}
+.daytime-controls input{width:92px;min-height:31px;padding:3px 6px;color:#f1f1ef;background:#111216;border:1px solid #60636a;border-radius:6px;color-scheme:dark;font-variant-numeric:tabular-nums}
+.daytime-controls button{min-height:31px;border:1px solid var(--orange);border-radius:6px;padding:5px 11px;color:#181513;background:var(--orange);font-weight:750}
+.daytime-controls output{font-size:10px;color:#e1bea9;min-width:58px;text-align:center}
+.selecting .daytime-controls{display:none}
+@media(max-width:800px){.daytime-controls{top:53px;gap:6px;padding:6px}.daytime-controls label{font-size:8px}.daytime-controls input{width:86px}.daytime-controls output{min-width:48px;font-size:9px}}
+@media(max-width:450px){.daytime-controls{top:52px}.daytime-controls output{display:none}.daytime-controls label{letter-spacing:0}}
