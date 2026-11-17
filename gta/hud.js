@@ -13,10 +13,6 @@ const arc=(cx,cy,r,from,to)=>{
   return 'M '+a.x.toFixed(2)+' '+a.y.toFixed(2)+
     ' A '+r+' '+r+' 0 '+(to-from>180?1:0)+' 1 '+b.x.toFixed(2)+' '+b.y.toFixed(2);
 };
-const dash=(from,to,thick=2,color='#e7edf1')=>{
-  const a=point(150,150,from,207),b=point(150,150,to,207);
-  return {a,b,thick,color};
-};
 function makeTachometer() {
   const cx=150,cy=150;
   let ticks='',labels='';
@@ -100,7 +96,6 @@ export function mountDriveHud({report}={}) {
   let mini=null,lastGps=0,lastPos=null;
   let lastSpeed=0,lastMeasure=0,smoothedAccel=0;
   let lastRpm=0,lastAux=0;
-  const speedMax=150; // km/h aproximados para el motor arcade actual
   let gpsFailed=false;
 
   function initGPS(state){
@@ -133,6 +128,11 @@ export function mountDriveHud({report}={}) {
         }catch(error){console.warn('OcToS GTA · personalización GPS:',error);}
       });
       mini.on('error',event=>{
+        const detail=String(event.error?.message||'');
+        if(/style.*(load|fetch)|failed to fetch.*style/i.test(detail)){
+          gpsStatus.textContent='GPS SIN MAPA';
+          gpsStatus.hidden=false;
+        }
         // Una tesela aislada puede fallar sin invalidar el resto del mapa.
         console.warn('OcToS GTA · tesela GPS:',event.error||event);
       });
