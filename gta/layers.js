@@ -319,7 +319,7 @@ export function mountLayerPanel(world,{report,setSettings}={}) {
     const rebuildCurves=()=>{
       timer=null;
       const source=map.getSource(curvedId);
-      if(!source||!map.isStyleLoaded())return;
+      if(!source)return;
       const position=map.getCenter(),zoom=map.getZoom(),now=performance.now();
       const moved=lastCenter?Math.hypot(
         (position.lng-lastCenter.lng)*111320*Math.cos(position.lat*Math.PI/180),
