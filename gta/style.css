@@ -338,7 +338,7 @@ body.editing #stage>.daytime-controls{
 @media(max-width:800px){
   #controls-button,.controls-panel{display:none!important}
   .topbar>.teleport-open{
-    left:clamp(92px,23vw,150px);top:10px;min-height:35px;
+    left:10px;top:64px;min-height:35px;
     padding:7px 9px;font-size:10px
   }
   .topbar>.gta-layers-menu{
@@ -363,7 +363,7 @@ body.editing #stage>.daytime-controls{
   .player-vitals{bottom:11px}
 }
 @media(max-width:460px){
-  .topbar>.teleport-open{left:90px;padding:7px;font-size:9px}
+  .topbar>.teleport-open{left:10px;top:64px;padding:7px;font-size:10px}
   .gta-arcade-hud>.gta-dials{width:calc(100vw - 4px);gap:2px;grid-template-columns:1.26fr .71fr 1.08fr .71fr 1.26fr}
   .gta-dials>.gta-small-dial{margin-bottom:16px}
   .gta-digital-speed{margin-bottom:41px;padding:2px;gap:3px}
