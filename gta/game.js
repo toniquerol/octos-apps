@@ -1,5 +1,5 @@
 /* OcToS GTA · personaje y primer vehículo independiente. */
-import {stepDriving,initialDriving} from './vehicle.js?v=1';
+import {stepDriving,initialDriving} from './vehicle.js?v=2';
 const STORAGE_KEY = 'octos-gta-v1-save';
 const DEFAULT = {lat: 41.3874, lon: 2.1701, heading: 0, mode: 'walk', place: 'Barcelona'};
 const RAD = Math.PI / 180;
