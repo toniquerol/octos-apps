@@ -75,3 +75,66 @@
 .vital.equipment{min-width:100px}
 @media(max-width:800px){.gta-layers-panel{right:9px;top:103px;width:min(260px,calc(100vw - 20px));max-height:calc(100% - 120px)}body:not(.selecting) .keys-hint{left:auto;right:10px;bottom:87px;max-width:168px;text-align:right}.player-vitals{bottom:15px;gap:4px}.vital{min-width:76px;padding:8px;grid-template-columns:20px auto;column-gap:5px}.vital svg{width:20px;height:20px}.vital.equipment{min-width:81px}}
 @media(max-width:490px){.gta-layers-panel{width:220px}.vital{min-width:66px}.vital.equipment{min-width:70px}.vital strong{font-size:11px}.vital span{font-size:8px}}
+
+
+/* GTA · Reorganización de HUD, teleportación y editor independiente de la partida. */
+.header-separator{display:block;flex:none;width:1px;height:27px;background:#53545b;margin:0 4px}
+.header-buttons{align-items:center}
+.header-buttons #map-mode-button[aria-pressed="true"]{background:#ff6a1a;border-color:#ff6a1a;color:#191719;font-weight:800}
+#game-hud{left:auto;right:18px;bottom:90px}
+.keys-hint{display:none!important}
+.teleport-open{position:absolute;left:18px;top:16px;z-index:16;padding:9px 15px;background:#1b1d21eb;border:1px solid #757980;border-radius:8px;color:#f1f1ef;font-size:12px;font-weight:750;box-shadow:0 6px 18px #0008}
+.teleport-open:hover{border-color:var(--orange)}
+.info-button{position:absolute;right:19px;bottom:35px;z-index:16;width:27px;height:27px;border-radius:50%;border:1px solid #adb1b9;background:#17191ee8;color:#f1f1ef;font-size:16px;font-weight:850;font-family:Georgia,serif;line-height:1;box-shadow:0 3px 10px #000a}
+.info-button:hover{border-color:var(--orange)}
+body:not(.selecting) .location-chip{top:64px;left:18px}
+.selecting .teleport-open,.selecting .info-button{display:none}
+.map-editor[hidden]{display:none!important}
+.map-editor{position:absolute;z-index:17;right:16px;top:64px;bottom:12px;width:min(322px,calc(100vw - 28px));overflow:auto;padding:14px;background:#17191ef7;border:1px solid #64666e;border-radius:12px;box-shadow:0 14px 32px #0009}
+.map-editor-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid #44474e}
+.map-editor-head h2{margin:0;font-size:17px;font-weight:800}
+.map-editor-head p{margin:5px 0 0;font-size:10px;color:#abb0ba}
+.map-editor-head>span{font-size:9px;color:#ffb28a;border:1px solid #725042;padding:3px 6px;border-radius:4px}
+.map-editor-field{position:relative;display:block;margin:12px 0;font-size:11px;color:#c8cad2}
+.map-editor-field select{display:block;width:100%;min-height:35px;margin-top:6px;padding:7px 9px;background:#111216;color:#f1f1ef;border:1px solid #65676e;border-radius:7px}
+.map-editor-field input[type=range]{display:block;width:100%;margin:9px 0 0;accent-color:#ff6a1a}
+.map-editor-field output{float:right;color:#ffae87;font-variant-numeric:tabular-nums}
+.map-editor-field input:disabled{opacity:.35}
+.map-editor-color{display:flex;align-items:center;justify-content:space-between;gap:15px}
+.map-editor-color input[type=color]{width:54px;height:33px;padding:3px;background:#111216;border:1px solid #65676e;border-radius:6px;cursor:pointer}
+.map-editor .gta-layers-panel{position:static;z-index:auto;display:block;width:auto;max-width:none;max-height:none;overflow:visible;margin-top:17px;background:#202227;border:1px solid #464950;border-radius:8px;box-shadow:none}
+.map-editor .gta-layers-panel>summary{min-height:38px;padding:9px 12px}
+.map-editor .gta-layers-body{padding:7px 10px 11px}
+.map-editor .gta-layer-subfield{margin-left:24px}
+.editor-save{display:block;margin-top:15px;width:100%;min-height:39px;border:1px solid #ff6a1a;border-radius:7px;background:#ff6a1a;color:#161414;font-weight:800}
+.editor-save-status{display:block;min-height:20px;margin-top:8px;text-align:center;color:#aeb6bd;font-size:10px}
+body.editing #game-hud,body.editing .player-vitals,body.editing .crosshair,body.editing .location-chip,body.editing .teleport-open,body.editing .info-button,body.editing .status{display:none!important}
+body.editing .daytime-controls{left:18px;transform:none;top:14px}
+body.editing #map .maplibregl-canvas{cursor:grab}
+body.editing #map .maplibregl-canvas:active{cursor:grabbing}
+.teleport-dialog{position:fixed;width:min(760px,calc(100vw - 30px));max-height:calc(100dvh - 28px);margin:auto;padding:17px 18px 18px;background:#191b20;color:#f1f1ef;border:1px solid #6b6f78;border-radius:12px;box-shadow:0 30px 90px #000b;overflow:auto}
+.teleport-dialog::backdrop{background:#000b}
+.teleport-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.teleport-head h2{margin:0;font-size:17px}
+.teleport-head button{width:33px;height:33px;border:1px solid #666a70;border-radius:6px;background:#2b2d32;color:#f1f1ef;font-size:20px}
+.teleport-dialog>p{color:#c0c4cb;margin:6px 0 11px;font-size:11px}
+#teleport-map{height:min(56dvh,470px);min-height:210px;width:100%;background:#10161d;border:1px solid #494d56;border-radius:8px;overflow:hidden}
+.teleport-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
+.teleport-footer span{display:flex;flex-direction:column;color:#a6aab2;font-size:10px}
+.teleport-footer output{color:#f1f1ef;font-size:12px;font-variant-numeric:tabular-nums}
+.teleport-footer button{background:#ff6a1a;border:1px solid #ff6a1a;color:#161414;font-weight:800;border-radius:7px;padding:10px 16px}
+@media(max-width:800px){
+  #game-hud{left:auto;right:9px;bottom:79px;width:180px}
+  .teleport-open{top:12px;left:10px;padding:7px 10px;font-size:11px}
+  body:not(.selecting) .location-chip{left:10px;top:93px;max-width:54vw}
+  .info-button{right:10px;bottom:36px}
+  .map-editor{right:8px;top:100px;bottom:8px;width:min(300px,calc(100vw - 16px))}
+  body.editing .daytime-controls{top:12px;left:10px}
+  .header-separator{height:23px;margin:0 1px}
+}
+@media(max-width:480px){
+  .map-editor{top:104px;max-height:calc(100% - 112px);width:min(290px,calc(100vw - 16px))}
+  .teleport-footer{flex-wrap:wrap}
+  .teleport-footer button{width:100%}
+  #teleport-map{height:45dvh}
+}
