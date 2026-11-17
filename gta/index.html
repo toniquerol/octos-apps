@@ -8,10 +8,10 @@
 <title>OcToS GTA · V1</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=9">
+<link rel="stylesheet" href="./style.css?v=10">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="../shared/nav.js?v=20261117-gta-map-editor" defer></script>
-<script type="module" src="./main.js?v=12"></script>
+<script type="module" src="./main.js?v=13"></script>
 </head>
 <body class="selecting">
 <header class="topbar">
@@ -103,30 +103,59 @@
     <label class="map-editor-field">Inclinación <output id="editor-pitch-value">0°</output>
       <input id="editor-pitch" type="range" min="0" max="70" step="5" value="45">
     </label>
-    <label class="map-editor-field map-editor-color">Color de edificios
-      <input id="editor-building-color" type="color" value="#707783">
-    </label>
-    <label class="map-editor-field">Opacidad de edificios <output id="editor-opacity-value">84%</output>
-      <input id="editor-building-opacity" type="range" min="15" max="100" step="1" value="84">
-    </label>
   <details id="layers-panel" class="gta-layers-panel" open>
     <summary>CAPAS <span>VISUALIZACIÓN</span></summary>
     <div class="gta-layers-body">
       <p class="layer-caption">Visibilidad y fuentes del mapa base</p>
       <label class="gta-layer-option"><input id="layer-roads" type="checkbox" checked> Carreteras · OpenFreeMap</label>
       <div class="gta-road-tuning" role="group" aria-label="Aspecto de las carreteras">
-        <label class="gta-layer-subfield" for="layer-road-width">Ancho de las líneas <output id="layer-road-width-value">6 m</output>
-          <input id="layer-road-width" type="range" min="0.5" max="30" step="0.5" value="6">
+        <label class="gta-layer-subfield" for="layer-road-width">Ancho de las líneas <output id="layer-road-width-value">16 m</output>
+          <input id="layer-road-width" type="range" min="0.5" max="30" step="0.5" value="16">
         </label>
-        <label class="gta-layer-option"><input id="layer-road-tint" type="checkbox"> Usar color personalizado</label>
+        <label class="gta-layer-option"><input id="layer-road-tint" type="checkbox" checked> Usar color personalizado</label>
         <label class="gta-layer-road-color" for="layer-road-color">Color de carreteras
-          <input id="layer-road-color" type="color" value="#ff6a1a">
+          <input id="layer-road-color" type="color" value="#26160d">
         </label>
       </div>
       <label class="gta-layer-option"><input id="layer-water" type="checkbox" checked> Agua y cursos fluviales</label>
+      <div class="gta-layer-tuning">
+        <label class="gta-layer-option"><input id="layer-water-tint" type="checkbox"> Color personalizado</label>
+        <label class="gta-layer-road-color" for="layer-water-color">Color del agua
+          <input id="layer-water-color" type="color" value="#407ca3">
+        </label>
+        <label class="gta-layer-subfield" for="layer-water-opacity">Opacidad del agua <output id="layer-water-percent">100%</output>
+          <input id="layer-water-opacity" type="range" min="0" max="100" step="1" value="100">
+        </label>
+      </div>
       <label class="gta-layer-option"><input id="layer-green" type="checkbox" checked> Vegetación y parques</label>
+      <div class="gta-layer-tuning">
+        <label class="gta-layer-option"><input id="layer-green-tint" type="checkbox"> Color personalizado</label>
+        <label class="gta-layer-road-color" for="layer-green-color">Color de vegetación
+          <input id="layer-green-color" type="color" value="#42634a">
+        </label>
+        <label class="gta-layer-subfield" for="layer-green-opacity">Opacidad de vegetación <output id="layer-green-percent">100%</output>
+          <input id="layer-green-opacity" type="range" min="0" max="100" step="1" value="100">
+        </label>
+      </div>
       <label class="gta-layer-option"><input id="layer-poi" type="checkbox" checked> Puntos de interés</label>
+      <div class="gta-layer-tuning">
+        <label class="gta-layer-option"><input id="layer-poi-tint" type="checkbox"> Color personalizado</label>
+        <label class="gta-layer-road-color" for="layer-poi-color">Color de puntos
+          <input id="layer-poi-color" type="color" value="#d0b89e">
+        </label>
+        <label class="gta-layer-subfield" for="layer-poi-opacity">Opacidad de puntos <output id="layer-poi-percent">100%</output>
+          <input id="layer-poi-opacity" type="range" min="0" max="100" step="1" value="100">
+        </label>
+      </div>
       <label class="gta-layer-option"><input id="layer-buildings" type="checkbox" checked> Edificios 3D</label>
+      <div class="gta-layer-tuning">
+        <label class="gta-layer-road-color" for="editor-building-color">Color de edificios
+          <input id="editor-building-color" type="color" value="#707783">
+        </label>
+        <label class="gta-layer-subfield" for="editor-building-opacity">Opacidad de edificios <output id="editor-opacity-value">84%</output>
+          <input id="editor-building-opacity" type="range" min="0" max="100" step="1" value="84">
+        </label>
+      </div>
       <label class="gta-layer-option"><input id="layer-terrain" type="checkbox" checked> Relieve 3D</label>
       <label class="gta-layer-subfield" for="layer-dem">Elevación
         <select id="layer-dem"><option value="mapterhorn">Mapterhorn</option><option value="aws">Mapzen / AWS</option></select>
@@ -137,9 +166,9 @@
       <label class="gta-layer-subfield" for="layer-pnoa-opacity">Opacidad PNOA <output id="layer-pnoa-percent">100%</output>
         <input id="layer-pnoa-opacity" type="range" min="0" max="100" step="5" value="100">
       </label>
-      <label class="gta-layer-option"><input id="layer-lidar" type="checkbox"> Relieve sombreado · LiDAR IGN</label>
-      <label class="gta-layer-subfield" for="layer-lidar-opacity">Opacidad LiDAR <output id="layer-lidar-percent">15%</output>
-        <input id="layer-lidar-opacity" type="range" min="0" max="100" step="5" value="15">
+      <label class="gta-layer-option"><input id="layer-lidar" type="checkbox" checked> Relieve sombreado · LiDAR IGN</label>
+      <label class="gta-layer-subfield" for="layer-lidar-opacity">Opacidad LiDAR <output id="layer-lidar-percent">5%</output>
+        <input id="layer-lidar-opacity" type="range" min="0" max="100" step="1" value="5">
       </label>
       <p id="layer-coverage-note" class="gta-layer-note">Ortofotos y LiDAR: solo España.</p>
       <p class="gta-layer-note">La combinación se recuerda en este navegador.</p>
