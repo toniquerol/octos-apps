@@ -31,7 +31,8 @@ export class Game {
     this.speed = 0; // m/s, con signo si el vehículo circula marcha atrás
     // Las dos vistas permanecen detrás del personaje; V solo varía la distancia.
     this.view = 'follow';
-    this.cameraZoom = {walk: 23.45, car: 22.2};
+    // Tres incrementos de rueda (3 × 0,27); la vista cercana topa en zoom 24.
+    this.cameraZoom = {walk: 24, car: 23.01};
     this.active = false;
     this.timer = null;
     this.lastTime = performance.now();
@@ -54,7 +55,7 @@ export class Game {
       if (!event.deltaY) return;
       const amount = Math.min(1, Math.max(.25, Math.abs(event.deltaY) / 120)) * .27;
       const mode = this.state.mode;
-      this.cameraZoom[mode] = clamp(this.cameraZoom[mode] - Math.sign(event.deltaY) * amount, 20.5, 23.85);
+      this.cameraZoom[mode] = clamp(this.cameraZoom[mode] - Math.sign(event.deltaY) * amount, 20.5, 24);
       this.updateCamera();
     };
     this.onBlur = () => { this.keys.clear(); this.speed = 0; this.emit(true); };
@@ -149,7 +150,7 @@ export class Game {
     const height = this.map.getContainer?.().clientHeight || 720;
     // El personaje queda en el tercio inferior; el mapa muestra la calle por delante.
     const topPadding = Math.round(height * (isCar ? .26 : .34));
-    const zoom = clamp(this.cameraZoom[this.state.mode] - (this.view === 'wide' ? .75 : 0), 20, 23.85);
+    const zoom = clamp(this.cameraZoom[this.state.mode] - (this.view === 'wide' ? .75 : 0), 20, 24);
     this.map.jumpTo({
       center: [this.state.lon, this.state.lat],
       bearing: this.state.heading,
