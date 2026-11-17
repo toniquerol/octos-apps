@@ -1,7 +1,8 @@
-import {createDaylight} from './daylight.js?v=1';
+import {createDaylight} from './daylight.js?v=2';
 
 /* OcToS GTA V1 · Escenario geográfico independiente de OcToS Drive. */
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/dark';
+const RENDER_RADIUS_METERS = 300;
 const TERRAIN = {
   mapterhorn: {
     tiles: ['https://tiles.mapterhorn.com/{z}/{x}/{y}.webp'],
@@ -41,6 +42,40 @@ export async function createWorld(start, report, {selection = false} = {}) {
   let buildingOpacity = 0.84;
   const daylight = createDaylight(map);
   let currentTime = '16:30';
+  let limitVisible = false;
+  let followPlayer = true;
+  let playerPosition = [start.lon, start.lat];
+  let lastMaskUpdate = 0;
+
+  // Recorte visual del canvas completo: relieve, edificios, capas y modelos 3D.
+  // MapLibre sigue solicitando teselas del viewport; no es un límite de carga.
+  function updateRenderRadius(force = false) {
+    if (!limitVisible) return;
+    const now = performance.now();
+    if (!force && now - lastMaskUpdate < 70) return;
+    lastMaskUpdate = now;
+    const center = followPlayer ? playerPosition : map.getCenter().toArray();
+    const lat = Math.max(-85, Math.min(85, center[1]));
+    const cosLat = Math.max(0.087, Math.cos(lat * Math.PI / 180));
+    const vertices = [];
+    for (let i = 0; i < 64; i++) {
+      const angle = i * Math.PI * 2 / 64;
+      const lng = center[0] + Math.cos(angle) * RENDER_RADIUS_METERS / (111320 * cosLat);
+      const y = lat + Math.sin(angle) * RENDER_RADIUS_METERS / 111320;
+      const point = map.project([lng, y]);
+      if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
+      vertices.push(point.x.toFixed(1) + 'px ' + point.y.toFixed(1) + 'px');
+    }
+    map.getCanvas().style.clipPath = 'polygon(' + vertices.join(',') + ')';
+  }
+
+  function setRenderCenter(lng, lat) {
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return;
+    playerPosition = [lng, lat];
+    if (followPlayer) updateRenderRadius();
+  }
+  map.on('move', () => updateRenderRadius());
+  map.on('resize', () => updateRenderRadius(true));
 
   // Mapterhorn se muestra sin bruma atmosférica; el relieve y la luz solar se conservan.
   function clearMapterhornHaze() {
@@ -183,6 +218,8 @@ export async function createWorld(start, report, {selection = false} = {}) {
   }
 
   function enterEditor() {
+    followPlayer = false;
+    updateRenderRadius(true);
     map.setMaxZoom(20);
     map.dragPan.enable();
     map.scrollZoom.enable();
@@ -192,6 +229,9 @@ export async function createWorld(start, report, {selection = false} = {}) {
   }
 
   function enterGame() {
+    followPlayer = true;
+    limitVisible = true;
+    updateRenderRadius(true);
     // Se amplía solo al entrar al juego; el selector geográfico conserva su zoom.
     map.setMaxZoom(24);
     map.dragPan.disable();
@@ -203,6 +243,6 @@ export async function createWorld(start, report, {selection = false} = {}) {
   return {
     map, updateBuildings, updateTerrain, setBuildingAppearance,
     elevation, quality, enterGame, enterEditor, resetAfterStyleChange,
-    setTime, refreshShadows: daylight.refreshShadows
+    setRenderCenter, setTime, refreshShadows: daylight.refreshShadows
   };
 }
