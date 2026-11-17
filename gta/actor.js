@@ -115,7 +115,7 @@ export async function createActor(world, start, report) {
           car.position.set((vp.x-p.x)/scale,-(vp.y-p.y)/scale,(vp.z-p.z)/scale);
           car.rotation.z=-vehicleLocation.heading*Math.PI/180;
           carShadow.position.set(car.position.x,car.position.y,car.position.z+.018);
-          vehicle.update(state.drive?.steer||0,state.drive?.spin||0);
+          vehicle.update(state.drive?.steer||0,state.drive?.spin||0,state.drive?.rearSpin??state.drive?.spin??0);
         }
         renderer.resetState();
         renderer.render(scene,camera);
