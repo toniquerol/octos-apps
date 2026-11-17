@@ -181,7 +181,7 @@ export class Game {
     const height = this.map.getContainer?.().clientHeight || 720;
     // El personaje queda en el tercio inferior; el mapa muestra la calle por delante.
     const zoom = isCar
-      ? [this.cameraZoom.car, this.cameraZoom.car-.75, 20.65][this.cameraMode]
+      ? clamp([this.cameraZoom.car, this.cameraZoom.car-.75, this.cameraZoom.car-1.36][this.cameraMode], 20, 24)
       : clamp(this.cameraZoom.walk - (this.view === 'wide' ? .75 : 0), 20, 24);
     let center = [this.state.lon, this.state.lat];
     let topPadding = Math.round(height * (isCar ? (this.cameraMode===2?0:.26) : .34));
