@@ -8,10 +8,10 @@
 <title>OcToS GTA · V1</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=5">
+<link rel="stylesheet" href="./style.css?v=6">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="../shared/nav.js?v=20261117-gta" defer></script>
-<script type="module" src="./main.js?v=7"></script>
+<script type="module" src="./main.js?v=8"></script>
 </head>
 <body class="selecting">
 <header class="topbar">
@@ -40,6 +40,20 @@
     <div class="hud-row"><span>ALTURA MDT</span><strong id="altitude">—</strong></div>
   </section>
   <div id="status" class="status" role="status" aria-live="polite">Cargando cartografía…</div>
+  <section id="player-vitals" class="player-vitals" aria-label="Estado del personaje">
+    <div class="vital" title="Vida: 100; sin sistema de daños en esta versión">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.4 5.5a5.2 5.2 0 0 0-7.4 0L12 6.6l-1.1-1.1a5.2 5.2 0 0 0-7.4 7.4L12 21l8.4-8.1a5.2 5.2 0 0 0 0-7.4Z"/></svg>
+      <span>VIDA</span><strong>100</strong>
+    </div>
+    <div class="vital" title="Escudo: 0; no hay armadura equipada">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 20 5v6c0 5-3.2 8.9-8 11-4.8-2.1-8-6-8-11V5l8-3Z"/><path d="M12 6v12"/></svg>
+      <span>ESCUDO</span><strong>0</strong>
+    </div>
+    <div class="vital equipment" title="Equipamiento: manos libres; inventario pendiente">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="7" width="14" height="14" rx="2"/><path d="M9 7V5a3 3 0 0 1 6 0v2M5 12h14M10 16h4"/></svg>
+      <span>EQUIPO</span><strong>—</strong>
+    </div>
+  </section>
   <div class="keys-hint">W A S D <span>·</span> Mayús correr <span>·</span> Espacio vehículo <span>·</span> V distancia <span>·</span> Rueda zoom</div>
   <aside id="settings-panel" class="panel" hidden>
     <div class="panel-head"><h2>Mundo y rendimiento</h2><button type="button" id="close-settings" aria-label="Cerrar ajustes">×</button></div>
@@ -68,6 +82,30 @@
     <button type="button" class="action secondary" id="save-position">Guardar posición</button>
     <p class="panel-foot">La circulación es libre. La V1 no incluye colisiones con edificios, tráfico ni misiones. Las ubicaciones y las alturas proceden de fuentes externas.</p>
   </aside>
+  <details id="layers-panel" class="gta-layers-panel" open>
+    <summary>CAPAS <span>COMPARAR</span></summary>
+    <div class="gta-layers-body">
+      <p class="layer-caption">Capas aprobadas · vista 3D</p>
+      <label class="gta-layer-option"><input id="layer-roads" type="checkbox" checked> Carreteras · OpenFreeMap</label>
+      <label class="gta-layer-option"><input id="layer-buildings" type="checkbox" checked> Edificios 3D</label>
+      <label class="gta-layer-option"><input id="layer-terrain" type="checkbox" checked> Relieve 3D</label>
+      <label class="gta-layer-subfield" for="layer-dem">Elevación
+        <select id="layer-dem"><option value="mapterhorn">Mapterhorn</option><option value="aws">Mapzen / AWS</option></select>
+      </label>
+      <label class="gta-layer-option"><input id="layer-labels" type="checkbox"> Nombres de las calles</label>
+      <hr>
+      <label class="gta-layer-option"><input id="layer-pnoa" type="checkbox"> Ortofoto IGN · PNOA</label>
+      <label class="gta-layer-subfield" for="layer-pnoa-opacity">Opacidad PNOA <output id="layer-pnoa-percent">100%</output>
+        <input id="layer-pnoa-opacity" type="range" min="0" max="100" step="5" value="100">
+      </label>
+      <label class="gta-layer-option"><input id="layer-lidar" type="checkbox"> Relieve sombreado · LiDAR IGN</label>
+      <label class="gta-layer-subfield" for="layer-lidar-opacity">Opacidad LiDAR <output id="layer-lidar-percent">15%</output>
+        <input id="layer-lidar-opacity" type="range" min="0" max="100" step="5" value="15">
+      </label>
+      <p id="layer-coverage-note" class="gta-layer-note">Ortofotos y LiDAR: solo España.</p>
+      <p class="gta-layer-note">La combinación se recuerda en este navegador.</p>
+    </div>
+  </details>
   <section id="welcome" class="welcome" aria-labelledby="welcome-title">
     <div class="welcome-card">
       <p class="eyebrow">OcToS 3D STUDIO · V1</p>
