@@ -116,15 +116,19 @@ export function mountLayerPanel(world,{report,setSettings}={}) {
     updateSettings();
   }
   function refreshEntries() {
-    for(const item of records)if(['TMS','XYZ','WMS','WMTS'].includes(item.kind))applyRaster(item);
+    for(const item of records)
+      if(!['octos-010','octos-011'].includes(item.id) &&
+         ['TMS','XYZ','WMS','WMTS'].includes(item.kind))applyRaster(item);
   }
   function setEnabled(item,on) {
     if(!displayable(item))return;
     if(item.id==='octos-009') {
       const select=document.getElementById('editor-basemap');
       if(select&&Array.from(select.options).some(o=>o.value==='drive-liberty')){
+        prefs.enabled[item.id]=on;
         select.value=on?'drive-liberty':'gta-dark';
         select.dispatchEvent(new Event('change',{bubbles:true}));
+        save();render();
       }else report?.('Mapa base Liberty todavía no disponible.','warn');
       return;
     }
@@ -142,6 +146,8 @@ export function mountLayerPanel(world,{report,setSettings}={}) {
   }
   function render(){
     if(!ready)return;
+    const previousOpen=new Map([...panel.querySelectorAll('details')].map(el=>
+      [el.dataset.groupKey||el.dataset.providerKey,el.open]));
     panel.replaceChildren();
     const groups=[...new Set(records.map(item=>item.group||'Otras'))]
       .sort((a,b)=>a==='Mapas base'?-1:b==='Mapas base'?1:a.localeCompare(b,'es'));
@@ -150,7 +156,8 @@ export function mountLayerPanel(world,{report,setSettings}={}) {
       const entries=records.filter(item=>(item.group||'Otras')===group);
       const section=document.createElement('details');
       section.className='gta-catalog-group';
-      section.open=group==='Mapas base'||group==='Elevaciones';
+      section.dataset.groupKey=group;
+      section.open=previousOpen.get(group)??(group==='Mapas base'||group==='Elevaciones');
       const heading=document.createElement('summary');
       heading.textContent=group+' · '+entries.length;
       section.append(heading);
@@ -159,7 +166,9 @@ export function mountLayerPanel(world,{report,setSettings}={}) {
         const subset=entries.filter(x=>(x.provider||'Sin proveedor')===provider);
         const sub=document.createElement('details');
         sub.className='gta-catalog-provider';
-        sub.open=group==='Mapas base'||group==='Elevaciones';
+        sub.dataset.providerKey=group+'::'+provider;
+        sub.open=previousOpen.get(sub.dataset.providerKey)??
+          (group==='Mapas base'||group==='Elevaciones');
         const title=document.createElement('summary');
         title.textContent=provider+' ('+subset.length+')';sub.append(title);
         for(const item of subset) {
@@ -284,6 +293,7 @@ export function mountLayerPanel(world,{report,setSettings}={}) {
       location={lng,lat};
       updateSettings();
       updateElevation();
+      world.updateBuildings(prefs.buildings);
       installRoadAppearance();
       save();
     },
@@ -295,6 +305,7 @@ export function mountLayerPanel(world,{report,setSettings}={}) {
     refreshStyle(){
       installRoadAppearance();
       updateElevation();
+      world.updateBuildings(prefs.buildings);
       refreshEntries();
     },
     getPreferences(){return {buildings:prefs.buildings,terrain:prefs.terrain,dem:prefs.dem,
