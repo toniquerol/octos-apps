@@ -4,7 +4,7 @@ import {mountLayerPanel} from './layers.js?v=7';
 import {mountMapEditor} from './map-editor.js?v=4';
 import {mountTeleport} from './teleport.js?v=1';
 import {createActor} from './actor.js?v=6';
-import {mountDriveHud} from './hud.js?v=3';
+import {mountDriveHud} from './hud.js?v=4';
 import {OcToSGamepadController,mountGamepadSettings} from '../shared/gamepad-controller.js?v=3';
 
 const $ = id => document.getElementById(id);
@@ -63,13 +63,30 @@ function updateHud(state) {
   layerControls?.updateLocation(state.lon,state.lat);
   world?.refreshShadows(state.lon, state.lat);
 }
+function showControls(visible) {
+  const active=Boolean(visible&&gamepadSettings);
+  $('controls-panel').hidden=!active;
+  $('controls-button').setAttribute('aria-expanded',String(active));
+  if(gamepadSettings?.panel)gamepadSettings.panel.open=active;
+  if(active){
+    showPanel(false);
+    $('layers-panel').open=false;
+  }
+}
 function showPanel(visible) {
+  if(visible)showControls(false);
   $('settings-panel').hidden = !visible;
   $('settings-button').setAttribute('aria-expanded',String(visible));
   if (document.body.classList.contains('editing')) $('map-editor').hidden = visible;
 }
 $('settings-button').addEventListener('click',() => showPanel($('settings-panel').hidden));
 $('close-settings').addEventListener('click',() => showPanel(false));
+$('controls-button').addEventListener('click',() => showControls($('controls-panel').hidden));
+$('close-controls').addEventListener('click',() => showControls(false));
+$('map-mode-button').addEventListener('click',() => showControls(false));
+$('layers-panel').addEventListener('toggle',() => {
+  if($('layers-panel').open){showControls(false);showPanel(false);}
+});
 $('info-button').addEventListener('click',() => $('help-dialog').showModal());
 $('close-help').addEventListener('click',() => $('help-dialog').close());
 $('daytime-controls').addEventListener('submit', event => {
@@ -223,7 +240,7 @@ async function launchScene() {
       else if(action==='secondary')report('Sin acción secundaria asignada a este personaje.','warn');
     };
     gamepadSettings=mountGamepadSettings({
-      controller:gamepadController,container:$('settings-panel')
+      controller:gamepadController,container:$('controls-content')
     });
     game.setQuality(quality);
     const editor=mountMapEditor({world,game,actor,layerControls,report});
@@ -247,6 +264,7 @@ async function launchScene() {
     $('map').setAttribute('aria-label','Escenario geográfico en tres dimensiones');
     welcome.hidden = true;
     showPanel(false);
+    showControls(false);
     game.start();
     // El HUD se monta únicamente al entrar en el mundo, después del selector 2D.
     try {
