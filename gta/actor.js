@@ -32,10 +32,11 @@ function buildCharacter(T) {
   cube(.19,.33,.12,.14,.06,.1,shoes);
   cube(.16,.23,.61,-.36,0,1.10,fabric);
   cube(.16,.23,.61,.36,0,1.10,fabric);
-  const head = new T.Mesh(new T.SphereGeometry(.2,10,8), skin);
-  head.position.set(0,0,1.72);group.add(head);
+  // Altura total: 1,80 m sobre la superficie (1,62 + radio 0,18).
+  const head = new T.Mesh(new T.SphereGeometry(.18,10,8), skin);
+  head.position.set(0,0,1.62);group.add(head);
   const facing = new T.Mesh(new T.BoxGeometry(.11,.04,.045), shoes);
-  facing.position.set(0,.199,1.74);group.add(facing);
+  facing.position.set(0,.18,1.64);group.add(facing);
   return group;
 }
 
