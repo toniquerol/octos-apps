@@ -7,7 +7,7 @@ export const VEHICLE = Object.freeze({
   steeringFullHoldSeconds: 0.85
 });
 const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
-export const initialDriving = () => ({speed:0, steer:0, spin:0, slip:0, steerHold:0, steerDirection:0});
+export const initialDriving = () => ({speed:0, steer:0, spin:0, rearSpin:0, rearLocked:false, slip:0, steerHold:0, steerDirection:0});
 
 /* Entrada de mando: left/right = 0 o 1; headingDelta está en RADIANES de la prueba.
    Mantener las mismas fórmulas, constantes y secuencia cuando handbrake=false. */
@@ -38,9 +38,10 @@ export function stepDriving(car, input, elapsed) {
   const desired = direction * steerLimit * (.12 + .88 * smoothHold);
   car.steer += (desired - car.steer) * (1 - Math.exp(-dt * VEHICLE.steeringSmoothing));
 
-  // Freno de mano independiente: se modifica el comportamiento SOLO durante su uso.
-  // Retención extra y deriva lateral amortiguada; no hay derrape sin freno de mano.
-  if (input.handbrake) {
+  // Freno de mano de eje trasero: las ruedas delanteras siguen rodando y
+  // permitiendo dirección. La retención del coche proviene solo del eje trasero.
+  car.rearLocked = Boolean(input.handbrake);
+  if (car.rearLocked) {
     car.speed *= Math.exp(-dt * 2.6);
     car.slip = clamp(car.slip - car.steer * Math.abs(car.speed) * dt * 1.8, -3.5, 3.5);
   } else {
@@ -49,7 +50,8 @@ export function stepDriving(car, input, elapsed) {
   }
   const headingDelta = car.speed / 2.715 * Math.tan(car.steer) * dt * (input.handbrake ? 1.30 : 1);
   const distance = car.speed * dt;
-  car.spin -= distance / .324;
+  car.spin -= distance / VEHICLE.wheelRadius; // ruedas delanteras: rodadura libre
+  if (!car.rearLocked) car.rearSpin = (car.rearSpin ?? car.spin) - distance / VEHICLE.wheelRadius;
   return {distance, slipDistance:car.slip * dt, headingDelta, changed: car.speed!==before || !!direction};
 }
 
@@ -113,7 +115,12 @@ export async function loadBMW(T) {
   }
   return {
     group:root,
-    update(steer,spin){for(const w of wheels){w.steering.rotation.y=w.front?steer:0;w.rolling.rotation.x=spin;}},
+    update(steer,spin,rearSpin=spin){
+      for(const w of wheels){
+        w.steering.rotation.y=w.front?steer:0;
+        w.rolling.rotation.x=w.front?spin:rearSpin;
+      }
+    },
     dispose(){root.traverse(item=>item.geometry?.dispose());for(const m of materials)m.dispose();}
   };
 }
