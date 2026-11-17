@@ -45,6 +45,44 @@ let selectionMarker = null;
 let choosing = false;
 let mapClickHandler = null;
 
+// Fundido de entrada y descenso desde la vista cenital del mapa de selección.
+function entryFade() {
+  const veil=document.createElement('div');
+  veil.className='gta-scene-entry-fade';
+  veil.setAttribute('aria-hidden','true');
+  document.body.append(veil);
+  requestAnimationFrame(()=>{veil.style.opacity='.96';});
+  return veil;
+}
+function finishEntryFade(veil) {
+  if(!veil)return;
+  veil.style.transition='opacity 420ms ease';
+  veil.style.opacity='0';
+  setTimeout(()=>veil.remove(),500);
+}
+function descendToGameCamera(map,options,duration) {
+  return new Promise((resolve,reject)=>{
+    let done=false;
+    const finish=()=>{
+      if(done)return;
+      done=true;
+      clearTimeout(timeout);
+      map.off('moveend',finish);
+      resolve();
+    };
+    const timeout=setTimeout(finish,duration+750);
+    map.once('moveend',finish);
+    try{map.easeTo({...options,duration,essential:true});}
+    catch(error){
+      if(done)return;
+      done=true;
+      clearTimeout(timeout);
+      map.off('moveend',finish);
+      reject(error);
+    }
+  });
+}
+
 function report(message, kind = '') {
   status.textContent = message;
   status.className = 'status ' + kind;
@@ -223,6 +261,7 @@ async function launchScene() {
   play.disabled = true;
   play.textContent = 'Preparando escenario 3D…';
   $('welcome-error').textContent = '';
+  const veil=entryFade();
   try {
     const start = {...selection};
     const quality = $('quality').value;
@@ -264,8 +303,10 @@ async function launchScene() {
     // Restaurar el mapa base guardado sin reiniciar el mapa ni perder el BMW.
     await editor.restoreBasemap();
     mountTeleport({world,game,report,teleport});
+    // El escenario arranca cenital, sin saltar a la cámara de juego.
+    world.setRenderRadiusSuspended(true);
     world.enterGame();
-    game.teleport(start.lat,start.lon,start.place);
+    game.teleport(start.lat,start.lon,start.place,{preserveCamera:true});
     world.setTime($('daytime-hour').value);
     world.refreshShadows(start.lon, start.lat, true);
     world.map.once('idle', () => {
@@ -277,12 +318,31 @@ async function launchScene() {
     if (mapClickHandler) world.map.off('click',mapClickHandler);
     selectionMarker?.remove();
     selectionMarker = null;
+    const map=world.map;
+    map.stop();
+    // Zoom de aproximación desde satélite al punto real elegido.
+    map.jumpTo({
+      center:[start.lon,start.lat],zoom:12.5,pitch:0,bearing:0,
+      padding:{top:0,bottom:0,left:0,right:0}
+    });
     document.body.classList.remove('selecting');
     $('map').setAttribute('aria-label','Escenario geográfico en tres dimensiones');
     welcome.hidden = true;
     showPanel(false);
     showControls(false);
     showCameras(false);
+    const targetCamera=game.updateCamera(0,true);
+    const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if(targetCamera&&!reducedMotion){
+      // Aparece gradualmente el territorio durante el zoom cenital.
+      veil.style.transition='opacity 1850ms ease';
+      veil.style.opacity='.10';
+      try{await descendToGameCamera(map,targetCamera,2700);}
+      catch(error){console.warn('OcToS GTA · zoom de entrada:',error);}
+    }
+    map.stop();
+    game.updateCamera();
+    world.setRenderRadiusSuspended(false);
     game.start();
     // El HUD se monta únicamente al entrar en el mundo, después del selector 2D.
     try {
@@ -301,7 +361,11 @@ async function launchScene() {
     report('No se ha podido cargar el escenario.','warn');
     play.textContent = 'Reintentar cargar escenario';
     play.disabled = false;
-  } finally { choosing = false; }
+  } finally {
+    if(world)world.setRenderRadiusSuspended(false);
+    finishEntryFade(veil);
+    choosing = false;
+  }
 }
 
 async function bootstrap() {
