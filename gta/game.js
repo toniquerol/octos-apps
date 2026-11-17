@@ -36,7 +36,7 @@ export class Game {
     this.lastSave = 0;
     this.fps = 30;
     this.onKeyDown = event => {
-      if (event.target.closest('input,select,textarea,button,[contenteditable="true"]')) return;
+      if (event.target?.closest?.('input,select,textarea,button,[contenteditable="true"]')) return;
       if (['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ShiftLeft','ShiftRight',
         'Space','KeyV','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code)) event.preventDefault();
       if (event.repeat && ['Space','KeyV'].includes(event.code)) return;
@@ -78,6 +78,7 @@ export class Game {
     const dt = clamp((now - this.lastTime) / 1000, 0, 0.08);
     this.lastTime = now;
     if (dt <= 0) return;
+    const oldSpeed = this.speed;
 
     const input = (this.keys.has('KeyW') || this.keys.has('ArrowUp') ? 1 : 0) -
                   (this.keys.has('KeyS') || this.keys.has('ArrowDown') ? 1 : 0);
@@ -124,8 +125,8 @@ export class Game {
       this.updateCamera();
       this.emit(now - this.lastHud >= 140);
       if (now - this.lastSave > 5000) this.save();
-    } else if (this.speed !== 0) {
-      this.emit(now - this.lastHud >= 140);
+    } else if (Math.abs(this.speed - oldSpeed) > 0.001 || this.speed !== 0) {
+      this.emit(now - this.lastHud >= 140 || this.speed === 0);
     }
   }
 
