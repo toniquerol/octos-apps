@@ -1,11 +1,12 @@
 import {createWorld} from './world.js?v=7';
-import {Game, readSave} from './game.js?v=17';
+import {Game, readSave} from './game.js?v=18';
 import {mountLayerPanel} from './layers.js?v=7';
 import {mountMapEditor} from './map-editor.js?v=4';
 import {mountTeleport} from './teleport.js?v=1';
 import {createActor} from './actor.js?v=6';
 import {mountDriveHud} from './hud.js?v=4';
 import {OcToSGamepadController,mountGamepadSettings} from '../shared/gamepad-controller.js?v=3';
+import {mountCameraSettings} from './cameras.js?v=1';
 
 const $ = id => document.getElementById(id);
 const status = $('status');
@@ -18,6 +19,7 @@ let layerControls = null;
 let driveHud = null;
 let gamepadController = null;
 let gamepadSettings = null;
+let cameraSettings = null;
 let hornContext = null;
 function soundHorn(){
   try {
@@ -59,6 +61,7 @@ function updateHud(state) {
   $('altitude').textContent = state.altitude == null ? 'Sin datos' : Math.round(state.altitude) + ' m';
   $('place-name').textContent = (state.place || 'Coordenadas') + ' · Mundo real';
   driveHud?.update(state);
+  cameraSettings?.sync(state.cameraMode);
   actor?.update(state);
   layerControls?.updateLocation(state.lon,state.lat);
   world?.refreshShadows(state.lon, state.lat);
@@ -69,12 +72,23 @@ function showControls(visible) {
   $('controls-button').setAttribute('aria-expanded',String(active));
   if(gamepadSettings?.panel)gamepadSettings.panel.open=active;
   if(active){
+    showCameras(false);
+    showPanel(false);
+    $('layers-panel').open=false;
+  }
+}
+function showCameras(visible) {
+  const active=Boolean(visible&&cameraSettings);
+  $('cameras-panel').hidden=!active;
+  $('cameras-button').setAttribute('aria-expanded',String(active));
+  if(active){
+    showControls(false);
     showPanel(false);
     $('layers-panel').open=false;
   }
 }
 function showPanel(visible) {
-  if(visible)showControls(false);
+  if(visible){showControls(false);showCameras(false);}
   $('settings-panel').hidden = !visible;
   $('settings-button').setAttribute('aria-expanded',String(visible));
   if (document.body.classList.contains('editing')) $('map-editor').hidden = visible;
@@ -83,9 +97,11 @@ $('settings-button').addEventListener('click',() => showPanel($('settings-panel'
 $('close-settings').addEventListener('click',() => showPanel(false));
 $('controls-button').addEventListener('click',() => showControls($('controls-panel').hidden));
 $('close-controls').addEventListener('click',() => showControls(false));
-$('map-mode-button').addEventListener('click',() => showControls(false));
+$('cameras-button').addEventListener('click',() => showCameras($('cameras-panel').hidden));
+$('close-cameras').addEventListener('click',() => showCameras(false));
+$('map-mode-button').addEventListener('click',() => {showControls(false);showCameras(false);});
 $('layers-panel').addEventListener('toggle',() => {
-  if($('layers-panel').open){showControls(false);showPanel(false);}
+  if($('layers-panel').open){showControls(false);showCameras(false);showPanel(false);}
 });
 $('info-button').addEventListener('click',() => $('help-dialog').showModal());
 $('close-help').addEventListener('click',() => $('help-dialog').close());
@@ -242,6 +258,7 @@ async function launchScene() {
     gamepadSettings=mountGamepadSettings({
       controller:gamepadController,container:$('controls-content')
     });
+    cameraSettings=mountCameraSettings({game,container:$('cameras-content')});
     game.setQuality(quality);
     const editor=mountMapEditor({world,game,actor,layerControls,report});
     // Restaurar el mapa base guardado sin reiniciar el mapa ni perder el BMW.
@@ -265,6 +282,7 @@ async function launchScene() {
     welcome.hidden = true;
     showPanel(false);
     showControls(false);
+    showCameras(false);
     game.start();
     // El HUD se monta únicamente al entrar en el mundo, después del selector 2D.
     try {
