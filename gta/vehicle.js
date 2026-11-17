@@ -2,7 +2,7 @@
    Sin física adicional en conducción normal; solo se añade un freno de mano arcade. */
 export const VEHICLE = Object.freeze({
   wheelbase: 2.715, wheelRadius: .324,
-  acceleration: 7.5, reverseAcceleration: 4.7, changeDirectionBrake: 14,
+  acceleration: 4.5, reverseAcceleration: 2.82, changeDirectionBrake: 14,
   reverseMax: -12, maxSpeed: 37, steeringSmoothing: 7.5
 });
 const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
@@ -13,8 +13,8 @@ export const initialDriving = () => ({speed:0, steer:0, spin:0, slip:0});
 export function stepDriving(car, input, elapsed) {
   const dt = clamp(elapsed,0,.05);
   const before = car.speed;
-  if (input.forward) car.speed += dt * (car.speed < 0 ? 14 : 7.5);
-  else if (input.reverse) car.speed -= dt * (car.speed > 0 ? 14 : 4.7);
+  if (input.forward) car.speed += dt * (car.speed < 0 ? VEHICLE.changeDirectionBrake : VEHICLE.acceleration);
+  else if (input.reverse) car.speed -= dt * (car.speed > 0 ? VEHICLE.changeDirectionBrake : VEHICLE.reverseAcceleration);
   else {
     car.speed *= Math.exp(-dt * (.44 + Math.abs(car.speed) * .009));
     if (Math.abs(car.speed) < .012) car.speed = 0;
