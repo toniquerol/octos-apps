@@ -232,3 +232,147 @@ body.gta-hud-active #game-hud{display:none!important}
 }
 @media(max-width:370px){.gta-gps-widget{width:108px}.gta-dials{width:162px;height:157px}}
 @media(max-height:500px){.gta-gps-widget{width:min(30vh,158px)}.gta-dials{width:min(47vh,238px);height:min(43vh,226px)}}
+
+
+/* OcToS GTA · redistribución del HUD aprobada por zonas de pantalla.
+   Solamente presentación: no afecta a conducción, mapa ni telemetría. */
+.topbar>.teleport-open{
+  position:absolute;left:calc(50% - 250px);top:12px;z-index:32;
+  min-height:38px;padding:8px 16px;border:1px solid #7e8789;
+  border-radius:7px;background:#1b1d21;color:#f1f1ef;
+  font-size:11px;font-weight:750;box-shadow:0 3px 13px #0008;
+}
+.topbar>.teleport-open:hover{border-color:var(--orange)}
+.topbar>.gta-layers-menu{
+  position:absolute;top:12px;right:clamp(230px,23vw,410px);
+  left:auto;bottom:auto;z-index:34;display:block;
+  width:120px;max-width:120px;max-height:none;overflow:visible;
+  border:1px solid #79aabd;border-radius:7px;
+  background:#1d2026;box-shadow:0 3px 12px #0007;
+}
+.topbar>.gta-layers-menu>summary{
+  height:37px;min-height:37px;padding:7px 10px;
+  font-size:11px;letter-spacing:.02em;color:#f1f1ef;
+}
+.topbar>.gta-layers-menu>summary span{font-size:9px;letter-spacing:0}
+.topbar>.gta-layers-menu>.gta-layers-body{
+  position:absolute;top:calc(100% + 7px);right:0;
+  width:min(320px,calc(100vw - 22px));
+  max-height:calc(100dvh - 122px);overflow:auto;
+  background:#1b1d22f9;border:1px solid #626b75;
+  border-radius:9px;box-shadow:0 12px 32px #000c;
+  padding:12px 12px 16px;
+}
+.topbar>.gta-layers-menu:not([open])>.gta-layers-body{display:none}
+.selecting .topbar>.gta-layers-menu{display:none!important}
+.header-buttons #controls-button{border-color:#999ca3}
+.controls-panel{z-index:38;right:145px;top:16px;width:min(325px,calc(100vw - 28px));padding:12px}
+.controls-panel #controls-content{min-height:0}
+.controls-panel .octos-gp-panel{margin:12px 0 0;border:0;background:transparent}
+.controls-panel .octos-gp-panel>summary{display:none}
+.controls-panel .octos-gp-body{padding:0}
+.controls-panel .octos-gp-panel[open]>summary{border:0}
+.selecting #controls-button{display:none!important}
+.selecting .controls-panel{display:none!important}
+
+/* Hora en la casilla central alta, velocidad digital en la inferior. */
+#stage>.daytime-controls{
+  top:auto;bottom:130px;left:50%;transform:translateX(-50%);
+  z-index:22;display:flex;align-items:center;justify-content:center;
+  gap:5px;min-height:34px;padding:3px 5px;background:#131519eb;
+  border:1px solid #757b82;border-radius:6px;
+}
+#stage>.daytime-controls label{
+  position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);
+}
+#stage>.daytime-controls input{width:84px;min-height:26px;padding:2px 3px;font-size:11px}
+#stage>.daytime-controls button{min-height:26px;padding:3px 7px;font-size:10px}
+#stage>.daytime-controls output{display:none}
+body.selecting #stage>.daytime-controls{display:none}
+body.editing #stage>.daytime-controls{
+  top:auto;bottom:130px;left:50%;transform:translateX(-50%);
+}
+
+/* Cinco relojes, de izquierda a derecha: velocidad, gasolina,
+   lectura digital central, turbo y RPM. */
+.gta-arcade-hud>.gta-dials{
+  position:absolute;left:50%;right:auto;bottom:10px;top:auto;
+  transform:translateX(-50%);width:min(598px,calc(100vw - 20px));
+  height:152px;display:grid;align-items:end;
+  grid-template-columns:1.25fr .78fr 1.12fr .78fr 1.25fr;
+  gap:9px;overflow:visible;filter:drop-shadow(0 5px 8px #000e);
+}
+.gta-dials>.gta-dial{
+  position:relative;inset:auto;top:auto;right:auto;bottom:auto;left:auto;
+  width:100%;height:auto;aspect-ratio:1;min-width:0;
+  border-radius:50%;box-shadow:0 2px 8px #0009;
+  background:radial-gradient(circle,#141b1b88 50%,#28332c99 94%,transparent 100%);
+}
+.gta-dials>.gta-small-dial{margin-bottom:27px}
+.gta-dials>.gta-tachometer{width:100%}
+.gta-dials .gta-speed-svg,.gta-dials .gta-small-svg,
+.gta-dials .gta-tach-svg{display:block;width:100%;height:100%}
+.gta-digital-speed{
+  align-self:end;justify-self:stretch;margin-bottom:58px;
+  min-height:43px;padding:3px 8px;display:flex;align-items:baseline;
+  justify-content:center;gap:6px;
+  background:#151719ee;border:2px solid #ff801e;border-radius:5px;
+  color:#f9fbf7;box-shadow:0 3px 12px #0009;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.gta-digital-speed strong{font-size:28px;line-height:1.2;font-weight:900}
+.gta-digital-speed span{font-size:9px;font-weight:750;color:#ffb481}
+.gta-dials svg text{paint-order:stroke fill;stroke:#141a16;stroke-width:.9}
+.player-vitals{z-index:14}
+
+/* El botón Teleport permanece visible en el área segura de móvil;
+   los controles de asignación se limitan a escritorio. */
+@media(max-width:1100px){
+  .topbar>.teleport-open{left:calc(50% - 225px)}
+  .gta-arcade-hud>.gta-dials{width:min(520px,calc(100vw - 18px));height:135px;gap:6px}
+  .gta-dials>.gta-small-dial{margin-bottom:21px}
+  .gta-digital-speed{margin-bottom:52px;min-height:38px}
+  .gta-digital-speed strong{font-size:23px}
+  #stage>.daytime-controls{bottom:117px}
+}
+@media(max-width:800px){
+  #controls-button,.controls-panel{display:none!important}
+  .topbar>.teleport-open{
+    left:clamp(92px,23vw,150px);top:10px;min-height:35px;
+    padding:7px 9px;font-size:10px
+  }
+  .topbar>.gta-layers-menu{
+    top:64px;right:10px;width:104px;max-width:104px
+  }
+  .topbar>.gta-layers-menu>summary{min-height:31px;height:31px;padding:5px 8px;font-size:10px}
+  .topbar>.gta-layers-menu>.gta-layers-body{
+    width:min(300px,calc(100vw - 18px));max-height:calc(100dvh - 135px)
+  }
+  .gta-arcade-hud>.gta-dials{
+    bottom:58px;width:min(495px,calc(100vw - 8px));height:128px;gap:4px
+  }
+  .gta-dials>.gta-small-dial{margin-bottom:13px}
+  .gta-digital-speed{margin-bottom:33px;min-height:31px;padding:2px 4px}
+  .gta-digital-speed strong{font-size:19px}
+  .gta-digital-speed span{font-size:8px}
+  #stage>.daytime-controls{bottom:165px;min-height:28px;padding:2px 3px}
+  #stage>.daytime-controls input{width:76px;min-height:24px;font-size:10px}
+  #stage>.daytime-controls button{min-height:24px;padding:2px 5px;font-size:9px}
+  body.editing #stage>.daytime-controls{bottom:165px;top:auto;left:50%;transform:translateX(-50%)}
+  .gta-gps-widget{bottom:225px;width:clamp(99px,24vw,148px);left:8px}
+  .player-vitals{bottom:11px}
+}
+@media(max-width:460px){
+  .topbar>.teleport-open{left:90px;padding:7px;font-size:9px}
+  .gta-arcade-hud>.gta-dials{width:calc(100vw - 4px);gap:2px;grid-template-columns:1.26fr .71fr 1.08fr .71fr 1.26fr}
+  .gta-dials>.gta-small-dial{margin-bottom:16px}
+  .gta-digital-speed{margin-bottom:41px;padding:2px;gap:3px}
+  .gta-digital-speed strong{font-size:16px}
+  .gta-digital-speed span{font-size:7px}
+  .gta-gps-widget{bottom:220px;width:100px}
+}
+@media(max-height:580px) and (max-width:800px){
+  .gta-gps-widget{bottom:160px;width:88px}
+  .gta-arcade-hud>.gta-dials{bottom:47px;height:108px}
+  #stage>.daytime-controls{bottom:140px}
+}
