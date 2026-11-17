@@ -144,7 +144,11 @@ export function mountLayerPanel(world, {report, setSettings}) {
   // Los trazos se añaden bajo las etiquetas, sin duplicar fuentes ni teselas.
   function ensureRoadOverlays() {
     const roadLines=[...roadPaints].filter(([,data])=>driveableRoad(data.layer));
-    const firstLabel=map.getStyle().layers.find(layer=>layer.type==='symbol')?.id;
+    const styleLayers=map.getStyle().layers.filter(layer=>!layer.id.startsWith('gta-road-'));
+    const lastRoad=styleLayers.reduce((last,layer,index)=>
+      existingRoads.includes(layer.id) ? index : last,-1);
+    // Superponer la pintura sobre las líneas de OpenStreetMap originales.
+    const beforeRoadPaint=styleLayers[lastRoad+1]?.id;
     for (let index=0;index<roadLines.length;index++) {
       const [,data]=roadLines[index];
       const base=data.layer;
@@ -158,7 +162,7 @@ export function mountLayerPanel(world, {report, setSettings}) {
         map.addLayer({...common,id:asphaltId,
           layout:{visibility:'none','line-cap':'round','line-join':'round'},
           paint:{'line-color':ASPHALT,'line-opacity':1,'line-width':1}
-        },firstLabel);
+        },beforeRoadPaint);
       }
       if (!roadOverlayIds.includes(asphaltId)) roadOverlayIds.push(asphaltId);
     }
@@ -166,6 +170,7 @@ export function mountLayerPanel(world, {report, setSettings}) {
       const [,data]=roadLines[index];
       const base=data.layer;
       const centerId='gta-road-center-'+index;
+      if (Number.isFinite(base.maxzoom) && base.maxzoom<=14) continue;
       if (!map.getLayer(centerId)) {
         const common={type:'line',source:base.source,minzoom:Math.max(14,base.minzoom||0)};
         if (base['source-layer']) common['source-layer']=base['source-layer'];
@@ -177,7 +182,7 @@ export function mountLayerPanel(world, {report, setSettings}) {
             'line-color':'#f2f2ea','line-opacity':0.92,
             'line-width':1,'line-dasharray':[7,10]
           }
-        },firstLabel);
+        },beforeRoadPaint);
       }
       if (!roadOverlayIds.includes(centerId)) roadOverlayIds.push(centerId);
     }
