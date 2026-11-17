@@ -195,7 +195,7 @@ body.gta-hud-active #game-hud{display:none!important}
 .gta-gps-shading{position:absolute;inset:0;border-radius:50%;
   background:radial-gradient(circle at 42% 44%,transparent 29%,#02090a2b 66%,#0508099c 100%);
   box-shadow:inset 0 0 16px 6px #000b}
-.gta-gps-pointer{position:absolute;left:50%;top:50%;width:31%;height:31%;transform:translate(-50%,-50%);
+.gta-gps-pointer{position:absolute;left:50%;top:63%;width:31%;height:31%;transform:translate(-50%,-50%);
   filter:drop-shadow(0 0 4px #ff891faa) drop-shadow(0 2px 2px #001)}
 .gta-gps-status{position:absolute;left:10%;right:10%;bottom:16%;padding:2px;text-align:center;
   font-size:9px;font-weight:800;letter-spacing:.06em;color:#d6e9db;text-shadow:0 1px 4px #000;background:#101a1b9c}
@@ -208,7 +208,7 @@ body.gta-hud-active #game-hud{display:none!important}
 .gta-gps-data span{font-size:9px;color:#f1f3ef;font-variant-numeric:tabular-nums}
 .gta-dials{position:absolute;right:clamp(9px,2vw,32px);bottom:clamp(8px,1.7vh,25px);
   width:clamp(235px,30vw,348px);height:clamp(230px,29vw,326px);filter:drop-shadow(0 9px 12px #000d)}
-.gta-tachometer{position:absolute;inset:0 0 auto auto;width:94%;aspect-ratio:1;border-radius:50%;
+.gta-tachometer{position:absolute;inset:0 0 auto auto;width:87%;aspect-ratio:1;border-radius:50%;
   background:radial-gradient(circle,#0e160e33 60%,#202b22a3 88%,transparent 95%)}
 .gta-tach-svg,.gta-aux-svg{display:block;width:100%;height:100%}
 .gta-tach-svg{filter:drop-shadow(0 2px 3px #0008)}
@@ -226,7 +226,7 @@ body.gta-hud-active #game-hud{display:none!important}
   .gta-gps-data strong{font-size:9px}
   .gta-gps-data span{font-size:7px}
   .gta-auxiliary{width:35%}
-  .gta-tachometer{width:95%}
+  .gta-tachometer{width:88%}
   .gta-gps-status{font-size:7px}
   .gta-gps-ring:after{inset:4%;border-width:1px}
 }
