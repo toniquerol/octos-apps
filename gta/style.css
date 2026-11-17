@@ -138,3 +138,9 @@ body.editing #map .maplibregl-canvas:active{cursor:grabbing}
   .teleport-footer button{width:100%}
   #teleport-map{height:45dvh}
 }
+
+/* Editor compacto: el mapa permanece visible sobre la hoja de controles móvil. */
+@media(max-width:600px){
+  .map-editor{left:0;right:0;top:auto;bottom:0;width:100%;max-width:none;height:47%;max-height:47%;border-radius:13px 13px 0 0;padding:12px 15px 24px}
+  .map-editor-head h2{font-size:15px}
+}
