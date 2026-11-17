@@ -48,22 +48,24 @@ export function stepDriving(car,input,elapsed) {
     if(Math.abs(car.speed)<.012)car.speed=0;
   }
   car.speed=clamp(car.speed,VEHICLE.reverseMax,VEHICLE.maxSpeed);
-  // El teclado conserva exactamente la dirección progresiva anterior.
-  // El mando usa un valor analógico directo (-1 derecha, +1 izquierda);
-  // ambos llegan al mismo límite y al mismo suavizado de dirección.
+  // Teclado y joystick comparten la misma dirección progresiva (~0,85 s).
+  // El joystick conserva todo su recorrido analógico y su sensibilidad:
+  // el desplazamiento controla la magnitud; el tiempo limita su entrada.
   const analog=Number.isFinite(input.analogSteer);
   const direction=analog?clamp(input.analogSteer,-1,1):
     Number(!!input.left)-Number(!!input.right);
-  if(!direction||analog){car.steerHold=0;car.steerDirection=0;}
+  const steerSign=Math.sign(direction);
+  if(!steerSign){car.steerHold=0;car.steerDirection=0;}
   else {
-    if(car.steerDirection!==direction)car.steerHold=0;
-    car.steerDirection=direction;
+    // Una inversión del stick reinicia el crecimiento, sin salto de volante.
+    if(car.steerDirection!==steerSign)car.steerHold=0;
+    car.steerDirection=steerSign;
     car.steerHold=Math.min(VEHICLE.steeringFullHoldSeconds,(car.steerHold||0)+dt);
   }
-  const hold=direction&&!analog?car.steerHold/VEHICLE.steeringFullHoldSeconds:0;
+  const hold=steerSign?car.steerHold/VEHICLE.steeringFullHoldSeconds:0;
   const smoothHold=hold*hold*(3-2*hold);
   const steerLimit=.58/(1+Math.abs(car.speed)/28);
-  const desired=direction*steerLimit*(analog?1:(.12+.88*smoothHold));
+  const desired=direction*steerLimit*(.12+.88*smoothHold);
   car.steer+=(desired-car.steer)*(1-Math.exp(-dt*VEHICLE.steeringSmoothing));
   car.rearLocked=handbrake;
   car.rearGripLoss??=0;
