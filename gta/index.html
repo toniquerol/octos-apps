@@ -8,10 +8,10 @@
 <title>OcToS GTA · V1</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=11">
+<link rel="stylesheet" href="./style.css?v=12">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="../shared/nav.js?v=20261117-gta-map-editor" defer></script>
-<script type="module" src="./main.js?v=15"></script>
+<script type="module" src="./main.js?v=16"></script>
 </head>
 <body class="selecting">
 <header class="topbar">
@@ -42,6 +42,29 @@
     <div class="hud-row"><span>POSICIÓN</span><strong id="coordinates">41.38740, 2.17010</strong></div>
     <div class="hud-row"><span>ALTURA MDT</span><strong id="altitude">—</strong></div>
   </section>
+  <div id="gta-drive-display" class="gta-arcade-hud" aria-label="Instrumentos de navegación y conducción">
+    <section class="gta-gps-widget" aria-label="GPS circular en tiempo real">
+      <div class="gta-gps-ring">
+        <div class="gta-gps-glass">
+          <div id="gta-gps-map" class="gta-gps-map" aria-hidden="true"></div>
+          <div class="gta-gps-shading" aria-hidden="true"></div>
+          <svg class="gta-gps-pointer" viewBox="0 0 80 80" aria-hidden="true">
+            <path d="M40 11 23 65 40 54 57 65Z" fill="#0bea67" stroke="#043819" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M40 11 40 54 57 65Z" fill="#a4ff78" opacity=".85"/>
+          </svg>
+          <span id="gta-gps-status" class="gta-gps-status">CARGANDO GPS</span>
+        </div>
+      </div>
+      <div class="gta-gps-data" aria-live="off">
+        <strong id="gta-gps-heading">000°</strong>
+        <span id="gta-gps-coords">—</span>
+      </div>
+    </section>
+    <section id="gta-dials" class="gta-dials" aria-label="Velocímetro, revoluciones estimadas y aceleración">
+      <div id="gta-auxiliary" class="gta-auxiliary" aria-label="Indicador de aceleración estimada"></div>
+      <div id="gta-tachometer" class="gta-tachometer" aria-label="Revoluciones estimadas y velocidad real del vehículo"></div>
+    </section>
+  </div>
   <div id="status" class="status" role="status" aria-live="polite">Cargando cartografía…</div>
   <section id="player-vitals" class="player-vitals" aria-label="Estado del personaje">
     <div class="vital" title="Vida: 100; sin sistema de daños en esta versión">
