@@ -29,8 +29,8 @@ function safeName(str){return String(str||'modelo').replace(/[\\/:*?"<>|]+/g,'-'
 function esc(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function tagsFromInput(){return [...new Set($('modelTags').value.split(',').map(v=>v.trim()).filter(Boolean))].slice(0,30)}
 function uid(){return crypto.randomUUID ? crypto.randomUUID() : Date.now()+'-'+Math.random().toString(36).slice(2)}
-function setBusy(value){busy=value;for(const id of ['save','export','getGLB','remove','optimize','import']){const el=$(id);el.disabled=value||(!active&&id!=='import')} $('renderStatus').textContent=value?'Procesando…':'Listo'}
-function updateButtons(){if(!busy){for(const id of ['save','export','getGLB','remove','optimize'])$(id).disabled=!active;$('import').disabled=false}}
+function setBusy(value){busy=value;for(const id of ['save','export','getGLB','remove','optimize','import']){const el=$(id);el.disabled=value||(!active&&id!=='import')||(id==='remove'&&!active?.id)} $('renderStatus').textContent=value?'Procesando…':'Listo'}
+function updateButtons(){if(!busy){for(const id of ['save','export','getGLB','remove','optimize'])$(id).disabled=!active;$('import').disabled=false;$('remove').disabled=!active?.id}}
 async function db(){
  if(dbPromise)return dbPromise;
  dbPromise=new Promise((resolve,reject)=>{
@@ -67,14 +67,14 @@ async function gltfLoader(){
  }
  loader.setDRACOLoader(draco);
  try{
-  if(!meshoptPromise)meshoptPromise=import('https://cdn.jsdelivr.net/npm/meshoptimizer@0.24.0/meshopt_decoder.module.js');
+  if(!meshoptPromise)meshoptPromise=import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/meshopt_decoder.module.js');
   const module=await meshoptPromise;
   if(module.MeshoptDecoder)loader.setMeshoptDecoder(module.MeshoptDecoder);
  }catch(e){/* Los GLB sin meshopt siguen siendo compatibles. */}
  return loader;
 }
 function clearModel(){
- if(shown){scene.remove(shown);shown=null}
+ if(shown){shown.traverse(o=>{if(o.geometry)o.geometry.dispose();const mats=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of mats){for(const v of Object.values(m)){if(v&&v.isTexture)v.dispose()}m.dispose()}});scene.remove(shown);shown=null}
  mixer=null;
 }
 function centerView(){
@@ -179,6 +179,7 @@ async function refresh(){
 async function importFiles(files){
  const items=[...files].filter(f=>/\.glb$/i.test(f.name));
  if(!items.length){status('Formato admitido: .GLB. GML es un formato distinto.',true);return}
+ if(items.length>1){status('Importa un modelo GLB cada vez para poder asignar su ficha y etiquetas.',true);return}
  for(const file of items){
   if(file.size>250*1048576){status(file.name+': límite de importación de 250 MB.',true);continue}
   setBusy(true);
@@ -234,7 +235,7 @@ async function makeHTML(blob,name){
  'function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}window.addEventListener("resize",resize);resize();',
  'const clock=new THREE.Clock();let mixer=null;function loop(){requestAnimationFrame(loop);const dt=clock.getDelta();if(mixer)mixer.update(dt);controls.update();renderer.render(scene,camera)}loop();',
  'async function decode(){const node=document.getElementById("payload"),s=node.textContent.trim();const chars=atob(s),data=new Uint8Array(chars.length);for(let i=0;i<chars.length;i++)data[i]=chars.charCodeAt(i);if(node.dataset.gzip!=="1")return data.buffer;if(!("DecompressionStream" in window))throw Error("Este navegador no admite descompresión GZIP.");return await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer()}',
- 'try{const decoder=new DRACOLoader();decoder.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/");const loader=new GLTFLoader();loader.setDRACOLoader(decoder);try{const m=await import("https://cdn.jsdelivr.net/npm/meshoptimizer@0.24.0/meshopt_decoder.module.js");if(m.MeshoptDecoder)loader.setMeshoptDecoder(m.MeshoptDecoder)}catch(e){}',
+ 'try{const decoder=new DRACOLoader();decoder.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/");const loader=new GLTFLoader();loader.setDRACOLoader(decoder);try{const m=await import("https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/meshopt_decoder.module.js");if(m.MeshoptDecoder)loader.setMeshoptDecoder(m.MeshoptDecoder)}catch(e){}',
  'const obj=await loader.parseAsync(await decode(),"");scene.add(obj.scene);fit(obj.scene);document.getElementById("fit").onclick=()=>fit(obj.scene);if(obj.animations.length){mixer=new THREE.AnimationMixer(obj.scene);obj.animations.forEach(clip=>mixer.clipAction(clip).play())}state.textContent="Arrastrar: girar · Rueda: zoom";}catch(e){state.textContent="Error al abrir el modelo: "+e.message;console.error(e)}',
  '<\/script></body></html>'
  ];
