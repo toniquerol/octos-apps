@@ -1,3 +1,5 @@
+import {createDaylight} from './daylight.js?v=1';
+
 /* OcToS GTA V1 · Escenario geográfico independiente de OcToS Drive. */
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/dark';
 const TERRAIN = {
@@ -35,6 +37,7 @@ export async function createWorld(start, report, {selection = false} = {}) {
   let buildingsActive = false;
   let provider = 'mapterhorn';
   let buildingsId = null;
+  const daylight = createDaylight(map);
   let tileErrorReported = false;
 
   map.on('error', event => {
@@ -68,9 +71,13 @@ export async function createWorld(start, report, {selection = false} = {}) {
     buildingsActive = Boolean(visible);
     if (buildingsId && map.getLayer(buildingsId)) {
       map.setLayoutProperty(buildingsId, 'visibility', buildingsActive ? 'visible' : 'none');
+      daylight.setBuildings(buildingsId ? map.getLayer(buildingsId)?.source : null, buildingsId, buildingsActive);
       return true;
     }
-    if (!buildingsActive) return false;
+    if (!buildingsActive) {
+      daylight.setBuildings(null, null, false);
+      return false;
+    }
     const sources = map.getStyle().sources;
     const vectorId = Object.keys(sources).find(id => sources[id].type === 'vector');
     if (!vectorId) {
@@ -93,9 +100,11 @@ export async function createWorld(start, report, {selection = false} = {}) {
           'fill-extrusion-opacity': 0.84
         }
       }, firstSymbol?.id);
+      daylight.setBuildings(vectorId, buildingsId, true);
       return true;
     } catch (error) {
       buildingsId = null;
+      daylight.setBuildings(null, null, false);
       report('Edificios 3D no disponibles en este estilo cartográfico.', 'warn');
       console.warn('OcToS GTA · edificios:', error);
       return false;
@@ -130,6 +139,7 @@ export async function createWorld(start, report, {selection = false} = {}) {
   }
 
   function quality(level) {
+    daylight.setQuality(level);
     const low = level === 'low';
     map.setMaxPitch(low ? 70 : 80);
     map.setFadeDuration?.(0);
@@ -145,5 +155,8 @@ export async function createWorld(start, report, {selection = false} = {}) {
     map.touchZoomRotate.disable();
     map.dragRotate.disable();
   }
-  return {map, updateBuildings, updateTerrain, elevation, quality, enterGame};
+  return {
+    map, updateBuildings, updateTerrain, elevation, quality, enterGame,
+    setTime: daylight.setTime, refreshShadows: daylight.refreshShadows
+  };
 }
