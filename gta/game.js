@@ -1,15 +1,33 @@
 /* OcToS GTA · personaje y primer vehículo independiente. */
 import {stepDriving,initialDriving} from './vehicle.js?v=7';
 const STORAGE_KEY = 'octos-gta-v1-save';
+const CAMERA_STORAGE_KEY = 'octos-gta-car-cameras';
 const DEFAULT = {lat: 41.3874, lon: 2.1701, heading: 0, mode: 'walk', place: 'Barcelona'};
 const RAD = Math.PI / 180;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const cameraAngleDelta=(from,to)=>((to-from+540)%360+360)%360-180;
-// Posiciones de cámara relativas al centro del coche (metros).
+// Cada cámara usa ejes relativos al vehículo y a su rumbo, en metros.
 const CAR_CAMERAS=Object.freeze([
-  Object.freeze({behind:6,above:6}),
-  Object.freeze({behind:12,above:12})
+  Object.freeze({behind:6,side:0,above:6,orbit:0,lookAhead:0}),
+  Object.freeze({behind:12,side:0,above:12,orbit:0,lookAhead:0}),
+  Object.freeze({behind:4,side:0,above:24,orbit:0,lookAhead:0})
 ]);
+const CAMERA_LIMITS=Object.freeze({
+  behind:[-10,50],side:[-20,20],above:[1,60],orbit:[-180,180],lookAhead:[-10,35]
+});
+function normalizedCamera(source,fallback){
+  const result={};
+  for(const key of Object.keys(CAMERA_LIMITS)){
+    const value=source && Number.isFinite(source[key])?source[key]:fallback[key];
+    result[key]=clamp(value,...CAMERA_LIMITS[key]);
+  }
+  return result;
+}
+function readCameraPresets(){
+  let saved;
+  try{saved=JSON.parse(localStorage.getItem(CAMERA_STORAGE_KEY)||'null');}catch{}
+  return CAR_CAMERAS.map((preset,index)=>normalizedCamera(Array.isArray(saved)?saved[index]:null,preset));
+}
 const CAR_CAMERA=Object.freeze({
   bearingSmooth:4.6, distanceSmooth:4.2,
   screenTopFraction:.40,
@@ -56,6 +74,7 @@ export class Game {
     this.lastCameraStick = 0;
     this.onAction = () => {};
     this.cameraMode = 0;
+    this.carCameras = readCameraPresets();
     this.keys = new Set();
     this.speed = 0; // m/s, con signo si el vehículo circula marcha atrás
     // Las dos vistas permanecen detrás del personaje; V solo varía la distancia.
@@ -157,7 +176,8 @@ export class Game {
     const sampled=this.controller?.poll();
     const gamepadAllowed=!document.body.classList.contains('editing') &&
       document.getElementById('settings-panel')?.hidden!==false &&
-      document.getElementById('controls-panel')?.hidden!==false;
+      document.getElementById('controls-panel')?.hidden!==false &&
+      document.getElementById('cameras-panel')?.hidden!==false;
     const pad=gamepadAllowed && sampled?.connected?sampled:null;
     if(pad?.pressed.pause){
       this.padPaused=!this.padPaused;
@@ -298,40 +318,43 @@ export class Game {
     }
 
     // Los desplazamientos se calculan desde el coche, nunca desde el mapa.
-    const preset=CAR_CAMERAS[this.cameraMode]||CAR_CAMERAS[0];
-    // La rueda del ratón sigue ajustando el acercamiento mediante escala.
+    const preset=this.carCameras[this.cameraMode]||this.carCameras[0];
+    // Los ejes longitudinal/lateral giran con la dirección de avance del BMW.
     const distanceScale=2**(21.55-this.cameraZoom.car);
-    const desiredBearing=this.state.heading+this.cameraOffset.yaw;
+    const desiredBearing=this.state.heading+this.cameraOffset.yaw+preset.orbit;
+    const target={behind:preset.behind*distanceScale,side:preset.side*distanceScale,
+      above:preset.above*distanceScale,lookAhead:preset.lookAhead};
     let rig=this.carCamera;
     if(!rig||dt<=0){
-      rig={bearing:desiredBearing,behind:preset.behind*distanceScale,
-        above:preset.above*distanceScale};
+      rig={bearing:desiredBearing,...target};
       this.carCamera=rig;
     }else{
       const rotation=1-Math.exp(-dt*CAR_CAMERA.bearingSmooth);
       const distance=1-Math.exp(-dt*CAR_CAMERA.distanceSmooth);
       rig.bearing+=cameraAngleDelta(rig.bearing,desiredBearing)*rotation;
-      rig.behind+=(preset.behind*distanceScale-rig.behind)*distance;
-      rig.above+=(preset.above*distanceScale-rig.above)*distance;
+      for(const axis of Object.keys(target))rig[axis]+=(target[axis]-rig[axis])*distance;
     }
 
     const heading=rig.bearing*RAD;
+    const carHeading=this.state.heading*RAD;
     const cosLat=Math.max(.087,Math.cos(this.state.lat*RAD));
-    const cameraLat=clamp(this.state.lat-Math.cos(heading)*rig.behind/111320,-85,85);
-    const cameraLon=((this.state.lon-Math.sin(heading)*rig.behind/(111320*cosLat)+180)%360+360)%360-180;
+    const north=-Math.cos(heading)*rig.behind-Math.sin(heading)*rig.side;
+    const east=-Math.sin(heading)*rig.behind+Math.cos(heading)*rig.side;
+    const cameraLat=clamp(this.state.lat+north/111320,-85,85);
+    const cameraLon=((this.state.lon+east/(111320*cosLat)+180)%360+360)%360-180;
+    const lookLat=clamp(this.state.lat+Math.cos(carHeading)*rig.lookAhead/111320,-85,85);
+    const lookLon=((this.state.lon+Math.sin(carHeading)*rig.lookAhead/(111320*cosLat)+180)%360+360)%360-180;
+    const focus=[lookLon,lookLat];
     const terrain=this.world.elevation(this.state.lon,this.state.lat)??0;
-    // MapLibre v4 convierte una posición 3D real en zoom y cabeceo.
+    // Conservar el enfoque geométrico real sobre terreno y edificios.
     const options=this.map.calculateCameraOptionsFromTo(
-      [cameraLon,cameraLat],terrain+rig.above,origin,terrain
+      [cameraLon,cameraLat],terrain+rig.above,focus,terrain
     );
-    // Las dos cámaras mantienen 45° geométricos (distancia = altura).
-    // El padding desplaza la proyección del coche al 70 % de la pantalla:
-    // se ve más carretera por delante sin mover el punto de referencia.
     const screenHeight=this.map.getContainer?.().clientHeight||720;
     this.map.jumpTo({
-      center:origin,
+      center:focus,
       zoom:options.zoom,
-      bearing:rig.bearing,
+      bearing:Number.isFinite(options.bearing)?options.bearing:rig.bearing,
       pitch:clamp(options.pitch+this.cameraOffset.pitch,0,80),
       padding:{top:Math.round(screenHeight*CAR_CAMERA.screenTopFraction),
         bottom:0,left:0,right:0}
@@ -381,16 +404,52 @@ export class Game {
     this.save();
   }
 
-  cycleCamera() {
-    this.cameraMode=(this.cameraMode+1)%CAR_CAMERAS.length;
-    this.updateCamera(1/30);
+  getCameraPresets(){
+    return this.carCameras.map(camera=>({...camera}));
+  }
+
+  setCameraPreset(index,key,value){
+    if(!Number.isInteger(index)||index<0||index>=this.carCameras.length ||
+       !Object.hasOwn(CAMERA_LIMITS,key)||!Number.isFinite(value))return false;
+    this.carCameras[index][key]=clamp(value,...CAMERA_LIMITS[key]);
+    this.saveCameraPresets();
+    if(index===this.cameraMode&&this.state.mode==='car'){
+      this.carCamera=null;
+      this.updateCamera();
+    }
+    return true;
+  }
+
+  resetCameraPreset(index){
+    if(!Number.isInteger(index)||index<0||index>=CAR_CAMERAS.length)return false;
+    this.carCameras[index]={...CAR_CAMERAS[index]};
+    this.saveCameraPresets();
+    if(index===this.cameraMode&&this.state.mode==='car'){
+      this.carCamera=null;
+      this.updateCamera();
+    }
+    return true;
+  }
+
+  saveCameraPresets(){
+    try{localStorage.setItem(CAMERA_STORAGE_KEY,JSON.stringify(this.carCameras));}catch{}
+  }
+
+  selectCamera(index){
+    if(!Number.isInteger(index)||index<0||index>=this.carCameras.length)return;
+    this.cameraMode=index;
+    this.updateCamera(this.state.mode==='car'?1/30:0);
     this.emit(true);
   }
 
-  toggleView() {
-    if (this.state.mode==='car') this.cameraMode=(this.cameraMode+1)%CAR_CAMERAS.length;
-    else this.view=this.view==='follow'?'wide':'follow';
-    this.updateCamera(this.state.mode==='car'?1/30:0);
+  cycleCamera(){
+    this.selectCamera((this.cameraMode+1)%this.carCameras.length);
+  }
+
+  toggleView(){
+    if(this.state.mode==='car'){this.cycleCamera();return;}
+    this.view=this.view==='follow'?'wide':'follow';
+    this.updateCamera();
     this.emit(true);
   }
 
