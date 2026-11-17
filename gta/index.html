@@ -8,10 +8,10 @@
 <title>OcToS GTA · V1</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=8">
+<link rel="stylesheet" href="./style.css?v=9">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="../shared/nav.js?v=20261117-gta-map-editor" defer></script>
-<script type="module" src="./main.js?v=10"></script>
+<script type="module" src="./main.js?v=11"></script>
 </head>
 <body class="selecting">
 <header class="topbar">
@@ -88,6 +88,12 @@
     <div class="map-editor-head">
       <div><h2>Editor de mapa</h2><p>Capas y visualización del mundo real</p></div>
     </div>
+    <label class="map-editor-field">Mapa base · catálogo OcToS
+      <select id="editor-basemap" aria-describedby="editor-basemap-status">
+        <option value="gta-dark">GTA · OpenFreeMap Dark</option>
+      </select>
+      <small id="editor-basemap-status" class="editor-basemap-status" role="status">Preparando catálogo de mapas base…</small>
+    </label>
     <label class="map-editor-field">Vista
       <select id="editor-view"><option value="2d">Mapa 2D</option><option value="3d">Mapa 3D</option></select>
     </label>
@@ -108,6 +114,15 @@
     <div class="gta-layers-body">
       <p class="layer-caption">Visibilidad y fuentes del mapa base</p>
       <label class="gta-layer-option"><input id="layer-roads" type="checkbox" checked> Carreteras · OpenFreeMap</label>
+      <div class="gta-road-tuning" role="group" aria-label="Aspecto de las carreteras">
+        <label class="gta-layer-subfield" for="layer-road-width">Ancho de las líneas <output id="layer-road-width-value">100%</output>
+          <input id="layer-road-width" type="range" min="50" max="450" step="10" value="100">
+        </label>
+        <label class="gta-layer-option"><input id="layer-road-tint" type="checkbox"> Usar color personalizado</label>
+        <label class="gta-layer-road-color" for="layer-road-color">Color de carreteras
+          <input id="layer-road-color" type="color" value="#ff6a1a">
+        </label>
+      </div>
       <label class="gta-layer-option"><input id="layer-water" type="checkbox" checked> Agua y cursos fluviales</label>
       <label class="gta-layer-option"><input id="layer-green" type="checkbox" checked> Vegetación y parques</label>
       <label class="gta-layer-option"><input id="layer-poi" type="checkbox" checked> Puntos de interés</label>
