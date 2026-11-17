@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
 const $ = id => document.getElementById(id);
 const DB_NAME = 'octos-3d-assets-v1', STORE = 'models';
@@ -16,6 +17,59 @@ const camera = new THREE.PerspectiveCamera(42,1,.01,50000);
 camera.position.set(5,3,7);
 const controls = new OrbitControls(camera,canvas);
 controls.enableDamping=true;controls.dampingFactor=.08;
+const transformTool=new TransformControls(camera,canvas);
+const transformHelper=transformTool.getHelper();scene.add(transformHelper);transformHelper.visible=false;
+let originalCenter=new THREE.Vector3();
+const defaultTransform=()=>({position:[0,0,0],rotation:[0,0,0],scale:[1,1,1]});
+function cleanTransform(value){
+ const base=defaultTransform();if(!value||typeof value!=='object')return base;
+ const normalize=(name,lo,hi)=>base[name].map((def,i)=>{
+  const v=value[name]?.[i],n=Number(v);
+  return v==null||!Number.isFinite(n)?def:THREE.MathUtils.clamp(n,lo,hi);
+ });
+ return {position:normalize('position',-100000,100000),rotation:normalize('rotation',-36000,36000),scale:normalize('scale',.01,100)};
+}
+const transformInputs={position:['posX','posY','posZ'],rotation:['rotX','rotY','rotZ'],scale:['scaleX','scaleY','scaleZ']};
+function readTransform(){
+ if(!shown)return defaultTransform();
+ return cleanTransform({position:shown.position.clone().sub(originalCenter).toArray(),rotation:[shown.rotation.x,shown.rotation.y,shown.rotation.z].map(THREE.MathUtils.radToDeg),scale:shown.scale.toArray()});
+}
+function syncTransformInputs(){
+ const t=readTransform();
+ for(const [name,ids] of Object.entries(transformInputs))ids.forEach((id,i)=>{$(id).value=Number(t[name][i].toFixed(4));});
+}
+function applyTransform(value){
+ if(!shown)return;
+ const t=cleanTransform(value);
+ shown.position.copy(originalCenter).add(new THREE.Vector3(...t.position));
+ shown.rotation.set(...t.rotation.map(THREE.MathUtils.degToRad),'XYZ');
+ shown.scale.set(...t.scale);shown.updateMatrixWorld(true);
+ syncTransformInputs();positionFloor();
+}
+function markTransform(){
+ if(!shown||!active?.file)return;
+ active.transform=readTransform();active.html=null;dirty=true;
+ syncTransformInputs();positionFloor();
+ status('Modelo ajustado. Guarda el objeto para conservar los cambios.');
+}
+transformTool.addEventListener('dragging-changed',e=>{controls.enabled=!e.value;});
+transformTool.addEventListener('objectChange',markTransform);
+function setTransformMode(mode){
+ transformTool.setMode(mode);
+ for(const [id,m] of [['modeMove','translate'],['modeRotate','rotate'],['modeScale','scale']]){
+  $(id).classList.toggle('active',m===mode);$(id).setAttribute('aria-pressed',String(m===mode));
+ }
+}
+for(const [id,mode] of [['modeMove','translate'],['modeRotate','rotate'],['modeScale','scale']])$(id).addEventListener('click',()=>setTransformMode(mode));
+for(const ids of Object.values(transformInputs))for(const id of ids)$(id).addEventListener('change',()=>{
+ if(!shown||!active?.file||busy)return;
+ const t={};
+ for(const [name,fields] of Object.entries(transformInputs))t[name]=fields.map(f=>$(f).value.trim()===''?NaN:Number($(f).value));
+ if(Object.values(t).some(a=>a.some(x=>!Number.isFinite(x)))){syncTransformInputs();return;}
+ applyTransform(t);markTransform();
+});
+$('resetTransform').addEventListener('click',()=>{if(shown&&active?.file){applyTransform(defaultTransform());markTransform();centerView();}});
+setTransformMode('translate');
 scene.add(new THREE.HemisphereLight(0xffffff,0x445268,2.6));
 const floorMat=new THREE.MeshStandardMaterial({color:0x565c65,roughness:.95,metalness:0,side:THREE.DoubleSide});
 const floor=new THREE.Mesh(new THREE.PlaneGeometry(10,10),floorMat);
@@ -83,6 +137,8 @@ function updateButtons(){
  $('import').disabled=busy;
  $('fit').disabled=busy||!hasGeometry;
  $('rotate').disabled=busy||!hasGeometry;
+ for(const id of ['modeMove','modeRotate','modeScale','resetTransform',...Object.values(transformInputs).flat()])$(id).disabled=busy||!hasGeometry;
+ transformHelper.visible=!busy&&!!shown&&hasGeometry;
 }
 async function db(){
  if(dbPromise)return dbPromise;
@@ -128,8 +184,9 @@ async function gltfLoader(){
 }
 function clearHTML(){const frame=$('htmlViewer');frame.hidden=true;frame.removeAttribute('srcdoc');$('canvas').hidden=false;$('viewHint').innerHTML='Arrastrar · Orbitar &nbsp; | &nbsp; Rueda · Zoom'}
 function clearModel(){
+ transformTool.detach();transformHelper.visible=false;
  if(shown){shown.traverse(o=>{if(o.geometry)o.geometry.dispose();const mats=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of mats){for(const v of Object.values(m)){if(v&&v.isTexture)v.dispose()}m.dispose()}});scene.remove(shown);shown=null}
- mixer=null;positionFloor();
+ mixer=null;originalCenter.set(0,0,0);positionFloor();
 }
 function centerView(){
  if(!shown)return;
@@ -149,7 +206,11 @@ async function preview(blob){
  const gltf=await loader.parseAsync(bytes,'');
  if(!gltf.scene)throw new Error('El modelo no contiene una escena visible.');
  clearHTML();clearModel();
- shown=gltf.scene;scene.add(shown);positionFloor();
+ const raw=gltf.scene;
+ originalCenter=new THREE.Box3().setFromObject(raw).getCenter(new THREE.Vector3());
+ const offset=new THREE.Group();offset.position.copy(originalCenter).multiplyScalar(-1);offset.add(raw);
+ shown=new THREE.Group();shown.name='OcToS · Transformable';shown.position.copy(originalCenter);shown.add(offset);
+ scene.add(shown);transformTool.attach(shown);transformHelper.visible=true;positionFloor();
  if(gltf.animations&&gltf.animations.length){
   mixer=new THREE.AnimationMixer(shown);
   for(const clip of gltf.animations)mixer.clipAction(clip).play();
@@ -194,6 +255,7 @@ async function choose(model){
   else if(item.html)await previewHTML(item.html);
   else throw new Error('La ficha no contiene un archivo.');
   active=item;dirty=false;
+  if(item.file){applyTransform(item.transform);centerView();}else syncTransformInputs();
   syncInspector();status('Objeto abierto desde la biblioteca.');drawLibrary();
  }catch(e){status('No se pudo abrir el objeto: '+e.message,true)}
  finally{setBusy(false);updateButtons()}
@@ -265,7 +327,7 @@ async function removeLibraryModel(model){
  try{
   await del(model.id);
   if(active?.id===model.id){
-   active=null;dirty=false;clearModel();clearHTML();$('emptyStage').hidden=false;
+   active=null;dirty=false;clearModel();clearHTML();syncTransformInputs();$('emptyStage').hidden=false;
    $('triangles').textContent='—';$('meshes').textContent='—';$('size').textContent='—';
    syncInspector();
   }
@@ -297,7 +359,9 @@ async function recoverGLB(file){
   buffer=await new Response(new Blob([decoded]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
  }
  validateGLB(buffer,buffer.byteLength);
- return new Blob([buffer],{type:'model/gltf-binary'});
+ let t=defaultTransform();
+ try{const value=payload.getAttribute('data-octos-transform');if(value)t=cleanTransform(JSON.parse(decodeURIComponent(value)));}catch(e){}
+ return {file:new Blob([buffer],{type:'model/gltf-binary'}),transform:t};
 }
 async function importFiles(files){
  if(busy)return;
@@ -314,18 +378,19 @@ async function importFiles(files){
    let recovered=null;
    try{recovered=await recoverGLB(file)}catch(e){status('No se pudo extraer GLB: '+e.message+'. Se conservará el HTML original.')}
    if(recovered){
-    const stats=await preview(recovered);
-    record={sourceKind:'glb-html',file:recovered,html:original,triangles:stats.triangles,meshes:stats.meshes};
+    const stats=await preview(recovered.file);
+    record={sourceKind:'glb-html',file:recovered.file,html:original,transform:recovered.transform,triangles:stats.triangles,meshes:stats.meshes};
    }else{
     await previewHTML(original);
     record={sourceKind:'html',file:null,html:original,triangles:null,meshes:null};
    }
   }else{
    const stats=await preview(file);
-   record={sourceKind:'glb',file:new Blob([file],{type:'model/gltf-binary'}),html:null,triangles:stats.triangles,meshes:stats.meshes};
+   record={sourceKind:'glb',file:new Blob([file],{type:'model/gltf-binary'}),html:null,transform:defaultTransform(),triangles:stats.triangles,meshes:stats.meshes};
   }
   active={id:null,name,tags:[],filename:file.name,createdAt:Date.now(),updatedAt:Date.now(),thumbnail:null,...record};
-  dirty=true;syncInspector();
+  dirty=true;if(record.file)applyTransform(record.transform);
+  syncInspector();
   status(isHTML
    ? (record.file?'HTML importado. GLB recuperado y disponible para optimizar.':'HTML importado para visualizar y guardar. Sin GLB extraíble, no se puede optimizar geometría.')
    : 'GLB importado. Revisa la ficha y pulsa Guardar objeto.');
