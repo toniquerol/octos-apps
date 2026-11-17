@@ -15,7 +15,13 @@ const TERRAIN = {
 
 export async function createWorld(start, report) {
   const lib = window.maplibregl;
-  if (!lib || !lib.supported()) throw new Error('WebGL no está disponible o no se ha cargado MapLibre.');
+  if (!lib || typeof lib.Map !== 'function') {
+    throw new Error('No se ha cargado MapLibre GL JS. Revisa la conexión.');
+  }
+  // Algunas distribuciones de MapLibre no exponen supported().
+  if (typeof lib.supported === 'function' && !lib.supported()) {
+    throw new Error('Este navegador no dispone de WebGL compatible.');
+  }
   const map = new lib.Map({
     container: 'map', style: MAP_STYLE,
     center: [start.lon, start.lat], zoom: 17.2, pitch: 68, bearing: 0,
