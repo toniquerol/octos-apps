@@ -70,15 +70,15 @@ export function stepDriving(car,input,elapsed) {
   const v=car.speed;
   const idealYaw=v/VEHICLE.wheelbase*Math.tan(car.steer);
 
-  if(v<2.5) {
-    // Sin velocidad hacia delante no hay derrape ni giro espontáneo;
-    // marcha atrás sigue usando la dirección cinemática habitual.
+  if(!car.driftActive) {
+    // Sin derrape: respuesta V1 idéntica incluso a baja velocidad y marcha atrás.
+    car.yawRate=idealYaw;
+    car.slip*=Math.exp(-dt*5.5);
+  } else if(v<2.5) {
+    // Durante un derrape y a muy baja velocidad se recupera estabilidad.
     car.yawRate+=(idealYaw-car.yawRate)*(1-Math.exp(-dt*5.5));
     car.slip*=Math.exp(-dt*5.5);
     if(!handbrake)car.driftActive=false;
-  } else if(!car.driftActive) {
-    car.yawRate=idealYaw;
-    car.slip*=Math.exp(-dt*5.5);
   } else if(car.rearGripLoss<.015 && Math.abs(car.slip)<.11 &&
             Math.abs(car.yawRate-idealYaw)<.11) {
     // Recuperación terminada: volver al comportamiento validado sin salto.
