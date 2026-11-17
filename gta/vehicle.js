@@ -1,58 +1,125 @@
-/* OcToS GTA · BMW E46 Touring: geometría exacta del prototipo y su cinemática aprobada.
-   Sin física adicional en conducción normal; solo se añade un freno de mano arcade. */
+/* OcToS GTA · BMW E46 Touring: control arcade con deriva de dos ejes.
+   Neumáticos con ángulo de deslizamiento y agarre lateral limitado,
+   además de inercia de guiñada y velocidad lateral independiente.
+   No usa datos ni código propietario de Assetto Corsa. */
 export const VEHICLE = Object.freeze({
   wheelbase: 2.715, wheelRadius: .324,
   acceleration: 4.5, reverseAcceleration: 2.82, changeDirectionBrake: 14,
   reverseMax: -12, maxSpeed: 37, steeringSmoothing: 7.5,
-  steeringFullHoldSeconds: 0.85
+  steeringFullHoldSeconds: .85,
+  rearLockDeceleration: 1.1,
+  rearLockGrip: .16
 });
-const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
-export const initialDriving = () => ({speed:0, steer:0, spin:0, rearSpin:0, rearLocked:false, slip:0, steerHold:0, steerDirection:0});
-
-/* Entrada de mando: left/right = 0 o 1; headingDelta está en RADIANES de la prueba.
-   Mantener las mismas fórmulas, constantes y secuencia cuando handbrake=false. */
-export function stepDriving(car, input, elapsed) {
-  const dt = clamp(elapsed,0,.05);
-  const before = car.speed;
-  if (input.forward) car.speed += dt * (car.speed < 0 ? VEHICLE.changeDirectionBrake : VEHICLE.acceleration);
-  else if (input.reverse) car.speed -= dt * (car.speed > 0 ? VEHICLE.changeDirectionBrake : VEHICLE.reverseAcceleration);
+const DYNAMICS=Object.freeze({
+  mass:1600, yawInertia:3250,
+  frontArm:1.33, rearArm:VEHICLE.wheelbase-1.33,
+  frontCornering:49000, rearCornering:53000,
+  frontPeakForce:7800, rearPeakForce:7700,
+  maxYawAcceleration:1.5, maxDriftYawRate:.9,
+  lateralDamping:2.0, yawRecovery:3.0, stabilityAssist:.2
+});
+const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+export const initialDriving=()=>({
+  speed:0,steer:0,spin:0,rearSpin:0,rearLocked:false,
+  slip:0,yawRate:0,rearGripLoss:0,steerHold:0,steerDirection:0
+});
+/* Al pisar Space, la inercia del coche continúa hacia delante mientras
+   se bloquea la rotación de ruedas traseras y baja su adherencia lateral.
+   Las ruedas delanteras conservan agarre, giro y rotación libres.
+   "slip" es velocidad lateral del centro de masas en m/s (derecha+).
+   "yawRate" es velocidad angular en rad/s (giro a la izquierda+). */
+export function stepDriving(car,input,elapsed) {
+  const dt=clamp(elapsed,0,.05);
+  const before=car.speed;
+  const handbrake=Boolean(input.handbrake);
+  if(handbrake){
+    // Freno de mano solo trasero: no anular de golpe la velocidad del chasis.
+    // BMW de tracción trasera: con ruedas bloqueadas no hay impulso motriz.
+    const deceleration=Math.min(Math.abs(car.speed),VEHICLE.rearLockDeceleration*dt);
+    car.speed-=Math.sign(car.speed)*deceleration;
+  } else if(input.forward) car.speed+=dt*(car.speed<0?VEHICLE.changeDirectionBrake:VEHICLE.acceleration);
+  else if(input.reverse) car.speed-=dt*(car.speed>0?VEHICLE.changeDirectionBrake:VEHICLE.reverseAcceleration);
   else {
-    car.speed *= Math.exp(-dt * (.44 + Math.abs(car.speed) * .009));
-    if (Math.abs(car.speed) < .012) car.speed = 0;
+    car.speed*=Math.exp(-dt*(.44+Math.abs(car.speed)*.009));
+    if(Math.abs(car.speed)<.012)car.speed=0;
   }
-  car.speed = clamp(car.speed, -12, 37);
-  const direction = Number(!!input.left) - Number(!!input.right);
-  // Un toque da un pequeño giro; mantener la tecla aumenta progresivamente
-  // el ángulo hasta el máximo. Cambiar de lado reinicia la progresión.
-  if (direction === 0) {
-    car.steerHold = 0;
-    car.steerDirection = 0;
-  } else {
-    if (car.steerDirection !== direction) car.steerHold = 0;
-    car.steerDirection = direction;
-    car.steerHold = Math.min(VEHICLE.steeringFullHoldSeconds, (car.steerHold || 0) + dt);
+  car.speed=clamp(car.speed,VEHICLE.reverseMax,VEHICLE.maxSpeed);
+  const direction=Number(!!input.left)-Number(!!input.right);
+  // Conservar el volante progresivo validado: toque corto => poco giro.
+  if(!direction){car.steerHold=0;car.steerDirection=0;}
+  else {
+    if(car.steerDirection!==direction)car.steerHold=0;
+    car.steerDirection=direction;
+    car.steerHold=Math.min(VEHICLE.steeringFullHoldSeconds,(car.steerHold||0)+dt);
   }
-  const hold = direction ? car.steerHold / VEHICLE.steeringFullHoldSeconds : 0;
-  const smoothHold = hold * hold * (3 - 2 * hold);
-  const steerLimit = .58 / (1 + Math.abs(car.speed) / 28);
-  const desired = direction * steerLimit * (.12 + .88 * smoothHold);
-  car.steer += (desired - car.steer) * (1 - Math.exp(-dt * VEHICLE.steeringSmoothing));
+  const hold=direction?car.steerHold/VEHICLE.steeringFullHoldSeconds:0;
+  const smoothHold=hold*hold*(3-2*hold);
+  const steerLimit=.58/(1+Math.abs(car.speed)/28);
+  const desired=direction*steerLimit*(.12+.88*smoothHold);
+  car.steer+=(desired-car.steer)*(1-Math.exp(-dt*VEHICLE.steeringSmoothing));
+  car.rearLocked=handbrake;
+  car.rearGripLoss??=0;
+  car.yawRate??=car.speed/VEHICLE.wheelbase*Math.tan(car.steer);
+  // Entrada en bloqueo ~0,3 s; recuperar agarre lleva aproximadamente 1 s.
+  const target=handbrake?1:0;
+  car.rearGripLoss+=(target-car.rearGripLoss)*(1-Math.exp(-dt*(handbrake?9:2.7)));
+  car.rearGripLoss=clamp(car.rearGripLoss,0,1);
+  const v=car.speed;
+  const idealYaw=v/VEHICLE.wheelbase*Math.tan(car.steer);
 
-  // Freno de mano de eje trasero: las ruedas delanteras siguen rodando y
-  // permitiendo dirección. La retención del coche proviene solo del eje trasero.
-  car.rearLocked = Boolean(input.handbrake);
-  if (car.rearLocked) {
-    car.speed *= Math.exp(-dt * 2.6);
-    car.slip = clamp(car.slip - car.steer * Math.abs(car.speed) * dt * 1.8, -3.5, 3.5);
+  if(Math.abs(v)<2.5) {
+    // Sin impulso no hay giro brusco del coche al accionar el freno.
+    car.yawRate+=(idealYaw-car.yawRate)*(1-Math.exp(-dt*5.5));
+    car.slip*=Math.exp(-dt*5.5);
+  } else if(car.rearGripLoss<.015 && Math.abs(car.slip)<.11 &&
+            Math.abs(car.yawRate-idealYaw)<.11) {
+    // Antes de entrar en derrape se conserva la conducción anterior.
+    car.yawRate=idealYaw;
+    car.slip*=Math.exp(-dt*5.5);
   } else {
-    car.slip *= Math.exp(-dt * 5.5);
-    if (Math.abs(car.slip) < .005) car.slip = 0;
+    // Modelo dinámico de dos ejes: fuerzas laterales delanteras y traseras
+    // separadas, saturación de agarre, inercia y asistencia de estabilidad.
+    const substeps=Math.max(1,Math.ceil(dt/.0125));
+    const h=dt/substeps;
+    for(let i=0;i<substeps;i++){
+      const u=Math.max(Math.abs(v),2.5);
+      const frontAngle=car.steer+Math.atan2(car.slip-DYNAMICS.frontArm*car.yawRate,u);
+      const rearAngle=Math.atan2(car.slip+DYNAMICS.rearArm*car.yawRate,u);
+      const frontForce=clamp(DYNAMICS.frontCornering*frontAngle,
+        -DYNAMICS.frontPeakForce,DYNAMICS.frontPeakForce);
+      const rearLimit=DYNAMICS.rearPeakForce*
+        (1-(1-VEHICLE.rearLockGrip)*car.rearGripLoss);
+      const rearForce=clamp(DYNAMICS.rearCornering*rearAngle,-rearLimit,rearLimit);
+      // La ayuda de contravolante permite estabilizar el coche sin eliminar
+      // el desplazamiento lateral: no se fuerza el vector de movimiento al eje.
+      let yawAccel=(DYNAMICS.frontArm*frontForce-DYNAMICS.rearArm*rearForce)/
+        DYNAMICS.yawInertia-.42*car.yawRate;
+      yawAccel+=DYNAMICS.yawRecovery*(idealYaw-car.yawRate)*
+        (1-.5*car.rearGripLoss)-DYNAMICS.stabilityAssist*car.slip;
+      const nextYaw=car.yawRate+clamp(yawAccel,
+        -DYNAMICS.maxYawAcceleration,DYNAMICS.maxYawAcceleration)*h;
+      // Si al entrar al drift se giraba más rápido que este límite,
+      // reducir la rotación progresivamente, sin salto instantáneo.
+      const yawCap=Math.max(DYNAMICS.maxDriftYawRate,
+        Math.abs(car.yawRate)-DYNAMICS.maxYawAcceleration*h);
+      car.yawRate=clamp(nextYaw,-yawCap,yawCap);
+      const lateralAccel=v*car.yawRate-
+        (frontForce+rearForce)/DYNAMICS.mass-DYNAMICS.lateralDamping*car.slip;
+      car.slip=clamp(car.slip+lateralAccel*h,-Math.abs(v)*.5,Math.abs(v)*.5);
+    }
   }
-  const headingDelta = car.speed / 2.715 * Math.tan(car.steer) * dt * (input.handbrake ? 1.30 : 1);
-  const distance = car.speed * dt;
-  car.spin -= distance / VEHICLE.wheelRadius; // ruedas delanteras: rodadura libre
-  if (!car.rearLocked) car.rearSpin = (car.rearSpin ?? car.spin) - distance / VEHICLE.wheelRadius;
-  return {distance, slipDistance:car.slip * dt, headingDelta, changed: car.speed!==before || !!direction};
+  if(!Number.isFinite(car.yawRate)||!Number.isFinite(car.slip)){
+    car.yawRate=idealYaw;car.slip=0;
+  }
+  const distance=v*dt;
+  car.spin-=distance/VEHICLE.wheelRadius;
+  // Las ruedas delanteras ruedan; las traseras no giran mientras bloqueadas.
+  if(!car.rearLocked)car.rearSpin-=distance/VEHICLE.wheelRadius;
+  return {
+    distance,slipDistance:car.slip*dt,headingDelta:car.yawRate*dt,
+    slipAngle:Math.atan2(car.slip,Math.max(Math.abs(v),.1)),
+    changed:car.speed!==before||!!direction
+  };
 }
 
 const PARTS=Array.from({length:10},(_,i)=>'./vehicles/bmw_e46.part'+String(i).padStart(2,'0')+'.bin');
