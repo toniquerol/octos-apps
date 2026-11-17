@@ -43,6 +43,7 @@ export async function createWorld(start, report, {selection = false} = {}) {
   const daylight = createDaylight(map);
   let currentTime = '16:30';
   let limitVisible = false;
+  let renderRadiusSuspended = false;
   let followPlayer = true;
   let playerPosition = [start.lon, start.lat];
   let lastMaskUpdate = 0;
@@ -50,7 +51,7 @@ export async function createWorld(start, report, {selection = false} = {}) {
   // Recorte visual del canvas completo: relieve, edificios, capas y modelos 3D.
   // MapLibre sigue solicitando teselas del viewport; no es un límite de carga.
   function updateRenderRadius(force = false) {
-    if (!limitVisible) return;
+    if (!limitVisible || renderRadiusSuspended) return;
     const now = performance.now();
     if (!force && now - lastMaskUpdate < 70) return;
     lastMaskUpdate = now;
@@ -97,6 +98,13 @@ export async function createWorld(start, report, {selection = false} = {}) {
         rx.toFixed(1) + 'px ' + ry.toFixed(1) + 'px at ' +
         anchor.x.toFixed(1) + 'px ' + anchor.y.toFixed(1) + 'px)';
     }
+  }
+
+  // El recorte de 300 m queda suspendido exclusivamente durante el vuelo.
+  function setRenderRadiusSuspended(suspended) {
+    renderRadiusSuspended = Boolean(suspended);
+    if (renderRadiusSuspended) map.getCanvas().style.clipPath = '';
+    else updateRenderRadius(true);
   }
 
   function setRenderCenter(lng, lat) {
@@ -273,6 +281,6 @@ export async function createWorld(start, report, {selection = false} = {}) {
   return {
     map, updateBuildings, updateTerrain, setBuildingAppearance,
     elevation, quality, enterGame, enterEditor, resetAfterStyleChange,
-    setRenderCenter, setTime, refreshShadows: daylight.refreshShadows
+    setRenderCenter, setRenderRadiusSuspended, setTime, refreshShadows: daylight.refreshShadows
   };
 }
