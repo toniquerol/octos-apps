@@ -4,25 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0E0E10">
-<meta name="description" content="OcToS GTA V1 · Exploración 3D jugable de ubicaciones geográficas reales.">
+<meta name="description" content="OcToS GTA V1 · Mundo abierto explorable en 3D.">
 <title>OcToS GTA · V1</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=7">
+<link rel="stylesheet" href="./style.css?v=8">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="../shared/nav.js?v=20261117-gta" defer></script>
-<script type="module" src="./main.js?v=8"></script>
+<script type="module" src="./main.js?v=9"></script>
 </head>
 <body class="selecting">
 <header class="topbar">
-  <div class="edition"><span class="version">V1.0</span><span class="subtitle">MUNDO GEOGRÁFICO · EXPLORACIÓN</span></div>
+  <div class="edition"><span class="subtitle">MUNDO ABIERTO</span><span class="version">V1</span></div>
   <div class="header-buttons">
-    <button type="button" id="help-button" title="Controles de juego">Controles</button>
     <button type="button" id="settings-button" aria-expanded="false" aria-controls="settings-panel">Ajustes</button>
+    <span class="header-separator" aria-hidden="true"></span>
+    <button type="button" id="map-mode-button" disabled aria-pressed="false">Editar mapa</button>
   </div>
 </header>
 <main id="stage">
   <div id="map" role="application" aria-label="Mapa interactivo para elegir dónde comenzar"></div>
+  <button type="button" id="teleport-open" class="teleport-open">Teleport</button>
+  <button type="button" id="info-button" class="info-button" aria-label="Información y controles" title="Información y controles">i</button>
   <form id="daytime-controls" class="daytime-controls" aria-label="Control de hora del día">
     <label for="daytime-hour">HORA DEL DÍA</label>
     <input id="daytime-hour" name="hora" type="time" value="16:30" step="60" required>
@@ -54,7 +57,6 @@
       <span>EQUIPO</span><strong>—</strong>
     </div>
   </section>
-  <div class="keys-hint">W A S D <span>·</span> Mayús correr <span>·</span> Espacio vehículo <span>·</span> V distancia <span>·</span> Rueda zoom</div>
   <aside id="settings-panel" class="panel" hidden>
     <div class="panel-head"><h2>Mundo y rendimiento</h2><button type="button" id="close-settings" aria-label="Cerrar ajustes">×</button></div>
     <label class="field">Calidad de imagen
@@ -82,6 +84,26 @@
     <button type="button" class="action secondary" id="save-position">Guardar posición</button>
     <p class="panel-foot">La circulación es libre. La V1 no incluye colisiones con edificios, tráfico ni misiones. Las ubicaciones y las alturas proceden de fuentes externas.</p>
   </aside>
+  <aside id="map-editor" class="map-editor" hidden aria-label="Editor de mapa">
+    <div class="map-editor-head">
+      <div><h2>Editor de mapa</h2><p>Capas y visualización del mundo real</p></div>
+      <span>V1</span>
+    </div>
+    <label class="map-editor-field">Vista
+      <select id="editor-view"><option value="2d">Mapa 2D</option><option value="3d">Mapa 3D</option></select>
+    </label>
+    <label class="map-editor-field">Zoom <output id="editor-zoom-value">16.0</output>
+      <input id="editor-zoom" type="range" min="5" max="19" step="0.1" value="16">
+    </label>
+    <label class="map-editor-field">Inclinación <output id="editor-pitch-value">0°</output>
+      <input id="editor-pitch" type="range" min="0" max="70" step="5" value="45">
+    </label>
+    <label class="map-editor-field map-editor-color">Color de edificios
+      <input id="editor-building-color" type="color" value="#707783">
+    </label>
+    <label class="map-editor-field">Opacidad de edificios <output id="editor-opacity-value">84%</output>
+      <input id="editor-building-opacity" type="range" min="15" max="100" step="1" value="84">
+    </label>
   <details id="layers-panel" class="gta-layers-panel" open>
     <summary>CAPAS <span>COMPARAR</span></summary>
     <div class="gta-layers-body">
@@ -106,6 +128,9 @@
       <p class="gta-layer-note">La combinación se recuerda en este navegador.</p>
     </div>
   </details>
+    <button type="button" id="editor-save" class="editor-save">Guardar mapa</button>
+    <output id="editor-save-status" class="editor-save-status" aria-live="polite"></output>
+  </aside>
   <section id="welcome" class="welcome" aria-labelledby="welcome-title">
     <div class="welcome-card">
       <p class="eyebrow">OcToS 3D STUDIO · V1</p>
@@ -128,8 +153,14 @@
       <p id="welcome-error" class="welcome-error" role="alert"></p>
     </div>
   </section>
+  <dialog id="teleport-dialog" class="teleport-dialog" aria-labelledby="teleport-title">
+    <div class="teleport-head"><h2 id="teleport-title">Teleport · mapa 2D</h2><button type="button" id="teleport-cancel" aria-label="Cerrar teletransporte">×</button></div>
+    <p>Arrastra y amplía el mapa. Haz clic en el destino.</p>
+    <div id="teleport-map" role="application" aria-label="Seleccionar destino en un mapa 2D"></div>
+    <div class="teleport-footer"><span>Destino <output id="teleport-selected">—</output></span><button type="button" id="teleport-apply">Ir al punto</button></div>
+  </dialog>
   <dialog id="help-dialog" class="help-dialog">
-    <h2>Controles · OcToS GTA V1</h2>
+    <h2>Información y controles</h2>
     <p><strong>A pie:</strong> W/S avanzar o retroceder, A/D desplazamiento lateral, Q/E cambiar rumbo, Mayús correr.</p>
     <p><strong>Vehículo:</strong> W acelerar, S frenar y marcha atrás, A/D girar, Espacio subir o bajar.</p>
     <p><strong>Cámara:</strong> permanece detrás del personaje y gira con su rumbo. V alterna la distancia; la rueda del ratón acerca y aleja.</p>
