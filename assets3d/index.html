@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101114">
+<meta name="description" content="OcToS 3D Assets · Visor y biblioteca de modelos GLB exportables a HTML.">
+<title>OcToS 3D Assets</title>
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<style>
+:root{color-scheme:dark;--bg:#101114;--pane:#191a1f;--card:#24262c;--edge:#3a3d45;--text:#f1f2f3;--muted:#a4a7b1;--orange:#ff6a1a}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:13px/1.48 system-ui,"Segoe UI",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.42;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+header{min-height:69px;background:#15161a;border-bottom:1px solid var(--edge);display:flex;align-items:center;justify-content:space-between;gap:15px;padding:10px 22px;position:relative;z-index:2}
+h1,h2,h3,p{margin:0}h1{font-size:19px;letter-spacing:.02em}h1 span{color:var(--orange)}.subtitle{color:var(--muted);font-size:11px}
+.logo{width:34px;height:34px;object-fit:contain}.brand{display:flex;align-items:center;gap:12px}.brand b{font-weight:760}
+button,.button{border:1px solid #545861;border-radius:8px;color:var(--text);background:#272a31;padding:9px 12px}
+button:hover,.button:hover{border-color:#ff6a1a}.accent{background:var(--orange);border-color:var(--orange);color:#17110d;font-weight:750}.accent:hover{background:#ff9156}
+main{height:calc(100dvh - 70px);min-height:540px;display:grid;grid-template-columns:300px minmax(0,1fr) 295px;overflow:hidden}
+.library,.inspector{background:var(--pane);overflow:auto;padding:18px;border-right:1px solid var(--edge)}
+.inspector{border-left:1px solid var(--edge);border-right:0}
+.headline{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:16px}.headline h2{font-size:15px}
+small,.soft{font-size:11px;color:var(--muted)}.group{display:grid;gap:10px;margin:15px 0}.group label{color:#c3c6cf;font-size:11px;display:block;margin-bottom:5px}
+input[type=text],input[type=search],select{width:100%;min-width:0;border:1px solid var(--edge);background:#111217;color:var(--text);border-radius:7px;padding:10px}
+select{cursor:pointer}.split{display:flex;gap:8px}.split>*{flex:1;min-width:0}
+.asset-list{display:grid;gap:9px;margin-top:12px}.asset{display:grid;grid-template-columns:72px minmax(0,1fr);text-align:left;gap:11px;padding:7px;width:100%;border-radius:10px;background:#212329}
+.asset.active{outline:1px solid var(--orange);background:#342921}.thumb{height:66px;border-radius:6px;object-fit:cover;width:72px;background:#30343b}
+.asset-title{font-size:12px;font-weight:700;display:block;overflow-wrap:anywhere}.asset-sub{color:var(--muted);font-size:10px;display:block;margin-top:5px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.chip{font-size:10px;padding:2px 6px;border-radius:9px;background:#3a3d46;color:#e4e4e8}
+.stage{position:relative;min-width:0;background:radial-gradient(ellipse at center,#343c4c 0%,#1b232e 58%,#11151b 100%);overflow:hidden}
+#canvas{display:block;width:100%;height:100%;outline:0}
+.stage-top{position:absolute;top:15px;left:15px;right:15px;pointer-events:none;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.stage-title{max-width:55%;background:#11151aca;padding:8px 11px;border:1px solid #58616c88;border-radius:8px;font-size:12px;overflow-wrap:anywhere}
+.stage-tools{display:flex;gap:6px;pointer-events:auto}.stage-tools button{font-size:11px;background:#1b2028de}
+.drop{position:absolute;inset:0;display:none;place-items:center;background:#111820cc;border:3px dashed var(--orange);z-index:4;color:#fff;font-size:19px;pointer-events:none}.drop.show{display:grid}
+.empty-stage{position:absolute;inset:0;display:grid;place-content:center;place-items:center;text-align:center;gap:12px;pointer-events:none;padding:25px;color:#d1d7df}.empty-stage strong{font-size:20px}
+.foot{position:absolute;left:15px;bottom:14px;right:15px;display:flex;justify-content:space-between;gap:10px;font-size:11px;color:#aeb8c5;pointer-events:none}
+.inspector h2{font-size:15px;margin-bottom:14px}.divider{border:0;border-top:1px solid var(--edge);margin:18px 0}.button-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:11px 0}.button-row button{font-size:11px}
+.full{width:100%}.state{padding:10px 11px;background:#1b2530;border-left:2px solid var(--orange);border-radius:5px;font-size:11px;color:#e1e3e8;margin-top:14px;overflow-wrap:anywhere}
+.warning{font-size:11px;color:#c1b6a7;margin:10px 0}.metric{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #34363c;font-size:11px}.metric strong{font-weight:650;color:#e8ebef}
+#file{display:none}.nothing{color:#9da5af;font-size:12px;padding:14px 5px;text-align:center}
+@media(max-width:1080px){main{grid-template-columns:240px minmax(0,1fr) 245px}.library,.inspector{padding:12px}}
+@media(max-width:800px){main{height:auto;display:flex;flex-direction:column;overflow:visible}.stage{height:55dvh;min-height:340px;order:0}.library{order:1;max-height:350px;border-top:1px solid var(--edge)}.inspector{order:2;border-top:1px solid var(--edge)}header{padding:12px}.subtitle{display:none}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<script src="../shared/nav.js?v=20261117-assets3d" defer></script>
+</head>
+<body>
+<header>
+ <div class="brand"><img class="logo" src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt=""><div><h1>OcToS <span>3D Assets</span></h1><div class="subtitle">Biblioteca de modelos · GLB → HTML</div></div></div>
+ <div class="split" style="flex:0 1 auto;align-items:center"><button id="backup" title="Exportar copia de seguridad de la biblioteca">Copia de seguridad</button><button id="importBackup" title="Restaurar una copia de seguridad">Restaurar</button><button id="import" class="accent">+ Importar GLB</button></div>
+</header>
+<main>
+ <aside class="library">
+   <div class="headline"><h2>Biblioteca</h2><small id="count">0 modelos</small></div>
+   <input id="search" type="search" aria-label="Buscar modelos" placeholder="Buscar por nombre o etiqueta">
+   <div class="group"><select id="tagFilter" aria-label="Filtrar por etiqueta"><option value="">Todas las etiquetas</option></select></div>
+   <div class="asset-list" id="assetList"><p class="nothing">Biblioteca vacía</p></div>
+   <p class="warning">Guardado local en este navegador mediante IndexedDB. Los modelos no se sincronizan entre dispositivos.</p>
+ </aside>
+ <section class="stage" id="stage" aria-label="Visor 3D">
+  <canvas id="canvas"></canvas>
+  <div class="stage-top"><div class="stage-title" id="stageTitle">Visor 3D · Sin modelo</div><div class="stage-tools"><button id="fit" title="Centrar modelo">Centrar</button><button id="rotate" title="Giro automático">Girar</button></div></div>
+  <div class="empty-stage" id="emptyStage"><strong>OcToS 3D Assets</strong><span>Importa un archivo .glb o selecciona un modelo guardado.</span></div>
+  <div class="drop" id="drop">Soltar modelo GLB</div>
+  <div class="foot"><span>Arrastrar · Orbitar &nbsp; | &nbsp; Rueda · Zoom</span><span id="renderStatus">Listo</span></div>
+ </section>
+ <aside class="inspector">
+  <h2>Ficha del objeto</h2>
+  <div class="group"><div><label for="modelName">Nombre del modelo</label><input id="modelName" type="text" maxlength="120" placeholder="Nombre del objeto"></div>
+  <div><label for="modelTags">Etiquetas (separadas por coma)</label><input id="modelTags" type="text" maxlength="400" placeholder="Vehículos, BMW, Touring"></div></div>
+  <div class="metric"><span>Archivo GLB</span><strong id="size">—</strong></div>
+  <div class="metric"><span>Triángulos</span><strong id="triangles">—</strong></div>
+  <div class="metric"><span>Mallas</span><strong id="meshes">—</strong></div>
+  <div class="metric"><span>Modelo</span><strong id="origin">—</strong></div>
+  <div class="button-row"><button id="save" class="accent" disabled>Guardar objeto</button><button id="export" disabled>Exportar HTML</button></div>
+  <div class="button-row"><button id="getGLB" disabled>Descargar GLB</button><button id="remove" disabled>Eliminar</button></div>
+  <hr class="divider">
+  <h2>Optimización geométrica</h2>
+  <div class="group"><div><label for="quality">Nivel de optimización</label><select id="quality"><option value="1">Sin pérdida · limpiar duplicados</option><option value="0.85">Suave · hasta 15 % menos</option><option value="0.65">Media · hasta 35 % menos</option><option value="0.45">Intensa · hasta 55 % menos</option></select></div></div>
+  <button id="optimize" class="full" disabled>Optimizar geometría</button>
+  <p class="warning">La optimización utiliza glTF-Transform y meshoptimizer. Los niveles con reducción pueden modificar el detalle. El archivo original permanece intacto hasta guardar.</p>
+  <div id="message" role="status" aria-live="polite" class="state">Importa un modelo para empezar.</div>
+  <hr class="divider">
+  <small>La exportación HTML integra el GLB dentro del archivo. Para visualizarlo utiliza Three.js y necesita conexión para cargar el motor gráfico.</small>
+ </aside>
+</main>
+<input id="file" type="file" accept=".glb,model/gltf-binary" multiple>
+<input id="restoreFile" type="file" accept=".json,application/json" hidden>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
