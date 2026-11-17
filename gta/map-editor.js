@@ -98,6 +98,8 @@ export function mountMapEditor({world, game, layerControls, report}) {
 
   function exit() {
     currentPosition = {center:map.getCenter().toArray(), bearing:map.getBearing()};
+    $('settings-panel').hidden = true;
+    $('settings-button').setAttribute('aria-expanded', 'false');
     panel.hidden = true;
     document.body.classList.remove('editing');
     modeButton.textContent = 'Editar mapa';
