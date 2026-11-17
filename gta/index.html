@@ -8,10 +8,10 @@
 <title>OcToS GTA · V1</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=4">
+<link rel="stylesheet" href="./style.css?v=5">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="../shared/nav.js?v=20261117-gta" defer></script>
-<script type="module" src="./main.js?v=6"></script>
+<script type="module" src="./main.js?v=7"></script>
 </head>
 <body class="selecting">
 <header class="topbar">
@@ -23,6 +23,12 @@
 </header>
 <main id="stage">
   <div id="map" role="application" aria-label="Mapa interactivo para elegir dónde comenzar"></div>
+  <form id="daytime-controls" class="daytime-controls" aria-label="Control de hora del día">
+    <label for="daytime-hour">HORA DEL DÍA</label>
+    <input id="daytime-hour" name="hora" type="time" value="16:30" step="60" required>
+    <button type="submit" id="apply-daytime">Aplicar</button>
+    <output id="daytime-phase" aria-live="polite">Día</output>
+  </form>
   <div class="crosshair" aria-hidden="true"></div>
   <div class="location-chip" id="place-name">Barcelona · España</div>
   <section id="game-hud" aria-label="Datos de juego">
