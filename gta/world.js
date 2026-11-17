@@ -58,15 +58,45 @@ export async function createWorld(start, report, {selection = false} = {}) {
     const lat = Math.max(-85, Math.min(85, center[1]));
     const cosLat = Math.max(0.087, Math.cos(lat * Math.PI / 180));
     const vertices = [];
+    let validProjection = true;
     for (let i = 0; i < 64; i++) {
       const angle = i * Math.PI * 2 / 64;
       const lng = center[0] + Math.cos(angle) * RENDER_RADIUS_METERS / (111320 * cosLat);
       const y = lat + Math.sin(angle) * RENDER_RADIUS_METERS / 111320;
       const point = map.project([lng, y]);
-      if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return;
-      vertices.push(point.x.toFixed(1) + 'px ' + point.y.toFixed(1) + 'px');
+      if (!Number.isFinite(point.x) || !Number.isFinite(point.y) ||
+          Math.abs(point.x) > 100000 || Math.abs(point.y) > 100000) validProjection = false;
+      vertices.push(point);
     }
-    map.getCanvas().style.clipPath = 'polygon(' + vertices.join(',') + ')';
+    const anchor = map.project(center);
+    // Si el borde cruza el plano posterior de la cámara, su proyección puede
+    // invertirse. En ese caso usamos una elipse de escala métrica local.
+    let inside = false;
+    if (validProjection) {
+      for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+        const a = vertices[i], b = vertices[j];
+        if ((a.y > anchor.y) !== (b.y > anchor.y) &&
+            anchor.x < (b.x - a.x) * (anchor.y - a.y) / (b.y - a.y) + a.x) {
+          inside = !inside;
+        }
+      }
+    }
+    if (validProjection && inside) {
+      map.getCanvas().style.clipPath = 'polygon(' + vertices.map(
+        p => p.x.toFixed(1) + 'px ' + p.y.toFixed(1) + 'px'
+      ).join(',') + ')';
+    } else {
+      const tenEast = map.project([center[0] + 10 / (111320 * cosLat), lat]);
+      const tenNorth = map.project([center[0], lat + 10 / 111320]);
+      const rx = RENDER_RADIUS_METERS / 10 *
+        Math.hypot(tenEast.x - anchor.x, tenEast.y - anchor.y);
+      const ry = RENDER_RADIUS_METERS / 10 *
+        Math.hypot(tenNorth.x - anchor.x, tenNorth.y - anchor.y);
+      if (!Number.isFinite(rx) || !Number.isFinite(ry)) return;
+      map.getCanvas().style.clipPath = 'ellipse(' +
+        rx.toFixed(1) + 'px ' + ry.toFixed(1) + 'px at ' +
+        anchor.x.toFixed(1) + 'px ' + anchor.y.toFixed(1) + 'px)';
+    }
   }
 
   function setRenderCenter(lng, lat) {
