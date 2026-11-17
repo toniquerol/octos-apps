@@ -33,7 +33,7 @@ function normalConfig(data) {
   const bindings={...DEFAULT_GAMEPAD_BINDINGS};
   for(const action of Object.keys(bindings)) {
     const value=d.bindings?.[action];
-    if(typeof value==='string' && /^(?:[ab][0-9]{1,2}|t[0-9]{1,2})$/.test(value))
+    if(typeof value==='string' && /^(?:[abtu][0-9]{1,2})$/.test(value))
       bindings[action]=value;
   }
   return {
@@ -117,8 +117,12 @@ export class OcToSGamepadController {
       const button=pad.buttons?.[index];
       return clamp(typeof button==='number'?button:Number(button?.value??(button?.pressed?1:0))||0,0,1);
     }
-    const axis=clamp(Number(pad.axes?.[index])||0,-1,1);
-    return type==='t'?clamp((axis+1)/2,0,1):axis;
+    const raw=Number(pad.axes?.[index]);
+    if(!Number.isFinite(raw))return 0;
+    const axis=clamp(raw,-1,1);
+    if(type==='t')return (axis+1)/2;
+    if(type==='u')return (1-axis)/2;
+    return axis;
   }
   axis(pad,name) {
     const value=this.read(pad,this.config.bindings[name]);
@@ -226,6 +230,7 @@ export function mountGamepadSettings({controller,container}){
     for(let i=0;i<12;i++) {
       options.push(['a'+i,'Eje '+i]);
       options.push(['t'+i,'Gatillo por eje '+i]);
+      options.push(['u'+i,'Gatillo eje '+i+' invertido']);
     }
     if(!options.some(o=>o[0]===selected))options.push([selected,selected]);
     return options;
@@ -261,20 +266,24 @@ export function mountGamepadSettings({controller,container}){
   }
   const prevChange=controller.onChange;
   controller.onChange=(state)=>{prevChange?.(state);paint()};
+  let optionSignature='';
   function show(){
     if(!panel.open)return;
     const pads=controller.list();
     const active=controller.activeIndex;
-    const existing=device.value;
-    device.replaceChildren();
-    if(!pads.length){
-      const o=document.createElement('option');o.value='-1';o.textContent='Sin mando detectado';
-      device.append(o);
-    }else for(const p of pads){
-      const o=document.createElement('option');o.value=String(p.index);o.textContent=p.id||'Mando '+p.index;
-      device.append(o);
+    const nextSignature=pads.map(p=>p.index+'|'+p.id).join(';')||'none';
+    if(nextSignature!==optionSignature){
+      optionSignature=nextSignature;
+      device.replaceChildren();
+      if(!pads.length){
+        const o=document.createElement('option');o.value='-1';o.textContent='Sin mando detectado';
+        device.append(o);
+      }else for(const p of pads){
+        const o=document.createElement('option');o.value=String(p.index);o.textContent=p.id||'Mando '+p.index;
+        device.append(o);
+      }
     }
-    device.value=String(active);
+    if(device.value!==String(active))device.value=String(active);
     const sample=controller.sample();
     status.textContent=sample.connected?
       'Conectado · '+sample.id+' · '+sample.axes.length+' ejes / '+sample.buttons.length+' botones':
