@@ -3,7 +3,7 @@ const PREFS_KEY = 'octos-gta-layers-v2';
 const LEGACY_PREFS_KEY = 'octos-gta-layers-v1';
 const DEFAULTS = Object.freeze({
   roads: true, water: true, green: true, poi: true, buildings: true, terrain: true, dem: 'mapterhorn',
-  roadWidthMeters: 16, roadColor: '#26160d', roadTint: true,
+  roadWidthMeters: 16, roadColor: '#202225', roadTint: true, roadTwoLanes: true,
   waterColor: '#407ca3', waterTint: false, waterOpacity: 100,
   greenColor: '#42634a', greenTint: false, greenOpacity: 100,
   poiColor: '#d0b89e', poiTint: false, poiOpacity: 100,
@@ -27,6 +27,9 @@ function loadPreferences() {
       saved.roadWidthMeters = Math.min(30,Math.max(0.5,raw.roadWidthMeters));
     if (typeof raw.roadColor === 'string' && /^#[0-9a-f]{6}$/i.test(raw.roadColor)) saved.roadColor=raw.roadColor;
     if (typeof raw.roadTint === 'boolean') saved.roadTint=raw.roadTint;
+    if (typeof raw.roadTwoLanes === 'boolean') saved.roadTwoLanes=raw.roadTwoLanes;
+    // El antiguo marrón predefinido pasa a un negro asfalto; respetar colores editados.
+    if (saved.roadColor.toLowerCase() === '#26160d') saved.roadColor='#202225';
     for (const name of ['water','green','poi']) {
       const color = raw[name+'Color'];
       if (typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color)) saved[name+'Color'] = color;
@@ -39,7 +42,7 @@ function loadPreferences() {
     // valores de arranque aprobados una sola vez incluso si había datos v1.
     if (!current) Object.assign(saved, {
       roads:true, water:true, buildings:true, terrain:true,
-      roadWidthMeters:16, roadColor:'#26160d', roadTint:true,
+      roadWidthMeters:16, roadColor:'#202225', roadTint:true, roadTwoLanes:true,
       lidar:true, lidarOpacity:5
     });
     return saved;
@@ -58,6 +61,12 @@ export function mountLayerPanel(world, {report, setSettings}) {
   const prefs = loadPreferences();
   let existingRoads=[], waterLayers=[], greenLayers=[], poiLayers=[];
   let roadPaints=new Map();
+  let roadOverlayIds=[];
+  const ASPHALT='#202225';
+  const EDGE='#73777b';
+  const ROAD_EXCLUDED=/(?:casing|outline|border|shadow|name|oneway|foot|pedestrian|cycle|path|bridle|track|steps|construction|proposed|rail|ferry|sidewalk)/i;
+  const driveableRoad = layer => layer?.type==='line' && Boolean(layer.source) &&
+    !ROAD_EXCLUDED.test(layer.id);
   let groupPaints = {water:new Map(),green:new Map(),poi:new Map()};
   function captureGroup(name, ids) {
     const snapshot = new Map();
@@ -86,12 +95,16 @@ export function mountLayerPanel(world, {report, setSettings}) {
     captureGroup('green',greenLayers);
     captureGroup('poi',poiLayers);
     roadPaints=new Map();
+    roadOverlayIds=[];
     for(const id of existingRoads) {
       const layer=map.getLayer(id);
       if(!layer || layer.type!=='line')continue;
       roadPaints.set(id,{
         width:map.getPaintProperty(id,'line-width'),
-        color:map.getPaintProperty(id,'line-color')
+        color:map.getPaintProperty(id,'line-color'),
+        opacity:map.getPaintProperty(id,'line-opacity'),
+        visible:map.getLayoutProperty(id,'visibility')!=='none',
+        layer:map.getStyle().layers.find(item=>item.id===id)
       });
     }
   }
@@ -107,7 +120,13 @@ export function mountLayerPanel(world, {report, setSettings}) {
     if (map.getLayer(id)) map.setLayoutProperty(id,'visibility',enabled ? 'visible' : 'none');
   }
   function applyRoads() {
-    for (const id of existingRoads) visible(id,prefs.roads);
+    for (const id of existingRoads) {
+      const original=roadPaints.get(id);
+      const permitted=!prefs.roadTwoLanes ||
+        (original && original.visible && driveableRoad(original.layer));
+      visible(id,Boolean(prefs.roads && permitted));
+    }
+    for (const id of roadOverlayIds) visible(id,prefs.roads && prefs.roadTwoLanes);
   }
   // MapLibre expresa line-width en píxeles, no en metros: convertir la anchura
   // física a píxeles según el zoom y la latitud. La interpolación exponencial
@@ -121,21 +140,84 @@ export function mountLayerPanel(world, {report, setSettings}) {
       0,meters/metersPerPixelAtZoom0,
       24,meters*Math.pow(2,24)/metersPerPixelAtZoom0];
   }
+  // Usar las mismas geometrías y filtros vectoriales del estilo OSM original.
+  // Los trazos se añaden bajo las etiquetas, sin duplicar fuentes ni teselas.
+  function ensureRoadOverlays() {
+    const roadLines=[...roadPaints].filter(([,data])=>driveableRoad(data.layer));
+    const firstLabel=map.getStyle().layers.find(layer=>layer.type==='symbol')?.id;
+    for (let index=0;index<roadLines.length;index++) {
+      const [,data]=roadLines[index];
+      const base=data.layer;
+      const common={type:'line',source:base.source};
+      if (base['source-layer']) common['source-layer']=base['source-layer'];
+      if (base.filter) common.filter=base.filter;
+      if (Number.isFinite(base.minzoom)) common.minzoom=base.minzoom;
+      if (Number.isFinite(base.maxzoom)) common.maxzoom=base.maxzoom;
+      const asphaltId='gta-road-asphalt-'+index;
+      if (!map.getLayer(asphaltId)) {
+        map.addLayer({...common,id:asphaltId,
+          layout:{visibility:'none','line-cap':'round','line-join':'round'},
+          paint:{'line-color':ASPHALT,'line-opacity':1,'line-width':1}
+        },firstLabel);
+      }
+      if (!roadOverlayIds.includes(asphaltId)) roadOverlayIds.push(asphaltId);
+    }
+    for (let index=0;index<roadLines.length;index++) {
+      const [,data]=roadLines[index];
+      const base=data.layer;
+      const centerId='gta-road-center-'+index;
+      if (!map.getLayer(centerId)) {
+        const common={type:'line',source:base.source,minzoom:Math.max(14,base.minzoom||0)};
+        if (base['source-layer']) common['source-layer']=base['source-layer'];
+        if (base.filter) common.filter=base.filter;
+        if (Number.isFinite(base.maxzoom)) common.maxzoom=base.maxzoom;
+        map.addLayer({...common,id:centerId,
+          layout:{visibility:'none','line-cap':'butt','line-join':'round'},
+          paint:{
+            'line-color':'#f2f2ea','line-opacity':0.92,
+            'line-width':1,'line-dasharray':[7,10]
+          }
+        },firstLabel);
+      }
+      if (!roadOverlayIds.includes(centerId)) roadOverlayIds.push(centerId);
+    }
+  }
   function applyRoadStyle() {
     const latitude=Number(map.getCenter()?.lat)||0;
     roadWidthLatitude=latitude;
-    const nextWidth=metricLineWidth(prefs.roadWidthMeters,latitude);
+    const width=prefs.roadWidthMeters;
+    const nextWidth=metricLineWidth(width,latitude);
+    if(prefs.roadTwoLanes) {
+      try { ensureRoadOverlays(); }
+      catch(error) { console.warn('OcToS GTA · capas de carretera:',error); }
+    }
     for(const [id,original] of roadPaints) {
       if(!map.getLayer(id))continue;
       try {
         map.setPaintProperty(id,'line-width',nextWidth);
-        if(original.color !== undefined) {
-          map.setPaintProperty(id,'line-color',prefs.roadTint?prefs.roadColor:original.color);
-        }
+        map.setPaintProperty(id,'line-color',
+          prefs.roadTwoLanes && driveableRoad(original.layer) ? EDGE :
+          prefs.roadTint ? prefs.roadColor : original.color ?? null);
+        map.setPaintProperty(id,'line-opacity',
+          prefs.roadTwoLanes && driveableRoad(original.layer) ? 1 : original.opacity ?? null);
       } catch(error) {
         console.warn('OcToS GTA · aspecto carretera:',id,error);
       }
     }
+    const asphaltWidth=metricLineWidth(Math.max(0.2,width-1.3),latitude);
+    const centerWidth=metricLineWidth(Math.min(0.6,width*0.045),latitude);
+    for(const id of roadOverlayIds) {
+      if(!map.getLayer(id))continue;
+      try {
+        if(id.startsWith('gta-road-asphalt-')) {
+          map.setPaintProperty(id,'line-color',prefs.roadTint?prefs.roadColor:ASPHALT);
+          map.setPaintProperty(id,'line-width',asphaltWidth);
+        } else {
+          map.setPaintProperty(id,'line-width',centerWidth);
+        }
+      } catch(error) {console.warn('OcToS GTA · pintura vial:',id,error);}
+    }
+    applyRoads();
   }
   // En recorridos largos actualizar el factor de latitud sin tocar el zoom.
   map.on('moveend',()=>{
@@ -223,6 +305,7 @@ export function mountLayerPanel(world, {report, setSettings}) {
     get('road-width-value').textContent=prefs.roadWidthMeters+' m';
     get('road-color').value=prefs.roadColor;
     get('road-tint').checked=prefs.roadTint;
+    get('road-two-lanes').checked=prefs.roadTwoLanes;
     for (const name of ['water','green','poi']) {
       get(name+'-tint').checked=prefs[name+'Tint'];
       get(name+'-color').value=prefs[name+'Color'];
@@ -280,6 +363,10 @@ export function mountLayerPanel(world, {report, setSettings}) {
   });
   get('road-tint').addEventListener('change',event => {
     prefs.roadTint=Boolean(event.target.checked);
+    applyRoadStyle();render();save();
+  });
+  get('road-two-lanes').addEventListener('change',event => {
+    prefs.roadTwoLanes=Boolean(event.target.checked);
     applyRoadStyle();render();save();
   });
   for (const name of ['water','green','poi']) {
