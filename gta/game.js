@@ -7,11 +7,12 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const cameraAngleDelta=(from,to)=>((to-from+540)%360+360)%360-180;
 // Posiciones de cámara relativas al centro del coche (metros).
 const CAR_CAMERAS=Object.freeze([
-  Object.freeze({behind:2,above:2}),
-  Object.freeze({behind:5,above:4})
+  Object.freeze({behind:6,above:6}),
+  Object.freeze({behind:12,above:12})
 ]);
 const CAR_CAMERA=Object.freeze({
   bearingSmooth:4.6, distanceSmooth:4.2,
+  screenTopFraction:.40,
   recenterDelayMs:900, recenterSmooth:2.0
 });
 
@@ -322,13 +323,17 @@ export class Game {
     const options=this.map.calculateCameraOptionsFromTo(
       [cameraLon,cameraLat],terrain+rig.above,origin,terrain
     );
-    // Al mirar al centro, el cabeceo sale de la geometría: 45° y ~51,3°.
+    // Las dos cámaras mantienen 45° geométricos (distancia = altura).
+    // El padding desplaza la proyección del coche al 70 % de la pantalla:
+    // se ve más carretera por delante sin mover el punto de referencia.
+    const screenHeight=this.map.getContainer?.().clientHeight||720;
     this.map.jumpTo({
       center:origin,
       zoom:options.zoom,
       bearing:rig.bearing,
       pitch:clamp(options.pitch+this.cameraOffset.pitch,0,80),
-      padding:{top:0,bottom:0,left:0,right:0}
+      padding:{top:Math.round(screenHeight*CAR_CAMERA.screenTopFraction),
+        bottom:0,left:0,right:0}
     });
   }
 
