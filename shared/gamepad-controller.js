@@ -190,6 +190,24 @@ export function mountGamepadSettings({controller,container}){
   const status=document.createElement('p');status.className='octos-gp-status';
   const live=document.createElement('div');live.className='octos-gp-live';
   live.setAttribute('aria-live','off');
+  const preview=document.createElement('div');preview.className='octos-gp-preview';
+  const stickDots={};
+  for(const [name,title] of [['left','STICK IZQUIERDO'],['right','STICK DERECHO']]){
+    const widget=document.createElement('div');widget.className='octos-gp-stick-widget';
+    const label=document.createElement('span');label.textContent=title;
+    const base=document.createElement('div');base.className='octos-gp-stick-base';
+    const dot=document.createElement('i');dot.className='octos-gp-stick-dot';
+    base.append(dot);widget.append(label,base);preview.append(widget);
+    stickDots[name]=dot;
+  }
+  const buttonView=document.createElement('div');
+  buttonView.className='octos-gp-button-grid';
+  const buttonLights=Array.from({length:20},(_,i)=>{
+    const light=document.createElement('span');
+    light.className='octos-gp-button-light';
+    light.textContent=String(i);buttonView.append(light);
+    return light;
+  });preview.append(buttonView);
   const note=document.createElement('p');note.className='octos-gp-note';
   note.textContent='Pulsa un botón del mando para que Chrome o Edge lo detecte. Los ejes y botones sin asignar pueden calibrarse aquí.';
   const title=document.createElement('strong');title.textContent='Asignaciones de controles';
@@ -253,7 +271,7 @@ export function mountGamepadSettings({controller,container}){
   const reset=document.createElement('button');reset.type='button';reset.textContent='Restaurar valores';
   reset.addEventListener('click',()=>{controller.reset();paint()});
   buttons.append(save,reset);
-  body.append(device,status,live,note,extras,title,form,buttons);
+  body.append(device,status,preview,live,note,extras,title,form,buttons);
   panel.append(heading,body);container.append(panel);
   device.addEventListener('change',()=>{controller.select(Number(device.value));paint()});
   function paint(){
@@ -285,6 +303,18 @@ export function mountGamepadSettings({controller,container}){
     }
     if(device.value!==String(active))device.value=String(active);
     const sample=controller.sample();
+    const pad=controller.refresh();
+    const stickPoint=(dot,x,y)=>{
+      dot.style.transform='translate('+Math.round(x*24)+'px,'+
+        Math.round(y*24)+'px)';
+    };
+    stickPoint(stickDots.left,controller.axis(pad,'moveX'),controller.axis(pad,'moveY'));
+    stickPoint(stickDots.right,controller.axis(pad,'lookX'),controller.axis(pad,'lookY'));
+    for(let i=0;i<buttonLights.length;i++){
+      const light=buttonLights[i];
+      light.hidden=i>=sample.buttons.length;
+      light.classList.toggle('pressed',(sample.buttons[i]||0)>.55);
+    }
     status.textContent=sample.connected?
       'Conectado · '+sample.id+' · '+sample.axes.length+' ejes / '+sample.buttons.length+' botones':
       'Desconectado · teclado y ratón disponibles';
