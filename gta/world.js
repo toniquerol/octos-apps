@@ -58,6 +58,12 @@ export async function createWorld(start, report, {selection = false} = {}) {
     });
   });
 
+
+  // Ocultar únicamente los nombres de calles y carreteras del mapa base.
+  for (const id of ['highway_name_other', 'highway_name_motorway']) {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+  }
+
   function updateBuildings(visible) {
     buildingsActive = Boolean(visible);
     if (buildingsId && map.getLayer(buildingsId)) {
