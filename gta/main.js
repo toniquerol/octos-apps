@@ -1,4 +1,4 @@
-import {createWorld} from './world.js?v=4';
+import {createWorld} from './world.js?v=5';
 import {Game, readSave} from './game.js?v=4';
 import {createActor} from './actor.js?v=2';
 
@@ -31,6 +31,7 @@ function updateHud(state) {
   $('altitude').textContent = state.altitude == null ? 'Sin datos' : Math.round(state.altitude) + ' m';
   $('place-name').textContent = (state.place || 'Coordenadas') + ' · Mundo real';
   actor?.update(state);
+  world?.refreshShadows(state.lon, state.lat);
 }
 function showPanel(visible) {
   $('settings-panel').hidden = !visible;
@@ -40,6 +41,21 @@ $('settings-button').addEventListener('click',() => showPanel($('settings-panel'
 $('close-settings').addEventListener('click',() => showPanel(false));
 $('help-button').addEventListener('click',() => $('help-dialog').showModal());
 $('close-help').addEventListener('click',() => $('help-dialog').close());
+$('daytime-controls').addEventListener('submit', event => {
+  event.preventDefault();
+  if (!world) return;
+  const time = $('daytime-hour').value;
+  if (!world.setTime(time)) {
+    report('Selecciona una hora válida.', 'warn');
+    return;
+  }
+  const hour = Number(time.slice(0, 2)) + Number(time.slice(3)) / 60;
+  $('daytime-phase').textContent = hour < 6 || hour >= 20 ? 'Noche'
+    : hour < 8 ? 'Amanecer' : hour >= 18 ? 'Atardecer' : 'Día';
+  if (game) world.refreshShadows(game.state.lon, game.state.lat, true);
+  try { localStorage.setItem('octos-gta-time', time); } catch {}
+  report('Iluminación aplicada: ' + time, 'ok');
+});
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && !$('settings-panel').hidden) showPanel(false);
 });
@@ -141,6 +157,14 @@ async function launchScene() {
     game.setQuality(quality);
     world.enterGame();
     game.teleport(start.lat,start.lon,start.place);
+    world.setTime($('daytime-hour').value);
+    world.refreshShadows(start.lon, start.lat, true);
+    world.map.once('idle', () => {
+      if (game) world.refreshShadows(game.state.lon, game.state.lat, true);
+    });
+    setTimeout(() => {
+      if (game) world.refreshShadows(game.state.lon, game.state.lat, true);
+    }, 3500);
     if (mapClickHandler) world.map.off('click',mapClickHandler);
     selectionMarker?.remove();
     selectionMarker = null;
@@ -171,6 +195,14 @@ async function bootstrap() {
   try {
     // El mapa de selección es plano: sin jugador, edificios 3D ni elevaciones.
     world = await createWorld(start,report,{selection:true});
+    let savedTime = '16:30';
+    try { savedTime = localStorage.getItem('octos-gta-time') || savedTime; } catch {}
+    if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(savedTime)) savedTime = '16:30';
+    $('daytime-hour').value = savedTime;
+    world.setTime(savedTime);
+    const timeHour = Number(savedTime.slice(0, 2)) + Number(savedTime.slice(3)) / 60;
+    $('daytime-phase').textContent = timeHour < 6 || timeHour >= 20 ? 'Noche'
+      : timeHour < 8 ? 'Amanecer' : timeHour >= 18 ? 'Atardecer' : 'Día';
     let savedQuality = 'balanced';
     try { savedQuality = localStorage.getItem('octos-gta-quality') || savedQuality; } catch {}
     $('quality').value = ['low','balanced','high'].includes(savedQuality) ? savedQuality : 'balanced';
