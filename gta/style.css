@@ -144,3 +144,12 @@ body.editing #map .maplibregl-canvas:active{cursor:grabbing}
   .map-editor{left:0;right:0;top:auto;bottom:0;width:100%;max-width:none;height:47%;max-height:47%;border-radius:13px 13px 0 0;padding:12px 15px 24px}
   .map-editor-head h2{font-size:15px}
 }
+
+
+/* GTA · Biblioteca de mapas base y ajustes de trazado en el editor. */
+.editor-basemap-status{display:block;margin:6px 0 0;color:#aeb2ba;font-size:10px;line-height:1.5}
+.gta-road-tuning{border-left:2px solid #ff6a1a66;margin:4px 0 12px 8px;padding:2px 3px 4px 9px}
+.gta-road-tuning .gta-layer-subfield{margin:8px 2px 12px}
+.gta-road-tuning .gta-layer-option{font-size:10px;min-height:29px}
+.gta-layer-road-color{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 3px;color:#bec2ca;font-size:10px}
+.gta-layer-road-color input[type=color]{width:50px;height:31px;padding:3px;background:#121317;border:1px solid #585b61;border-radius:6px;cursor:pointer}
