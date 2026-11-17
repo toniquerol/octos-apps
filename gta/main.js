@@ -41,6 +41,7 @@ function updateHud(state) {
 function showPanel(visible) {
   $('settings-panel').hidden = !visible;
   $('settings-button').setAttribute('aria-expanded',String(visible));
+  if (document.body.classList.contains('editing')) $('map-editor').hidden = visible;
 }
 $('settings-button').addEventListener('click',() => showPanel($('settings-panel').hidden));
 $('close-settings').addEventListener('click',() => showPanel(false));
