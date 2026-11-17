@@ -1,10 +1,11 @@
 import {createWorld} from './world.js?v=7';
-import {Game, readSave} from './game.js?v=12';
+import {Game, readSave} from './game.js?v=13';
 import {mountLayerPanel} from './layers.js?v=7';
 import {mountMapEditor} from './map-editor.js?v=4';
 import {mountTeleport} from './teleport.js?v=1';
-import {createActor} from './actor.js?v=5';
+import {createActor} from './actor.js?v=6';
 import {mountDriveHud} from './hud.js?v=3';
+import {OcToSGamepadController,mountGamepadSettings} from '../shared/gamepad-controller.js?v=1';
 
 const $ = id => document.getElementById(id);
 const status = $('status');
@@ -15,6 +16,27 @@ let game = null;
 let actor = null;
 let layerControls = null;
 let driveHud = null;
+let gamepadController = null;
+let gamepadSettings = null;
+let hornContext = null;
+function soundHorn(){
+  try {
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    if(!Ctx)return;
+    hornContext??=new Ctx();
+    if(hornContext.state==='suspended')hornContext.resume().catch(()=>{});
+    const now=hornContext.currentTime;
+    const oscillator=hornContext.createOscillator();
+    const gain=hornContext.createGain();
+    oscillator.type='sawtooth';
+    oscillator.frequency.setValueAtTime(290,now);
+    gain.gain.setValueAtTime(.0001,now);
+    gain.gain.exponentialRampToValueAtTime(.10,now+.025);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+.24);
+    oscillator.connect(gain);gain.connect(hornContext.destination);
+    oscillator.start(now);oscillator.stop(now+.25);
+  }catch(error){console.warn('OcToS GTA · claxon:',error);}
+}
 let showStatusTimer = 0;
 let selection = null;
 let selectionMarker = null;
@@ -144,7 +166,11 @@ $('quality').addEventListener('change',event => {
   try {localStorage.setItem('octos-gta-quality',event.target.value);} catch {}
   report('Calidad gráfica: '+event.target.selectedOptions[0].textContent,'ok');
 });
-window.addEventListener('pagehide',() => { game?.save(); driveHud?.destroy(); });
+window.addEventListener('pagehide',() => {
+  game?.save();driveHud?.destroy();
+  gamepadSettings?.destroy();gamepadController?.destroy();
+  hornContext?.close?.().catch(()=>{});
+});
 
 $('start-preset').addEventListener('change',event => {
   if (!event.target.value || choosing || game) return;
@@ -186,6 +212,19 @@ async function launchScene() {
     }
     actor = await createActor(world,start,report);
     game = new Game(world,updateHud,state => actor?.update(state));
+    // Interfaz universal: el teclado y el ratón siguen activos en paralelo.
+    gamepadController=new OcToSGamepadController({project:'gta'});
+    game.attachController(gamepadController);
+    game.onAction=(action,value)=>{
+      if(action==='horn')soundHorn();
+      else if(action==='pause')report(value?'Juego en pausa · Options para continuar.':
+        'Partida reanudada.','ok');
+      else if(action==='interact')report('No hay objeto interactivo cerca.','warn');
+      else if(action==='secondary')report('Sin acción secundaria asignada a este personaje.','warn');
+    };
+    gamepadSettings=mountGamepadSettings({
+      controller:gamepadController,container:$('settings-panel')
+    });
     game.setQuality(quality);
     const editor=mountMapEditor({world,game,actor,layerControls,report});
     // Restaurar el mapa base guardado sin reiniciar el mapa ni perder el BMW.
