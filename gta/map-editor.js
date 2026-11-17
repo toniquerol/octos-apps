@@ -1,4 +1,5 @@
 /* OcToS GTA · Editor de mapa sin crear otro motor ni contexto WebGL. */
+import {mountBasemaps} from './basemaps.js?v=1';
 const STORAGE_KEY = 'octos-gta-map-editor-v1';
 const $ = id => document.getElementById(id);
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -26,7 +27,7 @@ function readConfig() {
   } catch { return defaults; }
 }
 
-export function mountMapEditor({world, game, layerControls, report}) {
+export function mountMapEditor({world, game, actor, layerControls, report}) {
   const map = world.map;
   const modeButton = $('map-mode-button');
   const panel = $('map-editor');
@@ -38,6 +39,11 @@ export function mountMapEditor({world, game, layerControls, report}) {
   const color = $('editor-building-color');
   const opacity = $('editor-building-opacity');
   const saved = readConfig();
+  const basemaps = mountBasemaps({world,layerControls,actor,report});
+  basemaps.setBusyCallback(busy=>{
+    modeButton.disabled=busy;
+    saveButton.disabled=busy;
+  });
   let currentPosition = null;
 
   view.value = saved.view;
@@ -116,6 +122,7 @@ export function mountMapEditor({world, game, layerControls, report}) {
       color:color.value, opacity:Number(opacity.value),
       center, bearing:map.getBearing(),
       layers:layerControls?.getPreferences() || {},
+      basemap:basemaps.getChoice(),
       savedAt:new Date().toISOString()
     };
     try {
@@ -151,5 +158,5 @@ export function mountMapEditor({world, game, layerControls, report}) {
     updateLabels();
   });
   updateLabels();
-  return {enter, exit};
+  return {enter, exit, restoreBasemap:()=>basemaps.restore()};
 }
