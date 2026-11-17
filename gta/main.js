@@ -1,5 +1,5 @@
 import {createWorld} from './world.js?v=7';
-import {Game, readSave} from './game.js?v=8';
+import {Game, readSave} from './game.js?v=9';
 import {mountLayerPanel} from './layers.js?v=7';
 import {mountMapEditor} from './map-editor.js?v=4';
 import {mountTeleport} from './teleport.js?v=1';
