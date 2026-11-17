@@ -4,7 +4,7 @@ import {mountLayerPanel} from './layers.js?v=7';
 import {mountMapEditor} from './map-editor.js?v=4';
 import {mountTeleport} from './teleport.js?v=1';
 import {createActor} from './actor.js?v=4';
-import {mountDriveHud} from './hud.js?v=2';
+import {mountDriveHud} from './hud.js?v=3';
 
 const $ = id => document.getElementById(id);
 const status = $('status');
