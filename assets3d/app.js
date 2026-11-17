@@ -17,6 +17,48 @@ camera.position.set(5,3,7);
 const controls = new OrbitControls(camera,canvas);
 controls.enableDamping=true;controls.dampingFactor=.08;
 scene.add(new THREE.HemisphereLight(0xffffff,0x445268,2.6));
+const floorMat=new THREE.MeshStandardMaterial({color:0x565c65,roughness:.95,metalness:0,side:THREE.DoubleSide});
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(10,10),floorMat);
+floor.rotation.x=-Math.PI/2;
+floor.name='OcToS · Suelo 10 × 10 m';
+floor.renderOrder=-1;
+const floorGrid=new THREE.GridHelper(10,10,0x9ca3aa,0x7c8590);
+floorGrid.material.transparent=true;
+floorGrid.material.opacity=.25;
+floorGrid.material.depthWrite=false;
+floorGrid.renderOrder=0;
+scene.add(floor,floorGrid);
+const floorSettingsKey='octos-3d-assets-floor-v1';
+function saveFloorPrefs(){
+ try{localStorage.setItem(floorSettingsKey,JSON.stringify({enabled:$('floorEnabled').checked,color:$('floorColor').value}))}catch(e){}
+}
+function updateFloor(){
+ const enabled=$('floorEnabled').checked;
+ floor.visible=enabled;floorGrid.visible=enabled;
+ floorMat.color.set($('floorColor').value);
+ saveFloorPrefs();
+}
+function positionFloor(){
+ if(!shown){floor.position.set(0,0,0);floorGrid.position.set(0,.003,0);return}
+ const box=new THREE.Box3().setFromObject(shown);
+ if(box.isEmpty())return;
+ const center=box.getCenter(new THREE.Vector3());
+ // Model units follow glTF 2.0 (metres). Never scale the 10 m platform.
+ const y=box.min.y-.005;
+ floor.position.set(center.x,y,center.z);
+ floorGrid.position.set(center.x,y+.003,center.z);
+}
+try{
+ const prefs=JSON.parse(localStorage.getItem(floorSettingsKey)||'null');
+ if(prefs){
+  if(typeof prefs.enabled==='boolean')$('floorEnabled').checked=prefs.enabled;
+  if(typeof prefs.color==='string'&&/^#[0-9a-fA-F]{6}$/.test(prefs.color))$('floorColor').value=prefs.color;
+ }
+}catch(e){}
+updateFloor();
+$('floorEnabled').addEventListener('change',updateFloor);
+$('floorColor').addEventListener('input',updateFloor);
+
 const keyLight=new THREE.DirectionalLight(0xffffff,3.2);keyLight.position.set(5,9,7);scene.add(keyLight);
 const fillLight=new THREE.DirectionalLight(0x8ca9ff,1.4);fillLight.position.set(-6,2,-4);scene.add(fillLight);
 let shown=null,mixer=null,active=null,models=[],autoRotate=false,busy=false,dirty=false;
@@ -87,7 +129,7 @@ async function gltfLoader(){
 function clearHTML(){const frame=$('htmlViewer');frame.hidden=true;frame.removeAttribute('srcdoc');$('canvas').hidden=false;$('viewHint').innerHTML='Arrastrar · Orbitar &nbsp; | &nbsp; Rueda · Zoom'}
 function clearModel(){
  if(shown){shown.traverse(o=>{if(o.geometry)o.geometry.dispose();const mats=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of mats){for(const v of Object.values(m)){if(v&&v.isTexture)v.dispose()}m.dispose()}});scene.remove(shown);shown=null}
- mixer=null;
+ mixer=null;positionFloor();
 }
 function centerView(){
  if(!shown)return;
@@ -107,7 +149,7 @@ async function preview(blob){
  const gltf=await loader.parseAsync(bytes,'');
  if(!gltf.scene)throw new Error('El modelo no contiene una escena visible.');
  clearHTML();clearModel();
- shown=gltf.scene;scene.add(shown);
+ shown=gltf.scene;scene.add(shown);positionFloor();
  if(gltf.animations&&gltf.animations.length){
   mixer=new THREE.AnimationMixer(shown);
   for(const clip of gltf.animations)mixer.clipAction(clip).play();
