@@ -4,6 +4,7 @@ import {mountLayerPanel} from './layers.js?v=7';
 import {mountMapEditor} from './map-editor.js?v=4';
 import {mountTeleport} from './teleport.js?v=1';
 import {createActor} from './actor.js?v=4';
+import {mountDriveHud} from './hud.js?v=1';
 
 const $ = id => document.getElementById(id);
 const status = $('status');
@@ -13,6 +14,7 @@ let world = null;
 let game = null;
 let actor = null;
 let layerControls = null;
+let driveHud = null;
 let showStatusTimer = 0;
 let selection = null;
 let selectionMarker = null;
@@ -34,6 +36,7 @@ function updateHud(state) {
   $('coordinates').textContent = state.lat.toFixed(5) + ', ' + state.lon.toFixed(5);
   $('altitude').textContent = state.altitude == null ? 'Sin datos' : Math.round(state.altitude) + ' m';
   $('place-name').textContent = (state.place || 'Coordenadas') + ' · Mundo real';
+  driveHud?.update(state);
   actor?.update(state);
   layerControls?.updateLocation(state.lon,state.lat);
   world?.refreshShadows(state.lon, state.lat);
@@ -141,7 +144,7 @@ $('quality').addEventListener('change',event => {
   try {localStorage.setItem('octos-gta-quality',event.target.value);} catch {}
   report('Calidad gráfica: '+event.target.selectedOptions[0].textContent,'ok');
 });
-window.addEventListener('pagehide',() => game?.save());
+window.addEventListener('pagehide',() => { game?.save(); driveHud?.destroy(); });
 
 $('start-preset').addEventListener('change',event => {
   if (!event.target.value || choosing || game) return;
@@ -206,6 +209,15 @@ async function launchScene() {
     welcome.hidden = true;
     showPanel(false);
     game.start();
+    // El HUD se monta únicamente al entrar en el mundo, después del selector 2D.
+    try {
+      driveHud?.destroy();
+      driveHud = mountDriveHud({report});
+      driveHud.update({...game.state,speed:Math.abs(game.speed)*3.6,drive:game.driving});
+    } catch (error) {
+      console.warn('OcToS GTA · instrumentos:',error);
+      report('Los instrumentos no están disponibles; la conducción continúa.','warn');
+    }
     play.blur();
     report('Mundo abierto activo.','ok');
   } catch (error) {
