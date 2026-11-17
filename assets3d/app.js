@@ -416,8 +416,9 @@ async function compress(blob){
  const packed=new Uint8Array(await new Response(compressed).arrayBuffer());
  return {data:bytesToBase64(packed),compressed:true};
 }
-async function makeHTML(blob,name){
+async function makeHTML(blob,name,transform){
  const packed=await compress(blob);
+ const encodedTransform=encodeURIComponent(JSON.stringify(cleanTransform(transform)));
  const map='{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}';
  const out=[
  '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
@@ -425,7 +426,7 @@ async function makeHTML(blob,name){
  '<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#141922;color:#fff;font:13px system-ui}canvas{display:block;width:100%;height:100%}header{position:absolute;top:14px;left:16px;z-index:2;padding:9px 13px;background:#141922bd;border:1px solid #ffffff33;border-radius:9px}small{display:block;color:#b5c0cb;margin-top:4px}#state{position:absolute;bottom:14px;left:16px;color:#b7c3ce}button{position:absolute;right:16px;top:16px;z-index:2;background:#252e39;color:white;border:1px solid #627083;border-radius:7px;padding:9px 13px;cursor:pointer}</style>',
  '<script type="importmap">'+map+'</script></head><body>',
  '<header><b>'+esc(name)+'</b><small>OcToS 3D Assets · Visor 3D</small></header><button id="fit">Centrar</button><canvas id="view"></canvas><div id="state">Cargando modelo...</div>',
- '<script id="payload" type="text/plain" data-gzip="'+(packed.compressed?'1':'0')+'">'+packed.data+'</script>',
+ '<script id="payload" type="text/plain" data-gzip="'+(packed.compressed?'1':'0')+'" data-octos-transform="'+encodedTransform+'">'+packed.data+'</script>',
  '<script type="module">',
  'import * as THREE from "three";',
  'import {OrbitControls} from "three/addons/controls/OrbitControls.js";',
@@ -441,7 +442,7 @@ async function makeHTML(blob,name){
  'const clock=new THREE.Clock();let mixer=null;function loop(){requestAnimationFrame(loop);const dt=clock.getDelta();if(mixer)mixer.update(dt);controls.update();renderer.render(scene,camera)}loop();',
  'async function decode(){const node=document.getElementById("payload"),s=node.textContent.trim();const chars=atob(s),data=new Uint8Array(chars.length);for(let i=0;i<chars.length;i++)data[i]=chars.charCodeAt(i);if(node.dataset.gzip!=="1")return data.buffer;if(!("DecompressionStream" in window))throw Error("Este navegador no admite descompresión GZIP.");return await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer()}',
  'try{const decoder=new DRACOLoader();decoder.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/");const loader=new GLTFLoader();loader.setDRACOLoader(decoder);try{const m=await import("https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/meshopt_decoder.module.js");if(m.MeshoptDecoder)loader.setMeshoptDecoder(m.MeshoptDecoder)}catch(e){}',
- 'const obj=await loader.parseAsync(await decode(),"");scene.add(obj.scene);fit(obj.scene);document.getElementById("fit").onclick=()=>fit(obj.scene);if(obj.animations.length){mixer=new THREE.AnimationMixer(obj.scene);obj.animations.forEach(clip=>mixer.clipAction(clip).play())}state.textContent="Arrastrar: girar · Rueda: zoom";}catch(e){state.textContent="Error al abrir el modelo: "+e.message;console.error(e)}',
+ 'const obj=await loader.parseAsync(await decode(),"");const center=new THREE.Box3().setFromObject(obj.scene).getCenter(new THREE.Vector3());const offset=new THREE.Group();offset.position.copy(center).multiplyScalar(-1);offset.add(obj.scene);const wrapper=new THREE.Group();wrapper.position.copy(center);wrapper.add(offset);const t=JSON.parse(decodeURIComponent(document.getElementById("payload").dataset.octosTransform||"%7B%7D"));if(t.position)wrapper.position.add(new THREE.Vector3(...t.position));if(t.rotation)wrapper.rotation.set(...t.rotation.map(THREE.MathUtils.degToRad));if(t.scale)wrapper.scale.set(...t.scale);scene.add(wrapper);fit(wrapper);document.getElementById("fit").onclick=()=>fit(wrapper);if(obj.animations.length){mixer=new THREE.AnimationMixer(obj.scene);obj.animations.forEach(clip=>mixer.clipAction(clip).play())}state.textContent="Arrastrar: girar · Rueda: zoom";}catch(e){state.textContent="Error al abrir el modelo: "+e.message;console.error(e)}',
  '<\/script></body></html>'
  ];
  return new Blob([out.join('\n')],{type:'text/html;charset=utf-8'});
@@ -455,7 +456,7 @@ async function capture(){
  if(!shown||$('canvas').hidden)return null;
  await new Promise(resolve=>requestAnimationFrame(resolve));
  try{
-  renderer.render(scene,camera);
+  const wasVisible=transformHelper.visible;transformHelper.visible=false;renderer.render(scene,camera);transformHelper.visible=wasVisible;
   const thumb=document.createElement('canvas');thumb.width=320;thumb.height=200;
   const ctx=thumb.getContext('2d');if(!ctx)return null;
   ctx.fillStyle='#19212b';ctx.fillRect(0,0,320,200);
@@ -468,9 +469,9 @@ async function save(){
  if(!active)return;
  setBusy(true);
  try{
-  const html=active.html || (active.file?await makeHTML(active.file,active.name):null);
+  const html=active.html || (active.file?await makeHTML(active.file,active.name,active.transform):null);
   if(!html)throw new Error('El objeto no contiene HTML para guardar.');
-  const record={...active,id:active.id||uid(),name:$('modelName').value.trim()||active.name,tags:tagsFromInput(),updatedAt:Date.now(),html};
+  const record={...active,id:active.id||uid(),name:$('modelName').value.trim()||active.name,tags:tagsFromInput(),updatedAt:Date.now(),html,transform:active.file?readTransform():null};
   if(record.file)record.thumbnail=await capture()||record.thumbnail;
   await put(record);active=record;dirty=false;
   await refresh();syncInspector();
@@ -482,7 +483,7 @@ async function exportHTML(){
  if(!active)return;setBusy(true);
  try{
   const record=active;
-  const html=record.html || (record.file?await makeHTML(record.file,$('modelName').value.trim()||record.name):null);
+  const html=record.html || (record.file?await makeHTML(record.file,$('modelName').value.trim()||record.name,record.transform):null);
   if(!html)throw new Error('No hay contenido HTML para exportar.');
   download(html,safeName(record.name)+'.html');
   status(record.sourceKind==='html'?'HTML original exportado.':'HTML exportado. Los motores 3D externos pueden requerir conexión.');
@@ -514,10 +515,11 @@ async function optimize(){
    const old=active.file;
    const originalTriangles=$('triangles').textContent;
    try{
-    const stats=await preview(optimized);
+    const transformBefore=cleanTransform(active.transform);
+    const stats=await preview(optimized);applyTransform(transformBefore);
     active.file=optimized;active.triangles=stats.triangles;active.meshes=stats.meshes;active.html=null;active.sourceKind='glb';active.thumbnail=null;dirty=true;
     status('Optimización aplicada sin guardar. '+fmt(old.size)+' → '+fmt(optimized.size)+'; triángulos '+originalTriangles+' → '+integer(stats.triangles)+'.');
-   }catch(e){await preview(old);throw new Error('Resultado incompatible, se conserva el original. '+e.message)}
+   }catch(e){await preview(old);applyTransform(active.transform);throw new Error('Resultado incompatible, se conserva el original. '+e.message)}
   }
  }catch(e){status('No se pudo optimizar; se conserva el modelo actual. '+e.message,true)}
  finally{setBusy(false);updateButtons()}
@@ -531,7 +533,7 @@ async function backup(){
   const records=await getAll(),out=[];
   for(const x of records){
    out.push({id:x.id,name:x.name,tags:x.tags,filename:x.filename,createdAt:x.createdAt,updatedAt:x.updatedAt,
-    thumbnail:x.thumbnail,sourceKind:x.sourceKind||'glb',
+    thumbnail:x.thumbnail,sourceKind:x.sourceKind||'glb',transform:x.transform||null,
     file:x.file?bytesToBase64(new Uint8Array(await x.file.arrayBuffer())):null,
     html:x.html && (x.sourceKind==='html'||x.sourceKind==='glb-html')
       ?bytesToBase64(new Uint8Array(await x.html.arrayBuffer())):null});
@@ -557,10 +559,10 @@ async function restore(file){
     binary=new Blob([bytes],{type:'model/gltf-binary'});
    }
    if(row.html)html=new Blob([await base64ToBytes(row.html)],{type:'text/html;charset=utf-8'});
-   if(!html && binary)html=await makeHTML(binary,String(row.name||'Modelo'));
+   if(!html && binary)html=await makeHTML(binary,String(row.name||'Modelo'),row.transform);
    if(!html && !binary)throw new Error('Objeto sin archivo válido.');
    const name=String(row.name||'Modelo').slice(0,120);
-   await put({id:uid(),name,tags:Array.isArray(row.tags)?row.tags.slice(0,30).map(String):[],
+   await put({id:uid(),name,transform:cleanTransform(row.transform),tags:Array.isArray(row.tags)?row.tags.slice(0,30).map(String):[],
     filename:String(row.filename||name+(binary?'.glb':'.html')),sourceKind:row.sourceKind||(binary?'glb':'html'),
     file:binary,html,thumbnail:row.thumbnail||null,createdAt:Date.now(),updatedAt:Date.now()});
    count++;
