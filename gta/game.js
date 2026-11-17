@@ -1,5 +1,5 @@
 /* OcToS GTA · personaje y primer vehículo independiente. */
-import {stepDriving,initialDriving} from './vehicle.js?v=4';
+import {stepDriving,initialDriving} from './vehicle.js?v=5';
 const STORAGE_KEY = 'octos-gta-v1-save';
 const DEFAULT = {lat: 41.3874, lon: 2.1701, heading: 0, mode: 'walk', place: 'Barcelona'};
 const RAD = Math.PI / 180;
@@ -73,7 +73,7 @@ export class Game {
       this.cameraZoom[mode] = clamp(this.cameraZoom[mode] - Math.sign(event.deltaY) * amount, 20.5, 24);
       this.updateCamera();
     };
-    this.onBlur = () => { this.keys.clear(); this.speed = 0; this.driving.speed=0; this.driving.slip=0; this.emit(true); };
+    this.onBlur = () => { this.keys.clear(); this.speed = 0; this.driving.speed=0; this.driving.slip=0; this.driving.yawRate=0; this.driving.rearGripLoss=0; this.driving.rearLocked=false; this.emit(true); };
     document.addEventListener('keydown', this.onKeyDown);
     document.addEventListener('keyup', this.onKeyUp);
     document.addEventListener('wheel', this.onWheel, {passive: false});
@@ -101,6 +101,7 @@ export class Game {
     this.keys.clear();
     this.speed = 0;
     this.driving.speed=0; this.driving.slip=0;
+    this.driving.yawRate=0; this.driving.rearGripLoss=0; this.driving.rearLocked=false;
     this.emit(true);
   }
 
