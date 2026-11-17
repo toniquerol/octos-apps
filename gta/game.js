@@ -302,18 +302,20 @@ export class Game {
     }
   }
 
-  updateCamera(dt=0) {
+  updateCamera(dt=0, preview=false) {
     const origin=[this.state.lon,this.state.lat]; // Única referencia visual.
     if(this.state.mode!=='car'){
       // El personaje ocupa el centro real de la pantalla.
       this.carCamera=null;
-      this.map.jumpTo({
+      const view={
         center:origin,
         bearing:this.state.heading+this.cameraOffset.yaw,
         zoom:clamp(this.cameraZoom.walk-(this.view==='wide'?.75:0),20,24),
         pitch:clamp(69+this.cameraOffset.pitch,0,80),
         padding:{top:0,bottom:0,left:0,right:0}
-      });
+      };
+      if (preview) return view;
+      this.map.jumpTo(view);
       return;
     }
 
@@ -351,14 +353,16 @@ export class Game {
       [cameraLon,cameraLat],terrain+rig.above,focus,terrain
     );
     const screenHeight=this.map.getContainer?.().clientHeight||720;
-    this.map.jumpTo({
+    const view={
       center:focus,
       zoom:options.zoom,
       bearing:Number.isFinite(options.bearing)?options.bearing:rig.bearing,
       pitch:clamp(options.pitch+this.cameraOffset.pitch,0,80),
       padding:{top:Math.round(screenHeight*CAR_CAMERA.screenTopFraction),
         bottom:0,left:0,right:0}
-    });
+    };
+    if (preview) return view;
+    this.map.jumpTo(view);
   }
 
   parkNearPlayer() {
@@ -453,7 +457,7 @@ export class Game {
     this.emit(true);
   }
 
-  teleport(lat, lon, place = 'Coordenadas') {
+  teleport(lat, lon, place = 'Coordenadas', {preserveCamera = false} = {}) {
     if (!Number.isFinite(lat) || !Number.isFinite(lon) ||
       Math.abs(lat) > 85 || Math.abs(lon) > 180) throw new Error('Coordenadas fuera del rango admitido.');
     this.state.lat = lat;
@@ -467,7 +471,7 @@ export class Game {
     this.keys.clear();
     if (this.state.mode==='car') this.vehicle={lat,lon,heading:this.state.heading};
     else this.parkNearPlayer();
-    this.updateCamera();
+    if (!preserveCamera) this.updateCamera();
     this.onFrame({...this.state,vehicle:this.vehicle,drive:this.driving});
     this.emit(true);
     this.save();
