@@ -137,6 +137,8 @@ export async function createWorld(start, report, {selection = false} = {}) {
   }
 
   function enterGame() {
+    // Se amplía solo al entrar al juego; el selector geográfico conserva su zoom.
+    map.setMaxZoom(24);
     map.dragPan.disable();
     map.scrollZoom.disable();
     map.doubleClickZoom.disable();
