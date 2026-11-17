@@ -40,6 +40,7 @@ export class Game {
     this.lastSave = 0;
     this.fps = 30;
     this.onKeyDown = event => {
+      if (!this.active || document.body.classList.contains('editing')) return;
       if (event.target?.closest?.('input,select,textarea,button,[contenteditable="true"]')) return;
       if (['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ShiftLeft','ShiftRight',
         'Space','KeyV','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code)) event.preventDefault();
