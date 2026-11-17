@@ -41,7 +41,7 @@ select{cursor:pointer}.split{display:flex;gap:8px}.split>*{flex:1;min-width:0}
 .warning{font-size:11px;color:#c1b6a7;margin:10px 0}.metric{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #34363c;font-size:11px}.metric strong{font-weight:650;color:#e8ebef}
 #file{display:none}.nothing{color:#9da5af;font-size:12px;padding:14px 5px;text-align:center}
 @media(max-width:1080px){main{grid-template-columns:240px minmax(0,1fr) 245px}.library,.inspector{padding:12px}}
-@media(max-width:800px){main{height:auto;display:flex;flex-direction:column;overflow:visible}.stage{height:55dvh;min-height:340px;order:0}.library{order:1;max-height:350px;border-top:1px solid var(--edge)}.inspector{order:2;border-top:1px solid var(--edge)}header{padding:12px}.subtitle{display:none}}
+@media(max-width:600px){#backup,#importBackup{display:none}header{gap:6px}header h1{font-size:15px}header .brand{gap:6px}header .logo{width:27px;height:27px}}@media(max-width:800px){main{height:auto;display:flex;flex-direction:column;overflow:visible}.stage{height:55dvh;min-height:340px;order:0}.library{order:1;max-height:350px;border-top:1px solid var(--edge)}.inspector{order:2;border-top:1px solid var(--edge)}header{padding:12px}.subtitle{display:none}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 <script src="../shared/nav.js?v=20261117-assets3d" defer></script>
@@ -86,7 +86,7 @@ select{cursor:pointer}.split{display:flex;gap:8px}.split>*{flex:1;min-width:0}
   <small>La exportación HTML integra el GLB dentro del archivo. Para visualizarlo utiliza Three.js y necesita conexión para cargar el motor gráfico.</small>
  </aside>
 </main>
-<input id="file" type="file" accept=".glb,model/gltf-binary" multiple>
+<input id="file" type="file" accept=".glb,model/gltf-binary">
 <input id="restoreFile" type="file" accept=".json,application/json" hidden>
 <script type="module" src="./app.js"></script>
 </body>
