@@ -21,7 +21,7 @@ const DYNAMICS=Object.freeze({
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 export const initialDriving=()=>({
   speed:0,steer:0,spin:0,rearSpin:0,rearLocked:false,
-  slip:0,yawRate:0,rearGripLoss:0,steerHold:0,steerDirection:0
+  slip:0,yawRate:0,rearGripLoss:0,driftActive:false,steerHold:0,steerDirection:0
 });
 /* Al pisar Space, la inercia del coche continúa hacia delante mientras
    se bloquea la rotación de ruedas traseras y baja su adherencia lateral.
@@ -64,16 +64,25 @@ export function stepDriving(car,input,elapsed) {
   const target=handbrake?1:0;
   car.rearGripLoss+=(target-car.rearGripLoss)*(1-Math.exp(-dt*(handbrake?9:2.7)));
   car.rearGripLoss=clamp(car.rearGripLoss,0,1);
+  // El modo dinámico solo arranca al perder agarre trasero. En una
+  // conducción normal la cinemática V1 se mantiene sin variación.
+  if(car.rearGripLoss>.012)car.driftActive=true;
   const v=car.speed;
   const idealYaw=v/VEHICLE.wheelbase*Math.tan(car.steer);
 
-  if(Math.abs(v)<2.5) {
-    // Sin impulso no hay giro brusco del coche al accionar el freno.
+  if(v<2.5) {
+    // Sin velocidad hacia delante no hay derrape ni giro espontáneo;
+    // marcha atrás sigue usando la dirección cinemática habitual.
     car.yawRate+=(idealYaw-car.yawRate)*(1-Math.exp(-dt*5.5));
+    car.slip*=Math.exp(-dt*5.5);
+    if(!handbrake)car.driftActive=false;
+  } else if(!car.driftActive) {
+    car.yawRate=idealYaw;
     car.slip*=Math.exp(-dt*5.5);
   } else if(car.rearGripLoss<.015 && Math.abs(car.slip)<.11 &&
             Math.abs(car.yawRate-idealYaw)<.11) {
-    // Antes de entrar en derrape se conserva la conducción anterior.
+    // Recuperación terminada: volver al comportamiento validado sin salto.
+    car.driftActive=false;
     car.yawRate=idealYaw;
     car.slip*=Math.exp(-dt*5.5);
   } else {
