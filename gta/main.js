@@ -1,8 +1,8 @@
-import {createWorld} from './world.js?v=10';
-import {Game, readSave} from './game.js?v=19';
+import {createWorld} from './world.js?v=11';
+import {Game, readSave} from './game.js?v=20';
 import {mountLayerPanel} from './layers.js?v=7';
 import {mountMapEditor} from './map-editor.js?v=4';
-import {mountTeleport} from './teleport.js?v=1';
+import {mountTeleport} from './teleport.js?v=2';
 import {createActor} from './actor.js?v=7';
 import {mountDriveHud} from './hud.js?v=4';
 import {OcToSGamepadController,mountGamepadSettings} from '../shared/gamepad-controller.js?v=3';
@@ -137,12 +137,12 @@ function chooseLocation(lat,lon,place = 'Punto seleccionado', recenter = false) 
   if (selectionMarker) selectionMarker.setLngLat([lon,lat]);
   if (recenter && world) world.map.flyTo({center:[lon,lat],zoom:Math.max(world.map.getZoom(),13),pitch:0,essential:true});
 }
-function teleport(lat,lon,place) {
+function teleport(lat,lon,place,options) {
   try {
     if (!isValidCoordinate(lat,lon)) throw new Error('Coordenadas fuera del rango permitido.');
     if (!game) chooseLocation(lat,lon,place,true);
     else {
-      game.teleport(lat,lon,place);
+      game.teleport(lat,lon,place,options);
       $('latitude').value = String(lat);
       $('longitude').value = String(lon);
     }
