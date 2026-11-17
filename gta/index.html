@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E0E10">
+<meta name="description" content="OcToS GTA V1 · Exploración 3D jugable de ubicaciones geográficas reales.">
+<title>OcToS GTA · V1</title>
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="./style.css?v=1">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
+<script src="../shared/nav.js?v=20261117-gta" defer></script>
+<script type="module" src="./main.js?v=1"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="edition"><span class="version">V1.0</span><span class="subtitle">MUNDO GEOGRÁFICO · EXPLORACIÓN</span></div>
+  <div class="header-buttons">
+    <button type="button" id="help-button" title="Controles de juego">Controles</button>
+    <button type="button" id="settings-button" aria-expanded="false" aria-controls="settings-panel">Ajustes</button>
+  </div>
+</header>
+<main id="stage">
+  <div id="map" role="application" aria-label="Escenario geográfico en tres dimensiones"></div>
+  <div class="crosshair" aria-hidden="true"></div>
+  <div class="location-chip" id="place-name">Barcelona · España</div>
+  <section id="game-hud" aria-label="Datos de juego">
+    <div class="hud-title">OcToS <strong>GTA</strong> <span>01</span></div>
+    <div class="hud-row"><span>ESTADO</span><strong id="mode-label">A pie</strong></div>
+    <div class="hud-row"><span>VELOCIDAD</span><strong><span id="speed">0</span> km/h</strong></div>
+    <div class="hud-row"><span>RUMBO</span><strong id="heading">000°</strong></div>
+    <div class="hud-row"><span>POSICIÓN</span><strong id="coordinates">41.38740, 2.17010</strong></div>
+    <div class="hud-row"><span>ALTURA MDT</span><strong id="altitude">—</strong></div>
+  </section>
+  <div id="status" class="status" role="status" aria-live="polite">Cargando cartografía…</div>
+  <div class="keys-hint">W A S D <span>·</span> Mayús correr <span>·</span> Espacio vehículo <span>·</span> V cámara</div>
+  <aside id="settings-panel" class="panel" hidden>
+    <div class="panel-head"><h2>Mundo y rendimiento</h2><button type="button" id="close-settings" aria-label="Cerrar ajustes">×</button></div>
+    <label class="field">Calidad de imagen
+      <select id="quality"><option value="low">Baja · equipos modestos</option><option value="balanced" selected>Equilibrada</option><option value="high">Alta</option></select>
+    </label>
+    <label class="check"><input type="checkbox" id="terrain" checked> Relieve 3D real</label>
+    <label class="check"><input type="checkbox" id="buildings" checked> Edificios 3D</label>
+    <label class="field">Elevaciones
+      <select id="terrain-provider"><option value="mapterhorn">Mapterhorn</option><option value="aws">Mapzen / AWS (alternativa)</option></select>
+    </label>
+    <hr>
+    <label class="field">Ubicación inicial
+      <select id="preset">
+        <option value="">Seleccionar una ciudad…</option>
+        <option value="41.3874,2.1701,Barcelona">Barcelona</option>
+        <option value="41.1189,1.2445,Tarragona">Tarragona</option>
+        <option value="40.4168,-3.7038,Madrid">Madrid</option>
+        <option value="42.5078,1.5211,Andorra la Vella">Andorra la Vella</option>
+        <option value="40.8121,0.5227,Tortosa">Tortosa</option>
+        <option value="40.8848,0.8049,l'Ametlla de Mar">l'Ametlla de Mar</option>
+      </select>
+    </label>
+    <div class="coordinate-fields"><label class="field">Latitud<input type="number" id="latitude" min="-85" max="85" step="any" value="41.3874"></label><label class="field">Longitud<input type="number" id="longitude" min="-180" max="180" step="any" value="2.1701"></label></div>
+    <button type="button" class="action" id="go-to">Ir a coordenadas</button>
+    <button type="button" class="action secondary" id="save-position">Guardar posición</button>
+    <p class="panel-foot">La circulación es libre. La V1 no incluye colisiones con edificios, tráfico ni misiones. Las ubicaciones y las alturas proceden de fuentes externas.</p>
+  </aside>
+  <section id="welcome" class="welcome" aria-labelledby="welcome-title">
+    <div class="welcome-card">
+      <p class="eyebrow">OcToS 3D STUDIO · V1</p>
+      <h1 id="welcome-title">OcToS <span>GTA</span></h1>
+      <p>Mundo abierto sobre cartografía y relieve reales. Explora a pie o conduce un vehículo básico.</p>
+      <p class="instructions">W / S avanzar y retroceder · A / D moverse o girar · Q / E rotar a pie · Mayús correr · Espacio entrar o salir del vehículo · V cambiar cámara.</p>
+      <button type="button" id="play" class="play" disabled>Cargando escenario…</button>
+      <p id="welcome-error" class="welcome-error" role="alert"></p>
+    </div>
+  </section>
+  <dialog id="help-dialog" class="help-dialog">
+    <h2>Controles · OcToS GTA V1</h2>
+    <p><strong>A pie:</strong> W/S avanzar o retroceder, A/D desplazamiento lateral, Q/E cambiar rumbo, Mayús correr.</p>
+    <p><strong>Vehículo:</strong> W acelerar, S frenar y marcha atrás, A/D girar, Espacio subir o bajar.</p>
+    <p><strong>Cámara:</strong> V alterna seguimiento y vista cenital. Rueda del ratón acerca o aleja la escena.</p>
+    <p><strong>Entorno:</strong> relieve y edificios procedentes de datos geográficos reales; el vehículo y el personaje son modelos simplificados. Sin colisiones ni reglas de circulación en V1.</p>
+    <button type="button" id="close-help" class="action">Cerrar</button>
+  </dialog>
+</main>
+<footer class="credits">© OcToS 3D Studio · Geodatos: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a> · <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> · <a href="https://mapterhorn.com/" target="_blank" rel="noopener">Mapterhorn</a> · <a href="https://www.mapzen.com/" target="_blank" rel="noopener">Mapzen</a></footer>
+<noscript>Esta aplicación requiere JavaScript y un navegador compatible con WebGL.</noscript>
+</body>
+</html>
