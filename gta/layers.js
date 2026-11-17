@@ -1,7 +1,7 @@
 /* GTA · Panel temporal de comparación de capas aprobadas (sin cambiar el estilo base). */
 const PREFS_KEY = 'octos-gta-layers-v1';
 const DEFAULTS = Object.freeze({
-  roads: true, buildings: true, terrain: true, dem: 'mapterhorn',
+  roads: true, water: true, green: true, poi: true, buildings: true, terrain: true, dem: 'mapterhorn',
   labels: false, pnoa: false, pnoaOpacity: 100, lidar: false, lidarOpacity: 15
 });
 const PNOA = 'https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg';
@@ -12,7 +12,7 @@ function loadPreferences() {
     const raw = JSON.parse(localStorage.getItem(PREFS_KEY) || 'null');
     if (!raw || typeof raw !== 'object') return {...DEFAULTS};
     const saved = {...DEFAULTS};
-    for (const name of ['roads','buildings','terrain','labels','pnoa','lidar']) {
+    for (const name of ['roads','water','green','poi','buildings','terrain','labels','pnoa','lidar']) {
       if (typeof raw[name] === 'boolean') saved[name] = raw[name];
     }
     if (raw.dem === 'mapterhorn' || raw.dem === 'aws') saved.dem = raw.dem;
@@ -37,6 +37,12 @@ export function mountLayerPanel(world, {report, setSettings}) {
     /^(highway_(?!name)|road_(?!oneway))/.test(layer.id) &&
     ['line','fill'].includes(layer.type)
   ).map(layer => layer.id);
+  const group = (pattern, types) => map.getStyle().layers.filter(layer =>
+    types.includes(layer.type) && pattern.test(layer.id)
+  ).map(layer => layer.id);
+  const waterLayers = group(/water|river|lake|canal|ocean|stream/i,['fill','line']);
+  const greenLayers = group(/park|forest|grass|landcover|wood|vegetation|green/i,['fill','line']);
+  const poiLayers = group(/poi|landmark|transit_station|airport_label/i,['symbol']);
   const labels = ['highway_name_other','highway_name_motorway'];
   let location = null;
 
@@ -52,6 +58,11 @@ export function mountLayerPanel(world, {report, setSettings}) {
   }
   function applyLabels() {
     for (const id of labels) visible(id,prefs.labels);
+  }
+  function applyGroups() {
+    for (const id of waterLayers) visible(id,prefs.water);
+    for (const id of greenLayers) visible(id,prefs.green);
+    for (const id of poiLayers) visible(id,prefs.poi);
   }
   function addRaster(sourceId,layerId,tiles,opacity,attribution) {
     if (!map.getSource(sourceId)) {
@@ -87,7 +98,7 @@ export function mountLayerPanel(world, {report, setSettings}) {
     }
   }
   function render() {
-    for (const name of ['roads','buildings','terrain','labels','pnoa','lidar'])
+    for (const name of ['roads','water','green','poi','buildings','terrain','labels','pnoa','lidar'])
       get(name).checked = prefs[name];
     get('dem').value = prefs.dem;
     get('pnoa-opacity').value = String(prefs.pnoaOpacity);
@@ -107,16 +118,18 @@ export function mountLayerPanel(world, {report, setSettings}) {
   function apply() {
     applyRoads();
     applyLabels();
+    applyGroups();
     world.updateBuildings(prefs.buildings);
     world.updateTerrain(prefs.terrain,prefs.dem);
     applyRasters();
     render();
   }
 
-  for (const name of ['roads','buildings','terrain','labels','pnoa','lidar']) {
+  for (const name of ['roads','water','green','poi','buildings','terrain','labels','pnoa','lidar']) {
     get(name).addEventListener('change',event => {
       prefs[name] = Boolean(event.target.checked);
       if (name === 'roads') applyRoads();
+      else if (['water','green','poi'].includes(name)) applyGroups();
       else if (name === 'labels') applyLabels();
       else if (name === 'buildings') world.updateBuildings(prefs.buildings);
       else if (name === 'terrain') world.updateTerrain(prefs.terrain,prefs.dem);
