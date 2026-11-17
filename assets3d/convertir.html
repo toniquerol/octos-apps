@@ -105,7 +105,8 @@ const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(42,1,.001,50000
 controls.enableDamping=true;scene.add(new THREE.HemisphereLight(0xffffff,0x445268,2.6));
 const key=new THREE.DirectionalLight(0xffffff,3.2);key.position.set(5,9,7);scene.add(key);
 const fill=new THREE.DirectionalLight(0x8ca9ff,1.4);fill.position.set(-6,2,-4);scene.add(fill);
-let current=null,loader=null,source=null,sourceName='',sourceId=null,converted=null,resultGLB=null,working=false;
+let current=null,loader=null,source=null,sourceName='',sourceId=null,converted=null,resultGLB=null,packedData=null,convertedName='',working=false,mixer=null;
+const clock=new THREE.Clock();
 let triangles=0,meshes=0;
 const DB_NAME='octos-3d-assets-v1',STORE='models';
 const fmt=n=>(n/1048576).toLocaleString('es-ES',{maximumFractionDigits:2})+' MB';
@@ -117,9 +118,9 @@ function setBusy(v){working=v;$('open').disabled=v;$('convert').disabled=v||!sou
 function validate(buffer){const d=new DataView(buffer);if(buffer.byteLength<12||d.getUint32(0,true)!==0x46546c67||d.getUint32(4,true)!==2||d.getUint32(8,true)!==buffer.byteLength)throw Error('Se necesita un GLB 2.0 completo.');}
 function resize(){const w=stage.clientWidth,h=stage.clientHeight;if(w>0&&h>0){renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}}
 new ResizeObserver(resize).observe(stage);resize();
-function fit(){if(!current)return;const b=new THREE.Box3().setFromObject(current),size=b.getSize(new THREE.Vector3()),center=b.getCenter(new THREE.Vector3());const dist=Math.max(size.length(),.1)*1.15;controls.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(dist*.8,dist*.5,dist));camera.near=Math.max(dist/10000,.001);camera.far=Math.max(dist*100,500);camera.updateProjectionMatrix();controls.update();}
+function fit(){if(!current)return;const b=new THREE.Box3().setFromObject(current);if(b.isEmpty())return;const size=b.getSize(new THREE.Vector3()),center=b.getCenter(new THREE.Vector3());const dist=Math.max(size.length(),.1)*1.15;controls.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(dist*.8,dist*.5,dist));camera.near=Math.max(dist/10000,.001);camera.far=Math.max(dist*100,500);camera.updateProjectionMatrix();controls.update();}
 $('fit').addEventListener('click',fit);
-function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera);}loop();
+function loop(){requestAnimationFrame(loop);if(mixer)mixer.update(Math.min(clock.getDelta(),.08));else clock.getDelta();controls.update();renderer.render(scene,camera);}loop();
 async function getLoader(){
  if(loader)return loader;
  loader=new GLTFLoader();
@@ -132,7 +133,7 @@ async function preview(file){
  const gltf=await (await getLoader()).parseAsync(data,'');
  if(!gltf.scene)throw Error('El GLB no contiene una escena visible.');
  if(current){scene.remove(current);current.traverse(o=>{o.geometry?.dispose?.();for(const m of (Array.isArray(o.material)?o.material:[o.material]).filter(Boolean))m.dispose?.();});}
- current=gltf.scene;scene.add(current);fit();
+ current=gltf.scene;scene.add(current);mixer=null;if(gltf.animations.length){mixer=new THREE.AnimationMixer(current);for(const clip of gltf.animations)mixer.clipAction(clip).play();}fit();
  triangles=0;meshes=0;
  current.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){meshes++;const g=o.geometry;if(g?.attributes?.position)triangles+=Math.floor((g.index?.count||g.attributes.position.count)/3);}});
  $('meshInfo').textContent=meshes.toLocaleString('es-ES')+' / '+triangles.toLocaleString('es-ES');
@@ -146,7 +147,7 @@ async function selectFile(file,id=null,tags=[]){
   await preview(file);source=file;sourceId=id;sourceName=file.name.replace(/\.glb$/i,'');
   $('modelName').value=sourceName;$('modelTags').value=(tags||[]).join(', ');
   $('inputSize').textContent=fmt(file.size);$('outputSize').textContent='—';
-  converted=null;resultGLB=null;
+  converted=null;resultGLB=null;packedData=null;
   announce('Archivo cargado. Comprueba la vista 3D y pulsa Convertir.');
  }catch(e){announce('No se pudo abrir: '+e.message,true);}
  finally{setBusy(false);}
@@ -173,7 +174,8 @@ function base64(bytes){let s='';for(let i=0;i<bytes.length;i+=16384)s+=String.fr
 async function pack(bytes){
  if(!('CompressionStream' in window))return {data:bytes,gzip:false};
  const stream=new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'));
- return {data:new Uint8Array(await new Response(stream).arrayBuffer()),gzip:true};
+ const zipped=new Uint8Array(await new Response(stream).arrayBuffer());
+ return zipped.length<bytes.length?{data:zipped,gzip:true}:{data:bytes,gzip:false};
 }
 async function processGLB(bytes){
  if(!$('clean').checked&&!$('exterior').checked)return bytes;
@@ -214,7 +216,7 @@ async function convert(){
   const original=new Uint8Array(await source.arrayBuffer());
   const data=await processGLB(original);
   validate(data.buffer);
-  const packed=await pack(data);
+  const packed=await pack(data);packedData=packed;convertedName=name;
   resultGLB=new Blob([data],{type:'model/gltf-binary'});
   converted=buildHTML(packed.data,name,packed.gzip);
   $('outputSize').textContent=fmt(converted.size)+' · '+Math.round((1-converted.size/source.size)*100)+'%';
@@ -224,8 +226,18 @@ async function convert(){
  finally{setBusy(false);}
 }
 $('convert').addEventListener('click',convert);
+for(const id of ['clean','exterior'])$(id).addEventListener('change',()=>{
+ if(converted){converted=null;resultGLB=null;packedData=null;$('outputSize').textContent='—';setBusy(false);announce('Opciones modificadas. Pulsa Convertir para generar un nuevo HTML.');}
+});
+function currentHTML(){
+ if(converted&&packedData){
+  const name=$('modelName').value.trim()||sourceName||'Modelo';
+  if(name!==convertedName){converted=buildHTML(packedData.data,name,packedData.gzip);convertedName=name;$('outputSize').textContent=fmt(converted.size);}
+ }
+ return converted;
+}
 function download(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);}
-$('download').addEventListener('click',()=>{if(converted)download(converted,safeName($('modelName').value||sourceName)+'.html');});
+$('download').addEventListener('click',()=>{const html=currentHTML();if(html)download(html,safeName($('modelName').value||sourceName)+'.html');});
 function thumbnail(){
  if(!current)return null;
  renderer.render(scene,camera);
@@ -241,6 +253,7 @@ async function save(){
  setBusy(true);announce('Guardando modelo y última vista…');
  try{
   const previous=sourceId?await getOne(sourceId):null,now=Date.now();
+  currentHTML();
   const name=$('modelName').value.trim()||sourceName||'Modelo';
   const tags=[...new Set($('modelTags').value.split(',').map(s=>s.trim()).filter(Boolean))].slice(0,30);
   const item={...previous,id:previous?.id||uid(),name,tags,filename:source?.name||name+'.glb',createdAt:previous?.createdAt||now,updatedAt:now,sourceKind:'glb-html',file:resultGLB,html:converted,thumbnail:thumbnail()||previous?.thumbnail||null,triangles,meshes};
