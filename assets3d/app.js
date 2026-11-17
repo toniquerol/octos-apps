@@ -48,6 +48,7 @@ function applyTransform(value){
 }
 function markTransform(){
  if(!shown||!active?.file)return;
+ const scale=cleanTransform({scale:shown.scale.toArray()}).scale;shown.scale.set(...scale);
  active.transform=readTransform();active.html=null;dirty=true;
  syncTransformInputs();positionFloor();
  status('Modelo ajustado. Guarda el objeto para conservar los cambios.');
@@ -138,6 +139,7 @@ function updateButtons(){
  $('fit').disabled=busy||!hasGeometry;
  $('rotate').disabled=busy||!hasGeometry;
  for(const id of ['modeMove','modeRotate','modeScale','resetTransform',...Object.values(transformInputs).flat()])$(id).disabled=busy||!hasGeometry;
+ transformTool.enabled=!busy&&hasGeometry;
  transformHelper.visible=!busy&&!!shown&&hasGeometry;
 }
 async function db(){
@@ -236,7 +238,7 @@ async function preview(blob){
 async function previewHTML(blob){
  const html=await blob.text();
  if(!/<!doctype\s+html|<html\b|<head\b|<body\b|<canvas\b|<script\b/i.test(html))throw new Error('El archivo no contiene HTML reconocible.');
- clearModel();
+ clearModel();syncTransformInputs();
  $('htmlViewer').srcdoc=html;
  $('htmlViewer').hidden=false;
  $('canvas').hidden=true;
