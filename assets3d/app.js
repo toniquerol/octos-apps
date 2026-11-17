@@ -221,7 +221,8 @@ function drawLibrary(){
  $('count').textContent=integer(models.length)+' modelos';
  if(!list.length){const p=document.createElement('p');p.className='nothing';p.textContent='No hay modelos para este filtro.';root.append(p);return}
  for(const model of list.sort((a,b)=>b.updated-a.updated)){
-  const button=document.createElement('button');button.className='asset'+(active&&active.id===model.id?' active':'');
+  const card=document.createElement('div');card.className='asset'+(active&&active.id===model.id?' active':'');
+  const button=document.createElement('button');button.type='button';button.className='asset-open';button.setAttribute('aria-label','Abrir '+model.name);
   const img=document.createElement('img');img.className='thumb';img.alt='';img.src=model.thumbnail||'./icon.svg';
   const body=document.createElement('span'),title=document.createElement('span'),sub=document.createElement('span'),chips=document.createElement('span');
   title.className='asset-title';title.textContent=model.name;
@@ -230,8 +231,45 @@ function drawLibrary(){
   (model.tags||[]).slice(0,3).forEach(label=>{const c=document.createElement('span');c.className='chip';c.textContent=label;chips.append(c)});
   body.append(title,sub,chips);button.append(img,body);
   button.addEventListener('click',()=>choose(model));
-  root.append(button);
+  const actions=document.createElement('div');actions.className='asset-actions';
+  const rename=document.createElement('button');rename.className='asset-action';rename.type='button';rename.textContent='✎';rename.title='Renombrar';rename.setAttribute('aria-label','Renombrar '+model.name);
+  rename.addEventListener('click',()=>renameLibraryModel(model));
+  const removeCard=document.createElement('button');removeCard.className='asset-action danger';removeCard.type='button';removeCard.textContent='×';removeCard.title='Eliminar';removeCard.setAttribute('aria-label','Eliminar '+model.name);
+  removeCard.addEventListener('click',()=>removeLibraryModel(model));
+  actions.append(rename,removeCard);card.append(button,actions);root.append(card);
  }
+}
+async function renameLibraryModel(model){
+ if(busy)return;
+ const name=prompt('Nuevo nombre para "'+model.name+'"',model.name);
+ if(name===null)return;
+ const cleaned=name.trim().slice(0,120);
+ if(!cleaned||cleaned===model.name)return;
+ setBusy(true);
+ try{
+  const record=await getOne(model.id);
+  if(!record)throw new Error('No se encontró el objeto.');
+  record.name=cleaned;record.updatedAt=Date.now();
+  await put(record);
+  if(active?.id===model.id){active.name=cleaned;$('modelName').value=cleaned;$('stageTitle').textContent=cleaned;}
+  await refresh();status('Modelo renombrado: '+cleaned);
+ }catch(e){status('Error al cambiar el nombre: '+e.message,true)}
+ finally{setBusy(false)}
+}
+async function removeLibraryModel(model){
+ if(busy)return;
+ if(!confirm('¿Eliminar "'+model.name+'" de la biblioteca local?'))return;
+ setBusy(true);
+ try{
+  await del(model.id);
+  if(active?.id===model.id){
+   active=null;dirty=false;clearModel();clearHTML();$('emptyStage').hidden=false;
+   $('triangles').textContent='—';$('meshes').textContent='—';$('size').textContent='—';
+   syncInspector();
+  }
+  await refresh();status('Modelo eliminado de la biblioteca.');
+ }catch(e){status('Error al eliminar: '+e.message,true)}
+ finally{setBusy(false)}
 }
 async function refresh(){
  const all=await getAll();
@@ -347,8 +385,17 @@ function download(blob,name){
  setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 async function capture(){
+ if(!shown||$('canvas').hidden)return null;
  await new Promise(resolve=>requestAnimationFrame(resolve));
- try{return canvas.toDataURL('image/webp',.78)}catch(e){return null}
+ try{
+  renderer.render(scene,camera);
+  const thumb=document.createElement('canvas');thumb.width=320;thumb.height=200;
+  const ctx=thumb.getContext('2d');if(!ctx)return null;
+  ctx.fillStyle='#19212b';ctx.fillRect(0,0,320,200);
+  const factor=Math.min(320/canvas.width,200/canvas.height),w=canvas.width*factor,h=canvas.height*factor;
+  ctx.drawImage(canvas,(320-w)/2,(200-h)/2,w,h);
+  return thumb.toDataURL('image/webp',.78);
+ }catch(e){return null}
 }
 async function save(){
  if(!active)return;
@@ -357,7 +404,7 @@ async function save(){
   const html=active.html || (active.file?await makeHTML(active.file,active.name):null);
   if(!html)throw new Error('El objeto no contiene HTML para guardar.');
   const record={...active,id:active.id||uid(),name:$('modelName').value.trim()||active.name,tags:tagsFromInput(),updatedAt:Date.now(),html};
-  if(!record.thumbnail && record.file)record.thumbnail=await capture();
+  if(record.file)record.thumbnail=await capture()||record.thumbnail;
   await put(record);active=record;dirty=false;
   await refresh();syncInspector();
   status('Objeto guardado en la biblioteca: '+record.name+'. HTML independiente generado.');
@@ -409,15 +456,7 @@ async function optimize(){
  finally{setBusy(false);updateButtons()}
 }
 async function remove(){
- if(!active||!active.id)return;
- if(!confirm('¿Eliminar "'+active.name+'" de la biblioteca local?'))return;
- setBusy(true);
- try{
-  await del(active.id);active=null;clearModel();clearHTML();$('emptyStage').hidden=false;
-  $('triangles').textContent='—';$('meshes').textContent='—';$('size').textContent='—';
-  syncInspector();await refresh();status('Modelo eliminado de la biblioteca.');
- }catch(e){status('Error al eliminar: '+e.message,true)}
- finally{setBusy(false);updateButtons()}
+ if(active?.id)await removeLibraryModel({id:active.id,name:active.name});
 }
 async function backup(){
  setBusy(true);
