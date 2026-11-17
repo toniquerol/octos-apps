@@ -199,6 +199,8 @@ async function choose(model){
  finally{setBusy(false);updateButtons()}
 }
 function syncInspector(){
+  const convertLink=document.querySelector('#octos-app-switcher a[href*="/assets3d/convertir.html"]');
+  if(convertLink)convertLink.href='./convertir.html'+(active?.id?'?id='+encodeURIComponent(active.id):'');
  $('modelName').value=active?active.name:'';
  $('modelTags').value=active?(active.tags||[]).join(', '):'';
  $('stageTitle').textContent=active?active.name:'Visor 3D · Sin modelo';
