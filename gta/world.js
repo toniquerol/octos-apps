@@ -1,0 +1,128 @@
+/* OcToS GTA V1 · Escenario geográfico independiente de OcToS Drive. */
+const MAP_STYLE = 'https://tiles.openfreemap.org/styles/dark';
+const TERRAIN = {
+  mapterhorn: {
+    tiles: ['https://tiles.mapterhorn.com/{z}/{x}/{y}.webp'],
+    tileSize: 512, maxzoom: 13, encoding: 'terrarium',
+    attribution: 'Elevaciones: Mapterhorn'
+  },
+  aws: {
+    tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+    tileSize: 256, maxzoom: 12, encoding: 'terrarium',
+    attribution: 'Elevaciones: Mapzen / AWS Open Data'
+  }
+};
+
+export async function createWorld(start, report) {
+  const lib = window.maplibregl;
+  if (!lib || !lib.supported()) throw new Error('WebGL no está disponible o no se ha cargado MapLibre.');
+  const map = new lib.Map({
+    container: 'map', style: MAP_STYLE,
+    center: [start.lon, start.lat], zoom: 17.2, pitch: 68, bearing: 0,
+    maxPitch: 80, minZoom: 4, maxZoom: 19,
+    antialias: false, dragPan: false, dragRotate: false,
+    touchZoomRotate: false, attributionControl: false,
+    fadeDuration: 0, renderWorldCopies: false
+  });
+  map.addControl(new lib.AttributionControl({compact: true}), 'bottom-right');
+  let terrainActive = false;
+  let buildingsActive = false;
+  let provider = 'mapterhorn';
+  let buildingsId = null;
+  let tileErrorReported = false;
+
+  map.on('error', event => {
+    const message = String(event.error?.message || '');
+    if (!tileErrorReported && /tile|terrain|fetch|network|style|failed/i.test(message)) {
+      tileErrorReported = true;
+      report('Alguna tesela externa no se ha descargado. Puede faltar relieve o cartografía.', 'warn');
+    }
+    console.warn('OcToS GTA · mapa:', event.error || event);
+  });
+
+  await new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('No se ha podido cargar OpenFreeMap. Revisa la conexión.')), 20000);
+    map.once('load', () => { clearTimeout(timeout); resolve(); });
+    map.once('error', event => {
+      const message = String(event.error?.message || '');
+      if (/style.*(load|fetch)|Failed to fetch/i.test(message)) {
+        clearTimeout(timeout);
+        reject(new Error('Error al cargar el estilo geográfico: ' + message));
+      }
+    });
+  });
+
+  function updateBuildings(visible) {
+    buildingsActive = Boolean(visible);
+    if (buildingsId && map.getLayer(buildingsId)) {
+      map.setLayoutProperty(buildingsId, 'visibility', buildingsActive ? 'visible' : 'none');
+      return true;
+    }
+    if (!buildingsActive) return false;
+    const sources = map.getStyle().sources;
+    const vectorId = Object.keys(sources).find(id => sources[id].type === 'vector');
+    if (!vectorId) {
+      report('La cartografía cargada no contiene una fuente vectorial de edificios.', 'warn');
+      return false;
+    }
+    const firstSymbol = map.getStyle().layers.find(layer => layer.type === 'symbol');
+    buildingsId = 'octos-gta-buildings';
+    try {
+      map.addLayer({
+        id: buildingsId, type: 'fill-extrusion', source: vectorId, 'source-layer': 'building',
+        minzoom: 14, layout: {visibility: 'visible'},
+        paint: {
+          'fill-extrusion-color': '#707783',
+          'fill-extrusion-height': [
+            'max', 2,
+            ['to-number', ['get', 'render_height'], ['*', ['to-number', ['get', 'building:levels'], 3], 3]]
+          ],
+          'fill-extrusion-base': ['to-number', ['get', 'render_min_height'], 0],
+          'fill-extrusion-opacity': 0.84
+        }
+      }, firstSymbol?.id);
+      return true;
+    } catch (error) {
+      buildingsId = null;
+      report('Edificios 3D no disponibles en este estilo cartográfico.', 'warn');
+      console.warn('OcToS GTA · edificios:', error);
+      return false;
+    }
+  }
+
+  function updateTerrain(enabled, nextProvider = provider) {
+    provider = TERRAIN[nextProvider] ? nextProvider : 'mapterhorn';
+    terrainActive = Boolean(enabled);
+    try {
+      map.setTerrain(null);
+      if (map.getSource('octos-gta-terrain')) map.removeSource('octos-gta-terrain');
+      if (terrainActive) {
+        map.addSource('octos-gta-terrain', {type: 'raster-dem', ...TERRAIN[provider]});
+        map.setTerrain({source: 'octos-gta-terrain', exaggeration: 1});
+      }
+      return true;
+    } catch (error) {
+      terrainActive = false;
+      report('Relieve no disponible; el mundo continúa en mapa 3D sin elevaciones.', 'warn');
+      console.warn('OcToS GTA · relieve:', error);
+      return false;
+    }
+  }
+
+  function elevation(lon, lat) {
+    if (!terrainActive || typeof map.queryTerrainElevation !== 'function') return null;
+    try {
+      const value = map.queryTerrainElevation([lon, lat]);
+      return Number.isFinite(value) ? value : null;
+    } catch { return null; }
+  }
+
+  function quality(level) {
+    const low = level === 'low';
+    map.setMaxPitch(low ? 70 : 80);
+    map.setFadeDuration?.(0);
+    return low ? 20 : level === 'high' ? 45 : 30;
+  }
+
+  return {map, updateBuildings, updateTerrain, elevation, quality};
+}
