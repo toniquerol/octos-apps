@@ -2,6 +2,7 @@
 const PREFS_KEY = 'octos-gta-layers-v1';
 const DEFAULTS = Object.freeze({
   roads: true, water: true, green: true, poi: true, buildings: true, terrain: true, dem: 'mapterhorn',
+  roadWidth: 100, roadColor: '#ff6a1a', roadTint: false,
   labels: false, pnoa: false, pnoaOpacity: 100, lidar: false, lidarOpacity: 15
 });
 const PNOA = 'https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg';
@@ -16,6 +17,9 @@ function loadPreferences() {
       if (typeof raw[name] === 'boolean') saved[name] = raw[name];
     }
     if (raw.dem === 'mapterhorn' || raw.dem === 'aws') saved.dem = raw.dem;
+    if (Number.isFinite(raw.roadWidth)) saved.roadWidth = Math.min(450,Math.max(50,raw.roadWidth));
+    if (typeof raw.roadColor === 'string' && /^#[0-9a-f]{6}$/i.test(raw.roadColor)) saved.roadColor=raw.roadColor;
+    if (typeof raw.roadTint === 'boolean') saved.roadTint=raw.roadTint;
     for (const name of ['pnoaOpacity','lidarOpacity']) {
       if (Number.isFinite(raw[name])) saved[name] = Math.min(100,Math.max(0,raw[name]));
     }
@@ -33,16 +37,27 @@ export function mountLayerPanel(world, {report, setSettings}) {
   const map = world.map;
   const get = name => document.getElementById('layer-' + name);
   const prefs = loadPreferences();
-  const existingRoads = map.getStyle().layers.filter(layer =>
-    /^(highway_(?!name)|road_(?!oneway))/.test(layer.id) &&
-    ['line','fill'].includes(layer.type)
-  ).map(layer => layer.id);
-  const group = (pattern, types) => map.getStyle().layers.filter(layer =>
+  let existingRoads=[], waterLayers=[], greenLayers=[], poiLayers=[];
+  let roadPaints=new Map();
+  const group = (pattern,types) => map.getStyle().layers.filter(layer =>
     types.includes(layer.type) && pattern.test(layer.id)
-  ).map(layer => layer.id);
-  const waterLayers = group(/water|river|lake|canal|ocean|stream/i,['fill','line']);
-  const greenLayers = group(/park|forest|grass|landcover|wood|vegetation|green/i,['fill','line']);
-  const poiLayers = group(/poi|landmark|transit_station|airport_label/i,['symbol']);
+  ).map(layer=>layer.id);
+  function readStyleLayers() {
+    existingRoads=group(/^(highway_(?!name)|road_(?!oneway))/i,['line','fill']);
+    waterLayers=group(/water|river|lake|canal|ocean|stream/i,['fill','line']);
+    greenLayers=group(/park|forest|grass|landcover|wood|vegetation|green/i,['fill','line']);
+    poiLayers=group(/poi|landmark|transit_station|airport_label/i,['symbol']);
+    roadPaints=new Map();
+    for(const id of existingRoads) {
+      const layer=map.getLayer(id);
+      if(!layer || layer.type!=='line')continue;
+      roadPaints.set(id,{
+        width:map.getPaintProperty(id,'line-width'),
+        color:map.getPaintProperty(id,'line-color')
+      });
+    }
+  }
+  readStyleLayers();
   const labels = ['highway_name_other','highway_name_motorway'];
   let location = null;
 
@@ -55,6 +70,24 @@ export function mountLayerPanel(world, {report, setSettings}) {
   }
   function applyRoads() {
     for (const id of existingRoads) visible(id,prefs.roads);
+  }
+  function applyRoadStyle() {
+    const factor=prefs.roadWidth/100;
+    for(const [id,original] of roadPaints) {
+      if(!map.getLayer(id))continue;
+      try {
+        if(original.width !== undefined) {
+          const nextWidth=factor===1 ? original.width :
+            ['*',factor,original.width];
+          map.setPaintProperty(id,'line-width',nextWidth);
+        }
+        if(original.color !== undefined) {
+          map.setPaintProperty(id,'line-color',prefs.roadTint?prefs.roadColor:original.color);
+        }
+      } catch(error) {
+        console.warn('OcToS GTA · aspecto carretera:',id,error);
+      }
+    }
   }
   function applyLabels() {
     for (const id of labels) visible(id,prefs.labels);
@@ -101,6 +134,10 @@ export function mountLayerPanel(world, {report, setSettings}) {
     for (const name of ['roads','water','green','poi','buildings','terrain','labels','pnoa','lidar'])
       get(name).checked = prefs[name];
     get('dem').value = prefs.dem;
+    get('road-width').value=String(prefs.roadWidth);
+    get('road-width-value').textContent=prefs.roadWidth+'%';
+    get('road-color').value=prefs.roadColor;
+    get('road-tint').checked=prefs.roadTint;
     get('pnoa-opacity').value = String(prefs.pnoaOpacity);
     get('lidar-opacity').value = String(prefs.lidarOpacity);
     get('pnoa-percent').textContent = prefs.pnoaOpacity + '%';
@@ -117,6 +154,7 @@ export function mountLayerPanel(world, {report, setSettings}) {
   }
   function apply() {
     applyRoads();
+    applyRoadStyle();
     applyLabels();
     applyGroups();
     world.updateBuildings(prefs.buildings);
@@ -138,6 +176,20 @@ export function mountLayerPanel(world, {report, setSettings}) {
       save();
     });
   }
+  get('road-width').addEventListener('input',event => {
+    prefs.roadWidth=Math.min(450,Math.max(50,Number(event.target.value)||100));
+    applyRoadStyle();render();save();
+  });
+  get('road-color').addEventListener('input',event => {
+    if(!/^#[0-9a-f]{6}$/i.test(event.target.value))return;
+    prefs.roadColor=event.target.value;
+    prefs.roadTint=true;
+    applyRoadStyle();render();save();
+  });
+  get('road-tint').addEventListener('change',event => {
+    prefs.roadTint=Boolean(event.target.checked);
+    applyRoadStyle();render();save();
+  });
   get('dem').addEventListener('change',event => {
     prefs.dem = event.target.value === 'aws' ? 'aws' : 'mapterhorn';
     if (prefs.terrain) world.updateTerrain(true,prefs.dem);
@@ -165,6 +217,10 @@ export function mountLayerPanel(world, {report, setSettings}) {
         applyRasters();
         render();
       }
+    },
+    refreshStyle() {
+      readStyleLayers();
+      apply();
     },
     getPreferences() { return {...prefs}; },
     savePreferences() { save(); },
