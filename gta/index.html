@@ -8,12 +8,12 @@
 <title>OcToS GTA · V1</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="./style.css?v=1">
+<link rel="stylesheet" href="./style.css?v=3">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="../shared/nav.js?v=20261117-gta" defer></script>
-<script type="module" src="./main.js?v=2"></script>
+<script type="module" src="./main.js?v=3"></script>
 </head>
-<body>
+<body class="selecting">
 <header class="topbar">
   <div class="edition"><span class="version">V1.0</span><span class="subtitle">MUNDO GEOGRÁFICO · EXPLORACIÓN</span></div>
   <div class="header-buttons">
@@ -22,7 +22,7 @@
   </div>
 </header>
 <main id="stage">
-  <div id="map" role="application" aria-label="Escenario geográfico en tres dimensiones"></div>
+  <div id="map" role="application" aria-label="Mapa interactivo para elegir dónde comenzar"></div>
   <div class="crosshair" aria-hidden="true"></div>
   <div class="location-chip" id="place-name">Barcelona · España</div>
   <section id="game-hud" aria-label="Datos de juego">
@@ -66,9 +66,21 @@
     <div class="welcome-card">
       <p class="eyebrow">OcToS 3D STUDIO · V1</p>
       <h1 id="welcome-title">OcToS <span>GTA</span></h1>
-      <p>Mundo abierto sobre cartografía y relieve reales. Explora a pie o conduce un vehículo básico.</p>
-      <p class="instructions">W / S avanzar y retroceder · A / D moverse o girar · Q / E rotar a pie · Mayús correr · Espacio entrar o salir del vehículo · V cambiar cámara.</p>
-      <button type="button" id="play" class="play" disabled>Cargando escenario…</button>
+      <p>Elige primero el punto del mapa donde quieres aparecer.</p>
+      <p class="instructions">Arrastra para desplazarte · Rueda para ampliar · Haz clic en el mapa para marcar la posición inicial.</p>
+      <label class="start-label" for="start-preset">Ir a una ciudad</label>
+      <select id="start-preset" class="start-preset">
+        <option value="">Mover el mapa a…</option>
+        <option value="41.3874,2.1701,Barcelona">Barcelona</option>
+        <option value="41.1189,1.2445,Tarragona">Tarragona</option>
+        <option value="40.4168,-3.7038,Madrid">Madrid</option>
+        <option value="42.5078,1.5211,Andorra la Vella">Andorra la Vella</option>
+        <option value="40.8121,0.5227,Tortosa">Tortosa</option>
+        <option value="40.8848,0.8049,l'Ametlla de Mar">l'Ametlla de Mar</option>
+      </select>
+      <div class="start-point" aria-live="polite"><span>UBICACIÓN SELECCIONADA</span><strong id="start-name">Barcelona</strong><output id="start-coordinates">41.38740, 2.17010</output></div>
+      <button type="button" class="pick-center" id="pick-center">Usar el centro visible del mapa</button>
+      <button type="button" id="play" class="play" disabled>Cargando mapa 2D…</button>
       <p id="welcome-error" class="welcome-error" role="alert"></p>
     </div>
   </section>
