@@ -1,6 +1,8 @@
-import {createWorld} from './world.js?v=5';
-import {Game, readSave} from './game.js?v=5';
-import {mountLayerPanel} from './layers.js?v=1';
+import {createWorld} from './world.js?v=6';
+import {Game, readSave} from './game.js?v=6';
+import {mountLayerPanel} from './layers.js?v=2';
+import {mountMapEditor} from './map-editor.js?v=1';
+import {mountTeleport} from './teleport.js?v=1';
 import {createActor} from './actor.js?v=2';
 
 const $ = id => document.getElementById(id);
@@ -22,7 +24,7 @@ function report(message, kind = '') {
   status.className = 'status ' + kind;
   clearTimeout(showStatusTimer);
   if (kind === 'ok') {
-    showStatusTimer = setTimeout(() => { status.textContent = 'Mundo geográfico · V1'; }, 7000);
+    showStatusTimer = setTimeout(() => { status.textContent = 'OcToS GTA · Mundo abierto'; }, 7000);
   }
 }
 function updateHud(state) {
@@ -42,7 +44,7 @@ function showPanel(visible) {
 }
 $('settings-button').addEventListener('click',() => showPanel($('settings-panel').hidden));
 $('close-settings').addEventListener('click',() => showPanel(false));
-$('help-button').addEventListener('click',() => $('help-dialog').showModal());
+$('info-button').addEventListener('click',() => $('help-dialog').showModal());
 $('close-help').addEventListener('click',() => $('help-dialog').close());
 $('daytime-controls').addEventListener('submit', event => {
   event.preventDefault();
@@ -181,6 +183,8 @@ async function launchScene() {
     actor = await createActor(world,start,report);
     game = new Game(world,updateHud,state => actor?.update(state));
     game.setQuality(quality);
+    mountMapEditor({world,game,layerControls,report});
+    mountTeleport({world,game,report,teleport});
     world.enterGame();
     game.teleport(start.lat,start.lon,start.place);
     world.setTime($('daytime-hour').value);
@@ -200,7 +204,7 @@ async function launchScene() {
     showPanel(false);
     game.start();
     play.blur();
-    report('Escenario 3D activo.','ok');
+    report('Mundo abierto activo.','ok');
   } catch (error) {
     console.error('OcToS GTA · cargar escenario:',error);
     $('welcome-error').textContent = error.message;
