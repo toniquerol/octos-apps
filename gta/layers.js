@@ -2,7 +2,7 @@
 const PREFS_KEY = 'octos-gta-layers-v1';
 const DEFAULTS = Object.freeze({
   roads: true, water: true, green: true, poi: true, buildings: true, terrain: true, dem: 'mapterhorn',
-  roadWidth: 100, roadColor: '#ff6a1a', roadTint: false,
+  roadWidthMeters: 6, roadColor: '#ff6a1a', roadTint: false,
   labels: false, pnoa: false, pnoaOpacity: 100, lidar: false, lidarOpacity: 15
 });
 const PNOA = 'https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/{z}/{x}/{-y}.jpeg';
@@ -17,7 +17,9 @@ function loadPreferences() {
       if (typeof raw[name] === 'boolean') saved[name] = raw[name];
     }
     if (raw.dem === 'mapterhorn' || raw.dem === 'aws') saved.dem = raw.dem;
-    if (Number.isFinite(raw.roadWidth)) saved.roadWidth = Math.min(450,Math.max(50,raw.roadWidth));
+    // Los porcentajes guardados en versiones anteriores no son metros.
+    if (Number.isFinite(raw.roadWidthMeters))
+      saved.roadWidthMeters = Math.min(30,Math.max(0.5,raw.roadWidthMeters));
     if (typeof raw.roadColor === 'string' && /^#[0-9a-f]{6}$/i.test(raw.roadColor)) saved.roadColor=raw.roadColor;
     if (typeof raw.roadTint === 'boolean') saved.roadTint=raw.roadTint;
     for (const name of ['pnoaOpacity','lidarOpacity']) {
@@ -71,16 +73,26 @@ export function mountLayerPanel(world, {report, setSettings}) {
   function applyRoads() {
     for (const id of existingRoads) visible(id,prefs.roads);
   }
+  // MapLibre expresa line-width en píxeles, no en metros: convertir la anchura
+  // física a píxeles según el zoom y la latitud. La interpolación exponencial
+  // (base 2) reproduce la variación de escala en Web Mercator sin ejecutar
+  // setPaintProperty al cambiar el zoom.
+  let roadWidthLatitude=null;
+  function metricLineWidth(meters,latitude) {
+    const metersPerPixelAtZoom0 =
+      156543.03392804097 * Math.max(0.087,Math.cos(latitude*Math.PI/180));
+    return ['interpolate',['exponential',2],['zoom'],
+      0,meters/metersPerPixelAtZoom0,
+      24,meters*Math.pow(2,24)/metersPerPixelAtZoom0];
+  }
   function applyRoadStyle() {
-    const factor=prefs.roadWidth/100;
+    const latitude=Number(map.getCenter()?.lat)||0;
+    roadWidthLatitude=latitude;
+    const nextWidth=metricLineWidth(prefs.roadWidthMeters,latitude);
     for(const [id,original] of roadPaints) {
       if(!map.getLayer(id))continue;
       try {
-        if(original.width !== undefined) {
-          const nextWidth=factor===1 ? original.width :
-            ['*',factor,original.width];
-          map.setPaintProperty(id,'line-width',nextWidth);
-        }
+        map.setPaintProperty(id,'line-width',nextWidth);
         if(original.color !== undefined) {
           map.setPaintProperty(id,'line-color',prefs.roadTint?prefs.roadColor:original.color);
         }
@@ -89,6 +101,13 @@ export function mountLayerPanel(world, {report, setSettings}) {
       }
     }
   }
+  // En recorridos largos actualizar el factor de latitud sin tocar el zoom.
+  map.on('moveend',()=>{
+    if(roadWidthLatitude===null)return;
+    const latitude=map.getCenter()?.lat;
+    if(Number.isFinite(latitude)&&Math.abs(latitude-roadWidthLatitude)>.5)
+      applyRoadStyle();
+  });
   function applyLabels() {
     for (const id of labels) visible(id,prefs.labels);
   }
@@ -134,8 +153,8 @@ export function mountLayerPanel(world, {report, setSettings}) {
     for (const name of ['roads','water','green','poi','buildings','terrain','labels','pnoa','lidar'])
       get(name).checked = prefs[name];
     get('dem').value = prefs.dem;
-    get('road-width').value=String(prefs.roadWidth);
-    get('road-width-value').textContent=prefs.roadWidth+'%';
+    get('road-width').value=String(prefs.roadWidthMeters);
+    get('road-width-value').textContent=prefs.roadWidthMeters+' m';
     get('road-color').value=prefs.roadColor;
     get('road-tint').checked=prefs.roadTint;
     get('pnoa-opacity').value = String(prefs.pnoaOpacity);
@@ -177,7 +196,7 @@ export function mountLayerPanel(world, {report, setSettings}) {
     });
   }
   get('road-width').addEventListener('input',event => {
-    prefs.roadWidth=Math.min(450,Math.max(50,Number(event.target.value)||100));
+    prefs.roadWidthMeters=Math.min(30,Math.max(0.5,Number(event.target.value)||6));
     applyRoadStyle();render();save();
   });
   get('road-color').addEventListener('input',event => {
