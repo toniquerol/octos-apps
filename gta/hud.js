@@ -3,7 +3,7 @@
    No se altera la física ni se extraen imágenes del videojuego de referencia. */
 const GPS_STYLE='https://tiles.openfreemap.org/styles/dark';
 const GPS_ZOOM=14.6; // Más territorio visible por delante
-const GPS_PITCH=52; // Perspectiva de navegación suave
+const GPS_PITCH=65; // Navegación inclinada; la flecha usa el mismo plano del mapa
 
 const $=id=>document.getElementById(id);
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
@@ -123,29 +123,47 @@ export function mountDriveHud({report}={}) {
   const turboNeedle=$('gta-turbo-needle');
   const turboValue=$('gta-turbo-value');
   const gps=$('gta-gps-map');
+  const pointer=document.querySelector('.gta-gps-pointer');
+  const glass=pointer?.parentElement;
   const gpsStatus=$('gta-gps-status');
   const gpsHeading=$('gta-gps-heading');
   const gpsCoords=$('gta-gps-coords');
-  let mini=null,lastGps=0,lastPos=null;
+  let mini=null,gpsMarker=null,lastGps=0,lastPos=null,lastHeading=null;
   let lastSpeed=0,lastMeasure=0,smoothedAccel=0;
   let lastRpm=0,lastTurbo=0;
   let gpsFailed=false;
-  // La posición de la flecha queda a ~63 % de la altura para enseñar el recorrido por delante.
+  // El coche aparece ligeramente por debajo del centro, dejando más mapa
+  // por delante. El marcador conserva su coordenada exacta incluso con pitch.
   const cameraPadding=()=>({top:Math.round((gps.clientHeight||176)*.24),bottom:0,left:0,right:0});
+  function trackedLocation(state) {
+    const car=state.mode==='car' && state.vehicle;
+    return car && Number.isFinite(car.lat) && Number.isFinite(car.lon) ?
+      {lat:car.lat,lon:car.lon,heading:Number.isFinite(car.heading)?car.heading:state.heading}:
+      {lat:state.lat,lon:state.lon,heading:state.heading};
+  }
 
   function initGPS(state){
     if(mini||gpsFailed||!window.maplibregl?.Map)return;
     try {
+      const location=trackedLocation(state);
       mini=new window.maplibregl.Map({
         container:gps,style:GPS_STYLE,
-        center:[state.lon,state.lat],zoom:GPS_ZOOM,bearing:state.heading||0,
-        pitch:GPS_PITCH,minZoom:13,maxZoom:18,
+        center:[location.lon,location.lat],zoom:GPS_ZOOM,bearing:location.heading||0,
+        pitch:GPS_PITCH,minZoom:13,maxZoom:18,maxPitch:75,
         interactive:false,attributionControl:false,
         antialias:false,renderWorldCopies:false,fadeDuration:0,
         scrollZoom:false,dragPan:false,dragRotate:false,
         doubleClickZoom:false,boxZoom:false,keyboard:false,
         touchZoomRotate:false
       });
+      // El marcador lo sitúa MapLibre sobre las coordenadas del vehículo,
+      // no una posición fija en pantalla. Su inclinación sigue el mapa.
+      if(pointer) {
+        gpsMarker=new window.maplibregl.Marker({
+          element:pointer,anchor:'center',
+          rotationAlignment:'viewport',pitchAlignment:'map'
+        }).setLngLat([location.lon,location.lat]).addTo(mini);
+      }
       mini.once('load',()=>{
         try{
           const layers=mini.getStyle()?.layers||[];
@@ -172,6 +190,8 @@ export function mountDriveHud({report}={}) {
         console.warn('OcToS GTA · tesela GPS:',event.error||event);
       });
     }catch(error){
+      gpsMarker?.remove();gpsMarker=null;
+      if(pointer&&glass)glass.append(pointer);
       mini?.remove?.();mini=null;gpsFailed=true;
       gpsStatus.textContent='GPS SIN MAPA';gpsStatus.hidden=false;
       console.warn('OcToS GTA · GPS:',error);
@@ -215,20 +235,32 @@ export function mountDriveHud({report}={}) {
     turboNeedle.setAttribute('transform',
       'rotate('+(216+clamp(lastTurbo/1.5,0,1)*240).toFixed(2)+' 75 75)');
     turboValue.textContent=lastTurbo.toFixed(1);
-    gpsHeading.textContent=String(Math.round((state.heading||0)+360)%360).padStart(3,'0')+'°';
-    gpsCoords.textContent=state.lat.toFixed(4)+', '+state.lon.toFixed(4);
+    const position=trackedLocation(state);
+    const bearing=Number.isFinite(position.heading)?position.heading:0;
+    gpsHeading.textContent=String(Math.round((bearing+360)%360)).padStart(3,'0')+'°';
+    gpsCoords.textContent=position.lat.toFixed(4)+', '+position.lon.toFixed(4);
     initGPS(state);
-    if(mini && (now-lastGps>240 || !lastPos || Math.abs(lastPos.lat-state.lat)>.000025 ||
-      Math.abs(lastPos.lon-state.lon)>.000025)){
+    if(mini){
       try{
-        mini.jumpTo({center:[state.lon,state.lat],bearing:state.heading||0,
-          pitch:GPS_PITCH,zoom:GPS_ZOOM,padding:cameraPadding()});
-        lastGps=now;lastPos={lat:state.lat,lon:state.lon};
+        // El GPS permanece georreferenciado al coche durante la marcha.
+        gpsMarker?.setLngLat([position.lon,position.lat]);
+        const moved=!lastPos || Math.abs(lastPos.lat-position.lat)>.000006 ||
+          Math.abs(lastPos.lon-position.lon)>.000006;
+        const turned=lastHeading===null ||
+          Math.abs(((bearing-lastHeading+540)%360)-180)>.65;
+        if(now-lastGps>90 && (moved||turned||now-lastGps>350)){
+          mini.jumpTo({center:[position.lon,position.lat],bearing,
+            pitch:GPS_PITCH,zoom:GPS_ZOOM,padding:cameraPadding()});
+          lastGps=now;lastPos={lat:position.lat,lon:position.lon};
+          lastHeading=bearing;
+        }
       }catch(error){console.warn('OcToS GTA · actualizar GPS:',error);}
     }
   }
   document.body.classList.add('gta-hud-active');
   return {update,destroy(){
+    gpsMarker?.remove();gpsMarker=null;
+    if(pointer&&glass)glass.append(pointer);
     mini?.remove?.();mini=null;
     document.body.classList.remove('gta-hud-active');
   }};
