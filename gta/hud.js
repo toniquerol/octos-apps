@@ -2,6 +2,9 @@
    Velocidad y GPS son datos del juego; RPM y aceleración son indicadores estimados.
    No se altera la física ni se extraen imágenes del videojuego de referencia. */
 const GPS_STYLE='https://tiles.openfreemap.org/styles/dark';
+const GPS_ZOOM=14.6; // Más territorio visible por delante
+const GPS_PITCH=52; // Perspectiva de navegación suave
+
 const $=id=>document.getElementById(id);
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const point=(cx,cy,r,angle)=>{
@@ -97,14 +100,16 @@ export function mountDriveHud({report}={}) {
   let lastSpeed=0,lastMeasure=0,smoothedAccel=0;
   let lastRpm=0,lastAux=0;
   let gpsFailed=false;
+  // La posición de la flecha queda a ~63 % de la altura para enseñar el recorrido por delante.
+  const cameraPadding=()=>({top:Math.round((gps.clientHeight||176)*.24),bottom:0,left:0,right:0});
 
   function initGPS(state){
     if(mini||gpsFailed||!window.maplibregl?.Map)return;
     try {
       mini=new window.maplibregl.Map({
         container:gps,style:GPS_STYLE,
-        center:[state.lon,state.lat],zoom:15.3,bearing:state.heading||0,
-        pitch:0,minZoom:14,maxZoom:18,
+        center:[state.lon,state.lat],zoom:GPS_ZOOM,bearing:state.heading||0,
+        pitch:GPS_PITCH,minZoom:13,maxZoom:18,
         interactive:false,attributionControl:false,
         antialias:false,renderWorldCopies:false,fadeDuration:0,
         scrollZoom:false,dragPan:false,dragRotate:false,
@@ -178,7 +183,8 @@ export function mountDriveHud({report}={}) {
     if(mini && (now-lastGps>240 || !lastPos || Math.abs(lastPos.lat-state.lat)>.000025 ||
       Math.abs(lastPos.lon-state.lon)>.000025)){
       try{
-        mini.jumpTo({center:[state.lon,state.lat],bearing:state.heading||0,pitch:0});
+        mini.jumpTo({center:[state.lon,state.lat],bearing:state.heading||0,
+          pitch:GPS_PITCH,zoom:GPS_ZOOM,padding:cameraPadding()});
         lastGps=now;lastPos={lat:state.lat,lon:state.lon};
       }catch(error){console.warn('OcToS GTA · actualizar GPS:',error);}
     }
