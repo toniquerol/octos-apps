@@ -18,3 +18,14 @@
 .octos-gp-actions{display:flex;gap:6px;flex-wrap:wrap}
 .octos-gp-actions button{flex:1;font-size:10px;cursor:pointer}
 .octos-gp-actions button:first-child{border-color:#ff6a1a;color:#ffbd95}
+
+/* Muestra gráfica de sticks y botones del mando conectado. */
+.octos-gp-preview{display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:center;padding:10px 8px;background:#14181d;border:1px solid #3c434a;border-radius:7px}
+.octos-gp-stick-widget{display:grid;justify-items:center;gap:8px;min-width:0}
+.octos-gp-stick-widget>span{font-size:8px;letter-spacing:.08em;color:#c6cbd0}
+.octos-gp-stick-base{position:relative;width:66px;height:66px;border:2px solid #48545e;border-radius:50%;background:radial-gradient(circle,#3a4650 0 3px,transparent 4px),linear-gradient(90deg,transparent 49%,#3b454e 50%,transparent 51%),linear-gradient(0deg,transparent 49%,#3b454e 50%,transparent 51%);display:grid;place-items:center}
+.octos-gp-stick-dot{width:13px;height:13px;border-radius:50%;background:#ff891f;border:2px solid #ffdbc1;box-shadow:0 0 7px #ff891f88;transition:transform .055s linear}
+.octos-gp-button-grid{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+.octos-gp-button-light{min-width:19px;height:19px;display:grid;place-items:center;background:#20272c;border:1px solid #46525a;border-radius:4px;font-size:9px;color:#9faab1}
+.octos-gp-button-light.pressed{background:#ff891f;border-color:#ffca9d;color:#171412;font-weight:800}
+.octos-gp-button-light[hidden]{display:none}
