@@ -5,7 +5,7 @@ import {mountMapEditor} from './map-editor.js?v=4';
 import {mountTeleport} from './teleport.js?v=1';
 import {createActor} from './actor.js?v=6';
 import {mountDriveHud} from './hud.js?v=3';
-import {OcToSGamepadController,mountGamepadSettings} from '../shared/gamepad-controller.js?v=2';
+import {OcToSGamepadController,mountGamepadSettings} from '../shared/gamepad-controller.js?v=3';
 
 const $ = id => document.getElementById(id);
 const status = $('status');
