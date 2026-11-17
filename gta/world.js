@@ -158,6 +158,12 @@ export async function createWorld(start, report, {selection = false} = {}) {
     return low ? 20 : level === 'high' ? 45 : 30;
   }
 
+  function resetAfterStyleChange() {
+    // MapLibre descarta las capas del estilo anterior; conservar solo parámetros.
+    buildingsId = null;
+    daylight.setBuildings(null,null,false);
+  }
+
   function enterEditor() {
     map.setMaxZoom(20);
     map.dragPan.enable();
@@ -178,7 +184,7 @@ export async function createWorld(start, report, {selection = false} = {}) {
   }
   return {
     map, updateBuildings, updateTerrain, setBuildingAppearance,
-    elevation, quality, enterGame, enterEditor,
+    elevation, quality, enterGame, enterEditor, resetAfterStyleChange,
     setTime: daylight.setTime, refreshShadows: daylight.refreshShadows
   };
 }
