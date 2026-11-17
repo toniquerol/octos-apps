@@ -73,5 +73,5 @@
 .vital span{font-size:9px;letter-spacing:.08em;color:#aeb0b8;line-height:1.2}
 .vital strong{font-size:13px;font-weight:800;line-height:1.25;font-variant-numeric:tabular-nums}
 .vital.equipment{min-width:100px}
-@media(max-width:800px){.gta-layers-panel{right:9px;top:50px;width:min(260px,calc(100vw - 20px));max-height:calc(100% - 66px)}.player-vitals{bottom:15px;gap:4px}.vital{min-width:76px;padding:8px;grid-template-columns:20px auto;column-gap:5px}.vital svg{width:20px;height:20px}.vital.equipment{min-width:81px}}
+@media(max-width:800px){.gta-layers-panel{right:9px;top:103px;width:min(260px,calc(100vw - 20px));max-height:calc(100% - 120px)}body:not(.selecting) .keys-hint{left:auto;right:10px;bottom:87px;max-width:168px;text-align:right}.player-vitals{bottom:15px;gap:4px}.vital{min-width:76px;padding:8px;grid-template-columns:20px auto;column-gap:5px}.vital svg{width:20px;height:20px}.vital.equipment{min-width:81px}}
 @media(max-width:490px){.gta-layers-panel{width:220px}.vital{min-width:66px}.vital.equipment{min-width:70px}.vital strong{font-size:11px}.vital span{font-size:8px}}
