@@ -40,6 +40,20 @@ export async function createWorld(start, report, {selection = false} = {}) {
   let buildingColor = '#707783';
   let buildingOpacity = 0.84;
   const daylight = createDaylight(map);
+  let currentTime = '16:30';
+
+  // Mapterhorn se muestra sin bruma atmosférica; el relieve y la luz solar se conservan.
+  function clearMapterhornHaze() {
+    if (provider === 'mapterhorn' && typeof map.setSky === 'function') map.setSky(undefined);
+  }
+
+  function setTime(value) {
+    if (!daylight.setTime(value)) return false;
+    currentTime = value;
+    clearMapterhornHaze();
+    return true;
+  }
+
   let tileErrorReported = false;
 
   map.on('error', event => {
@@ -124,6 +138,7 @@ export async function createWorld(start, report, {selection = false} = {}) {
   }
 
   function updateTerrain(enabled, nextProvider = provider) {
+    const previousProvider = provider;
     provider = TERRAIN[nextProvider] ? nextProvider : 'mapterhorn';
     terrainActive = Boolean(enabled);
     try {
@@ -133,6 +148,9 @@ export async function createWorld(start, report, {selection = false} = {}) {
         map.addSource('octos-gta-terrain', {type: 'raster-dem', ...TERRAIN[provider]});
         map.setTerrain({source: 'octos-gta-terrain', exaggeration: 1});
       }
+      // Restaurar el cielo al usar AWS; eliminarlo al usar Mapterhorn.
+      if (provider !== previousProvider) setTime(currentTime);
+      else clearMapterhornHaze();
       return true;
     } catch (error) {
       terrainActive = false;
@@ -185,6 +203,6 @@ export async function createWorld(start, report, {selection = false} = {}) {
   return {
     map, updateBuildings, updateTerrain, setBuildingAppearance,
     elevation, quality, enterGame, enterEditor, resetAfterStyleChange,
-    setTime: daylight.setTime, refreshShadows: daylight.refreshShadows
+    setTime, refreshShadows: daylight.refreshShadows
   };
 }
