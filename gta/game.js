@@ -32,7 +32,7 @@ export class Game {
     // Las dos vistas permanecen detrás del personaje; V solo varía la distancia.
     this.view = 'follow';
     // Vista a pie próxima; conducción un nivel de zoom más alejada.
-    this.cameraZoom = {walk: 24, car: 22.01};
+    this.cameraZoom = {walk: 23, car: 22.01};
     this.active = false;
     this.timer = null;
     this.lastTime = performance.now();
@@ -149,10 +149,26 @@ export class Game {
     const isCar = this.state.mode === 'car';
     const height = this.map.getContainer?.().clientHeight || 720;
     // El personaje queda en el tercio inferior; el mapa muestra la calle por delante.
-    const topPadding = Math.round(height * (isCar ? .26 : .34));
     const zoom = clamp(this.cameraZoom[this.state.mode] - (this.view === 'wide' ? .75 : 0), 20, 24);
+    let center = [this.state.lon, this.state.lat];
+    let topPadding = Math.round(height * (isCar ? .26 : .34));
+    if (!isCar) {
+      // Rig geográfico detrás del cuello: pivote a 1,5 m en dirección al rumbo.
+      // MapLibre 4 limita la cámara mediante zoom; el offset físico es aproximado.
+      const neckOffsetM = 1.5;
+      const neckHeightM = 1.5;
+      const heading = this.state.heading * RAD;
+      const lat = clamp(this.state.lat + Math.cos(heading) * neckOffsetM / 111320, -85, 85);
+      const scaleLongitude = Math.max(.087,Math.cos(this.state.lat * RAD));
+      const lon = this.state.lon + Math.sin(heading) * neckOffsetM / (111320 * scaleLongitude);
+      center = [((lon+180)%360+360)%360-180,lat];
+      // Se orienta el encuadre hacia el cuello y no hacia la base del modelo.
+      const metersPerPixel = 156543.03392 * Math.max(.087,Math.cos(this.state.lat * RAD)) / (2 ** zoom);
+      const neckPixels = Math.min(height*.075,neckHeightM / metersPerPixel * Math.cos(69*RAD));
+      topPadding += Math.round(neckPixels);
+    }
     this.map.jumpTo({
-      center: [this.state.lon, this.state.lat],
+      center,
       bearing: this.state.heading,
       zoom,
       pitch: isCar ? 75 : 69,
