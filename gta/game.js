@@ -31,8 +31,8 @@ export class Game {
     this.speed = 0; // m/s, con signo si el vehículo circula marcha atrás
     // Las dos vistas permanecen detrás del personaje; V solo varía la distancia.
     this.view = 'follow';
-    // Tres incrementos de rueda (3 × 0,27); la vista cercana topa en zoom 24.
-    this.cameraZoom = {walk: 24, car: 23.01};
+    // Vista a pie próxima; conducción un nivel de zoom más alejada.
+    this.cameraZoom = {walk: 24, car: 22.01};
     this.active = false;
     this.timer = null;
     this.lastTime = performance.now();
@@ -155,7 +155,7 @@ export class Game {
       center: [this.state.lon, this.state.lat],
       bearing: this.state.heading,
       zoom,
-      pitch: isCar ? 65 : 69,
+      pitch: isCar ? 75 : 69,
       padding: {top: topPadding, bottom: 0, left: 0, right: 0}
     });
   }
