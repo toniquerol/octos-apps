@@ -36,8 +36,6 @@ export function mountMapEditor({world, game, actor, layerControls, report}) {
   const view = $('editor-view');
   const zoom = $('editor-zoom');
   const pitch = $('editor-pitch');
-  const color = $('editor-building-color');
-  const opacity = $('editor-building-opacity');
   const saved = readConfig();
   const basemaps = mountBasemaps({world,layerControls,actor,report});
   basemaps.setBusyCallback(busy=>{
@@ -49,21 +47,12 @@ export function mountMapEditor({world, game, actor, layerControls, report}) {
   view.value = saved.view;
   zoom.value = String(saved.zoom);
   pitch.value = String(saved.pitch);
-  color.value = saved.color;
-  opacity.value = String(saved.opacity);
   world.setBuildingAppearance(saved.color, saved.opacity / 100);
 
   function updateLabels() {
     $('editor-zoom-value').textContent = Number(zoom.value).toFixed(1);
     $('editor-pitch-value').textContent = pitch.value + '°';
-    $('editor-opacity-value').textContent = opacity.value + '%';
     pitch.disabled = view.value === '2d';
-  }
-
-  function appearance() {
-    world.setBuildingAppearance(color.value, Number(opacity.value) / 100);
-    updateLabels();
-    saveStatus.textContent = 'Cambios sin guardar';
   }
 
   function camera() {
@@ -119,7 +108,7 @@ export function mountMapEditor({world, game, actor, layerControls, report}) {
     const data = {
       version:1,
       view:view.value, zoom:Number(zoom.value), pitch:Number(pitch.value),
-      color:color.value, opacity:Number(opacity.value),
+      color:saved.color, opacity:saved.opacity,
       center, bearing:map.getBearing(),
       layers:layerControls?.getPreferences() || {},
       basemap:basemaps.getChoice(),
@@ -144,8 +133,6 @@ export function mountMapEditor({world, game, actor, layerControls, report}) {
     else enter();
   });
   saveButton.addEventListener('click', save);
-  color.addEventListener('input', appearance);
-  opacity.addEventListener('input', appearance);
   view.addEventListener('change', camera);
   zoom.addEventListener('input', camera);
   pitch.addEventListener('input', camera);
