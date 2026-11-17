@@ -195,8 +195,10 @@ body.gta-hud-active #game-hud{display:none!important}
 .gta-gps-shading{position:absolute;inset:0;border-radius:50%;
   background:radial-gradient(circle at 42% 44%,transparent 29%,#02090a2b 66%,#0508099c 100%);
   box-shadow:inset 0 0 16px 6px #000b}
-.gta-gps-pointer{position:absolute;left:50%;top:63%;width:31%;height:31%;transform:translate(-50%,-50%);
+.gta-gps-pointer{width:29%;height:29%;pointer-events:none;
   filter:drop-shadow(0 0 4px #ff891faa) drop-shadow(0 2px 2px #001)}
+/* MapLibre gestiona la posición y la inclinación del marcador del coche. */
+.gta-gps-map .maplibregl-marker.gta-gps-pointer{z-index:3;will-change:transform}
 .gta-gps-status{position:absolute;left:10%;right:10%;bottom:16%;padding:2px;text-align:center;
   font-size:9px;font-weight:800;letter-spacing:.06em;color:#d6e9db;text-shadow:0 1px 4px #000;background:#101a1b9c}
 .gta-gps-status[hidden]{display:none}
