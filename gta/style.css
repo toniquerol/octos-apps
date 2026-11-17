@@ -159,3 +159,21 @@ body.editing #map .maplibregl-canvas:active{cursor:grabbing}
 .gta-layer-tuning .gta-layer-option{min-height:29px;font-size:10px}
 .gta-layer-tuning .gta-layer-subfield{margin:6px 2px 8px}
 .gta-layer-tuning .gta-layer-road-color{padding:5px 3px}
+
+/* GTA · Catálogo compacto compartido con OcToS Layers V3.4. */
+.gta-catalog-tree{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.gta-catalog-group{background:#202227;border:1px solid #4c4e54;border-radius:7px;overflow:hidden}
+.gta-catalog-group>summary{cursor:pointer;padding:9px 10px;color:#f0f0ef;font-size:11px;font-weight:700;line-height:1.35}
+.gta-catalog-group[open]>summary{color:#ffb37f;border-bottom:1px solid #414349}
+.gta-catalog-provider{margin:3px 6px 6px;border-left:2px solid #4b4d52;padding-left:7px}
+.gta-catalog-provider>summary{cursor:pointer;padding:6px 3px;color:#bfc2c9;font-size:10px;font-weight:600;line-height:1.35}
+.gta-catalog-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:6px;row-gap:3px;align-items:center;padding:7px 3px 8px;border-bottom:1px solid #36383d}
+.gta-catalog-entry:last-child{border-bottom:0}
+.gta-catalog-choice{display:flex;min-width:0;align-items:flex-start;gap:6px;font-size:10px;line-height:1.3;color:#f0f0ef;cursor:pointer}
+.gta-catalog-choice input{width:14px;height:14px;margin:0;flex:none;accent-color:#ff6a1a}
+.gta-catalog-choice input:disabled{opacity:.45;cursor:not-allowed}
+.gta-catalog-choice:has(input:disabled){color:#898e97}
+.gta-catalog-entry small{color:#a1a4ad;font-size:9px;text-align:right;white-space:nowrap}
+.gta-catalog-opacity{grid-column:1;display:block;width:100%;margin:4px 0 0;accent-color:#ff6a1a}
+.gta-catalog-entry output{grid-column:2;text-align:right;color:#ffb58d;font-size:9px;font-variant-numeric:tabular-nums}
+.gta-catalog-opacity:disabled{opacity:.4}
