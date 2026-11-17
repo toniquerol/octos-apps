@@ -1,9 +1,9 @@
-import {createWorld} from './world.js?v=6';
-import {Game, readSave} from './game.js?v=7';
-import {mountLayerPanel} from './layers.js?v=2';
-import {mountMapEditor} from './map-editor.js?v=1';
+import {createWorld} from './world.js?v=7';
+import {Game, readSave} from './game.js?v=8';
+import {mountLayerPanel} from './layers.js?v=3';
+import {mountMapEditor} from './map-editor.js?v=2';
 import {mountTeleport} from './teleport.js?v=1';
-import {createActor} from './actor.js?v=3';
+import {createActor} from './actor.js?v=4';
 
 const $ = id => document.getElementById(id);
 const status = $('status');
@@ -184,7 +184,9 @@ async function launchScene() {
     actor = await createActor(world,start,report);
     game = new Game(world,updateHud,state => actor?.update(state));
     game.setQuality(quality);
-    mountMapEditor({world,game,layerControls,report});
+    const editor=mountMapEditor({world,game,actor,layerControls,report});
+    // Restaurar el mapa base guardado sin reiniciar el mapa ni perder el BMW.
+    await editor.restoreBasemap();
     mountTeleport({world,game,report,teleport});
     world.enterGame();
     game.teleport(start.lat,start.lon,start.place);
