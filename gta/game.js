@@ -156,7 +156,8 @@ export class Game {
     // Leer el mando directamente en el ciclo del juego, sin emular WASD.
     const sampled=this.controller?.poll();
     const gamepadAllowed=!document.body.classList.contains('editing') &&
-      document.getElementById('settings-panel')?.hidden!==false;
+      document.getElementById('settings-panel')?.hidden!==false &&
+      document.getElementById('controls-panel')?.hidden!==false;
     const pad=gamepadAllowed && sampled?.connected?sampled:null;
     if(pad?.pressed.pause){
       this.padPaused=!this.padPaused;
