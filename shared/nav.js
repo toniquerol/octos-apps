@@ -202,6 +202,20 @@
     menu.setAttribute('aria-expanded','false');
     menu.setAttribute('aria-controls','octos-app-list');
     toolbar.append(home,menu,back);
+    if(appId==='assets3d'){
+      const separator=document.createElement('span');
+      separator.className='octos-convert-separator';
+      separator.setAttribute('aria-hidden','true');
+      separator.style.cssText='width:1px;height:27px;background:#62636a;margin:0 5px;flex:none';
+      const convert=document.createElement('a');
+      convert.href=new URL('assets3d/convertir.html',root).href;
+      convert.textContent='Convertir';
+      convert.title='Conversor GLB a HTML';
+      convert.setAttribute('aria-label','Abrir conversor GLB a HTML');
+      convert.style.cssText='color:#ffb18b;text-decoration:none;font:650 12px system-ui,sans-serif;white-space:nowrap;padding:8px 9px;border-radius:7px;border:1px solid #ff6a1a;background:#272019';
+      if(location.pathname.endsWith('/convertir.html'))convert.setAttribute('aria-current','page');
+      toolbar.append(separator,convert);
+    }
     // El menú preexistente de cada aplicación conserva sus eventos.
     const themeLeft=header.querySelector(':scope > .ot-head-left');
     if(themeLeft)themeLeft.prepend(toolbar);
