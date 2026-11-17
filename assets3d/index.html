@@ -18,11 +18,11 @@ h1,h2,h3,p{margin:0}h1{font-size:19px;letter-spacing:.02em}h1 span{color:var(--o
 button,.button{border:1px solid #545861;border-radius:8px;color:var(--text);background:#272a31;padding:9px 12px}
 button:hover,.button:hover{border-color:#ff6a1a}.accent{background:var(--orange);border-color:var(--orange);color:#17110d;font-weight:750}.accent:hover{background:#ff9156}
 main{height:calc(100dvh - 70px);min-height:540px;display:grid;grid-template-columns:300px minmax(0,1fr) 295px;overflow:hidden}
-.library,.inspector{background:var(--pane);overflow:auto;padding:18px;border-right:1px solid var(--edge)}
+.library,.inspector{background:var(--pane);overflow:auto;padding:18px;border-right:1px solid var(--edge)}.library{display:flex;flex-direction:column;min-height:0}.library>.asset-list{flex:1;min-height:65px;overflow-y:auto;align-content:start}.floor-panel{flex:none;margin-top:auto;padding-top:14px;border-top:1px solid var(--edge)}.floor-panel h2{font-size:14px;margin:0 0 4px}
 .inspector{border-left:1px solid var(--edge);border-right:0}
 .headline{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:16px}.headline h2{font-size:15px}
 small,.soft{font-size:11px;color:var(--muted)}.group{display:grid;gap:10px;margin:15px 0}.group label{color:#c3c6cf;font-size:11px;display:block;margin-bottom:5px}
-input[type=color]{width:48px;height:32px;background:#111217;border:1px solid var(--edge);border-radius:7px;padding:2px;cursor:pointer}input[type=checkbox]{accent-color:var(--orange);width:16px;height:16px;vertical-align:middle}.floor-controls{margin:8px 0 14px}.floor-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:11px}.floor-row label{font-size:12px;color:#dce0e5}.floor-row input{flex:none}input[type=text],input[type=search],select{width:100%;min-width:0;border:1px solid var(--edge);background:#111217;color:var(--text);border-radius:7px;padding:10px}
+input[type=color]{width:48px;height:32px;background:#111217;border:1px solid var(--edge);border-radius:7px;padding:2px;cursor:pointer}input[type=checkbox]{accent-color:var(--orange);width:16px;height:16px;vertical-align:middle}.floor-controls{margin:8px 0 14px}.floor-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:11px}.floor-row label{font-size:12px;color:#dce0e5}.floor-row input{flex:none}.transform-modes{display:flex;gap:5px;margin:10px 0 14px}.transform-modes button{flex:1;padding:8px 4px;font-size:11px}.transform-modes button.active{background:var(--orange);border-color:var(--orange);color:#111;font-weight:750}.axis-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:5px 0 12px}.axis-grid input{min-width:0;width:100%;padding:8px 4px;text-align:center;font-variant-numeric:tabular-nums}.axis-grid label{min-width:0;text-align:center;color:#bfc3cc;font-size:11px}.axis-grid label span{display:block;margin:0 0 5px}.transform-section>p{margin-top:6px}.transform-section button.full{margin-top:5px}input[type=number]{border:1px solid var(--edge);background:#111217;color:var(--text);border-radius:7px}input[type=text],input[type=search],select{width:100%;min-width:0;border:1px solid var(--edge);background:#111217;color:var(--text);border-radius:7px;padding:10px}
 select{cursor:pointer}.split{display:flex;gap:8px}.split>*{flex:1;min-width:0}
 .asset-list{display:grid;gap:9px;margin-top:12px}.asset{display:grid;grid-template-columns:72px minmax(0,1fr);text-align:left;gap:11px;padding:7px;width:100%;border-radius:10px;background:#212329}
 .asset.active{outline:1px solid var(--orange);background:#342921}
@@ -47,7 +47,7 @@ select{cursor:pointer}.split{display:flex;gap:8px}.split>*{flex:1;min-width:0}
 .warning{font-size:11px;color:#c1b6a7;margin:10px 0}.metric{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #34363c;font-size:11px}.metric strong{font-weight:650;color:#e8ebef}
 #file{display:none}.nothing{color:#9da5af;font-size:12px;padding:14px 5px;text-align:center}
 @media(max-width:1080px){main{grid-template-columns:240px minmax(0,1fr) 245px}.library,.inspector{padding:12px}}
-@media(max-width:600px){#backup,#importBackup{display:none}header{gap:6px}header h1{font-size:15px}header .brand{gap:6px}header .logo{width:27px;height:27px}}@media(max-width:800px){main{height:auto;display:flex;flex-direction:column;overflow:visible}.stage{height:55dvh;min-height:340px;order:0}.library{order:1;max-height:350px;border-top:1px solid var(--edge)}.inspector{order:2;border-top:1px solid var(--edge)}header{padding:12px}.subtitle{display:none}}
+@media(max-width:600px){#backup,#importBackup{display:none}header{gap:6px}header h1{font-size:15px}header .brand{gap:6px}header .logo{width:27px;height:27px}}@media(max-width:800px){main{height:auto;display:flex;flex-direction:column;overflow:visible}.stage{height:55dvh;min-height:340px;order:0}.library{order:1;max-height:500px;border-top:1px solid var(--edge)}.inspector{order:2;border-top:1px solid var(--edge)}header{padding:12px}.subtitle{display:none}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 <script src="../shared/nav.js?v=20261117-assets3d" defer></script>
@@ -64,6 +64,14 @@ select{cursor:pointer}.split{display:flex;gap:8px}.split>*{flex:1;min-width:0}
    <div class="group"><select id="tagFilter" aria-label="Filtrar por etiqueta"><option value="">Todas las etiquetas</option></select></div>
    <div class="asset-list" id="assetList"><p class="nothing">Biblioteca vacía</p></div>
    <p class="warning">Guardado local en este navegador mediante IndexedDB. Los modelos no se sincronizan entre dispositivos.</p>
+   <section class="floor-panel" aria-label="Escenario 3D">
+    <h2>Escenario 3D</h2>
+    <div class="floor-controls">
+     <div class="floor-row"><label for="floorEnabled">Suelo · 10 × 10 m</label><input id="floorEnabled" type="checkbox" checked></div>
+     <div class="floor-row"><label for="floorColor">Color del suelo</label><input id="floorColor" type="color" value="#565c65"></div>
+    </div>
+    <small>Suelo independiente del objeto. Los HTML conservan su propio escenario.</small>
+   </section>
  </aside>
  <section class="stage" id="stage" aria-label="Visor 3D">
   <canvas id="canvas"></canvas><iframe id="htmlViewer" title="Vista previa de HTML importado" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe>
@@ -80,15 +88,37 @@ select{cursor:pointer}.split{display:flex;gap:8px}.split>*{flex:1;min-width:0}
   <div class="metric"><span>Triángulos</span><strong id="triangles">—</strong></div>
   <div class="metric"><span>Mallas</span><strong id="meshes">—</strong></div>
   <div class="metric"><span>Modelo</span><strong id="origin">—</strong></div>
+  <hr class="divider">
+  <section class="transform-section" aria-label="Transformación del modelo">
+   <h2>Ajustar modelo 3D</h2>
+   <div class="transform-modes" role="group" aria-label="Modo de transformación">
+    <button id="modeMove" type="button" class="active" disabled>Mover</button>
+    <button id="modeRotate" type="button" disabled>Girar</button>
+    <button id="modeScale" type="button" disabled>Escalar</button>
+   </div>
+   <label class="soft">Posición · metros</label>
+   <div class="axis-grid" id="posGrid">
+    <label><span>X</span><input id="posX" type="number" step="0.1" value="0" disabled></label>
+    <label><span>Y</span><input id="posY" type="number" step="0.1" value="0" disabled></label>
+    <label><span>Z</span><input id="posZ" type="number" step="0.1" value="0" disabled></label>
+   </div>
+   <label class="soft">Rotación · grados</label>
+   <div class="axis-grid">
+    <label><span>X</span><input id="rotX" type="number" step="1" value="0" disabled></label>
+    <label><span>Y</span><input id="rotY" type="number" step="1" value="0" disabled></label>
+    <label><span>Z</span><input id="rotZ" type="number" step="1" value="0" disabled></label>
+   </div>
+   <label class="soft">Escala · multiplicador</label>
+   <div class="axis-grid">
+    <label><span>X</span><input id="scaleX" type="number" min="0.01" max="100" step="0.01" value="1" disabled></label>
+    <label><span>Y</span><input id="scaleY" type="number" min="0.01" max="100" step="0.01" value="1" disabled></label>
+    <label><span>Z</span><input id="scaleZ" type="number" min="0.01" max="100" step="0.01" value="1" disabled></label>
+   </div>
+   <button id="resetTransform" type="button" class="full" disabled>Restablecer posición, giro y escala</button>
+   <p class="warning">También puedes arrastrar los ejes de colores en el visor. Los ajustes se conservan al guardar y exportar HTML.</p>
+  </section>
   <div class="button-row"><button id="save" class="accent" disabled>Guardar objeto</button><button id="export" disabled>Exportar HTML</button></div>
   <div class="button-row"><button id="getGLB" disabled>Descargar GLB</button><button id="remove" disabled>Eliminar</button></div>
-  <hr class="divider">
-  <h2>Escenario 3D</h2>
-  <div class="floor-controls">
-   <div class="floor-row"><label for="floorEnabled">Mostrar suelo · 10 × 10 m</label><input id="floorEnabled" type="checkbox" checked></div>
-   <div class="floor-row"><label for="floorColor">Color del suelo</label><input id="floorColor" type="color" value="#565c65" aria-label="Color del suelo"></div>
-   <p class="warning">Plataforma centrada bajo el modelo. No modifica el archivo original. Los HTML independientes mantienen su propio escenario.</p>
-  </div>
   <hr class="divider">
   <h2>Optimización geométrica</h2>
   <div class="group"><div><label for="quality">Nivel de optimización</label><select id="quality"><option value="1">Sin pérdida · limpiar duplicados</option><option value="0.85">Suave · hasta 15 % menos</option><option value="0.65">Media · hasta 35 % menos</option><option value="0.45">Intensa · hasta 55 % menos</option></select></div></div>
@@ -101,6 +131,6 @@ select{cursor:pointer}.split{display:flex;gap:8px}.split>*{flex:1;min-width:0}
 </main>
 <input id="file" type="file" accept=".glb,.html,.htm,model/gltf-binary,text/html">
 <input id="restoreFile" type="file" accept=".json,application/json" hidden>
-<script type="module" src="./app.js?v=20261117-library-preview-v2"></script>
+<script type="module" src="./app.js?v=20261117-model-transform"></script>
 </body>
 </html>
