@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="./style.css?v=9">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="../shared/nav.js?v=20261117-gta-map-editor" defer></script>
-<script type="module" src="./main.js?v=11"></script>
+<script type="module" src="./main.js?v=12"></script>
 </head>
 <body class="selecting">
 <header class="topbar">
@@ -115,8 +115,8 @@
       <p class="layer-caption">Visibilidad y fuentes del mapa base</p>
       <label class="gta-layer-option"><input id="layer-roads" type="checkbox" checked> Carreteras · OpenFreeMap</label>
       <div class="gta-road-tuning" role="group" aria-label="Aspecto de las carreteras">
-        <label class="gta-layer-subfield" for="layer-road-width">Ancho de las líneas <output id="layer-road-width-value">100%</output>
-          <input id="layer-road-width" type="range" min="50" max="450" step="10" value="100">
+        <label class="gta-layer-subfield" for="layer-road-width">Ancho de las líneas <output id="layer-road-width-value">6 m</output>
+          <input id="layer-road-width" type="range" min="0.5" max="30" step="0.5" value="6">
         </label>
         <label class="gta-layer-option"><input id="layer-road-tint" type="checkbox"> Usar color personalizado</label>
         <label class="gta-layer-road-color" for="layer-road-color">Color de carreteras
