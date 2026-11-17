@@ -4,6 +4,13 @@ const STORAGE_KEY = 'octos-gta-v1-save';
 const DEFAULT = {lat: 41.3874, lon: 2.1701, heading: 0, mode: 'walk', place: 'Barcelona'};
 const RAD = Math.PI / 180;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+const cameraAngleDelta=(from,to)=>((to-from+540)%360+360)%360-180;
+const CAR_CAMERA=Object.freeze({
+  pitch:66, topScreenFraction:.29,
+  forwardMeters:2.8, forwardSpeedFactor:.11, maxForwardExtra:3.6,
+  positionSmooth:5.2, bearingSmooth:4.6, zoomSmooth:4.0,
+  pitchSmooth:4.4, recenterDelayMs:900, recenterSmooth:2.0
+});
 
 export function readSave() {
   try {
@@ -41,6 +48,8 @@ export class Game {
     this.jumpQueued = false;
     this.aiming = false;
     this.cameraOffset = {yaw:0,pitch:0};
+    this.carCamera = null;
+    this.lastCameraStick = 0;
     this.onAction = () => {};
     this.cameraMode = 0;
     this.keys = new Set();
@@ -48,7 +57,7 @@ export class Game {
     // Las dos vistas permanecen detrás del personaje; V solo varía la distancia.
     this.view = 'follow';
     // Vista a pie próxima; conducción un nivel de zoom más alejada.
-    this.cameraZoom = {walk: 23, car: 22.01};
+    this.cameraZoom = {walk: 23, car: 21.55};
     this.active = false;
     this.timer = null;
     this.lastTime = performance.now();
@@ -81,7 +90,7 @@ export class Game {
       const amount = Math.min(1, Math.max(.25, Math.abs(event.deltaY) / 120)) * .27;
       const mode = this.state.mode;
       this.cameraZoom[mode] = clamp(this.cameraZoom[mode] - Math.sign(event.deltaY) * amount, 20.5, 24);
-      this.updateCamera();
+      this.updateCamera(1/30);
     };
     this.onBlur = () => { this.keys.clear(); this.speed = 0; this.driving.speed=0; this.driving.slip=0; this.driving.yawRate=0; this.driving.rearGripLoss=0; this.driving.driftActive=false; this.driving.rearLocked=false; this.emit(true); };
     document.addEventListener('keydown', this.onKeyDown);
@@ -101,6 +110,7 @@ export class Game {
     if (this.active) return;
     this.active = true;
     this.lastTime = performance.now();
+    this.carCamera = null; // Reenfocar al volver desde el editor.
     this.timer = setInterval(() => this.tick(), Math.round(1000 / this.fps));
     if (!this.vehicle) this.parkNearPlayer();
     this.updateCamera();
@@ -175,7 +185,18 @@ export class Game {
       const sensitivity=this.controller?.config.cameraSensitivity||1;
       this.cameraOffset.yaw=(this.cameraOffset.yaw+pad.lookX*125*sensitivity*dt+540)%360-180;
       this.cameraOffset.pitch=clamp(this.cameraOffset.pitch+pad.lookY*80*sensitivity*dt,-55,45);
+      this.lastCameraStick=now;
       cameraChanged=true;
+    } else if(this.state.mode==='car' && now-this.lastCameraStick>CAR_CAMERA.recenterDelayMs){
+      // La cámara libre vuelve suavemente a mirar al frente al soltar el stick.
+      const factor=1-Math.exp(-dt*CAR_CAMERA.recenterSmooth);
+      const oldYaw=this.cameraOffset.yaw,oldPitch=this.cameraOffset.pitch;
+      this.cameraOffset.yaw*=1-factor;
+      this.cameraOffset.pitch*=1-factor;
+      if(Math.abs(this.cameraOffset.yaw)<.02)this.cameraOffset.yaw=0;
+      if(Math.abs(this.cameraOffset.pitch)<.02)this.cameraOffset.pitch=0;
+      cameraChanged=Math.abs(oldYaw-this.cameraOffset.yaw)>.00001||
+        Math.abs(oldPitch-this.cameraOffset.pitch)>.00001;
     }
 
     if(this.state.mode==='walk'){
@@ -238,7 +259,7 @@ export class Game {
       if (this.state.mode === 'car') Object.assign(this.vehicle,{
         lat:this.state.lat,lon:this.state.lon,heading:this.state.heading
       });
-      this.updateCamera();
+      this.updateCamera(dt);
       this.onFrame({...this.state,vehicle:this.vehicle,drive:this.driving,
         jumpHeight:this.jumpHeight,aiming:this.aiming});
       this.emit(now - this.lastHud >= 140);
@@ -246,6 +267,9 @@ export class Game {
     } else if (Math.abs(this.speed - oldSpeed) > 0.001 || this.speed !== 0) {
       this.emit(now - this.lastHud >= 140 || this.speed === 0);
     }
+    // Continuar el amortiguado de cámara tras detener el vehículo.
+    if(this.state.mode==='car'&&!moved&&!rotated&&!cameraChanged)
+      this.updateCamera(dt);
     // Actualizar el giro visible de las ruedas incluso con el coche detenido.
     if (!moved && !rotated && this.state.mode === 'car' &&
         Math.abs(this.driving.steer - oldSteer) > 0.000001) {
@@ -253,37 +277,78 @@ export class Game {
     }
   }
 
-  updateCamera() {
-    const isCar = this.state.mode === 'car';
-    const height = this.map.getContainer?.().clientHeight || 720;
-    // El personaje queda en el tercio inferior; el mapa muestra la calle por delante.
-    const zoom = isCar
-      ? clamp([this.cameraZoom.car, this.cameraZoom.car-.75, this.cameraZoom.car-1.36][this.cameraMode], 20, 24)
-      : clamp(this.cameraZoom.walk - (this.view === 'wide' ? .75 : 0), 20, 24);
-    let center = [this.state.lon, this.state.lat];
-    let topPadding = Math.round(height * (isCar ? (this.cameraMode===2?0:.26) : .34));
-    if (!isCar) {
-      // Rig geográfico detrás del cuello: pivote a 1,5 m en dirección al rumbo.
-      // MapLibre 4 limita la cámara mediante zoom; el offset físico es aproximado.
-      const neckOffsetM = 1.5;
-      const neckHeightM = 1.5;
-      const heading = this.state.heading * RAD;
-      const lat = clamp(this.state.lat + Math.cos(heading) * neckOffsetM / 111320, -85, 85);
-      const scaleLongitude = Math.max(.087,Math.cos(this.state.lat * RAD));
-      const lon = this.state.lon + Math.sin(heading) * neckOffsetM / (111320 * scaleLongitude);
-      center = [((lon+180)%360+360)%360-180,lat];
-      // Se orienta el encuadre hacia el cuello y no hacia la base del modelo.
-      const metersPerPixel = 156543.03392 * Math.max(.087,Math.cos(this.state.lat * RAD)) / (2 ** zoom);
-      const neckPixels = Math.min(height*.075,neckHeightM / metersPerPixel * Math.cos(69*RAD));
-      topPadding += Math.round(neckPixels);
+  updateCamera(dt=0) {
+    const isCar=this.state.mode==='car';
+    const height=this.map.getContainer?.().clientHeight||720;
+    const zoom=isCar
+      ? clamp([this.cameraZoom.car,this.cameraZoom.car-.75,this.cameraZoom.car-1.36][this.cameraMode],20,24)
+      : clamp(this.cameraZoom.walk-(this.view==='wide'?.75:0),20,24);
+
+    if(!isCar){
+      // Se conserva la cámara de personaje aprobada.
+      this.carCamera=null;
+      const neckOffsetM=1.5,neckHeightM=1.5,heading=this.state.heading*RAD;
+      const lat=clamp(this.state.lat+Math.cos(heading)*neckOffsetM/111320,-85,85);
+      const scaleLongitude=Math.max(.087,Math.cos(this.state.lat*RAD));
+      const lon=this.state.lon+Math.sin(heading)*neckOffsetM/(111320*scaleLongitude);
+      const center=[((lon+180)%360+360)%360-180,lat];
+      const metersPerPixel=156543.03392*scaleLongitude/(2**zoom);
+      const neckPixels=Math.min(height*.075,neckHeightM/metersPerPixel*Math.cos(69*RAD));
+      this.map.jumpTo({
+        center,bearing:this.state.heading+this.cameraOffset.yaw,zoom,
+        pitch:clamp(69+this.cameraOffset.pitch,0,80),
+        padding:{top:Math.round(height*.34)+Math.round(neckPixels),
+          bottom:0,left:0,right:0}
+      });
+      return;
     }
+
+    // Cámara detrás del coche, dirigida hacia el rumbo de circulación.
+    // El encuadre adelanta su centro sobre la carretera y deja el coche abajo.
+    const overhead=this.cameraMode===2;
+    const ahead=overhead?0:CAR_CAMERA.forwardMeters+
+      Math.min(CAR_CAMERA.maxForwardExtra,Math.abs(this.speed)*CAR_CAMERA.forwardSpeedFactor);
+    const heading=this.state.heading*RAD;
+    const latScale=Math.max(.087,Math.cos(this.state.lat*RAD));
+    const desired={
+      lat:clamp(this.state.lat+Math.cos(heading)*ahead/111320,-85,85),
+      lon:((this.state.lon+Math.sin(heading)*ahead/(111320*latScale)+180)%360+360)%360-180,
+      bearing:this.state.heading+this.cameraOffset.yaw,
+      zoom,pitch:clamp((overhead?0:CAR_CAMERA.pitch)+this.cameraOffset.pitch,0,80),
+      top:Math.round(height*(overhead?0:CAR_CAMERA.topScreenFraction))
+    };
+
+    const rig=this.carCamera;
+    const before=rig?{...rig}:null;
+    if(!rig||!dt){
+      // Teletransporte e inicio: colocación inmediata, sin vuelo entre lugares.
+      this.carCamera={...desired};
+    }else{
+      const position=1-Math.exp(-dt*CAR_CAMERA.positionSmooth);
+      const rotation=1-Math.exp(-dt*CAR_CAMERA.bearingSmooth);
+      const optics=1-Math.exp(-dt*CAR_CAMERA.zoomSmooth);
+      const tilt=1-Math.exp(-dt*CAR_CAMERA.pitchSmooth);
+      const lonDelta=((desired.lon-rig.lon+540)%360+360)%360-180;
+      rig.lon=((rig.lon+lonDelta*position+180)%360+360)%360-180;
+      rig.lat+=(desired.lat-rig.lat)*position;
+      rig.bearing+=cameraAngleDelta(rig.bearing,desired.bearing)*rotation;
+      rig.zoom+=(desired.zoom-rig.zoom)*optics;
+      rig.pitch+=(desired.pitch-rig.pitch)*tilt;
+      rig.top+=(desired.top-rig.top)*tilt;
+    }
+    const current=this.carCamera;
+    // Evitar renderizados adicionales cuando ya se haya estabilizado.
+    if(before&&dt &&
+      Math.abs(cameraAngleDelta(before.lon,current.lon))<1e-8 &&
+      Math.abs(current.lat-before.lat)<1e-8 &&
+      Math.abs(cameraAngleDelta(before.bearing,current.bearing))<.008 &&
+      Math.abs(current.zoom-before.zoom)<.00015 &&
+      Math.abs(current.pitch-before.pitch)<.008 &&
+      Math.abs(current.top-before.top)<.1)return;
     this.map.jumpTo({
-      center,
-      bearing: this.state.heading+this.cameraOffset.yaw,
-      zoom,
-      pitch: clamp((isCar ? (this.cameraMode===2 ? 0 : 75) : 69)+
-        this.cameraOffset.pitch,0,80),
-      padding: {top: topPadding, bottom: 0, left: 0, right: 0}
+      center:[current.lon,current.lat],bearing:current.bearing,
+      zoom:current.zoom,pitch:current.pitch,
+      padding:{top:Math.round(current.top),bottom:0,left:0,right:0}
     });
   }
 
@@ -320,6 +385,7 @@ export class Game {
     }
     this.driving=initialDriving();
     this.speed=0;
+    this.carCamera=null;this.lastCameraStick=0;
     this.jumpHeight=0;this.jumpVelocity=0;this.jumpQueued=false;
     this.cameraOffset={yaw:0,pitch:0};
     this.keys.clear();
@@ -331,14 +397,14 @@ export class Game {
 
   cycleCamera() {
     this.cameraMode=(this.cameraMode+1)%3;
-    this.updateCamera();
+    this.updateCamera(1/30);
     this.emit(true);
   }
 
   toggleView() {
     if (this.state.mode==='car') this.cameraMode=(this.cameraMode+1)%3;
     else this.view=this.view==='follow'?'wide':'follow';
-    this.updateCamera();
+    this.updateCamera(this.state.mode==='car'?1/30:0);
     this.emit(true);
   }
 
@@ -350,6 +416,7 @@ export class Game {
     this.state.place = String(place).slice(0, 80);
     this.speed = 0;
     this.driving=initialDriving();
+    this.carCamera=null;this.lastCameraStick=0;
     this.jumpHeight=0;this.jumpVelocity=0;this.jumpQueued=false;
     this.cameraOffset={yaw:0,pitch:0};
     this.keys.clear();
