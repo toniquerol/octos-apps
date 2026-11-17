@@ -1,6 +1,6 @@
 import {createWorld} from './world.js?v=11';
 import {Game, readSave} from './game.js?v=21';
-import {mountLayerPanel} from './layers.js?v=8';
+import {mountLayerPanel} from './layers.js?v=9';
 import {mountMapEditor} from './map-editor.js?v=4';
 import {mountTeleport} from './teleport.js?v=2';
 import {createActor} from './actor.js?v=7';
