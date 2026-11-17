@@ -400,3 +400,16 @@ body.editing #stage>.daytime-controls{
 @media(prefers-reduced-motion:reduce){
   .gta-scene-entry-fade{transition:opacity 150ms linear}
 }
+
+/* Ocultar controles durante el vuelo inicial; mostrarlos al aterrizar. */
+body.entering-scene #game-hud,
+body.entering-scene .gta-arcade-hud,
+body.entering-scene .player-vitals,
+body.entering-scene .location-chip,
+body.entering-scene .status,
+body.entering-scene .daytime-controls,
+body.entering-scene .topbar>.teleport-open,
+body.entering-scene .topbar>.gta-layers-menu,
+body.entering-scene .header-buttons{
+  visibility:hidden!important;
+}
