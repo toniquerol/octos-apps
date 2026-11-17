@@ -77,6 +77,20 @@ export class Game {
     this.emit(true);
   }
 
+  pause() {
+    if (!this.active) return;
+    this.active = false;
+    clearInterval(this.timer);
+    this.timer = null;
+    this.keys.clear();
+    this.speed = 0;
+    this.emit(true);
+  }
+
+  resume() {
+    this.start();
+  }
+
   setQuality(level) {
     this.fps = this.world.quality(level);
     if (this.active) {
