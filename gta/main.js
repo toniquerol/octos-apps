@@ -1,9 +1,9 @@
 import {createWorld} from './world.js?v=7';
-import {Game, readSave} from './game.js?v=9';
+import {Game, readSave} from './game.js?v=10';
 import {mountLayerPanel} from './layers.js?v=7';
 import {mountMapEditor} from './map-editor.js?v=4';
 import {mountTeleport} from './teleport.js?v=1';
-import {createActor} from './actor.js?v=4';
+import {createActor} from './actor.js?v=5';
 import {mountDriveHud} from './hud.js?v=3';
 
 const $ = id => document.getElementById(id);
