@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-15",
+  "updated": "2026-11-17",
   "items": [
     {
       "id": "drive",
@@ -344,6 +344,41 @@
         "Revisa la composición en 3D y exporta el proyecto."
       ],
       "launch": "../kitchen/"
+    },
+    {
+      "id": "gta",
+      "name": "GTA",
+      "category": "Videojuego geográfico 3D",
+      "icon": "gta/icon-light.svg",
+      "eyebrow": "Mundo abierto · Cartografía real · V1",
+      "headline": "Explora territorios reales en un mundo abierto 3D.",
+      "lead": "Videojuego de exploración 3D para navegador con conducción básica, desplazamiento a pie y mapas y elevaciones geográficas reales.",
+      "summary": "Juego geográfico experimental de mundo abierto con control a pie o en vehículo y cambio de ciudades.",
+      "tags": [
+        "WEBGL",
+        "MUNDO ABIERTO",
+        "GEO 3D"
+      ],
+      "features": [
+        {
+          "title": "Territorio geográfico",
+          "text": "Calles, edificios y relieve procedentes de OpenStreetMap y modelos de elevaciones."
+        },
+        {
+          "title": "Exploración y conducción",
+          "text": "Movimiento a pie, conducción simplificada y cámaras de seguimiento y cenital."
+        },
+        {
+          "title": "Rendimiento adaptable",
+          "text": "Ajustes gráficos, proveedores alternativos de relieve y guardado local."
+        }
+      ],
+      "steps": [
+        "Abre el juego en un navegador compatible con WebGL.",
+        "Desplázate con WASD y pulsa Espacio para utilizar el vehículo.",
+        "Elige otra ciudad o introduce coordenadas y ajusta la calidad gráfica."
+      ],
+      "launch": "../gta/"
     },
     {
       "id": "wordpress",
