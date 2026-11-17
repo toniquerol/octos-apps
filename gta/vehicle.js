@@ -3,10 +3,11 @@
 export const VEHICLE = Object.freeze({
   wheelbase: 2.715, wheelRadius: .324,
   acceleration: 4.5, reverseAcceleration: 2.82, changeDirectionBrake: 14,
-  reverseMax: -12, maxSpeed: 37, steeringSmoothing: 7.5
+  reverseMax: -12, maxSpeed: 37, steeringSmoothing: 7.5,
+  steeringFullHoldSeconds: 0.85
 });
 const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
-export const initialDriving = () => ({speed:0, steer:0, spin:0, slip:0});
+export const initialDriving = () => ({speed:0, steer:0, spin:0, slip:0, steerHold:0, steerDirection:0});
 
 /* Entrada de mando: left/right = 0 o 1; headingDelta está en RADIANES de la prueba.
    Mantener las mismas fórmulas, constantes y secuencia cuando handbrake=false. */
@@ -21,9 +22,21 @@ export function stepDriving(car, input, elapsed) {
   }
   car.speed = clamp(car.speed, -12, 37);
   const direction = Number(!!input.left) - Number(!!input.right);
+  // Un toque da un pequeño giro; mantener la tecla aumenta progresivamente
+  // el ángulo hasta el máximo. Cambiar de lado reinicia la progresión.
+  if (direction === 0) {
+    car.steerHold = 0;
+    car.steerDirection = 0;
+  } else {
+    if (car.steerDirection !== direction) car.steerHold = 0;
+    car.steerDirection = direction;
+    car.steerHold = Math.min(VEHICLE.steeringFullHoldSeconds, (car.steerHold || 0) + dt);
+  }
+  const hold = direction ? car.steerHold / VEHICLE.steeringFullHoldSeconds : 0;
+  const smoothHold = hold * hold * (3 - 2 * hold);
   const steerLimit = .58 / (1 + Math.abs(car.speed) / 28);
-  const desired = direction * steerLimit;
-  car.steer += (desired - car.steer) * (1 - Math.exp(-dt * 7.5));
+  const desired = direction * steerLimit * (.12 + .88 * smoothHold);
+  car.steer += (desired - car.steer) * (1 - Math.exp(-dt * VEHICLE.steeringSmoothing));
 
   // Freno de mano independiente: se modifica el comportamiento SOLO durante su uso.
   // Retención extra y deriva lateral amortiguada; no hay derrape sin freno de mano.
