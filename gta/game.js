@@ -1,5 +1,5 @@
 /* OcToS GTA · personaje y primer vehículo independiente. */
-import {stepDriving,initialDriving} from './vehicle.js?v=2';
+import {stepDriving,initialDriving} from './vehicle.js?v=3';
 const STORAGE_KEY = 'octos-gta-v1-save';
 const DEFAULT = {lat: 41.3874, lon: 2.1701, heading: 0, mode: 'walk', place: 'Barcelona'};
 const RAD = Math.PI / 180;
@@ -124,6 +124,7 @@ export class Game {
     this.lastTime = now;
     if (dt <= 0) return;
     const oldSpeed = this.speed;
+    const oldSteer = this.driving.steer;
 
     const input = (this.keys.has('KeyW') || this.keys.has('ArrowUp') ? 1 : 0) -
                   (this.keys.has('KeyS') || this.keys.has('ArrowDown') ? 1 : 0);
@@ -173,6 +174,11 @@ export class Game {
       if (now - this.lastSave > 5000) this.save();
     } else if (Math.abs(this.speed - oldSpeed) > 0.001 || this.speed !== 0) {
       this.emit(now - this.lastHud >= 140 || this.speed === 0);
+    }
+    // Actualizar el giro visible de las ruedas incluso con el coche detenido.
+    if (!moved && !rotated && this.state.mode === 'car' &&
+        Math.abs(this.driving.steer - oldSteer) > 0.000001) {
+      this.onFrame({...this.state,vehicle:this.vehicle,drive:this.driving});
     }
   }
 
