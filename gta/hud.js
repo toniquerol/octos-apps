@@ -1,5 +1,5 @@
 /* OcToS GTA · Instrumentación arcade inspirada en la referencia del usuario.
-   Velocidad y GPS son datos del juego; RPM y aceleración son indicadores estimados.
+   Velocidad y GPS son datos del juego; RPM y turbo son indicadores estimados. El nivel de combustible no se simula.
    No se altera la física ni se extraen imágenes del videojuego de referencia. */
 const GPS_STYLE='https://tiles.openfreemap.org/styles/dark';
 const GPS_ZOOM=14.6; // Más territorio visible por delante
@@ -54,51 +54,81 @@ function makeTachometer() {
     <circle cx="150" cy="150" r="27" fill="#2c322b" stroke="#697166" stroke-width="6"/>
     <circle cx="150" cy="150" r="17" fill="#121814" stroke="#c4c7c4" stroke-width="2.1"/>
     <circle cx="150" cy="150" r="7" fill="#d9e0db"/>
-    <text id="gta-speed-value" x="211" y="212" text-anchor="middle" font-family="Arial,sans-serif" fill="#fff" font-size="47" font-style="italic" font-weight="900">0</text>
-    <text id="gta-speed-unit" x="211" y="237" text-anchor="middle" fill="#d5d9d6" font-size="19" font-style="italic">KM/H</text>
+    <text id="gta-rpm-value" x="150" y="228" text-anchor="middle" font-family="Arial,sans-serif" fill="#fff" font-size="39" font-style="italic" font-weight="900">0.0</text>
     <text x="148" y="271" text-anchor="middle" fill="#8d9990" font-size="9" letter-spacing="2">OCTOS DRIVE</text>
   </svg>`;
 }
-function makeAuxiliaryGauge(){
+function makeSpeedometer(){
   let ticks='',labels='';
-  for(let i=0;i<=6;i++){
-    const angle=212+i*38;
-    const a=point(75,75,60,angle),b=point(75,75,66,angle);
-    ticks+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${i>4?'#ed837e':'#e9eeee'}" stroke-width="2.6"/>`;
-    if(i%3===0){
-      const p=point(75,75,48,angle);
-      labels+=`<text x="${p.x.toFixed(1)}" y="${(p.y+4).toFixed(1)}" text-anchor="middle" font-size="13" font-weight="700" fill="#ebefef">${(i-3)*10}</text>`;
+  for(let i=0;i<=40;i++){
+    const angle=207+i*6.15,major=i%5===0;
+    const a=point(150,150,major?102:112,angle),b=point(150,150,120,angle);
+    ticks+='<line x1="'+a.x.toFixed(2)+'" y1="'+a.y.toFixed(2)+'" x2="'+b.x.toFixed(2)+'" y2="'+b.y.toFixed(2)+'" stroke="#f1f4f1" stroke-width="'+(major?3.4:1.4)+'"/>';
+    if(major){
+      const p=point(150,150,86,angle);
+      labels+='<text x="'+p.x.toFixed(1)+'" y="'+(p.y+6).toFixed(1)+'" text-anchor="middle" font-size="21" font-weight="800" fill="#f1f3ef">'+(i*6)+'</text>';
     }
   }
-  return `<svg class="gta-aux-svg" viewBox="0 0 150 150" aria-hidden="true">
-    <circle cx="75" cy="75" r="73" fill="#161a17" opacity=".93" stroke="#7a837c" stroke-width="5"/>
-    <circle cx="75" cy="75" r="66" fill="#242a25" stroke="#424c43" stroke-width="4"/>
-    <path d="${arc(75,75,68,210,330)}" fill="none" stroke="#dfe7e6" stroke-width="6" opacity=".75"/>
-    <path d="${arc(75,75,68,338,440)}" fill="none" stroke="#ef7676" stroke-width="6" opacity=".85"/>
+  return `<svg class="gta-speed-svg" viewBox="0 0 300 300" aria-hidden="true">
+    <circle cx="150" cy="150" r="147" fill="#121912" stroke="#77837c" stroke-width="5"/>
+    <circle cx="150" cy="150" r="136" fill="#202922" stroke="#46554e" stroke-width="5"/>
+    <circle cx="150" cy="150" r="126" fill="none" stroke="#121c1a" stroke-width="8"/>
+    <path d="${arc(150,150,130,207,453)}" fill="none" stroke="#41b9dc" stroke-width="8" opacity=".85"/>
     ${ticks}${labels}
-    <text x="75" y="108" text-anchor="middle" font-size="11" fill="#d7dfd7" letter-spacing="1">ACEL.</text>
-    <line id="gta-aux-needle" x1="75" y1="89" x2="75" y2="30" stroke="#f0f5f6" stroke-width="3.3" stroke-linecap="round" transform="rotate(326 75 75)"/>
-    <circle cx="75" cy="75" r="14" fill="#151b16" stroke="#a7b0a9" stroke-width="4"/>
+    <text x="150" y="105" fill="#d1d9d1" font-size="14" letter-spacing="4" text-anchor="middle">KM/H</text>
+    <line id="gta-speed-needle" x1="150" y1="170" x2="150" y2="49" stroke="#f8f8f0" stroke-width="4" stroke-linecap="round" transform="rotate(207 150 150)"/>
+    <circle cx="150" cy="150" r="24" fill="#19221d" stroke="#b0b7ac" stroke-width="5"/>
+    <circle cx="150" cy="150" r="8" fill="#c5cfc9"/>
+    <text x="150" y="225" fill="#f4f7f4" font-size="36" text-anchor="middle" font-weight="800" id="gta-speed-face">0</text>
+    <text x="150" y="266" fill="#94a39b" font-size="10" letter-spacing="2" text-anchor="middle">OCTOS DRIVE</text>
+  </svg>`;
+}
+function makeSmallGauge(kind,label,unit){
+  let ticks='';
+  for(let i=0;i<=12;i++){
+    const angle=216+i*20;
+    const p1=point(75,75,i%3===0?52:58,angle),p2=point(75,75,64,angle);
+    ticks+='<line x1="'+p1.x.toFixed(1)+'" y1="'+p1.y.toFixed(1)+'" x2="'+p2.x.toFixed(1)+'" y2="'+p2.y.toFixed(1)+'" stroke="#e6ede8" stroke-width="'+(i%3===0?3:1.7)+'"/>';
+  }
+  const tickAngle=kind==='fuel'?336:216;
+  return `<svg class="gta-small-svg" viewBox="0 0 150 150" aria-hidden="true">
+    <circle cx="75" cy="75" r="73" fill="#141c18" stroke="#86908a" stroke-width="5"/>
+    <circle cx="75" cy="75" r="66" fill="#242d27" stroke="#4b5c50" stroke-width="4"/>
+    <path d="${arc(75,75,69,216,456)}" fill="none" stroke="${kind==='turbo'?'#f29b60':'#d2b47b'}" stroke-width="5" opacity=".8"/>
+    ${ticks}
+    <text x="75" y="48" text-anchor="middle" fill="#d8e0db" font-size="12" font-weight="800" letter-spacing="1">${label}</text>
+    <line id="gta-${kind}-needle" x1="75" y1="88" x2="75" y2="24" stroke="#f2f5ed" stroke-width="3" stroke-linecap="round" transform="rotate(${tickAngle} 75 75)"${kind==='fuel'?' opacity=".36"':''}/>
+    <circle cx="75" cy="75" r="12" fill="#151d18" stroke="#b3bdb2" stroke-width="4"/>
+    <text id="gta-${kind}-value" x="75" y="115" text-anchor="middle" font-size="19" fill="#f3f5ef" font-weight="800">${kind==='fuel'?'—':'0.0'}</text>
+    <text x="75" y="131" text-anchor="middle" font-size="10" fill="#aab8ac">${unit}</text>
   </svg>`;
 }
 export function mountDriveHud({report}={}) {
   const shell=$('gta-drive-display');
   if(!shell)throw new Error('No se encuentra el HUD de conducción.');
   const tach=$('gta-tachometer');
-  const aux=$('gta-auxiliary');
+  const speedometer=$('gta-speedometer');
+  const fuel=$('gta-fuel');
+  const turbo=$('gta-turbo');
   tach.innerHTML=makeTachometer();
-  aux.innerHTML=makeAuxiliaryGauge();
-  const speedLabel=$('gta-speed-value');
+  speedometer.innerHTML=makeSpeedometer();
+  fuel.innerHTML=makeSmallGauge('fuel','GASOIL','SIN DATOS');
+  turbo.innerHTML=makeSmallGauge('turbo','TURBO','BAR EST.');
+  const speedLabel=$('gta-speed-digital');
+  const speedFace=$('gta-speed-face');
+  const speedNeedle=$('gta-speed-needle');
+  const rpmValue=$('gta-rpm-value');
   const rpmNeedle=$('gta-tach-needle');
   const rpmShadow=$('gta-tach-needle-shadow');
-  const auxNeedle=$('gta-aux-needle');
+  const turboNeedle=$('gta-turbo-needle');
+  const turboValue=$('gta-turbo-value');
   const gps=$('gta-gps-map');
   const gpsStatus=$('gta-gps-status');
   const gpsHeading=$('gta-gps-heading');
   const gpsCoords=$('gta-gps-coords');
   let mini=null,lastGps=0,lastPos=null;
   let lastSpeed=0,lastMeasure=0,smoothedAccel=0;
-  let lastRpm=0,lastAux=0;
+  let lastRpm=0,lastTurbo=0;
   let gpsFailed=false;
   // La posición de la flecha queda a ~63 % de la altura para enseñar el recorrido por delante.
   const cameraPadding=()=>({top:Math.round((gps.clientHeight||176)*.24),bottom:0,left:0,right:0});
@@ -161,6 +191,9 @@ export function mountDriveHud({report}={}) {
     const inCar=state.mode==='car';
     const kmh=inCar?Math.max(0,Number(state.speed)||0):0;
     speedLabel.textContent=String(Math.round(kmh));
+    speedFace.textContent=String(Math.round(kmh));
+    speedNeedle.setAttribute('transform',
+      'rotate('+(207+clamp(kmh/240,0,1)*246).toFixed(2)+' 150 150)');
     const rpm=estimatedRpm(kmh,inCar);
     // Solo indicadores: el juego no simula rpm ni un sensor de presión.
     lastRpm+=(rpm-lastRpm)*.40;
@@ -168,6 +201,7 @@ export function mountDriveHud({report}={}) {
     const rotation='rotate('+angle.toFixed(2)+' 150 150)';
     rpmNeedle.setAttribute('transform',rotation);
     rpmShadow.setAttribute('transform',rotation);
+    rpmValue.textContent=(lastRpm/1000).toFixed(1);
     if(lastMeasure && now>lastMeasure){
       const seconds=clamp((now-lastMeasure)/1000,.03,1);
       const a=(kmh-lastSpeed)/3.6/seconds;
@@ -175,8 +209,12 @@ export function mountDriveHud({report}={}) {
     }
     if(!inCar)smoothedAccel*=.75;
     lastMeasure=now;lastSpeed=kmh;
-    lastAux+=(clamp(smoothedAccel*7.5,-30,30)-lastAux)*.48;
-    auxNeedle.setAttribute('transform','rotate('+(212+(lastAux+30)/60*228).toFixed(2)+' 75 75)');
+    // Estimación visual de presión de turbo: no existe sensor mecánico en GTA.
+    const turboEstimate=inCar?clamp(Math.max(0,smoothedAccel)*.32,0,1.5):0;
+    lastTurbo+=(turboEstimate-lastTurbo)*.45;
+    turboNeedle.setAttribute('transform',
+      'rotate('+(216+clamp(lastTurbo/1.5,0,1)*240).toFixed(2)+' 75 75)');
+    turboValue.textContent=lastTurbo.toFixed(1);
     gpsHeading.textContent=String(Math.round((state.heading||0)+360)%360).padStart(3,'0')+'°';
     gpsCoords.textContent=state.lat.toFixed(4)+', '+state.lon.toFixed(4);
     initGPS(state);
