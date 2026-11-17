@@ -12,17 +12,19 @@ export const VEHICLE = Object.freeze({
   rearLockGrip: .16
 });
 const DYNAMICS=Object.freeze({
-  mass:1600, yawInertia:3250, rearDriveGripForce: 9300,
+  // BMW E46 Touring: masas y cotas aproximadas para dinámica en navegador.
+  mass:1600, gravity:9.81, cgHeight:.53, yawInertia:3250,
   frontArm:1.33, rearArm:VEHICLE.wheelbase-1.33,
   frontCornering:49000, rearCornering:53000,
-  frontPeakForce:7800, rearPeakForce:7700,
-  maxYawAcceleration:1.5, maxDriftYawRate:.9,
-  lateralDamping:2.0, yawRecovery:3.0, stabilityAssist:.2
+  frontFriction:1.04, rearFriction:1.0,
+  maxYawAcceleration:1.65, maxDriftYawRate:1.0,
+  lateralDamping:2.1, yawRecovery:3.0, stabilityAssist:.24
 });
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 export const initialDriving=()=>({
   speed:0,steer:0,spin:0,rearSpin:0,rearLocked:false,
-  slip:0,yawRate:0,rearGripLoss:0,wheelSlip:0,driftActive:false,steerHold:0,steerDirection:0
+  slip:0,yawRate:0,rearGripLoss:0,wheelSlip:0,driftActive:false,
+  steerHold:0,steerDirection:0,longAccel:0,rearSideForce:0
 });
 /* Al pisar Space, la inercia del coche continúa hacia delante mientras
    se bloquea la rotación de ruedas traseras y baja su adherencia lateral.
@@ -35,7 +37,16 @@ export function stepDriving(car,input,elapsed) {
   const handbrake=Boolean(input.handbrake);
   const throttle=clamp(Number(input.forward)||0,0,1);
   const reverse=clamp(Number(input.reverse)||0,0,1);
-  let wheelSlipTarget=0;
+  car.longAccel??=0;car.rearSideForce??=0;
+  // Reparto dinámico de carga: aceleración -> eje posterior; frenado -> frontal.
+  const totalWeight=DYNAMICS.mass*DYNAMICS.gravity;
+  const transfer=DYNAMICS.mass*DYNAMICS.cgHeight*
+    clamp(car.longAccel,-9,9)/VEHICLE.wheelbase;
+  const rearLoad=clamp(totalWeight*DYNAMICS.frontArm/VEHICLE.wheelbase+
+    transfer,totalWeight*.25,totalWeight*.75);
+  const frontLoad=totalWeight-rearLoad;
+  const rearMax=rearLoad*DYNAMICS.rearFriction;
+  let wheelSlipTarget=0,driveForce=0;
   if(handbrake){
     // Freno de mano solo trasero: bloqueo y ausencia de impulso.
     const deceleration=Math.min(Math.abs(car.speed),VEHICLE.rearLockDeceleration*dt);
@@ -52,13 +63,17 @@ export function stepDriving(car,input,elapsed) {
       );
       // Solo las ruedas traseras transmiten la fuerza al suelo.
       // Al girar hay menos agarre longitudinal disponible.
-      const cornerLoad=clamp(Math.abs(car.steer)/.45,0,1);
-      const tractionForce=DYNAMICS.rearDriveGripForce*(1-.29*cornerLoad);
-      const deliveredForce=Math.min(demandForce,tractionForce);
+      const lateralShare=clamp(Math.abs(car.rearSideForce)/
+        Math.max(1,rearMax),0,1);
+      // El neumático trasero comparte adherencia longitudinal y lateral.
+      const tractionForce=rearMax*Math.sqrt(Math.max(.25,
+        1-.68*lateralShare*lateralShare));
+      driveForce=Math.min(demandForce,tractionForce);
       const excessForce=Math.max(0,demandForce-tractionForce);
-      wheelSlipTarget=clamp(excessForce/tractionForce*1.12,0,1);
+      wheelSlipTarget=clamp(excessForce/Math.max(1,tractionForce)*1.14,0,1);
       const aeroAndRollingDrag=180+.48*car.speed*car.speed;
-      car.speed=Math.max(0,car.speed+(deliveredForce-aeroAndRollingDrag)/DYNAMICS.mass*dt);
+      car.speed=Math.max(0,car.speed+
+        (driveForce-aeroAndRollingDrag)/DYNAMICS.mass*dt);
     }
   } else if(reverse){
     car.speed-=dt*(car.speed>0?VEHICLE.changeDirectionBrake:VEHICLE.reverseAcceleration)*reverse;
@@ -70,6 +85,8 @@ export function stepDriving(car,input,elapsed) {
     if(Math.abs(car.speed)<.012)car.speed=0;
   }
   car.speed=clamp(car.speed,VEHICLE.reverseMax,VEHICLE.maxSpeed);
+  car.longAccel=dt?clamp((car.speed-before)/dt,-9,9):0;
+  car.driveForce=driveForce;
   // Inercia de las ruedas motrices: patinan al pisar fuerte R2/W, y recuperan
   // adherencia al levantar el pie. No se aplica a las ruedas delanteras.
   car.wheelSlip??=0;
@@ -107,23 +124,31 @@ export function stepDriving(car,input,elapsed) {
   // Derrape por potencia sin necesidad de tocar el freno de mano.
   if(car.rearGripLoss>.025)car.driftActive=true;
   const v=car.speed;
-  const idealYaw=v/VEHICLE.wheelbase*Math.tan(car.steer);
+  // El giro sostenido no puede exigir aceleración lateral ilimitada a
+  // velocidades altas; representa el subviraje antes de perder adherencia.
+  const roadYawCap=Math.min(1.1,
+    DYNAMICS.gravity*1.08/Math.max(Math.abs(v),4));
+  const idealYaw=clamp(v/VEHICLE.wheelbase*Math.tan(car.steer),
+    -roadYawCap,roadYawCap);
 
   if(!car.driftActive) {
     // Sin derrape: respuesta V1 idéntica incluso a baja velocidad y marcha atrás.
     car.yawRate=idealYaw;
     car.slip*=Math.exp(-dt*5.5);
+    car.rearSideForce=0;
   } else if(v<2.5) {
     // Durante un derrape y a muy baja velocidad se recupera estabilidad.
     car.yawRate+=(idealYaw-car.yawRate)*(1-Math.exp(-dt*5.5));
     car.slip*=Math.exp(-dt*5.5);
     if(!handbrake&&car.rearGripLoss<.025)car.driftActive=false;
+    car.rearSideForce=0;
   } else if(car.rearGripLoss<.015 && Math.abs(car.slip)<.11 &&
             Math.abs(car.yawRate-idealYaw)<.11) {
     // Recuperación terminada: volver al comportamiento validado sin salto.
     car.driftActive=false;
     car.yawRate=idealYaw;
     car.slip*=Math.exp(-dt*5.5);
+    car.rearSideForce=0;
   } else {
     // Modelo dinámico de dos ejes: fuerzas laterales delanteras y traseras
     // separadas, saturación de agarre, inercia y asistencia de estabilidad.
@@ -133,11 +158,16 @@ export function stepDriving(car,input,elapsed) {
       const u=Math.max(Math.abs(v),2.5);
       const frontAngle=car.steer+Math.atan2(car.slip-DYNAMICS.frontArm*car.yawRate,u);
       const rearAngle=Math.atan2(car.slip+DYNAMICS.rearArm*car.yawRate,u);
+      const frontLimit=frontLoad*DYNAMICS.frontFriction;
       const frontForce=clamp(DYNAMICS.frontCornering*frontAngle,
-        -DYNAMICS.frontPeakForce,DYNAMICS.frontPeakForce);
-      const rearLimit=DYNAMICS.rearPeakForce*
+        -frontLimit,frontLimit);
+      const longitudinalUse=clamp(driveForce/Math.max(1,rearMax),0,.96);
+      const combinedGrip=Math.sqrt(Math.max(.18,
+        1-longitudinalUse*longitudinalUse));
+      const rearLimit=rearMax*combinedGrip*
         (1-(1-VEHICLE.rearLockGrip)*car.rearGripLoss);
       const rearForce=clamp(DYNAMICS.rearCornering*rearAngle,-rearLimit,rearLimit);
+      car.rearSideForce=rearForce;
       // La ayuda de contravolante permite estabilizar el coche sin eliminar
       // el desplazamiento lateral: no se fuerza el vector de movimiento al eje.
       let yawAccel=(DYNAMICS.frontArm*frontForce-DYNAMICS.rearArm*rearForce)/
@@ -148,12 +178,13 @@ export function stepDriving(car,input,elapsed) {
         -DYNAMICS.maxYawAcceleration,DYNAMICS.maxYawAcceleration)*h;
       // Si al entrar al drift se giraba más rápido que este límite,
       // reducir la rotación progresivamente, sin salto instantáneo.
-      const yawCap=Math.max(DYNAMICS.maxDriftYawRate,
-        Math.abs(car.yawRate)-DYNAMICS.maxYawAcceleration*h);
+      const yawCap=Math.min(DYNAMICS.maxDriftYawRate,
+        DYNAMICS.gravity*1.2/Math.max(u,5));
       car.yawRate=clamp(nextYaw,-yawCap,yawCap);
       const lateralAccel=v*car.yawRate-
         (frontForce+rearForce)/DYNAMICS.mass-DYNAMICS.lateralDamping*car.slip;
-      car.slip=clamp(car.slip+lateralAccel*h,-Math.abs(v)*.5,Math.abs(v)*.5);
+      const sidewaysCap=Math.max(1.5,Math.abs(v)*.23);
+      car.slip=clamp(car.slip+lateralAccel*h,-sidewaysCap,sidewaysCap);
     }
   }
   if(!Number.isFinite(car.yawRate)||!Number.isFinite(car.slip)){
