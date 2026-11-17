@@ -1,4 +1,4 @@
-import {createWorld} from './world.js?v=9';
+import {createWorld} from './world.js?v=10';
 import {Game, readSave} from './game.js?v=18';
 import {mountLayerPanel} from './layers.js?v=7';
 import {mountMapEditor} from './map-editor.js?v=4';
