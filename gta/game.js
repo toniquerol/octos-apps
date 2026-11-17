@@ -1,5 +1,5 @@
 /* OcToS GTA · personaje y primer vehículo independiente. */
-import {stepDriving,initialDriving} from './vehicle.js?v=9';
+import {stepDriving,initialDriving} from './vehicle.js?v=10';
 const STORAGE_KEY = 'octos-gta-v1-save';
 const CAMERA_STORAGE_KEY = 'octos-gta-car-cameras';
 const DEFAULT = {lat: 41.3874, lon: 2.1701, heading: 0, mode: 'walk', place: 'Barcelona'};
@@ -115,7 +115,7 @@ export class Game {
       this.cameraZoom[mode] = clamp(this.cameraZoom[mode] - Math.sign(event.deltaY) * amount, 20.5, 24);
       this.updateCamera(1/30);
     };
-    this.onBlur = () => { this.keys.clear(); this.speed = 0; this.driving.speed=0; this.driving.slip=0; this.driving.yawRate=0; this.driving.rearGripLoss=0; this.driving.wheelSlip=0; this.driving.driftActive=false; this.driving.rearLocked=false; this.emit(true); };
+    this.onBlur = () => { this.keys.clear(); this.speed = 0; this.driving.speed=0; this.driving.slip=0; this.driving.yawRate=0; this.driving.rearGripLoss=0; this.driving.wheelSlip=0; this.driving.longAccel=0; this.driving.rearSideForce=0; this.driving.driveForce=0; this.driving.driftActive=false; this.driving.rearLocked=false; this.emit(true); };
     document.addEventListener('keydown', this.onKeyDown);
     document.addEventListener('keyup', this.onKeyUp);
     document.addEventListener('wheel', this.onWheel, {passive: false});
@@ -148,7 +148,7 @@ export class Game {
     this.keys.clear();
     this.speed = 0;
     this.driving.speed=0; this.driving.slip=0;
-    this.driving.yawRate=0; this.driving.rearGripLoss=0; this.driving.wheelSlip=0; this.driving.driftActive=false; this.driving.rearLocked=false;
+    this.driving.yawRate=0; this.driving.rearGripLoss=0; this.driving.wheelSlip=0; this.driving.longAccel=0; this.driving.rearSideForce=0; this.driving.driveForce=0; this.driving.driftActive=false; this.driving.rearLocked=false;
     this.padPaused=false;this.jumpQueued=false;this.jumpHeight=0;this.jumpVelocity=0;
     this.emit(true);
   }
