@@ -89,6 +89,10 @@ html.pin-locked body>:not(#team-access):not(script){visibility:hidden!important}
 .pin-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
 .pin-actions button{padding:8px 10px;font-size:11px}
 .perms-empty{color:var(--muted);font-size:12px;line-height:1.55}
+.perms-app-pin{margin-bottom:20px}
+.perms-app-pin[hidden]{display:none}
+#general-pin-message{min-height:18px;margin:12px 0 0;color:#ffae80;font-size:12px}
+.pin-entry .pin-role{font-weight:600;color:#e0e0df}
 @media(max-width:780px){.perms-layout{grid-template-columns:1fr}.perms-head{align-items:start;flex-direction:column}.perms-master{align-items:start;flex-direction:column}}
 @media(max-width:610px){.nav-shortcuts{margin-right:0;gap:5px}.nav-shortcuts button{min-width:33px;height:34px}.perms-panel{padding:17px}header{gap:7px}.perms-apps{grid-template-columns:1fr}nav{gap:4px}nav button{padding:7px}}
 
@@ -416,10 +420,10 @@ header.team-header .octos-global-brand{z-index:1!important}
  <div class="team-access-card">
   <div class="team-access-overline">OcToS · Acceso restringido</div>
   <h1 id="team-access-title">OcToS Team</h1>
-  <p>Introduce el PIN maestro de cuatro dígitos o un PIN existente de seis dígitos.</p>
+  <p>Introduce el PIN maestro original de seis dígitos.</p>
   <form id="team-access-form">
    <label for="team-access-pin">PIN de acceso</label>
-   <input id="team-access-pin" type="password" inputmode="numeric" pattern="(?:[0-9]{4}|[0-9]{6})" maxlength="6" minlength="4" autocomplete="off" required autofocus>
+   <input id="team-access-pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6" autocomplete="off" required autofocus>
    <button id="team-access-submit" type="submit">Acceder</button>
    <div id="team-access-error" role="status" aria-live="polite"></div>
   </form>
@@ -588,9 +592,21 @@ header.team-header .octos-global-brand{z-index:1!important}
 </section>
 <section id="system" class="view"><div class="eyebrow">Módulo 04</div><div class="empty"><h2>Configuración</h2><p>Área reservada a la definición de agentes, equipos y permisos en versiones posteriores.</p><button class="outline" data-page="home">Volver al inicio</button></div></section>
 <section id="permissions" class="view" aria-labelledby="perms-title">
- <div class="perms-head"><div><div class="eyebrow">Administración / Sala de trabajo</div><h1 id="perms-title">Permisos y accesos</h1><p>Gestiona PIN secundarios y las aplicaciones autorizadas para cada perfil.</p></div><button class="outline" data-page="room" type="button">Volver a la sala</button></div>
+ <div class="perms-head"><div><div class="eyebrow">Administración / Sala de trabajo</div><h1 id="perms-title">Permisos y accesos</h1><p>Consulta los PIN activos, su tipo y las aplicaciones autorizadas. Solo el PIN maestro original permite entrar a Team.</p></div><button class="outline" data-page="room" type="button">Volver a la sala</button></div>
  <div class="perms-banner">Configuración experimental almacenada exclusivamente en este navegador. Los PIN secundarios solo funcionan en este dispositivo y navegador; no se sincronizan con otros usuarios. Los enlaces públicos de GitHub Pages no quedan protegidos. La compartición real y la revocación remota requieren autenticación de servidor.</div>
- <div class="perms-master"><strong>PIN maestro · Administrador</strong><span>Conservado · Acceso completo · No editable desde este panel</span></div>
+ <div class="perms-master"><strong>PIN original · Administrador</strong><span>Maestro: SÍ · Activo · 6 cifras · Todas las aplicaciones, incluido Team · No editable</span></div>
+ <section id="general-pin-editor" class="perms-panel perms-app-pin" hidden aria-labelledby="general-pin-title">
+  <h2 id="general-pin-title">Configurar PIN 8888 · No maestro</h2>
+  <p class="perms-hint">Selecciona las aplicaciones autorizadas. Team está excluido y solo acepta el maestro original.</p>
+  <div class="perms-apps" id="general-pin-apps"></div>
+  <div class="perms-actions">
+   <button id="general-pin-select-all" type="button">Seleccionar todas</button>
+   <button id="general-pin-clear" type="button">Deseleccionar</button>
+   <button id="general-pin-save" type="button" class="primary">Guardar permisos</button>
+   <button id="general-pin-cancel" type="button">Cancelar</button>
+  </div>
+  <p id="general-pin-message" role="status" aria-live="polite"></p>
+ </section>
  <div class="perms-layout">
   <div class="perms-panel">
    <h2 id="perms-form-title">Crear PIN secundario</h2>
@@ -606,7 +622,7 @@ header.team-header .octos-global-brand{z-index:1!important}
     <p id="perms-message" role="status" aria-live="polite"></p>
    </form>
   </div>
-  <div class="perms-panel"><h2>Accesos configurados</h2><div id="perms-list" class="pin-list"><p class="perms-empty">Todavía no hay PIN secundarios.</p></div></div>
+  <div class="perms-panel"><h2>PIN y estados</h2><div id="perms-list" class="pin-list"></div></div>
  </div>
 </section>
 
@@ -769,35 +785,18 @@ document.getElementById("floor").addEventListener("keydown",function(e){var el=e
 "use strict";
 const PIN_SALT="792dc348777ee0684dc1eb5dcc6c706a";
 const PIN_HASH="076ee91cf0a5f5d1f317b67acae6b6a4a7545863baf8dfe0d7763a3f2b573234";
-const PIN_SALT_4="7d4afe35245bda3dd9674af42a8bf047",PIN_HASH_4="7e0c4240af0acc92e2c7e85385aecde4af55bc622be6d55dfab64c66442974eb";
-const ROUNDS=250000,TTL=15*60*1000,SESSION_KEY="octos-team-access-until",TEAM_ROLE_KEY="octos-team-access-role",PROFILE_STORE="octos-permissions-v1";
+const ROUNDS=250000,TTL=15*60*1000,SESSION_KEY="octos-team-access-until-v2",TEAM_ROLE_KEY="octos-team-access-role-v2";
 let currentRole=null;window.octosTeamIsMaster=null;
 const root=document.documentElement,gate=document.getElementById("team-access"),form=document.getElementById("team-access-form");
 const pin=document.getElementById("team-access-pin"),error=document.getElementById("team-access-error"),submit=document.getElementById("team-access-submit");
 let lastActivity=Date.now(),failures=0,lockedUntil=0,lastSessionRefresh=0;
 function hexBytes(hex){return Uint8Array.from(hex.match(/.{2}/g).map(x=>parseInt(x,16)))}
 async function verify(value){
- const shortMaster=value.length===4;
  const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(value),{name:"PBKDF2"},false,["deriveBits"]);
- const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:hexBytes(shortMaster?PIN_SALT_4:PIN_SALT),iterations:ROUNDS,hash:"SHA-256"},k,256);
- const actual=new Uint8Array(bits),expected=hexBytes(shortMaster?PIN_HASH_4:PIN_HASH);
+ const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:hexBytes(PIN_SALT),iterations:ROUNDS,hash:"SHA-256"},k,256);
+ const actual=new Uint8Array(bits),expected=hexBytes(PIN_HASH);
  let different=0;for(let i=0;i<expected.length;i++)different|=actual[i]^expected[i];
  return different===0;
-}
-function readProfiles(){
- try{
-  const x=JSON.parse(localStorage.getItem(PROFILE_STORE)||"[]");
-  return Array.isArray(x)?x.filter(p=>p&&typeof p.id==="string"&&p.active!==false&&Array.isArray(p.apps)&&p.apps.includes("team")&&typeof p.salt==="string"&&typeof p.hash==="string"):[];
- }catch(e){return []}
-}
-async function verifySecondary(value,profile){
- try{
-  if(!/^[0-9a-f]{32}$/.test(profile.salt)||!/^[0-9a-f]{64}$/.test(profile.hash))return false;
-  const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(value),{name:"PBKDF2"},false,["deriveBits"]);
-  const a=new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:hexBytes(profile.salt),iterations:ROUNDS,hash:"SHA-256"},k,256));
-  const b=hexBytes(profile.hash);let diff=0;for(let i=0;i<b.length;i++)diff|=a[i]^b[i];
-  return diff===0;
- }catch(e){return false}
 }
 function persist(){try{sessionStorage.setItem(SESSION_KEY,String(Date.now()+TTL));sessionStorage.setItem(TEAM_ROLE_KEY,JSON.stringify(currentRole))}catch(e){}}
 function clear(){try{sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(TEAM_ROLE_KEY)}catch(e){}}
@@ -818,22 +817,17 @@ function lock(){
 }
 try{
  const role=JSON.parse(sessionStorage.getItem(TEAM_ROLE_KEY)||"null");
- const valid=role&&(role.kind==="master"||(role.kind==="secondary"&&readProfiles().some(p=>p.id===role.id)));
+ const valid=role&&role.kind==="master";
  if(valid&&Number(sessionStorage.getItem(SESSION_KEY)||0)>Date.now())enter(role);
  else{clear();document.querySelectorAll('[data-page="permissions"]').forEach(el=>el.hidden=true)}
 }catch(e){clear()}
 form.addEventListener("submit",async function(event){
  event.preventDefault();
  if(Date.now()<lockedUntil){error.textContent="Espera 30 segundos antes de volver a intentarlo.";return}
- if(!/^(?:[0-9]{4}|[0-9]{6})$/.test(pin.value)){error.textContent="Introduce cuatro o seis dígitos.";return}
+ if(!/^[0-9]{6}$/.test(pin.value)){error.textContent="Introduce seis dígitos.";return}
  submit.disabled=true;error.textContent="";
  try{
   if(await verify(pin.value)){failures=0;enter({kind:"master"});return}
-  for(const profile of readProfiles()){
-   if(await verifySecondary(pin.value,profile)){
-    failures=0;enter({kind:"secondary",id:profile.id});return;
-   }
-  }
   failures++;pin.value="";pin.focus();
   if(failures>=5){lockedUntil=Date.now()+30000;failures=0;error.textContent="Demasiados intentos. Espera 30 segundos."}
   else error.textContent="PIN incorrecto.";
