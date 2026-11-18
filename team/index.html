@@ -850,21 +850,46 @@ if(root.classList.contains("pin-locked"))pin.focus();
 /* Gestor de accesos local. Sin backend, no proporciona autorización real ni sincronización externa. */
 (function(){
 "use strict";
-const STORE="octos-permissions-v1", IDENTITY="octos-permissions", ROUNDS=250000;
+const STORE="octos-permissions-v1", APP_PIN_STORE="octos-apps-general-access-v1", ROUNDS=250000;
 const apps=[
  ["drive","Drive"],["carto","Carto"],["meteo","Meteo"],["rain","Rain"],["layers","Layers"],
- ["templates","Templates"],["aero","Aero"],["roads","Roads"],["kitchen","Kitchen"],["team","Team"],["wordpress","WordPress"]
+ ["templates","Templates"],["aero","Aero"],["assets3d","3D Assets"],["garage","Garage"],["gta","GTA"],["roads","Roads"],["kitchen","Kitchen"],["wordpress","WordPress"]
 ];
 const appBox=document.getElementById("perms-apps"),form=document.getElementById("perms-form"),
 nameBox=document.getElementById("perms-alias"),pinBox=document.getElementById("perms-pin"),
 message=document.getElementById("perms-message"),listBox=document.getElementById("perms-list"),
-saveButton=document.getElementById("perms-save");
+saveButton=document.getElementById("perms-save"),
+ generalEditor=document.getElementById("general-pin-editor"),
+ generalBox=document.getElementById("general-pin-apps"),
+ generalMessage=document.getElementById("general-pin-message");
 let editing=null,registry=[];
 function read(){try{
  const r=JSON.parse(localStorage.getItem(STORE)||"[]");
  return Array.isArray(r)?r.filter(x=>x&&typeof x.id==="string"&&Array.isArray(x.apps)&&typeof x.salt==="string"&&typeof x.hash==="string"):[];
 }catch(e){return []}}
 function store(){localStorage.setItem(STORE,JSON.stringify(registry))}
+function readGeneralPin(){
+ try{
+  const v=JSON.parse(localStorage.getItem(APP_PIN_STORE)||"null");
+  return v&&typeof v==="object"?{
+   active:v.active!==false,
+   apps:Array.isArray(v.apps)?v.apps.filter(x=>typeof x==="string"&&x!=="team"):null
+  }:{active:true,apps:null};
+ }catch(e){return {active:true,apps:null}}
+}
+function saveGeneralPin(record){
+ localStorage.setItem(APP_PIN_STORE,JSON.stringify({active:record.active,apps:record.apps}));
+}
+function appLabels(allowed){
+ return (allowed===null?apps.map(x=>x[0]):allowed).filter(x=>x!=="team")
+  .map(x=>(apps.find(v=>v[0]===x)||[x,x])[1]).join(" · ")||"Sin aplicaciones";
+}
+function editGeneralPin(){
+ const config=readGeneralPin();
+ generalBox.querySelectorAll("input").forEach(x=>{x.checked=config.apps===null||config.apps.includes(x.value)});
+ generalEditor.hidden=false;generalMessage.textContent="";
+ generalEditor.scrollIntoView({behavior:"smooth",block:"start"});
+}
 function bytesToHex(a){return Array.from(a).map(x=>x.toString(16).padStart(2,"0")).join("")}
 async function hashPin(pin,salt){
  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(pin),{name:"PBKDF2"},false,["deriveBits"]);
@@ -872,21 +897,56 @@ async function hashPin(pin,salt){
  return bytesToHex(new Uint8Array(raw));
 }
 function checkbox(slug,title){
- if(appBox.querySelector('[data-app="'+slug+'"]'))return;
- const lab=document.createElement("label"),check=document.createElement("input");
- check.type="checkbox";check.dataset.app=slug;check.value=slug;
- lab.append(check,document.createTextNode(title));appBox.append(lab);
+ for(const container of [appBox,generalBox]){
+  if(container.querySelector('[data-app="'+slug+'"]'))continue;
+  const lab=document.createElement("label"),check=document.createElement("input");
+  check.type="checkbox";check.dataset.app=slug;check.value=slug;
+  lab.append(check,document.createTextNode(title));container.append(lab);
+ }
 }
 apps.forEach(x=>checkbox(x[0],x[1]));
+document.getElementById("general-pin-select-all").addEventListener("click",()=>{
+ generalBox.querySelectorAll("input").forEach(x=>x.checked=true);
+});
+document.getElementById("general-pin-clear").addEventListener("click",()=>{
+ generalBox.querySelectorAll("input").forEach(x=>x.checked=false);
+});
+document.getElementById("general-pin-cancel").addEventListener("click",()=>{
+ generalEditor.hidden=true;
+});
+document.getElementById("general-pin-save").addEventListener("click",()=>{
+ const record=readGeneralPin();
+ record.apps=Array.from(generalBox.querySelectorAll("input:checked")).map(x=>x.value);
+ try{saveGeneralPin(record);generalMessage.textContent="Permisos guardados en este navegador.";renderList()}
+ catch(e){generalMessage.textContent="No se han podido guardar los permisos."}
+});
 function renderList(){
  listBox.replaceChildren();
- if(!registry.length){const p=document.createElement("p");p.className="perms-empty";p.textContent="Todavía no hay PIN secundarios.";listBox.append(p);return}
+ const general=readGeneralPin();
+ const pinCard=document.createElement("div");pinCard.className="pin-entry";
+ const pinTop=document.createElement("div");pinTop.className="pin-entry-top";
+ const pinInfo=document.createElement("div"),pinLabel=document.createElement("strong"),pinDesc=document.createElement("small"),pinState=document.createElement("span");
+ pinLabel.textContent="PIN 8888 · Aplicaciones";
+ pinDesc.textContent="No maestro · "+appLabels(general.apps)+" · Team excluido";
+ pinState.className="pin-state";pinState.textContent=general.active?"Activo":"Inactivo";
+ pinInfo.append(pinLabel,pinDesc);pinTop.append(pinInfo,pinState);
+ const pinActions=document.createElement("div");pinActions.className="pin-actions";
+ const editPin=document.createElement("button");editPin.type="button";editPin.textContent="Editar aplicaciones";
+ editPin.addEventListener("click",editGeneralPin);pinActions.append(editPin);
+ const togglePin=document.createElement("button");togglePin.type="button";togglePin.textContent=general.active?"Desactivar":"Activar";
+ togglePin.addEventListener("click",()=>{
+  const record=readGeneralPin();record.active=!record.active;
+  try{saveGeneralPin(record);renderList()}catch(e){generalMessage.textContent="No se ha podido cambiar el estado.";generalEditor.hidden=false}
+ });
+ pinActions.append(togglePin);
+ pinCard.append(pinTop,pinActions);listBox.append(pinCard);
+ if(!registry.length){const p=document.createElement("p");p.className="perms-empty";p.textContent="No hay PIN secundarios creados.";listBox.append(p);return}
  registry.forEach(function(entry){
   const box=document.createElement("div");box.className="pin-entry";
   const head=document.createElement("div");head.className="pin-entry-top";
   const title=document.createElement("div"),label=document.createElement("strong"),info=document.createElement("small"),state=document.createElement("span");
   label.textContent=entry.name;
-  info.textContent=(entry.apps||[]).map(s=>(apps.find(x=>x[0]===s)||[s,s])[1]).join(" · ")||"Sin aplicaciones";
+  info.textContent="No maestro · "+appLabels((entry.apps||[]).filter(s=>s!=="team"));
   state.className="pin-state";state.textContent=entry.active===false?"Inactivo":"Activo";
   title.append(label,info);head.append(title,state);
   const controls=document.createElement("div");controls.className="pin-actions";
@@ -896,6 +956,7 @@ function renderList(){
   action("Editar",function(){
    editing=entry.id;nameBox.value=entry.name;pinBox.value="";
    appBox.querySelectorAll("input").forEach(el=>el.checked=entry.apps.includes(el.value));
+   generalEditor.hidden=true;
    document.getElementById("perms-form-title").textContent="Editar PIN secundario";
    document.getElementById("perms-pin-hint").textContent="Deja el PIN vacío para mantenerlo o escribe otro de seis cifras para cambiarlo.";
    saveButton.textContent="Guardar cambios";message.textContent="";nameBox.focus();
@@ -948,7 +1009,7 @@ registry=read();renderList();
   const res=await fetch("https://api.github.com/repos/toniquerol/octos-apps/git/trees/main?recursive=1",{cache:"no-store"});
   if(!res.ok)throw Error("Sin sincronización");
   const data=await res.json();if(!Array.isArray(data.tree)||data.truncated)throw Error("Listado incompleto");
-  const ignored=new Set(["rain-v8","shared","tests"]);
+  const ignored=new Set(["rain-v8","shared","tests","team"]);
   data.tree.forEach(f=>{
    const m=/^([a-z0-9][a-z0-9-]*)\/index\.html$/.exec(f.path||"");
    if(!m||ignored.has(m[1])||apps.some(x=>x[0]===m[1]))return;
