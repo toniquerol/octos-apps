@@ -416,10 +416,10 @@ header.team-header .octos-global-brand{z-index:1!important}
  <div class="team-access-card">
   <div class="team-access-overline">OcToS · Acceso restringido</div>
   <h1 id="team-access-title">OcToS Team</h1>
-  <p>Introduce el PIN de seis dígitos para acceder al panel.</p>
+  <p>Introduce el PIN maestro de cuatro dígitos o un PIN existente de seis dígitos.</p>
   <form id="team-access-form">
    <label for="team-access-pin">PIN de acceso</label>
-   <input id="team-access-pin" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6" autocomplete="off" required autofocus>
+   <input id="team-access-pin" type="password" inputmode="numeric" pattern="(?:[0-9]{4}|[0-9]{6})" maxlength="6" minlength="4" autocomplete="off" required autofocus>
    <button id="team-access-submit" type="submit">Acceder</button>
    <div id="team-access-error" role="status" aria-live="polite"></div>
   </form>
@@ -769,6 +769,7 @@ document.getElementById("floor").addEventListener("keydown",function(e){var el=e
 "use strict";
 const PIN_SALT="792dc348777ee0684dc1eb5dcc6c706a";
 const PIN_HASH="076ee91cf0a5f5d1f317b67acae6b6a4a7545863baf8dfe0d7763a3f2b573234";
+const PIN_SALT_4="7d4afe35245bda3dd9674af42a8bf047",PIN_HASH_4="7e0c4240af0acc92e2c7e85385aecde4af55bc622be6d55dfab64c66442974eb";
 const ROUNDS=250000,TTL=15*60*1000,SESSION_KEY="octos-team-access-until",TEAM_ROLE_KEY="octos-team-access-role",PROFILE_STORE="octos-permissions-v1";
 let currentRole=null;window.octosTeamIsMaster=null;
 const root=document.documentElement,gate=document.getElementById("team-access"),form=document.getElementById("team-access-form");
@@ -776,9 +777,10 @@ const pin=document.getElementById("team-access-pin"),error=document.getElementBy
 let lastActivity=Date.now(),failures=0,lockedUntil=0,lastSessionRefresh=0;
 function hexBytes(hex){return Uint8Array.from(hex.match(/.{2}/g).map(x=>parseInt(x,16)))}
 async function verify(value){
+ const shortMaster=value.length===4;
  const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(value),{name:"PBKDF2"},false,["deriveBits"]);
- const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:hexBytes(PIN_SALT),iterations:ROUNDS,hash:"SHA-256"},k,256);
- const actual=new Uint8Array(bits),expected=hexBytes(PIN_HASH);
+ const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:hexBytes(shortMaster?PIN_SALT_4:PIN_SALT),iterations:ROUNDS,hash:"SHA-256"},k,256);
+ const actual=new Uint8Array(bits),expected=hexBytes(shortMaster?PIN_HASH_4:PIN_HASH);
  let different=0;for(let i=0;i<expected.length;i++)different|=actual[i]^expected[i];
  return different===0;
 }
@@ -823,7 +825,7 @@ try{
 form.addEventListener("submit",async function(event){
  event.preventDefault();
  if(Date.now()<lockedUntil){error.textContent="Espera 30 segundos antes de volver a intentarlo.";return}
- if(!/^[0-9]{6}$/.test(pin.value)){error.textContent="Introduce seis dígitos.";return}
+ if(!/^(?:[0-9]{4}|[0-9]{6})$/.test(pin.value)){error.textContent="Introduce cuatro o seis dígitos.";return}
  submit.disabled=true;error.textContent="";
  try{
   if(await verify(pin.value)){failures=0;enter({kind:"master"});return}
