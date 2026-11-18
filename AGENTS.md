@@ -38,3 +38,9 @@ El objetivo es **resolver exactamente lo pedido con la menor lectura, el menor d
 ## Iconos aprobados — revisión 3
 - Drive y Carto tienen referencias visuales aprobadas en `shared/icons/referencias/`; conservar sus conceptos y no alterarlos sin autorización expresa del usuario.
 - Los maestros y variantes están catalogados en `shared/icons/catalog.json`; regenerar PNG y favicon desde SVG cuando cambie un símbolo. Dejar `apps`, `layers`, `templates`, `team` y `kitchen` intactos salvo petición expresa.
+
+## Estándar visual obligatorio — cabecera OcToS
+- Leer `shared/ui/OcToS_BARRA_ESTANDAR.md` antes de crear una app o modificar la barra superior de cualquier app existente.
+- La captura aprobada de OcToS Aero (18/11/2026) fija el criterio común: barra oscura de 68 px, Inicio/Menú/Atrás a la izquierda, menús de app después, bloque central absoluto con **T oficial blanca + OcToS [APP] + subtítulo**, herramientas propias de cada app a la derecha; naranja #FF6A1A y gris/antracita de identidad.
+- Conservar logotipo, tamaños, colores, radios, alineaciones y estilos consistentes en todas las apps. Adaptar únicamente nombres y herramientas funcionales. En móvil evitar solapamientos mediante menús plegables.
+- No cambiar masivamente las cabeceras existentes ni otros estilos fuera del alcance expresamente solicitado.
