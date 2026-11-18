@@ -329,7 +329,7 @@ button,input,select{font:inherit}button{cursor:pointer}.app{display:flex;height:
 </div>
 <script id="lbmWorkerSource" type="text/plain">
 'use strict';
-// OcToS LBM D3Q19 BGK + optional Smagorinsky (LES) numerical prototype.
+// OcToS LBM D3Q19 TRT + optional Smagorinsky (LES); transient qualitative prototype.
 // All lattice velocities/densities are dimensionless. Physical conversion is explicit.
 const ex=new Int8Array([0,1,-1,0,0,0,0,1,-1,1,-1,1,-1,1,-1,0,0,0,0]);
 const ey=new Int8Array([0,0,0,1,-1,0,0,1,-1,-1,1,0,0,0,0,1,-1,1,-1]);
@@ -551,13 +551,28 @@ function extract(m,kind='snapshot'){
   m.lastProbe=meanProbe;
   m.massError=100*Math.abs(fluxIn-fluxOut)/Math.max(1e-8,Math.abs(fluxIn));
   const reverseFraction=fluidWake?negative/fluidWake:0;
+  // Preserve V15 approximate surface-pressure drag, explicitly NOT validated.
+  let forceX=0,frontalCells=0,frontalArea=0;
+  if(m.occupied){
+    const silhouette=new Uint8Array(ny*nz);
+    for(let z=1;z<nz-1;z++)for(let y=1;y<ny-1;y++)for(let x=1;x<nx-1;x++){
+      const i=(z*ny+y)*nx+x;if(mask[i]!==2)continue;
+      silhouette[z*ny+y]=1;
+      if(!mask[i-1])forceX+=pressure[i-1]*dy*dz;
+      if(!mask[i+1])forceX-=pressure[i+1]*dy*dz;
+    }
+    for(let i=0;i<silhouette.length;i++)frontalCells+=silhouette[i];
+    frontalArea=frontalCells*dy*dz;
+  }
+  const qDynamic=.5*m.rhoPhysical*m.uPhys*m.uPhys;
+  const dragCoefficient=frontalArea>0?forceX/(qDynamic*frontalArea):null;
   const diagnostics={iterations:m.step,residual:m.residual,massError:m.massError,
     machLbm:m.uIn*Math.sqrt(3),tauPhysical:m.physicalTau,tauUsed:m.baseTau,
     nuPhysical:m.nuPhysical,effectiveNu:m.effNu,viscosityRatio:m.effNu/m.nuPhysical,dt:m.dt,cellRef:m.cellRef,
     cellAspect:Math.max(dx,dy,dz)/Math.min(dx,dy,dz),
     reynoldsPhysical:m.uPhys*m.Dref/m.nuPhysical,reynoldsEffective:m.uPhys*m.Dref/m.effNu,
     characteristicLength:m.Dref,minPressure,maxPressure,maxSpeed,maxVorticity,reverseFraction,
-    frontalArea:0,dragForceN:0,cd:null,converged:false,valid:m.massError<10,
+    frontalArea,dragForceN:forceX,cd:dragCoefficient,converged:false,valid:m.massError<10,
     approximate:true,classification:'transient qualitative; not validated',timePhysical:m.step*m.dt};
   send(kind,{job:m.job,dims:m.dims,bounds,mstep:m.step,steps:m.step,timePhysical:m.step*m.dt,
     vectors,pressure,vorticity,occupied:m.occupied,diagnostics},
@@ -993,7 +1008,8 @@ self.onmessage=e=>{
     $('solverDiagnostics').className='audit '+(d.massError<10?'good':'warn');
     $('solverDiagnostics').innerHTML=`Transitorio: <b>${pretty(m.steps)} iter</b> · tiempo físico <b>${d.timePhysical.toFixed(3)} s</b><br>`+
       `Desequilibrio de caudal (aprox.): <b>${d.massError.toFixed(2)} %</b> · fluctuación sonda <b>${d.residual.toExponential(2)}</b><br>`+
-      `Presión relativa: ${d.minPressure.toFixed(0)}…${d.maxPressure.toFixed(0)} Pa · velocidad máx.: ${d.maxSpeed.toFixed(2)} m/s`;
+      `Presión relativa: ${d.minPressure.toFixed(0)}…${d.maxPressure.toFixed(0)} Pa · velocidad máx.: ${d.maxSpeed.toFixed(2)} m/s<br>`+
+      `Fuerza X por presión ≈ ${d.dragForceN.toFixed(1)} N · Cd presión ≈ ${d.cd===null?'—':d.cd.toFixed(3)} (no validado)`;
     $('wakeMetrics').innerHTML=`Re físico ≈ <b>${pretty(d.reynoldsPhysical)}</b> · Re efectivo ≈ <b>${pretty(d.reynoldsEffective)}</b><br>`+
       `Flujo inverso (estela): <b>${(100*d.reverseFraction).toFixed(2)} %</b> · ω máxima: <b>${d.maxVorticity.toFixed(2)} s⁻¹</b><br>`+
       `<span class="warningLabel">Resultado cualitativo, no validado; ${d.reynoldsEffective<60?'resolución viscosa de estela limitada':'la formación de vórtices depende del régimen y la malla'}.</span>`;
@@ -2011,7 +2027,7 @@ self.onmessage=e=>{
     C.style.width=cw+'px';C.style.height=ch+'px';
   }
   new ResizeObserver(resize).observe(W);
-  // V15 · Ratón: izquierdo = selección de geometría; central = órbita;
+  // Aero 3.0 · Ratón: izquierdo = selección de geometría; central = órbita;
   // derecho = desplazamiento; rueda = zoom. F = reencuadrar.
   // Táctil: un dedo orbita y dos dedos desplazan y hacen zoom.
   const touchPoints=new Map();
