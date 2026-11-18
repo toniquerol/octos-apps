@@ -151,6 +151,13 @@ button,input,select{font:inherit}button{cursor:pointer}.app{display:flex;height:
  .headerAuraBar{top:132px;left:calc(var(--sidebar-width) + 12px);right:auto}
  .headerPlayback{top:132px;right:10px}
 }
+@media (min-width:761px) and (max-width:950px){
+ .octosTopBar{height:202px}.app{height:calc(100dvh - 202px)}
+ .headerQuick{top:81px;left:calc(var(--sidebar-width) + 8px)}
+ .headerViews{top:127px;left:calc(var(--sidebar-width) + 8px);right:auto}
+ .headerAuraBar{top:170px;left:calc(var(--sidebar-width) + 8px);right:auto}
+ .headerPlayback{top:170px;right:10px}
+}
 @media(max-width:760px){
  .octosTopBar{height:203px}.app{height:calc(100dvh - 203px)}
  .headerQuick{left:10px;top:79px;gap:4px}
