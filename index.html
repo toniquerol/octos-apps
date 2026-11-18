@@ -135,7 +135,7 @@ footer a{text-decoration:underline;text-underline-offset:3px}
 const pinSalt="792dc348777ee0684dc1eb5dcc6c706a";
 const pinHash="076ee91cf0a5f5d1f317b67acae6b6a4a7545863baf8dfe0d7763a3f2b573234";
 const pinSalt4="7d4afe35245bda3dd9674af42a8bf047",pinHash4="7e0c4240af0acc92e2c7e85385aecde4af55bc622be6d55dfab64c66442974eb";
-const pbkdfRounds=250000, inactivityMs=15*60*1000, sessionKey="octos-apps-until",roleKey="octos-apps-role",permissionsKey="octos-permissions-v1";
+const pbkdfRounds=250000, inactivityMs=15*60*1000, sessionKey="octos-apps-until-v2",roleKey="octos-apps-role-v2",permissionsKey="octos-permissions-v1",appPinSettingsKey="octos-apps-general-access-v1";
 let currentAccess=null;
 const root=document.documentElement,gate=document.getElementById("access"),form=document.getElementById("access-form");
 const pin=document.getElementById("access-pin"),error=document.getElementById("access-error"),submit=document.getElementById("access-submit");
@@ -165,11 +165,23 @@ async function verifySecondary(value,profile){
   return difference===0;
  }catch(e){return false}
 }
+function appPinSettings(){
+ try{
+  const value=JSON.parse(localStorage.getItem(appPinSettingsKey)||"null");
+  return value&&typeof value==="object"?
+   {active:value.active!==false,apps:Array.isArray(value.apps)?value.apps.filter(x=>typeof x==="string"&&x!=="team"):null}:
+   {active:true,apps:null};
+ }catch(e){return {active:true,apps:null}}
+}
 function currentAllowed(){
  if(!currentAccess||currentAccess.kind==="master")return null;
+ if(currentAccess.kind==="apps"){
+  const settings=appPinSettings();
+  return settings.active?settings.apps:[];
+ }
  const entry=getProfiles().find(x=>x.id===currentAccess.id);
  if(!entry)return [];
- return entry.apps;
+ return entry.apps.filter(slug=>slug!=="team");
 }
 function persist(){try{sessionStorage.setItem(sessionKey,String(Date.now()+inactivityMs));sessionStorage.setItem(roleKey,JSON.stringify(currentAccess))}catch(e){}}
 function clear(){try{sessionStorage.removeItem(sessionKey);sessionStorage.removeItem(roleKey)}catch(e){}}
@@ -189,7 +201,11 @@ form.addEventListener("submit",async function(e){
  if(!/^(?:[0-9]{4}|[0-9]{6})$/.test(pin.value)){error.textContent="Introduce cuatro o seis dígitos.";return}
  submit.disabled=true;error.textContent="";
  try{
-  if(await verify(pin.value)){failures=0;enter({kind:"master"});render();return}
+  if(await verify(pin.value)){
+    const generalPin=pin.value.length===4;
+    if(generalPin&&!appPinSettings().active){pin.value="";error.textContent="Este PIN está desactivado.";return}
+    failures=0;enter({kind:generalPin?"apps":"master"});render();return
+   }
   for(const profile of getProfiles()){
    if(await verifySecondary(pin.value,profile)){
     failures=0;enter({kind:"secondary",id:profile.id});render();return
@@ -213,11 +229,17 @@ setInterval(function(){if(!root.classList.contains("pin-locked")&&Date.now()-las
 document.addEventListener("visibilitychange",function(){if(!document.hidden&&!root.classList.contains("pin-locked")&&Date.now()-lastAction>inactivityMs)lock()});
 try{
  const stored=JSON.parse(sessionStorage.getItem(roleKey)||"null");
- const valid=stored&&(stored.kind==="master"||(stored.kind==="secondary"&&getProfiles().some(x=>x.id===stored.id)));
+ const valid=stored&&(stored.kind==="master"||(stored.kind==="apps"&&appPinSettings().active)||(stored.kind==="secondary"&&getProfiles().some(x=>x.id===stored.id)));
  if(valid&&Number(sessionStorage.getItem(sessionKey)||0)>Date.now())enter(stored);
  else clear();
 }catch(e){clear()}
-if(root.classList.contains("pin-locked"))pin.focus();
+window.addEventListener("storage",event=>{
+  if(event.key!==appPinSettingsKey&&event.key!==permissionsKey)return;
+  if(currentAccess?.kind==="apps"&&!appPinSettings().active){lock();return}
+  if(currentAccess?.kind==="secondary"&&!getProfiles().some(x=>x.id===currentAccess.id)){lock();return}
+  render();
+ });
+ if(root.classList.contains("pin-locked"))pin.focus();
 
 const repo="toniquerol/octos-apps";
 const metadata=[
@@ -274,7 +296,7 @@ function makeCard(item){
  const copy=element("div","card-copy");
  copy.append(element("h3","card-name",item.name),element("p","card-detail",item.detail||"Aplicación OcToS"));
  const actions=element("div","card-actions");
- const isRoads=item.slug==="roads"&&currentAccess?.kind!=="master";
+ const isRoads=item.slug==="roads"&&!["master","apps"].includes(currentAccess?.kind);
  const open=element("a","card-link",isRoads?"Solicitar acceso":"Abrir");
  open.href=isRoads?"https://octos3dstudio.wordpress.com/contacto/":item.href||("./"+encodeURIComponent(item.slug)+"/");
  open.target="_blank";open.rel="noopener noreferrer";
@@ -292,7 +314,7 @@ function placeholder(){
 function render(){
  const query=filter.value.trim().toLocaleLowerCase("es");
  const permitted=currentAllowed();
- const accessible=[...items,wordpress].filter(x=>!permitted||permitted.includes(x.slug));
+ const accessible=[...items,wordpress].filter(x=>(x.slug!=="team"||currentAccess?.kind==="master")&&(!permitted||permitted.includes(x.slug)));
  const visible=accessible.filter(x=>(x.name+" "+x.type+" "+x.detail).toLocaleLowerCase("es").includes(query));
  const frag=document.createDocumentFragment();
  visible.forEach(item=>frag.append(makeCard(item)));
