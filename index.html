@@ -102,7 +102,7 @@ footer a{text-decoration:underline;text-underline-offset:3px}
   <h1 id="access-title"><img src="https://octos3dstudio.wordpress.com/wp-content/uploads/2026/11/octos-monograma-t-blanco-transparente.png" alt="OcToS"></h1>
   <form id="access-form">
    <label for="access-pin">PIN de acceso</label>
-   <input id="access-pin" type="password" inputmode="numeric" autocomplete="off" pattern="[0-9]{6}" maxlength="6" minlength="6" required autofocus>
+   <input id="access-pin" type="password" inputmode="numeric" autocomplete="off" pattern="(?:[0-9]{4}|[0-9]{6})" maxlength="6" minlength="4" required autofocus>
    <button class="primary-button" type="submit" id="access-submit">Acceder</button>
    <div id="access-error" role="status" aria-live="polite"></div>
   </form>
@@ -134,6 +134,7 @@ footer a{text-decoration:underline;text-underline-offset:3px}
 "use strict";
 const pinSalt="792dc348777ee0684dc1eb5dcc6c706a";
 const pinHash="076ee91cf0a5f5d1f317b67acae6b6a4a7545863baf8dfe0d7763a3f2b573234";
+const pinSalt4="7d4afe35245bda3dd9674af42a8bf047",pinHash4="7e0c4240af0acc92e2c7e85385aecde4af55bc622be6d55dfab64c66442974eb";
 const pbkdfRounds=250000, inactivityMs=15*60*1000, sessionKey="octos-apps-until",roleKey="octos-apps-role",permissionsKey="octos-permissions-v1";
 let currentAccess=null;
 const root=document.documentElement,gate=document.getElementById("access"),form=document.getElementById("access-form");
@@ -141,9 +142,10 @@ const pin=document.getElementById("access-pin"),error=document.getElementById("a
 let lastAction=Date.now(),lastSessionWrite=0,failures=0,cooldownUntil=0;
 function bytes(hex){return Uint8Array.from(hex.match(/.{2}/g).map(x=>parseInt(x,16)))}
 async function verify(value){
+ const shortMaster=value.length===4;
  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(value),{name:"PBKDF2"},false,["deriveBits"]);
- const got=new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:bytes(pinSalt),iterations:pbkdfRounds,hash:"SHA-256"},key,256));
- const expected=bytes(pinHash);let difference=0;
+ const got=new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:bytes(shortMaster?pinSalt4:pinSalt),iterations:pbkdfRounds,hash:"SHA-256"},key,256));
+ const expected=bytes(shortMaster?pinHash4:pinHash);let difference=0;
  for(let i=0;i<expected.length;i++)difference|=got[i]^expected[i];
  return difference===0;
 }
@@ -184,7 +186,7 @@ function lock(){
 form.addEventListener("submit",async function(e){
  e.preventDefault();
  if(Date.now()<cooldownUntil){error.textContent="Espera 30 segundos antes de repetir el intento.";return}
- if(!/^[0-9]{6}$/.test(pin.value)){error.textContent="Introduce seis dígitos.";return}
+ if(!/^(?:[0-9]{4}|[0-9]{6})$/.test(pin.value)){error.textContent="Introduce cuatro o seis dígitos.";return}
  submit.disabled=true;error.textContent="";
  try{
   if(await verify(pin.value)){failures=0;enter({kind:"master"});render();return}
@@ -272,7 +274,7 @@ function makeCard(item){
  const copy=element("div","card-copy");
  copy.append(element("h3","card-name",item.name),element("p","card-detail",item.detail||"Aplicación OcToS"));
  const actions=element("div","card-actions");
- const isRoads=item.slug==="roads";
+ const isRoads=item.slug==="roads"&&currentAccess?.kind!=="master";
  const open=element("a","card-link",isRoads?"Solicitar acceso":"Abrir");
  open.href=isRoads?"https://octos3dstudio.wordpress.com/contacto/":item.href||("./"+encodeURIComponent(item.slug)+"/");
  open.target="_blank";open.rel="noopener noreferrer";
