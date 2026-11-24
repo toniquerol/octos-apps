@@ -30,7 +30,7 @@ export function rotateGLB(buffer, quaternion) {
   return new Blob([result],{type:'model/gltf-binary'});
 }
 
-export async function createOrientation(host, buffer) {
+export async function createOrientation(host, buffer, isCurrent = () => true) {
   const canvas=host.querySelector('canvas');
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
@@ -58,6 +58,7 @@ export async function createOrientation(host, buffer) {
   try {
     const gltf=await loader.parseAsync(buffer,'');
     root.add(gltf.scene);
+    if (!isCurrent()) throw Error('Vista cancelada.');
     const bounds=new THREE.Box3().setFromObject(root);
     if(bounds.isEmpty()) throw Error('El modelo no contiene geometría visible.');
     const center=bounds.getCenter(new THREE.Vector3());
