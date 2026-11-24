@@ -135,9 +135,21 @@ export default {
       if (method === 'PATCH') {
         const details = metadata(request);
         if (!details) return fail('Revisa el nombre, la categoría y la visibilidad.', 400);
+        const bytes = request.body ? await readModel(request) : null;
+        if (request.body && !bytes) return fail('GLB no válido o superior a 5 MB.', 400);
+        const replacement = [];
+        if (bytes) {
+          const exists = await db.prepare('SELECT id FROM models WHERE id = ?').bind(id).first();
+          if (!exists) return fail('Modelo no disponible.', 404);
+          replacement.push(db.prepare('DELETE FROM model_chunks WHERE model_id = ?').bind(id));
+          for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+            replacement.push(db.prepare('INSERT INTO model_chunks (model_id, position, data) SELECT id, ?, ? FROM models WHERE id = ?').bind(offset / chunkSize, bytes.slice(offset, offset + chunkSize).buffer, id));
+          }
+        }
         const [{ meta }] = await db.batch([
-          db.prepare('UPDATE models SET name = ?, category = ?, public = ? WHERE id = ?')
-            .bind(details.name, details.category, Number(details.public), id),
+          db.prepare('UPDATE models SET name = ?, category = ?, public = ?, size = COALESCE(?, size) WHERE id = ?')
+            .bind(details.name, details.category, Number(details.public), bytes?.length ?? null, id),
+          ...replacement,
           db.prepare('DELETE FROM model_access WHERE model_id = ?').bind(id),
           ...grantAccess(db, id, details.profiles),
         ]);
