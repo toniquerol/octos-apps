@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { libraryURL } from '../modelos/library.js';
+import { api } from '../shared/access.mjs';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -618,12 +618,10 @@ async function openOnlineModel(){
  }
  status('Cargando modelo de la biblioteca online…');
  try{
-  const catalog=await fetch(libraryURL+'/models');
-  if(!catalog.ok)throw new Error('La biblioteca online no está disponible.');
+  const catalog=await api('/models');
   const model=(await catalog.json()).models.find(item=>item.id===id);
-  if(!model)throw new Error('El modelo ya no está disponible públicamente.');
-  const response=await fetch(libraryURL+'/models/'+id);
-  if(!response.ok)throw new Error('El modelo ya no está disponible públicamente.');
+  if(!model)throw new Error('El modelo no está disponible para tu sesión.');
+  const response=await api('/models/'+id);
   await importFiles([new File([await response.blob()],model.name+'.glb',{type:'model/gltf-binary'})],true);
  }catch(error){status(error.message,true)}
 }

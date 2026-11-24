@@ -1,4 +1,4 @@
-export const libraryURL = 'https://octos-assets-library.toniquerolalegre.workers.dev';
+import { api as request, getAccess, libraryURL, signIn, signOut } from '../shared/access.mjs';
 
 if (document.getElementById('models')) {
   const get = (id) => document.getElementById(id);
@@ -8,7 +8,15 @@ if (document.getElementById('models')) {
   const fields = editor.elements;
   const categories = ['Vehículos', 'Cocina', 'Vallas y barreras', 'Otros'];
   const sizeFormat = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 });
-  let token = '';
+  const profileForm = get('profile');
+  const apps = Object.entries({
+    modelos: 'Biblioteca de modelos', assets3d: '3D Assets', kitchen: 'Kitchen', aero: 'Aero',
+    drive: 'Drive', carto: 'Carto', meteo: 'Meteo', rain: 'Rain', layers: 'Layers',
+    templates: 'Templates', garage: 'Garage', gta: 'GTA', roads: 'Roads', wordpress: 'WordPress',
+  });
+  let session;
+  let profiles = [];
+  let configured = true;
   let models = [];
   let local = [];
   let editId = '';
@@ -17,16 +25,6 @@ if (document.getElementById('models')) {
   function message(text, error = false) {
     status.textContent = text;
     status.toggleAttribute('data-error', error);
-  }
-
-  async function request(path, { method = 'GET', body, details } = {}) {
-    const headers = {};
-    if (token) headers.Authorization = 'Bearer ' + token;
-    if (details) headers['X-Model-Metadata'] = encodeURIComponent(JSON.stringify(details));
-    if (body) headers['Content-Type'] = 'model/gltf-binary';
-    const response = await fetch(libraryURL + path, { method, body, headers });
-    if (!response.ok) throw new Error((await response.json().catch(() => null))?.error || 'No se pudo conectar con la biblioteca.');
-    return response;
   }
 
   function action(label, handler) {
@@ -54,16 +52,15 @@ if (document.getElementById('models')) {
       info.append(title, meta);
       const actions = document.createElement('div');
       actions.className = 'actions';
-      if (model.public) {
-        const open = document.createElement('a');
-        open.className = 'button';
-        open.href = '../assets3d/?modelo=' + model.id;
-        open.textContent = 'Abrir en visor';
-        actions.append(open, action('Copiar enlace GLB', () => run(async () => {
-          await navigator.clipboard.writeText(libraryURL + '/models/' + model.id);
-          message('Enlace GLB copiado.');
-        })));
-      }
+      const open = document.createElement('a');
+      open.className = 'button';
+      open.href = '../assets3d/?modelo=' + model.id;
+      open.textContent = 'Abrir en visor';
+      actions.append(open);
+      if (model.public) actions.append(action('Copiar enlace GLB', () => run(async () => {
+        await navigator.clipboard.writeText(libraryURL + '/models/' + model.id);
+        message('Enlace GLB copiado.');
+      })));
       actions.append(action('Descargar GLB', () => run(async () => {
         const file = await (await request('/models/' + model.id)).blob();
         const url = URL.createObjectURL(file);
@@ -73,7 +70,7 @@ if (document.getElementById('models')) {
         link.click();
         setTimeout(() => URL.revokeObjectURL(url), 30000);
       })));
-      if (token) actions.append(action('Editar', () => edit(model)), action('Borrar', () => {
+      if (session?.kind === 'master') actions.append(action('Editar', () => edit(model)), action('Borrar', () => {
         if (confirm('¿Borrar de la biblioteca online «' + model.name + '»?')) {
           run(async () => {
             await request('/models/' + model.id, { method: 'DELETE' });
@@ -129,6 +126,7 @@ if (document.getElementById('models')) {
     fields.name.value = model?.name || '';
     fields.category.value = model?.category || '';
     fields.visibility.value = model?.public ? 'public' : 'private';
+    renderModelProfiles(model?.profiles || []);
     if (editId) fields.name.focus();
   }
 
@@ -144,35 +142,104 @@ if (document.getElementById('models')) {
   get('search').addEventListener('input', render);
   get('filter').addEventListener('change', render);
   get('cancel').addEventListener('click', () => edit());
-  get('manage').addEventListener('click', () => {
-    if (busy) return;
-    if (!token) {
-      login.hidden = !login.hidden;
-      if (!login.hidden) login.elements.token.focus();
-      return;
-    }
-    token = '';
-    models = models.filter(model => model.public);
-    render();
-    editor.hidden = true;
-    get('manage').textContent = 'Gestionar biblioteca';
-    run(refresh);
-  });
+  function checkbox(value, text, checked = false) {
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = value;
+    input.checked = checked;
+    label.append(input, text);
+    return label;
+  }
 
-  login.addEventListener('submit', (event) => {
-    event.preventDefault();
-    run(async () => {
-      token = login.elements.token.value.trim();
-      login.reset();
-      try { await refresh(); }
-      catch (error) { token = ''; throw error; }
-      login.hidden = true;
-      editor.hidden = false;
-      get('manage').textContent = 'Cerrar gestión';
-      edit();
+  get('app-access').append(...apps.map(([id, label]) => checkbox(id, label, id === 'modelos')));
+  const selected = root => [...root.querySelectorAll('input:checked')].map(input => input.value);
+
+  function renderModelProfiles(grants) {
+    const allowed = profiles.filter(profile => profile.apps.includes('modelos'));
+    get('model-profiles').replaceChildren(...allowed.map(profile => checkbox(profile.id, profile.name, grants.includes(profile.id))));
+    get('model-access').hidden = fields.visibility.value === 'public' || !allowed.length;
+  }
+
+  async function readProfiles() {
+    profiles = (await (await request('/access/profiles')).json()).profiles;
+    get('profiles').replaceChildren(...profiles.map(profile => {
+      const row = document.createElement('article');
+      const name = document.createElement('span');
+      name.textContent = profile.name + ' · ' + profile.apps.map(id => apps.find(app => app[0] === id)?.[1] || id).join(', ');
+      row.append(name, action('Revocar PIN', () => {
+        if (!confirm('¿Revocar el PIN de «' + profile.name + '»?')) return;
+        run(async () => {
+          await request('/access/profiles/' + profile.id, { method: 'DELETE' });
+          await readProfiles();
+          await refresh();
+          message('PIN revocado.');
+        });
+      }));
+      return row;
+    }));
+    renderModelProfiles(selected(get('model-profiles')));
+  }
+
+  async function showSession(value) {
+    session = value;
+    if (session) login.hidden = true;
+    const admin = session?.kind === 'master';
+    get('manage').textContent = session ? 'Cerrar sesión' : (configured ? 'Acceder con PIN' : 'Activar acceso');
+    editor.hidden = !admin;
+    get('permissions').hidden = !admin;
+    if (admin) {
       local = await readLocalModels().catch(() => []);
       fields.source.replaceChildren(new Option('Archivo GLB', 'file'), ...local.map((model, index) => new Option('Local · ' + model.name, String(index))));
+      await readProfiles();
+    } else {
+      profiles = [];
+      models = models.filter(model => model.public);
+      render();
+    }
+    await refresh();
+  }
+
+  get('manage').addEventListener('click', () => {
+    if (busy) return;
+    if (session) {
+      run(async () => { await signOut(); await showSession(null); });
+    } else {
+      login.hidden = !login.hidden;
+      if (!login.hidden) (configured ? login.elements.pin : login.elements.code).focus();
+    }
+  });
+
+  login.addEventListener('submit', event => {
+    event.preventDefault();
+    run(async () => {
+      const value = await signIn(login.elements.pin.value, configured ? '' : login.elements.code.value.trim());
+      login.reset();
+      configured = true;
+      get('activation').hidden = true;
+      login.elements.code.required = false;
+      await showSession(value);
     });
+  });
+
+  profileForm.addEventListener('submit', event => {
+    event.preventDefault();
+    run(async () => {
+      await request('/access/profiles', { method: 'POST', body: {
+        name: profileForm.elements.alias.value,
+        pin: profileForm.elements.pin.value,
+        apps: selected(get('app-access')),
+      }});
+      profileForm.reset();
+      await readProfiles();
+      message('PIN registrado.');
+    });
+  });
+
+  fields.visibility.addEventListener('change', () => renderModelProfiles(selected(get('model-profiles'))));
+  window.addEventListener('octos-access', event => {
+    if (busy || event.detail?.id === session?.id) return;
+    run(() => showSession(event.detail));
   });
 
   fields.source.addEventListener('change', () => {
@@ -186,7 +253,7 @@ if (document.getElementById('models')) {
   editor.addEventListener('submit', (event) => {
     event.preventDefault();
     run(async () => {
-      const details = { name: fields.name.value.trim(), category: fields.category.value.trim(), public: fields.visibility.value === 'public' };
+      const details = { name: fields.name.value.trim(), category: fields.category.value.trim(), public: fields.visibility.value === 'public', profiles: selected(get('model-profiles')) };
       const original = models.find(model => model.id === editId);
       if (details.public && !original?.public && !confirm('Cualquier persona con el enlace podrá descargar este GLB. ¿Publicarlo?')) return;
       if (editId) await request('/models/' + editId, { method: 'PATCH', details });
@@ -202,5 +269,11 @@ if (document.getElementById('models')) {
     });
   });
 
-  run(refresh);
+  run(async () => {
+    const access = await getAccess();
+    configured = access.configured;
+    get('activation').hidden = configured;
+    login.elements.code.required = !configured;
+    await showSession(access.session);
+  });
 }

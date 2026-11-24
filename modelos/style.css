@@ -39,3 +39,8 @@ article > div:first-child { flex: 1 1 150px; min-width: 0; }
   form { grid-template-columns: minmax(0, 1fr); }
   main { padding: 18px 12px; }
 }
+details { margin-top: 15px; border: 1px solid #34353b; border-radius: 9px; padding: 12px; }
+summary { cursor: pointer; }
+fieldset { grid-column: 1 / -1; min-width: 0; border: 1px solid #34353b; border-radius: 7px; }
+fieldset label { display: inline-flex; align-items: center; margin: 4px 14px 4px 0; }
+#profiles { display: grid; gap: 8px; margin-top: 8px; }

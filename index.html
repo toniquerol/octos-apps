@@ -106,6 +106,7 @@ footer a{text-decoration:underline;text-underline-offset:3px}
    <button class="primary-button" type="submit" id="access-submit">Acceder</button>
    <div id="access-error" role="status" aria-live="polite"></div>
   </form>
+  <a class="outline" href="./modelos/">Biblioteca de modelos</a>
  </div>
 </section>
 <div id="app">
@@ -127,119 +128,45 @@ footer a{text-decoration:underline;text-underline-offset:3px}
   </div>
   <iframe id="roadsInfoFrame" class="road-info-frame" title="Página informativa de la aplicación seleccionada" loading="lazy"></iframe>
  </dialog>
- <footer><span>© OcToS 3D Studio · Catálogo alojado en GitHub Pages</span><span>PIN local de interfaz. El contenido público requiere un servicio de autenticación para quedar realmente protegido.</span></footer>
+ <footer><span>© OcToS 3D Studio · Catálogo alojado en GitHub Pages</span><span>Acceso OcToS compartido con la biblioteca de modelos.</span></footer>
 </div>
 <script>
 (function(){
 "use strict";
-const pinSalt="792dc348777ee0684dc1eb5dcc6c706a";
-const pinHash="076ee91cf0a5f5d1f317b67acae6b6a4a7545863baf8dfe0d7763a3f2b573234";
-const pinSalt4="7d4afe35245bda3dd9674af42a8bf047",pinHash4="7e0c4240af0acc92e2c7e85385aecde4af55bc622be6d55dfab64c66442974eb";
-const pbkdfRounds=250000, inactivityMs=15*60*1000, sessionKey="octos-apps-until-v2",roleKey="octos-apps-role-v2",permissionsKey="octos-permissions-v1",appPinSettingsKey="octos-apps-general-access-v1";
 let currentAccess=null;
 const root=document.documentElement,gate=document.getElementById("access"),form=document.getElementById("access-form");
 const pin=document.getElementById("access-pin"),error=document.getElementById("access-error"),submit=document.getElementById("access-submit");
-let lastAction=Date.now(),lastSessionWrite=0,failures=0,cooldownUntil=0;
-function bytes(hex){return Uint8Array.from(hex.match(/.{2}/g).map(x=>parseInt(x,16)))}
-async function verify(value){
- const shortMaster=value.length===4;
- const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(value),{name:"PBKDF2"},false,["deriveBits"]);
- const got=new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:bytes(shortMaster?pinSalt4:pinSalt),iterations:pbkdfRounds,hash:"SHA-256"},key,256));
- const expected=bytes(shortMaster?pinHash4:pinHash);let difference=0;
- for(let i=0;i<expected.length;i++)difference|=got[i]^expected[i];
- return difference===0;
-}
-function getProfiles(){
- try{
-  const value=JSON.parse(localStorage.getItem(permissionsKey)||"[]");
-  return Array.isArray(value)?value.filter(x=>x&&typeof x.id==="string"&&typeof x.salt==="string"&&typeof x.hash==="string"&&Array.isArray(x.apps)&&x.active!==false):[];
- }catch(e){return []}
-}
-async function verifySecondary(value,profile){
- try{
-  if(profile.salt.length!==32||profile.hash.length!==64||!/^[0-9a-f]+$/.test(profile.salt+profile.hash))return false;
-  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(value),{name:"PBKDF2"},false,["deriveBits"]);
-  const actual=new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:bytes(profile.salt),iterations:pbkdfRounds,hash:"SHA-256"},key,256));
-  const expected=bytes(profile.hash);let difference=0;
-  for(let i=0;i<expected.length;i++)difference|=actual[i]^expected[i];
-  return difference===0;
- }catch(e){return false}
-}
-function appPinSettings(){
- try{
-  const value=JSON.parse(localStorage.getItem(appPinSettingsKey)||"null");
-  return value&&typeof value==="object"?
-   {active:value.active!==false,apps:Array.isArray(value.apps)?value.apps.filter(x=>typeof x==="string"&&x!=="team"):null}:
-   {active:true,apps:null};
- }catch(e){return {active:true,apps:null}}
-}
+const accessClient=import("./shared/access.mjs");
 function currentAllowed(){
- if(!currentAccess||currentAccess.kind==="master")return null;
- if(currentAccess.kind==="apps"){
-  const settings=appPinSettings();
-  return settings.active?settings.apps:[];
- }
- const entry=getProfiles().find(x=>x.id===currentAccess.id);
- if(!entry)return [];
- return entry.apps.filter(slug=>slug!=="team");
+ return currentAccess?.kind==="master" ? null : currentAccess?.apps || [];
 }
-function persist(){try{sessionStorage.setItem(sessionKey,String(Date.now()+inactivityMs));sessionStorage.setItem(roleKey,JSON.stringify(currentAccess))}catch(e){}}
-function clear(){try{sessionStorage.removeItem(sessionKey);sessionStorage.removeItem(roleKey)}catch(e){}}
-function enter(access){
- currentAccess=access||{kind:"master"};
- root.classList.remove("pin-locked");gate.hidden=true;pin.value="";error.textContent="";
- lastAction=Date.now();lastSessionWrite=lastAction;persist();
+function showAccess(value){
+ currentAccess=value;
+ if(!value&&roadsInfoDialog.open)roadsInfoDialog.close();
+ root.classList.toggle("pin-locked",!value);
+ gate.hidden=Boolean(value);
+ pin.value="";
+ if(!value)pin.focus();
+ render();
 }
-function lock(){
- if(roadsInfoDialog.open)roadsInfoDialog.close();
- currentAccess=null;root.classList.add("pin-locked");gate.hidden=false;
- pin.value="";error.textContent="";clear();pin.focus();
-}
-form.addEventListener("submit",async function(e){
- e.preventDefault();
- if(Date.now()<cooldownUntil){error.textContent="Espera 30 segundos antes de repetir el intento.";return}
- if(!/^(?:[0-9]{4}|[0-9]{6})$/.test(pin.value)){error.textContent="Introduce cuatro o seis dígitos.";return}
+form.addEventListener("submit",async event=>{
+ event.preventDefault();
+ if(!/^(?:[0-9]{4}|[0-9]{6})$/.test(pin.value))return;
  submit.disabled=true;error.textContent="";
- try{
-  if(await verify(pin.value)){
-    const generalPin=pin.value.length===4;
-    if(generalPin&&!appPinSettings().active){pin.value="";error.textContent="Este PIN está desactivado.";return}
-    failures=0;enter({kind:generalPin?"apps":"master"});render();return
-   }
-  for(const profile of getProfiles()){
-   if(await verifySecondary(pin.value,profile)){
-    failures=0;enter({kind:"secondary",id:profile.id});render();return
-   }
-  }
-  failures++;pin.value="";pin.focus();
-  if(failures>=5){cooldownUntil=Date.now()+30000;failures=0;error.textContent="Demasiados intentos. Espera 30 segundos."}
-  else error.textContent="PIN incorrecto.";
- }catch(err){error.textContent="El navegador no permite comprobar el PIN."}
+ try{await (await accessClient).signIn(pin.value)}
+ catch(err){pin.value="";pin.focus();error.textContent=err.message}
  finally{submit.disabled=false}
 });
-document.getElementById("lock-button").addEventListener("click",lock);
-for(const eventName of ["keydown","pointerdown","touchstart"]){
- document.addEventListener(eventName,function(){
-  if(root.classList.contains("pin-locked"))return;
-  lastAction=Date.now();
-  if(lastAction-lastSessionWrite>30000){persist();lastSessionWrite=lastAction}
- },{passive:true});
-}
-setInterval(function(){if(!root.classList.contains("pin-locked")&&Date.now()-lastAction>inactivityMs)lock()},30000);
-document.addEventListener("visibilitychange",function(){if(!document.hidden&&!root.classList.contains("pin-locked")&&Date.now()-lastAction>inactivityMs)lock()});
-try{
- const stored=JSON.parse(sessionStorage.getItem(roleKey)||"null");
- const valid=stored&&(stored.kind==="master"||(stored.kind==="apps"&&appPinSettings().active)||(stored.kind==="secondary"&&getProfiles().some(x=>x.id===stored.id)));
- if(valid&&Number(sessionStorage.getItem(sessionKey)||0)>Date.now())enter(stored);
- else clear();
-}catch(e){clear()}
-window.addEventListener("storage",event=>{
-  if(event.key!==appPinSettingsKey&&event.key!==permissionsKey)return;
-  if(currentAccess?.kind==="apps"&&!appPinSettings().active){lock();return}
-  if(currentAccess?.kind==="secondary"&&!getProfiles().some(x=>x.id===currentAccess.id)){lock();return}
-  render();
- });
- if(root.classList.contains("pin-locked"))pin.focus();
+document.getElementById("lock-button").addEventListener("click",async ()=>{
+ try{await (await accessClient).signOut()}
+ catch(err){status.textContent=err.message}
+});
+window.addEventListener("octos-access",event=>showAccess(event.detail));
+accessClient.then(client=>client.getAccess()).then(access=>{
+ if(!access.configured){
+  error.textContent="Activa primero el PIN maestro en la biblioteca de modelos.";
+ }
+}).catch(err=>{error.textContent=err.message});
 
 const repo="toniquerol/octos-apps";
 const metadata=[
@@ -250,6 +177,7 @@ const metadata=[
  {slug:"layers",name:"Layers",type:"Cartografía",detail:"Catálogo de capas WMS",icon:"./layers/icon-light.svg"},
  {slug:"templates",name:"Templates",type:"Sistema visual",detail:"Plantillas y diseño",icon:"./templates/icon-light.svg"},
  {slug:"aero",name:"Aero",type:"Visualización 3D",detail:"Vehículos y flujo visual",icon:"./aero/icon-light.svg"},
+ {slug:"modelos",name:"Biblioteca de modelos",type:"Biblioteca 3D",detail:"Modelos 3D públicos y privados",icon:"./assets3d/icon.svg"},
  {slug:"assets3d",name:"3D Assets",type:"Biblioteca 3D",detail:"Modelos GLB, visor y exportación HTML",icon:"./assets3d/icon.svg"},
  {slug:"garage",name:"Garage",type:"Visualización 3D",detail:"Taller 3D y editor de nave",icon:"./garage/icon-light.svg"},
  {slug:"gta",name:"GTA",type:"Videojuego 3D",detail:"Mundo abierto geográfico · V1",icon:"./gta/icon-light.svg"},

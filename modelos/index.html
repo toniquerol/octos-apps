@@ -8,20 +8,30 @@
 <link rel="icon" href="../assets3d/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="./style.css">
 <script src="../shared/nav.js?v=20261124-modelos" defer></script>
-<script type="module" src="./library.js"></script>
+<script type="module" src="./library.js?v=pin1"></script>
 </head>
 <body>
 <header><a class="button" href="../assets3d/">Visor 3D Assets</a></header>
 <main>
   <div class="heading">
     <h1>Biblioteca de modelos</h1>
-    <button id="manage">Gestionar biblioteca</button>
+    <button id="manage">Acceder con PIN</button>
   </div>
   <form id="login" hidden>
-    <label>Token de GitHub <input name="token" type="password" required autocomplete="off" spellcheck="false"></label>
+    <label id="activation" hidden>Código de activación <input name="code" type="password" autocomplete="off"></label>
+    <label>PIN OcToS <input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,6}" maxlength="6" required autocomplete="off"></label>
     <button>Entrar</button>
-    <small>Usa un <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">token de permisos detallados de GitHub</a> de tu cuenta, con caducidad y sin permisos adicionales. Se conserva en memoria hasta cerrar o recargar esta página.</small>
   </form>
+  <details id="permissions" hidden>
+    <summary>Gestionar PIN secundarios</summary>
+    <form id="profile">
+      <label>Alias <input name="alias" required maxlength="50"></label>
+      <label>PIN público o secundario <input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,6}" maxlength="6" required autocomplete="off"></label>
+      <fieldset id="app-access"><legend>Aplicaciones autorizadas</legend></fieldset>
+      <button>Registrar PIN</button>
+    </form>
+    <div id="profiles"></div>
+  </details>
   <form id="editor" hidden>
     <h2 id="editor-title">Añadir modelo</h2>
     <label>Origen <select name="source"><option value="file">Archivo GLB</option></select></label>
@@ -29,6 +39,7 @@
     <label>Nombre <input name="name" required maxlength="120"></label>
     <label>Categoría <input name="category" list="categories" required maxlength="60" placeholder="Elige o escribe una categoría"></label>
     <label>Visibilidad <select name="visibility"><option value="private">Privado</option><option value="public">Público</option></select></label>
+    <fieldset id="model-access" hidden><legend>Dar acceso a perfiles secundarios</legend><div id="model-profiles"></div></fieldset>
     <div class="actions"><button class="accent" id="submit">Subir modelo</button><button type="button" id="cancel" hidden>Cancelar edición</button></div>
   </form>
   <div class="heading filters">

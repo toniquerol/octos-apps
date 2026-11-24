@@ -1,5 +1,6 @@
+import { access, getSession } from './access.mjs';
+
 const siteOrigin = 'https://toniquerol.github.io';
-const ownerId = 322857552;
 const limit = 5_000_000;
 const chunkSize = 512_000;
 const glbType = 'model/gltf-binary';
@@ -11,23 +12,15 @@ const headers = {
 const json = (body, status = 200) => Response.json(body, { status, headers });
 const fail = (error, status) => json({ error }, status);
 
-async function isAdmin(request) {
-  const authorization = request.headers.get('Authorization');
-  if (!authorization || !/^Bearer [A-Za-z0-9_]+$/.test(authorization)) return false;
-  const response = await fetch('https://api.github.com/user', {
-    headers: { Authorization: authorization, 'User-Agent': 'OcToS-Modelos' },
-    signal: AbortSignal.timeout(7000),
-  });
-  return response.ok && (await response.json()).id === ownerId;
-}
-
 function metadata(request) {
   try {
     const value = JSON.parse(decodeURIComponent(request.headers.get('X-Model-Metadata') || ''));
     const name = typeof value.name === 'string' && value.name.trim();
     const category = typeof value.category === 'string' && value.category.trim();
     if (name && name.length <= 120 && category && category.length <= 60 && typeof value.public === 'boolean') {
-      return { name, category, public: value.public };
+      const profiles = Array.isArray(value.profiles) ? [...new Set(value.profiles)] : [];
+      if (profiles.length > 30 || profiles.some(id => typeof id !== 'string' || !/^[0-9a-f-]{36}$/.test(id))) return null;
+      return { name, category, public: value.public, profiles };
     }
   } catch {
     return null;
@@ -57,6 +50,15 @@ async function readModel(request) {
   return buffer.subarray(0, size);
 }
 
+function grantAccess(db, modelId, profiles) {
+  return profiles.map(id => db.prepare(`INSERT INTO model_access (model_id, profile_id)
+    SELECT ?, id FROM access_profiles WHERE EXISTS (SELECT 1 FROM models WHERE id = ?) AND id = ? AND kind <> 'master'`).bind(modelId, modelId, id));
+}
+
+const visibility = `(public = 1 OR ? = 1 OR EXISTS (
+  SELECT 1 FROM model_access a WHERE a.model_id = models.id AND a.profile_id = ?
+))`;
+
 async function upload(request, db) {
   const details = metadata(request);
   if (!details) return fail('Indica un nombre, una categoría y la visibilidad.', 400);
@@ -69,13 +71,13 @@ async function upload(request, db) {
     statements.push(db.prepare('INSERT INTO model_chunks (model_id, position, data) VALUES (?, ?, ?)')
       .bind(id, offset / chunkSize, bytes.slice(offset, offset + chunkSize).buffer));
   }
-  await db.batch(statements);
+  await db.batch([...statements, ...grantAccess(db, id, details.profiles)]);
   return json({ id }, 201);
 }
 
-async function download(db, id, admin) {
-  const row = await db.prepare('SELECT size FROM models WHERE id = ? AND (public = 1 OR ? = 1)')
-    .bind(id, Number(admin)).first();
+async function download(db, id, admin, profileId) {
+  const row = await db.prepare(`SELECT size FROM models WHERE id = ? AND ${visibility}`)
+    .bind(id, Number(admin), profileId).first();
   if (!row) return fail('Modelo no disponible.', 404);
   const chunks = Math.ceil(row.size / chunkSize);
   let position = 0;
@@ -106,25 +108,39 @@ export default {
       } });
     }
     try {
-      const admin = request.headers.has('Authorization') && await isAdmin(request);
-      if (!admin && (method !== 'GET' || request.headers.has('Authorization'))) {
-        return fail('Se requiere autorización de Toni para esta operación.', 401);
-      }
       const db = env.LIBRARY;
+      const session = await getSession(request, db);
+      if (pathname === '/access' || pathname.startsWith('/access/')) return await access(request, env, session, json, fail);
+      const admin = session?.kind === 'master';
+      const profileId = session?.apps.includes('modelos') ? session.id : '';
+      if (!admin && method !== 'GET') return fail('Esta operación requiere el PIN maestro.', 403);
       if (pathname === '/models' && method === 'GET') {
-        const { results } = await db.prepare('SELECT id, name, category, size, public FROM models WHERE public = 1 OR ? = 1 ORDER BY created_at DESC, id')
-          .bind(Number(admin)).all();
+        const { results } = await db.prepare(`SELECT id, name, category, size, public FROM models WHERE ${visibility} ORDER BY created_at DESC, id`)
+          .bind(Number(admin), profileId).all();
+        if (admin) {
+          const grants = (await db.prepare('SELECT model_id, profile_id FROM model_access').all()).results;
+          const byModel = new Map();
+          for (const grant of grants) {
+            if (!byModel.has(grant.model_id)) byModel.set(grant.model_id, []);
+            byModel.get(grant.model_id).push(grant.profile_id);
+          }
+          for (const model of results) model.profiles = byModel.get(model.id) || [];
+        }
         return json({ models: results, admin });
       }
       if (pathname === '/models' && method === 'POST') return await upload(request, db);
       const id = /^\/models\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/.exec(pathname)?.[1];
       if (!id) return fail('Modelo no disponible.', 404);
-      if (method === 'GET') return await download(db, id, admin);
+      if (method === 'GET') return await download(db, id, admin, profileId);
       if (method === 'PATCH') {
         const details = metadata(request);
         if (!details) return fail('Revisa el nombre, la categoría y la visibilidad.', 400);
-        const { meta } = await db.prepare('UPDATE models SET name = ?, category = ?, public = ? WHERE id = ?')
-          .bind(details.name, details.category, Number(details.public), id).run();
+        const [{ meta }] = await db.batch([
+          db.prepare('UPDATE models SET name = ?, category = ?, public = ? WHERE id = ?')
+            .bind(details.name, details.category, Number(details.public), id),
+          db.prepare('DELETE FROM model_access WHERE model_id = ?').bind(id),
+          ...grantAccess(db, id, details.profiles),
+        ]);
         return meta.changes ? json({ id }) : fail('Modelo no disponible.', 404);
       }
       if (method === 'DELETE') {
