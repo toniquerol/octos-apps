@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0e0e10">
+<title>OcToS · Biblioteca de modelos</title>
+<link rel="icon" href="../assets3d/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./style.css">
+<script src="../shared/nav.js?v=20261124-modelos" defer></script>
+<script type="module" src="./library.js"></script>
+</head>
+<body>
+<header><a class="button" href="../assets3d/">Visor 3D Assets</a></header>
+<main>
+  <div class="heading">
+    <h1>Biblioteca de modelos</h1>
+    <button id="manage">Gestionar biblioteca</button>
+  </div>
+  <form id="login" hidden>
+    <label>Token de GitHub <input name="token" type="password" required autocomplete="off" spellcheck="false"></label>
+    <button>Entrar</button>
+    <small>Usa un <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">token de permisos detallados de GitHub</a> de tu cuenta, con caducidad y sin permisos adicionales. Se conserva en memoria hasta cerrar o recargar esta página.</small>
+  </form>
+  <form id="editor" hidden>
+    <h2 id="editor-title">Añadir modelo</h2>
+    <label>Origen <select name="source"><option value="file">Archivo GLB</option></select></label>
+    <label id="file-label">Archivo GLB · hasta 5 MB <input name="file" type="file" accept=".glb,model/gltf-binary"></label>
+    <label>Nombre <input name="name" required maxlength="120"></label>
+    <label>Categoría <input name="category" list="categories" required maxlength="60" placeholder="Elige o escribe una categoría"></label>
+    <label>Visibilidad <select name="visibility"><option value="private">Privado</option><option value="public">Público</option></select></label>
+    <div class="actions"><button class="accent" id="submit">Subir modelo</button><button type="button" id="cancel" hidden>Cancelar edición</button></div>
+  </form>
+  <div class="heading filters">
+    <input type="search" id="search" aria-label="Buscar modelos" placeholder="Buscar modelo">
+    <select id="filter" aria-label="Filtrar por categoría"></select>
+  </div>
+  <datalist id="categories"></datalist>
+  <p id="status" role="status" aria-live="polite">Cargando biblioteca…</p>
+  <div id="models" class="models"></div>
+</main>
+</body>
+</html>

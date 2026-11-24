@@ -34,6 +34,7 @@
     templates:['TEMPLATES','SISTEMA VISUAL'],
     aero:['AERO','LABORATORIO 3D'],
     assets3d:['3D ASSETS','BIBLIOTECA DE MODELOS 3D'],
+    modelos:['MODELOS','BIBLIOTECA ONLINE'],
     garage:['GARAGE','TALLER VIRTUAL 3D'],
     gta:['GTA','MUNDO ABIERTO'],
     roads:['ROADS','INFRAESTRUCTURAS'],

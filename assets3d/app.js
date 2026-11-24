@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { libraryURL } from '../modelos/library.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -365,7 +366,7 @@ async function recoverGLB(file){
  try{const value=payload.getAttribute('data-octos-transform');if(value)t=cleanTransform(JSON.parse(decodeURIComponent(value)));}catch(e){}
  return {file:new Blob([buffer],{type:'model/gltf-binary'}),transform:t};
 }
-async function importFiles(files){
+async function importFiles(files, fromOnline = false){
  if(busy)return;
  const items=[...files].filter(f=>/\.(glb|html|htm)$/i.test(f.name));
  if(items.length!==1){status(items.length?'Importa un archivo cada vez.':'Formatos admitidos: .GLB, .HTML y .HTM.',true);return}
@@ -391,11 +392,11 @@ async function importFiles(files){
    record={sourceKind:'glb',file:new Blob([file],{type:'model/gltf-binary'}),html:null,transform:defaultTransform(),triangles:stats.triangles,meshes:stats.meshes};
   }
   active={id:null,name,tags:[],filename:file.name,createdAt:Date.now(),updatedAt:Date.now(),thumbnail:null,...record};
-  dirty=true;if(record.file)applyTransform(record.transform);
+  dirty=!fromOnline;if(record.file)applyTransform(record.transform);
   syncInspector();
   status(isHTML
    ? (record.file?'HTML importado. GLB recuperado y disponible para optimizar.':'HTML importado para visualizar y guardar. Sin GLB extraíble, no se puede optimizar geometría.')
-   : 'GLB importado. Revisa la ficha y pulsa Guardar objeto.');
+   : (fromOnline ? 'GLB abierto desde la biblioteca online.' : 'GLB importado. Revisa la ficha y pulsa Guardar objeto.'));
   drawLibrary();
  }catch(e){status(file.name+': '+e.message,true)}
  finally{setBusy(false);updateButtons()}
@@ -609,4 +610,21 @@ stage.addEventListener('dragover',e=>e.preventDefault());
 stage.addEventListener('dragleave',e=>{e.preventDefault();dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)$('drop').classList.remove('show')});
 stage.addEventListener('drop',e=>{e.preventDefault();dragDepth=0;$('drop').classList.remove('show');importFiles(e.dataTransfer.files)});
 window.addEventListener('beforeunload',e=>{if(dirty&&active){e.preventDefault();e.returnValue=''}});
-refresh().then(()=>status('Biblioteca local lista para importar GLB o HTML.')).catch(e=>status('IndexedDB no disponible: '+e.message,true));
+async function openOnlineModel(){
+ const id=new URLSearchParams(location.search).get('modelo');
+ if(!id)return;
+ if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)){
+  status('El enlace del modelo no es válido.',true);return;
+ }
+ status('Cargando modelo de la biblioteca online…');
+ try{
+  const catalog=await fetch(libraryURL+'/models');
+  if(!catalog.ok)throw new Error('La biblioteca online no está disponible.');
+  const model=(await catalog.json()).models.find(item=>item.id===id);
+  if(!model)throw new Error('El modelo ya no está disponible públicamente.');
+  const response=await fetch(libraryURL+'/models/'+id);
+  if(!response.ok)throw new Error('El modelo ya no está disponible públicamente.');
+  await importFiles([new File([await response.blob()],model.name+'.glb',{type:'model/gltf-binary'})],true);
+ }catch(error){status(error.message,true)}
+}
+refresh().then(()=>status('Biblioteca local lista para importar GLB o HTML.')).catch(e=>status('IndexedDB no disponible: '+e.message,true)).then(openOnlineModel);

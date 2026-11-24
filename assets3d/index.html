@@ -16,7 +16,7 @@ header{min-height:69px;background:#15161a;border-bottom:1px solid var(--edge);di
 h1,h2,h3,p{margin:0}h1{font-size:19px;letter-spacing:.02em}h1 span{color:var(--orange)}.subtitle{color:var(--muted);font-size:11px}
 .logo{width:34px;height:34px;object-fit:contain}.brand{display:flex;align-items:center;gap:12px}.brand b{font-weight:760}
 button,.button{border:1px solid #545861;border-radius:8px;color:var(--text);background:#272a31;padding:9px 12px}
-button:hover,.button:hover{border-color:#ff6a1a}.accent{background:var(--orange);border-color:var(--orange);color:#17110d;font-weight:750}.accent:hover{background:#ff9156}
+button:hover,.button:hover{border-color:#ff6a1a}.accent{background:var(--orange);border-color:var(--orange);color:#17110d;font-weight:750}.accent:hover{background:#ff9156}.button{text-decoration:none;white-space:nowrap;text-align:center}.online-library{margin-bottom:12px}
 main{height:calc(100dvh - 70px);min-height:540px;display:grid;grid-template-columns:300px minmax(0,1fr) 295px;overflow:hidden}
 .library,.inspector{background:var(--pane);overflow:auto;padding:18px;border-right:1px solid var(--edge)}.library{display:flex;flex-direction:column;min-height:0}.library>.asset-list{flex:1;min-height:65px;overflow-y:auto;align-content:start}.floor-panel{flex:none;margin-top:auto;padding-top:14px;border-top:1px solid var(--edge)}.floor-panel h2{font-size:14px;margin:0 0 4px}
 .inspector{border-left:1px solid var(--edge);border-right:0}
@@ -60,6 +60,7 @@ select{cursor:pointer}.split{display:flex;gap:8px}.split>*{flex:1;min-width:0}
 <main>
  <aside class="library">
    <div class="headline"><h2>Biblioteca</h2><small id="count">0 modelos</small></div>
+   <a class="button online-library" href="../modelos/">Biblioteca online</a>
    <input id="search" type="search" aria-label="Buscar modelos" placeholder="Buscar por nombre o etiqueta">
    <div class="group"><select id="tagFilter" aria-label="Filtrar por etiqueta"><option value="">Todas las etiquetas</option></select></div>
    <div class="asset-list" id="assetList"><p class="nothing">Biblioteca vacía</p></div>
@@ -131,6 +132,6 @@ select{cursor:pointer}.split{display:flex;gap:8px}.split>*{flex:1;min-width:0}
 </main>
 <input id="file" type="file" accept=".glb,.html,.htm,model/gltf-binary,text/html">
 <input id="restoreFile" type="file" accept=".json,application/json" hidden>
-<script type="module" src="./app.js?v=20261117-model-transform"></script>
+<script type="module" src="./app.js?v=20261124-modelos"></script>
 </body>
 </html>
