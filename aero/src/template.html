@@ -200,6 +200,14 @@ THE SOFTWARE.
 <p class="hint" id="emitterStatus">Selecciona el volumen turquesa en el visor. Arrastra el punto central para moverlo en Y/Z; utiliza los tiradores de borde para cambiar anchura y altura. X permanece fijo. Compatible con ratón y pantalla táctil.</p></div>
 <label for="focus">Zona de emisión</label><select id="focus"><option value="all">Anchura completa</option><option value="center" selected>Franja central</option></select><label for="speed">Velocidad de animación <span id="speedval">1,5×</span></label><input id="speed" type="range" min="0.2" max="2.5" value="1.5" step="0.1"><label><input id="lines" type="checkbox"> Guías de trayectoria</label><label><input id="tunnel" type="checkbox"> Marco del túnel</label><label><input id="body" type="checkbox" checked> Mostrar carrocería</label><label><input id="grid" type="checkbox" checked> Rejilla del suelo</label></section><section id="cfdPanelContent"><h2>03 / CAMPO CFD</h2>
 <label class="file" for="cfdfile" style="display:block;text-align:center">Importar campo CFD JSON</label><input id="cfdfile" type="file" accept=".json,application/json" style="display:none">
+<div class="cfd-local" style="margin:16px 0 8px;padding:13px 12px;border:1px solid #44464d;border-radius:7px;background:#17191e">
+<h3 style="font:600 13px Manrope,system-ui;margin:0 0 8px;color:#f1f1ef">PREPARAR CFD EN EL ORDENADOR</h3>
+<p class="hint">Genera la geometría STL con la orientación actual y un manifiesto para OpenFOAM. El CFD se calcula en Windows/WSL2; este navegador no ejecuta el solver.</p>
+<label for="cfdCaseSpeed">Velocidad del aire (m/s)</label><input id="cfdCaseSpeed" type="number" min="0.1" max="100" step="0.1" value="25" inputmode="decimal" style="width:100%;background:#101114;color:#f1f1ef;border:1px solid #44464d;padding:9px;margin:4px 0 10px">
+<button id="cfdExportStl" type="button" style="width:100%;margin:4px 0">Exportar geometría STL</button>
+<button id="cfdExportManifest" type="button" style="width:100%;margin:4px 0">Exportar configuración CFD</button>
+<p id="cfdLocalStatus" class="hint" aria-live="polite">Exporta ambos archivos. La geometría puede necesitar reparación antes del mallado; la configuración no equivale a un caso ejecutable.</p>
+</div>
 <button id="clearCFD" style="width:100%;margin-top:9px">Volver a flujo visual</button>
 <p id="fieldinfo" class="hint" aria-live="polite">Sin campo CFD importado. Vórtices y velocidad cromática ilustrativos.</p>
 <p class="hint">Formato octos-cfd-v1: rejilla XYZ en metros y velocidad [vx, vy, vz] en m/s. Los datos deben coincidir con la posición y escala del vehículo. Las trayectorias visuales evitan intersecciones con la malla; el campo CFD original no cambia. No resuelve CFD en el navegador.</p>

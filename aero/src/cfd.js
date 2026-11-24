@@ -46,7 +46,11 @@ const AeroCFD = (() => {
     }
     const bounds=origin.map((v,i)=>[v,v+(dims[i]-1)*spacing[i]]);
     return {dims,origin,spacing,velocity,maxSpeed,displayMaxSpeed:maxSpeed,
-      referenceSpeed,bounds,source:String(data.source||'Campo CFD importado').slice(0,100),sample};
+      referenceSpeed,bounds,source:String(data.source||'Campo CFD importado').slice(0,100),
+      caseInfo:data.case&&typeof data.case==='object'?
+        {vehicleFile:String(data.case.vehicleFile||'').slice(0,140),
+         vehicleName:String(data.case.vehicleName||'').slice(0,140),
+         stl:String(data.case.stl||'').slice(0,140)}:null,sample};
   }
   async function build(field,surface,{L,H,W,extent,precision='balanced',focus='all',emitterWidth=2.6,emitterHeight=2.0,emitterOffsetY=0,emitterOffsetZ=0},current=()=>true){
     const {tracks,steps}=AeroPaths.modes[precision]||AeroPaths.modes.balanced;

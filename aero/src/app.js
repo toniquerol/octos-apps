@@ -620,6 +620,10 @@ $('cfdfile').onchange=async e=>{
     if(f.size>110*1024*1024)throw Error('El archivo supera el máximo de 110 MB.');
     status('Leyendo campo de velocidades CFD…');
     const field=AeroCFD.parse(await f.text());
+    const requestedFile=field.caseInfo?.vehicleFile;
+    const currentFile=$('filename').textContent;
+    if(requestedFile&&currentFile&&requestedFile!==currentFile)
+      throw Error('El CFD pertenece a '+requestedFile+', pero el visor muestra '+currentFile+'. Importa el GLB correspondiente.');
     if(requested!==token)return;
     activeCFD=field;
     $('palette').value='velocity';
@@ -754,8 +758,50 @@ async function projectRestore(project){
  updateEmitterVisual();wake();
  return {vehicleRestored:matching};
 }
+/* Export the transformed mesh in Aero scene metres (X longitudinal, Y up, Z lateral).
+   The STL is input geometry ONLY; this does not create a watertight CFD mesh. */
+function exportCFDSTL(){
+ if(!content)throw Error('Importa un GLB antes de exportar geometría CFD.');
+ content.updateWorldMatrix(true,true);
+ const meshes=[];let faces=0;
+ content.traverse(mesh=>{
+  const positions=mesh.geometry?.attributes?.position;
+  if(!mesh.isMesh||!mesh.visible||!positions)return;
+  const geometry=mesh.geometry,indices=geometry.index;
+  const n=indices?indices.count:positions.count;
+  if(n%3!==0)throw Error('La geometría contiene triángulos incompletos.');
+  faces+=n/3;
+  if(faces>2000000)throw Error('El STL supera 2 millones de triángulos; simplifica la geometría.');
+  meshes.push({mesh,positions,indices,n});
+ });
+ if(!faces)throw Error('El modelo no contiene triángulos exportables.');
+ const bytes=new ArrayBuffer(84+faces*50),view=new DataView(bytes);
+ const header='OcToS Aero CFD geometry · metres · X longitudinal Y vertical Z transverse';
+ for(let i=0;i<Math.min(80,header.length);i++)view.setUint8(i,header.charCodeAt(i));
+ view.setUint32(80,faces,true);
+ const a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),u=new T.Vector3(),v=new T.Vector3(),n=new T.Vector3();
+ let p=84;
+ const writeVector=q=>{for(const k of ['x','y','z']){if(!Number.isFinite(q[k]))throw Error('La geometría tiene coordenadas inválidas.');view.setFloat32(p,q[k],true);p+=4;}};
+ for(const {mesh,positions,indices,n:count} of meshes){
+  for(let j=0;j<count;j+=3){
+   const idx=k=>indices?indices.getX(k):k;
+   a.fromBufferAttribute(positions,idx(j)).applyMatrix4(mesh.matrixWorld);
+   b.fromBufferAttribute(positions,idx(j+1)).applyMatrix4(mesh.matrixWorld);
+   c.fromBufferAttribute(positions,idx(j+2)).applyMatrix4(mesh.matrixWorld);
+   u.subVectors(b,a);v.subVectors(c,a);n.crossVectors(u,v);
+   if(n.lengthSq()>1e-24)n.normalize();else n.set(0,0,0);
+   writeVector(n);writeVector(a);writeVector(b);writeVector(c);
+   view.setUint16(p,0,true);p+=2;
+  }
+ }
+ const bounds=new T.Box3().setFromObject(content),min=bounds.min.toArray(),max=bounds.max.toArray();
+ if(min.concat(max).some(x=>!Number.isFinite(x)))throw Error('No se pudo obtener la extensión del STL.');
+ return {blob:new Blob([bytes],{type:'application/octet-stream'}),triangles:faces,bounds:{min,max}};
+}
+
 window.aeroProjectBridge={
  snapshot:projectSnapshot,
+ exportGeometrySTL:exportCFDSTL,
  restore:projectRestore,
  startNew:async()=>{
    token++;resetField();currentCFDFile=null;

@@ -27,6 +27,7 @@ def main():
     parser.add_argument("--reference-speed", type=float, help="Freestream speed (m/s)")
     parser.add_argument("--display-max-speed", type=float, help="Upper limit of colour scale (m/s)")
     parser.add_argument("--source", default="ParaView / OpenFOAM exported field")
+    parser.add_argument("--case-manifest", type=Path, help="OcToS Aero octos-cfd-case-v1 manifest to associate provenance")
     args = parser.parse_args()
     if args.reference_speed is not None and args.reference_speed <= 0:
         parser.error("--reference-speed must be positive")
@@ -81,6 +82,27 @@ def main():
         "dimensions":[len(a) for a in axes],
         "velocity":values,
     }
+    if args.case_manifest is not None:
+        manifest = json.loads(args.case_manifest.read_text(encoding="utf-8-sig"))
+        if not isinstance(manifest, dict) or manifest.get("format") != "octos-cfd-case-v1":
+            raise ValueError("Invalid OcToS Aero CFD case manifest")
+        vehicle = manifest.get("project", {}).get("vehicle", {})
+        simulation = manifest.get("simulation", {})
+        geometry = manifest.get("geometry", {})
+        if not isinstance(vehicle, dict) or not isinstance(simulation, dict) or not isinstance(geometry, dict):
+            raise ValueError("Incomplete CFD case manifest")
+        case_speed = simulation.get("velocityMps")
+        if not isinstance(case_speed, (int,float)) or not math.isfinite(case_speed) or not 0.1 <= case_speed <= 100:
+            raise ValueError("Invalid manifest inlet speed")
+        payload["case"] = {
+            "vehicleName": str(vehicle.get("name", ""))[:140],
+            "vehicleFile": str(vehicle.get("fileRef", ""))[:140],
+            "stl": str(geometry.get("stl", ""))[:140],
+            "createdAt": str(manifest.get("createdAt", ""))[:50],
+            "engine": "OpenFOAM",
+        }
+        if args.reference_speed is None:
+            payload["referenceSpeed"] = case_speed
     if args.reference_speed is not None:
         payload["referenceSpeed"] = args.reference_speed
     if args.display_max_speed is not None:

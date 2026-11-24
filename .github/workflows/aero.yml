@@ -32,6 +32,8 @@ jobs:
         run: node aero/tests/geometry.test.cjs
       - name: Structured CFD interpolation and integration tests
         run: node aero/tests/cfd.test.cjs
+      - name: Local OpenFOAM integration contract tests (without solver)
+        run: python3 -m unittest discover -s aero/tests -p 'test_local_cfd.py'
       - name: Verify clean standalone bundle
         run: |
           test -s aero/index.html
