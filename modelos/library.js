@@ -37,12 +37,12 @@ if (document.getElementById('models')) {
     get('orientation-controls').disabled = true;
     get('submit').disabled = true;
     try {
-      const [{createOrientation}, response] = await Promise.all([import('./orientation.js?v=1'), request('/models/' + id)]);
+      const [{createOrientation}, response] = await Promise.all([import('./orientation.js?v=2'), request('/models/' + id)]);
       const buffer = await response.arrayBuffer();
       if (generation !== previewGeneration) return;
       const canvas = preview.querySelector('canvas');
       canvas.replaceWith(canvas.cloneNode(false));
-      const view = await createOrientation(preview, buffer);
+      const view = await createOrientation(preview, buffer, () => generation === previewGeneration);
       if (generation !== previewGeneration) { view.dispose(); return; }
       orientation = view;
       get('orientation-controls').disabled = false;
@@ -174,7 +174,7 @@ if (document.getElementById('models')) {
 
   get('search').addEventListener('input', render);
   get('filter').addEventListener('change', render);
-  get('cancel').addEventListener('click', () => edit());
+  get('cancel').addEventListener('click', () => { if (!busy) edit(); });
   function checkbox(value, text, checked = false) {
     const label = document.createElement('label');
     const input = document.createElement('input');
