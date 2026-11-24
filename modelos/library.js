@@ -21,6 +21,38 @@ if (document.getElementById('models')) {
   let local = [];
   let editId = '';
   let busy = false;
+  let orientation = null;
+  let previewGeneration = 0;
+  const preview = get('orientation');
+  function closePreview() {
+    ++previewGeneration;
+    orientation?.dispose(); orientation = null;
+    preview.hidden = true;
+    get('submit').disabled = false;
+  }
+  async function openPreview(id) {
+    const generation = previewGeneration;
+    preview.hidden = false;
+    get('orientation-status').textContent = 'Cargando modelo…';
+    get('orientation-controls').disabled = true;
+    get('submit').disabled = true;
+    try {
+      const [{createOrientation}, response] = await Promise.all([import('./orientation.js?v=1'), request('/models/' + id)]);
+      const buffer = await response.arrayBuffer();
+      if (generation !== previewGeneration) return;
+      const canvas = preview.querySelector('canvas');
+      canvas.replaceWith(canvas.cloneNode(false));
+      const view = await createOrientation(preview, buffer);
+      if (generation !== previewGeneration) { view.dispose(); return; }
+      orientation = view;
+      get('orientation-controls').disabled = false;
+      get('orientation-status').textContent = 'Giro respecto al origen del GLB · X rojo, Y verde, Z azul.';
+    } catch (error) {
+      if (generation === previewGeneration) get('orientation-status').textContent = 'Vista 3D no disponible: ' + error.message + '. Puedes editar los metadatos.';
+    } finally {
+      if (generation === previewGeneration) get('submit').disabled = false;
+    }
+  }
 
   function message(text, error = false) {
     status.textContent = text;
@@ -70,7 +102,7 @@ if (document.getElementById('models')) {
         link.click();
         setTimeout(() => URL.revokeObjectURL(url), 30000);
       })));
-      if (session?.kind === 'master') actions.append(action('Editar', () => edit(model)), action('Borrar', () => {
+      if (session?.kind === 'master') actions.append(action('Editar', () => { if (!busy) edit(model); }), action('Borrar', () => {
         if (confirm('¿Borrar de la biblioteca online «' + model.name + '»?')) {
           run(async () => {
             await request('/models/' + model.id, { method: 'DELETE' });
@@ -116,6 +148,7 @@ if (document.getElementById('models')) {
   }
 
   function edit(model) {
+    closePreview();
     editId = model?.id || '';
     editor.reset();
     fields.source.closest('label').hidden = Boolean(editId);
@@ -127,7 +160,7 @@ if (document.getElementById('models')) {
     fields.category.value = model?.category || '';
     fields.visibility.value = model?.public ? 'public' : 'private';
     renderModelProfiles(model?.profiles || []);
-    if (editId) fields.name.focus();
+    if (editId) { fields.name.focus(); editor.scrollIntoView({block:'nearest'}); void openPreview(editId); }
   }
 
   async function run(task) {
@@ -193,6 +226,7 @@ if (document.getElementById('models')) {
       fields.source.replaceChildren(new Option('Archivo GLB', 'file'), ...local.map((model, index) => new Option('Local · ' + model.name, String(index))));
       await readProfiles();
     } else {
+      edit();
       profiles = [];
       models = models.filter(model => model.public);
       render();
@@ -252,11 +286,12 @@ if (document.getElementById('models')) {
 
   editor.addEventListener('submit', (event) => {
     event.preventDefault();
+    if (get('submit').disabled) return;
     run(async () => {
       const details = { name: fields.name.value.trim(), category: fields.category.value.trim(), public: fields.visibility.value === 'public', profiles: selected(get('model-profiles')) };
       const original = models.find(model => model.id === editId);
       if (details.public && !original?.public && !confirm('Cualquier persona con el enlace podrá descargar este GLB. ¿Publicarlo?')) return;
-      if (editId) await request('/models/' + editId, { method: 'PATCH', details });
+      if (editId) await request('/models/' + editId, { method: 'PATCH', details, body: orientation?.getFile() });
       else {
         const body = fields.source.value === 'file' ? fields.file.files[0] : local[Number(fields.source.value)]?.file;
         if (!body || body.size > 5_000_000) throw new Error('Selecciona un GLB de hasta 5 MB.');

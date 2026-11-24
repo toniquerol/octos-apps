@@ -8,7 +8,9 @@
 <link rel="icon" href="../assets3d/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="./style.css">
 <script src="../shared/nav.js?v=20261124-modelos" defer></script>
-<script type="module" src="./library.js?v=pin1"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<script type="module" src="./library.js?v=orientation1"></script>
+<style>#orientation{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:12px;align-items:start}#orientation canvas{width:100%;height:250px;display:block;border:1px solid #34353b;border-radius:7px;touch-action:none}#orientation-controls{margin:0;display:grid;gap:8px}#orientation-controls label{display:grid;grid-template-columns:24px minmax(0,1fr) auto auto;align-items:center;margin:0;gap:5px}#orientation-controls input{width:100%}#orientation-controls button{padding:6px 8px}#orientation-status{grid-column:1/-1}@media(max-width:680px){#orientation{grid-template-columns:minmax(0,1fr)}}</style>
 </head>
 <body>
 <header><a class="button" href="../assets3d/">Visor 3D Assets</a></header>
@@ -40,6 +42,16 @@
     <label>Categoría <input name="category" list="categories" required maxlength="60" placeholder="Elige o escribe una categoría"></label>
     <label>Visibilidad <select name="visibility"><option value="private">Privado</option><option value="public">Público</option></select></label>
     <fieldset id="model-access" hidden><legend>Dar acceso a perfiles secundarios</legend><div id="model-profiles"></div></fieldset>
+    <section id="orientation" hidden aria-label="Orientación del modelo">
+      <canvas aria-label="Vista previa 3D"></canvas>
+      <fieldset id="orientation-controls" disabled><legend>Orientación del modelo (°)</legend>
+        <label><span>X</span><input type="number" aria-label="Rotación X en grados" data-angle step="any" value="0"><button type="button" data-axis="0" data-turn="-90">−90°</button><button type="button" data-axis="0" data-turn="90">+90°</button></label>
+        <label><span>Y</span><input type="number" aria-label="Rotación Y en grados" data-angle step="any" value="0"><button type="button" data-axis="1" data-turn="-90">−90°</button><button type="button" data-axis="1" data-turn="90">+90°</button></label>
+        <label><span>Z</span><input type="number" aria-label="Rotación Z en grados" data-angle step="any" value="0"><button type="button" data-axis="2" data-turn="-90">−90°</button><button type="button" data-axis="2" data-turn="90">+90°</button></label>
+        <button type="button" data-reset>Restablecer orientación</button>
+      </fieldset>
+      <small id="orientation-status" role="status"></small>
+    </section>
     <div class="actions"><button class="accent" id="submit">Subir modelo</button><button type="button" id="cancel" hidden>Cancelar edición</button></div>
   </form>
   <div class="heading filters">
